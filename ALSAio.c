@@ -1,0 +1,713 @@
+/* ALSA audio capture and playback. */
+
+#include <string.h>		/* memcpy */
+#include <dirent.h>		/* readdir */
+#include <alsa/asoundlib.h>	/* ALSA library */
+
+#include "Template.h"
+#include "ALSAio.h"
+#include "Wav.h"
+#include "Audio.h"
+#include "String.h"
+#include "Mem.h"
+#include "Cfg.h"
+
+int asize1;
+
+static void config_handler(Instance *pi, void *msg);
+static void Wav_handler(Instance *pi, void *msg);
+
+enum { INPUT_CONFIG, INPUT_WAV, INPUT_AUDIO };
+enum { OUTPUT_FEEDBACK };
+
+static Input ALSAPlayback_inputs[] = {
+  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = config_handler },
+  [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
+  // [ INPUT_AUDIO ] = { .type_label = "Audio_buffer", .handler = Audio_handler },
+};
+static Output ALSAPlayback_outputs[] = {
+  [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L  },
+};
+
+
+enum { OUTPUT_WAV, OUTPUT_AUDIO };
+static Input ALSACapture_inputs[] = {
+  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = config_handler },
+};
+static Output ALSACapture_outputs[] = {
+  [ OUTPUT_WAV ] = { .type_label = "Wav_buffer", .destination = 0L },
+  // [ OUTPUT_AUDIO ] = { .type_label = "Audio_buffer", .destination = 0L },
+};
+
+
+static int rates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 96000, 192000 };
+
+static int channels[] = { 
+  1,				/* mono */
+  2, 				/* stereo */
+  3,				/* 2.1 */
+  6,				/* 5.1 */
+  12,				/* envy24 output (note: input is 10 channels) */
+};
+
+static struct {
+  const char *label;
+  snd_pcm_format_t value;
+  int bytes;
+} formats[] = {
+  { .label = "signed 8-bit", .value = SND_PCM_FORMAT_S8, .bytes = 1 },
+  { .label = "signed 16-bit little endian", .value = SND_PCM_FORMAT_S16_LE, .bytes = 2 },
+  { .label = "signed 24-bit little endian", .value = SND_PCM_FORMAT_S24_LE, .bytes = 3 },
+  { .label = "signed 32-bit little endian", .value = SND_PCM_FORMAT_S32_LE, .bytes = 4 },
+};
+
+typedef struct {
+  snd_pcm_t *handle;
+  char *device;			/* "hw:0", etc. */
+  snd_pcm_hw_params_t *hwparams;
+  snd_pcm_stream_t mode;
+
+  int rate;
+  int channels;   
+  snd_pcm_format_t format;	/* can translate to string using formats[] */
+  int format_bytes;
+
+  /* frames_per_io determines the frequency of snd_pcm_readi calls. */
+  snd_pcm_uframes_t frames_per_io;
+
+  int enable;
+
+  struct timespec t0;
+  int analyze;
+  int total_wait_for_it;
+  uint64_t total_encoded_bytes;
+  uint64_t total_encoded_next;
+  uint64_t total_encoded_delta;
+  
+} ALSAio_private;
+
+
+static int set_device(Instance *pi, const char *value)
+{
+  ALSAio_private *priv = pi->data;
+  int rc = 0;
+
+  if (priv->device) {
+    free(priv->device);
+  }
+  priv->device = strdup(value);
+
+  if (priv->handle) {
+    snd_pcm_close(priv->handle);
+  }
+  
+  rc = snd_pcm_open(&priv->handle, priv->device, priv->mode, 0);
+  if (rc < 0) {
+    fprintf(stderr, "snd_pcm_open %s: %s\n", priv->device, snd_strerror(rc));
+    goto out;
+  }
+  
+  fprintf(stderr, "ALSA device %s opened, handle=%p\n", priv->device, priv->handle);
+
+  /* Allocate hardware parameter structure, and call "any", and use
+     the resulting hwparams in subsequent calls.  I had tried calling
+     _any() in each get/set function, but recording failed, so it
+     seems ALSA doesn't work that way. */
+  snd_pcm_hw_params_malloc(&priv->hwparams);
+  rc = snd_pcm_hw_params_any(priv->handle, priv->hwparams);
+
+  /* Might as well set interleaved here, too. */
+  rc = snd_pcm_hw_params_set_access(priv->handle, priv->hwparams,
+				    SND_PCM_ACCESS_RW_INTERLEAVED);
+  if (rc != 0) {
+    fprintf(stderr, "snd_pcm_hw_params_set_access %s: %s\n", priv->device, snd_strerror(rc));
+  }
+
+ out:
+  return rc;
+}
+
+
+static void get_device_range(Instance *pi, Range **range)
+{
+  DIR *d;
+  struct dirent *de;
+
+  Range *r = Range_new(RANGE_STRINGS);
+  // range->strings.num_strs = 0;
+
+  d = opendir("/proc/asound");
+
+  while (1) {
+    de = readdir(d);
+    if (!de) {
+      break;
+    }
+
+    char c = de->d_name[strlen("card")];
+    if (strncmp(de->d_name, "card", strlen("card")) == 0
+	&& c >= '0' && c <= '9' ) {
+      //char *syspath = 0L;
+      //String_cat3(&syspath, "/proc/asound/", de->d_name, "/id");
+      //puts(syspath);
+      // List_append(range->strings.values, &range->strings.num_values, syspath);
+      //Mem_free(syspath);
+    }
+
+#if 0
+    Stringlist_append(&range->strings.values, &range->strings.num_values, de->d_name);
+    char *data = File_load(syspath);
+    Stringlist_append(&range->strings.values, &range->strings.num_values, syspath);
+#endif
+  }
+
+  *range = r;
+}
+
+
+static int set_rate(Instance *pi, const char *value)
+{
+  int rc;
+  int rate = atoi(value);
+  ALSAio_private *priv = pi->data;
+
+  if (!priv->handle) {
+    fprintf(stderr, "device is not open!\n");
+    return 1;
+  }
+
+  rc = snd_pcm_hw_params_set_rate(priv->handle,
+				  priv->hwparams,
+				  rate, 0);
+  
+  if (rc == 0) {
+    printf("rate set to %d\n", rate);
+    priv->rate = rate;
+  }
+  else {
+    fprintf(stderr, "error setting rate %d\n", rate);
+  }
+
+  return rc;
+}
+
+
+static void get_rate_range(Instance *pi, Range **range)
+{
+  /* FIXME: Need modc or similar ephemeral string and list support. */
+  int i;
+  int rc;
+  ALSAio_private *priv = pi->data;
+
+  if (!priv->handle) {
+    fprintf(stderr, "device is not open!\n");
+    return;
+  }
+
+  for (i=0; i < table_size(rates); i++) {
+    rc = snd_pcm_hw_params_test_rate(priv->handle, priv->hwparams, rates[i], 0);
+    if (rc == 0) {
+      printf("  rate %d is available\n", rates[i]);
+    }
+  }
+}
+
+
+static int set_channels(Instance *pi, const char *value)
+{
+  int rc;
+  int channels = atoi(value);
+  ALSAio_private *priv = pi->data;
+
+  if (!priv->handle) {
+    fprintf(stderr, "device is not open!\n");
+    return 1;
+  }
+
+  rc = snd_pcm_hw_params_set_channels(priv->handle,
+				      priv->hwparams,
+				      channels);
+  
+  if (rc == 0) {
+    printf("channels set to %d\n", channels);
+    priv->channels = channels;
+  }
+  else {
+    fprintf(stderr, "error setting %d channels\n", channels);
+  }
+
+  return rc;
+}
+
+static void get_channels_range(Instance *pi, Range **range)
+{
+  /* FIXME: Need modc or similar ephemeral string and list support. */
+  int i;
+  int rc;
+  ALSAio_private *priv = pi->data;
+
+  if (!priv->handle) {
+    fprintf(stderr, "device is not open!\n");
+    return;
+  }
+
+  for (i=0; i < table_size(channels); i++) {
+    rc = snd_pcm_hw_params_test_channels(priv->handle, priv->hwparams, channels[i]);
+    if (rc == 0) {
+      printf("  %d-channel sampling available\n", channels[i]);
+    }
+  }
+}
+
+
+static int set_format(Instance *pi, const char *value)
+{
+  int i;
+  int rc = -1;
+  ALSAio_private *priv = pi->data;
+  char tmp[strlen(value)+1];
+  int j;
+
+  if (!priv->handle) {
+    fprintf(stderr, "device is not open!\n");
+    return 1;
+  }
+  
+  strcpy(tmp, value);
+  for (j=0; tmp[j]; j++) {
+    if (tmp[j] == '.') {
+      tmp[j] = ' ';
+    }
+  }
+
+  for (i=0; i < table_size(formats); i++) {
+    if (streq(formats[i].label, tmp)) {
+      rc = snd_pcm_hw_params_set_format(priv->handle, priv->hwparams, formats[i].value);
+      if (rc < 0) {
+	fprintf(stderr, "snd_pcm_hw_params_set_format %s: %s\n", priv->device, snd_strerror(rc));
+      }
+      else {
+	fprintf(stderr, "format set to %s\n", value);
+	priv->format = formats[i].value;
+	priv->format_bytes = formats[i].bytes;
+      }
+      break;
+    }
+  }  
+  
+  return rc;
+}
+
+static void get_format_range(Instance *pi, Range **range)
+{
+  /* FIXME: Need modc or similar ephemeral string and list support. */
+  int i;
+  int rc;
+  ALSAio_private *priv = pi->data;
+
+  if (!priv->handle) {
+    fprintf(stderr, "device is not open!\n");
+    return;
+  }
+
+  for (i=0; i < table_size(formats); i++) {
+    rc = snd_pcm_hw_params_test_format(priv->handle, priv->hwparams, formats[i].value);
+    if (rc == 0) {
+      printf("  %s sampling available\n", formats[i].label);
+    }
+  }
+}
+
+static int set_frames_per_io(Instance *pi, const char *value)
+{
+  ALSAio_private *priv = pi->data;
+  if (!priv->handle) {
+    fprintf(stderr, "device is not open!\n");
+    priv->enable = 0;
+  }
+  else {
+    priv->frames_per_io = atol(value);
+  }
+  
+  printf("ALSACapture frames_per_io set to %ld\n", priv->frames_per_io);
+
+  return 0;
+}
+
+
+static int set_enable(Instance *pi, const char *value)
+{
+  ALSAio_private *priv = pi->data;
+  if (!priv->handle) {
+    fprintf(stderr, "device is not open!\n");
+    priv->enable = 0;
+  }
+  else {
+    priv->enable = atoi(value);
+  }
+  
+  printf("ALSA enable set to %d\n", priv->enable);
+
+  return 0;
+}
+
+
+static Config config_table[] = {
+  { "device",  set_device, 0L, get_device_range },
+  { "rate",  set_rate, 0L, get_rate_range },
+  { "channels",  set_channels, 0L, get_channels_range },
+  { "format",  set_format, 0L, get_format_range },
+  { "frames_per_io",  set_frames_per_io, 0L, 0L},
+  { "enable",  set_enable, 0L, 0L },
+};
+
+static void config_handler(Instance *pi, void *data)
+{
+  Config_buffer *cb_in = data;
+  int i;
+
+  /* Walk the config table. */
+  for (i=0; i < table_size(config_table); i++) {
+    if (streq(config_table[i].label, cb_in->label->bytes)) {
+      int rc;		/* FIXME: What to do with this? */
+      rc = config_table[i].set(pi, cb_in->value->bytes);
+      break;
+    }
+  }
+  
+  Config_buffer_discard(&cb_in);
+}
+
+static void Wav_handler(Instance *pi, void *data)
+{
+  ALSAio_private *priv = pi->data;
+  Wav_buffer *wav_in = data;
+  int state;
+  int dir = 0;
+  int rc;
+  snd_pcm_sframes_t n;
+
+  if (!priv->enable) {
+    return;
+  }
+
+  state = snd_pcm_state(priv->handle);
+
+  if (state == SND_PCM_STATE_OPEN || state == SND_PCM_STATE_SETUP) {
+    /* One time playback setup. */
+
+    /* FIXME: Why does 64 work on NVidia CK804 with "snd_intel8x0"
+       driver, but not 32, 128, 2048?  How to find out what will
+       work? */
+    snd_pcm_uframes_t frames =  priv->frames_per_io;
+
+    printf("state=%d\n", state);
+
+    rc = snd_pcm_hw_params_set_period_size_near(priv->handle, priv->hwparams, &frames, &dir);
+    printf("set_period_size_near returns %d (frames=%d)\n", rc, (int)frames);
+
+    int periods = 4;
+
+    rc = snd_pcm_hw_params_set_periods(priv->handle, priv->hwparams, periods, 0);
+    if (rc < 0) {
+      fprintf(stderr, "snd_pcm_hw_params_set_periods %s: %s\n", priv->device, snd_strerror(rc));      
+    }
+      
+    rc = snd_pcm_hw_params(priv->handle, priv->hwparams);
+    if (rc < 0) {
+      fprintf(stderr, "snd_pcm_hw_params %s: %s\n", priv->device, snd_strerror(rc));      
+    }
+
+    state = snd_pcm_state(priv->handle);
+    printf("state=%d\n", state);
+
+    rc = snd_pcm_prepare(priv->handle);
+    state = snd_pcm_state(priv->handle);
+    printf("state=%d\n", state);
+  }
+
+  if (wav_in->params.rate &&
+      wav_in->params.rate != priv->rate) {
+    /* FIXME: Adjust rate.  May need to stop/start stream.  Or, resample. */
+    // char rate[32];
+    // sprintf(rate, "%d", wav_in->params.rate);
+    // set_rate(pi, rate);
+  }
+
+  int out_frames = wav_in->data_length / (priv->channels * priv->format_bytes);
+  while (1) {
+    n = snd_pcm_writei(priv->handle, wav_in->data, out_frames);
+    if (n > 0) {
+      out_frames -= n;
+    }
+    else {
+      break;
+    }
+  }
+
+  if (n < 0) {
+    fprintf(stderr, "snd_pcm_writei %s: %s\n", priv->device, snd_strerror((int)n));
+    fprintf(stderr, "attempting snd_pcm_prepare() to correct...\n");
+    snd_pcm_prepare(priv->handle);
+  }
+
+  if (wav_in->no_feedback == 0 	/* The default is 0, set to 1 if "filler" code below is called. */
+      && pi->outputs[OUTPUT_FEEDBACK].destination) {
+    Feedback_buffer *fb = Feedback_buffer_new();
+    fb->seq = wav_in->seq;
+    PostData(fb, pi->outputs[OUTPUT_FEEDBACK].destination);
+  }
+
+  Wav_buffer_discard(&wav_in);
+}
+
+
+static void ALSAPlayback_tick(Instance *pi)
+{
+  ALSAio_private *priv = pi->data;
+  int wait_flag = (priv->enable ? 0 : 1);
+
+  Handler_message *hm;
+
+  hm = GetData(pi, wait_flag);
+  if (hm) {
+    hm->handler(pi, hm->data);
+    ReleaseMessage(&hm);
+    while (pi->pending_messages > 4) {
+      /* This happens when capture clock is faster than playback
+	 clock.  In cx88play.cmd, it drops a block every ~2s. */
+      hm = GetData(pi, wait_flag);
+      if (hm->handler == Wav_handler) {
+	Wav_buffer *wav_in = hm->data;
+	double s = (1.0*wav_in->data_length)/
+	  (priv->rate * priv->channels * priv->format_bytes);
+	printf("dropping %.4fs of audio (%d %d %d)\n", s,
+	       priv->rate, priv->channels, priv->format_bytes
+	       );
+      }
+      else {
+	/* Should always handle config messages... */
+	hm->handler(pi, hm->data);
+      }
+      ReleaseMessage(&hm);
+    }
+  }
+  else if (priv->enable) {
+    /* Filler... */
+    Wav_buffer *wav_in;
+    printf("filler\n");
+    int i;
+    wav_in = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
+    wav_in->data_length = 16*priv->channels*priv->format_bytes;
+    wav_in->data = Mem_calloc(1, wav_in->data_length);
+    if (access("/dev/shm/a1", R_OK) == 0) {
+      /* Blip. */
+      for (i=0; i < wav_in->data_length; i+=2) {
+	wav_in->data[i] = 0;
+	wav_in->data[i+1] = (2048 - i);
+      }
+      unlink("/dev/shm/a1");
+    }
+    Wav_buffer_finalize(wav_in);
+    /* Avoid sending feedback since this was generated locally. */
+    wav_in->no_feedback = 1;
+    Wav_handler(pi, wav_in);
+  }
+}
+
+
+static void analyze_rate(ALSAio_private *priv, Wav_buffer *wav)
+{
+  if (priv->total_wait_for_it) {
+    priv->total_wait_for_it -= 1;
+  }
+  else {
+    if (priv->t0.tv_sec == 0) {
+      clock_gettime(CLOCK_MONOTONIC, &priv->t0);
+    }
+    if (priv->total_encoded_bytes > priv->total_encoded_next) {
+      struct timespec tnow;
+      double d;
+      clock_gettime(CLOCK_MONOTONIC, &tnow);
+      d = (tnow.tv_sec + tnow.tv_nsec/1000000000.0) -
+	(priv->t0.tv_sec + priv->t0.tv_nsec/1000000000.0);
+      printf("encoding %.4f bytes/sec\n", (priv->total_encoded_bytes/d));
+      priv->total_encoded_next += priv->total_encoded_delta;
+    }
+    priv->total_encoded_bytes += wav->data_length;
+  }
+}
+
+
+static void ALSACapture_tick(Instance *pi)
+{
+  ALSAio_private *priv = pi->data;
+  int wait_flag = (priv->enable ? 0 : 1);
+
+  Handler_message *hm;
+
+  hm = GetData(pi, wait_flag);
+  if (hm) {
+    hm->handler(pi, hm->data);
+    ReleaseMessage(&hm);
+  }
+
+  if (!priv->enable) {
+    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
+    return;
+  }
+ 
+  /* Read a block of data. */
+  int rc;
+  snd_pcm_sframes_t n;
+  int state;
+  snd_pcm_uframes_t frames = priv->frames_per_io;
+  int dir = 0;
+
+  state = snd_pcm_state(priv->handle);
+
+  if (state == SND_PCM_STATE_OPEN || state == SND_PCM_STATE_SETUP) {
+    /* One time capture setup. */
+    printf("%s: state=%d\n", __func__, state);
+
+    rc = snd_pcm_hw_params_set_period_size_near(priv->handle, priv->hwparams, &frames, &dir);
+    printf("%s: set_period_size_near returns %d (frames=%d)\n", __func__, rc, (int)frames);
+
+    rc = snd_pcm_hw_params(priv->handle, priv->hwparams);
+    if (rc < 0) {
+      fprintf(stderr, "snd_pcm_hw_params %s: %s\n", priv->device, snd_strerror(rc));      
+    }
+
+    state = snd_pcm_state(priv->handle);
+    printf("%s: state=%d\n", __func__, state);
+
+    rc = snd_pcm_prepare(priv->handle);
+    state = snd_pcm_state(priv->handle);
+    printf("%s: state=%d\n", __func__, state);
+  }
+
+  if (!priv->handle) {
+    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
+    return;
+  }
+
+  snd_pcm_hw_params_get_period_size(priv->hwparams, &frames, &dir);
+  int size = frames * priv->format_bytes * priv->channels;
+
+  if (!size) {
+    // This can happen if channels or format_bytes was not set...
+    printf("%s: size error - %ld * %d * %d\n", __func__, frames , priv->format_bytes , priv->channels);
+    while (1) {
+      sleep(1);
+    }
+  }
+
+  if (!priv->rate) {
+    printf("%s: error - rate is 0!\n", __func__);
+    while (1) {
+      sleep(1);
+    }
+  }
+
+  /* Allocate buffer for PCM samples. */
+  asize1=size+1;
+  uint8_t *buffer = Mem_malloc(size+1);
+  buffer[size] = 0x55;
+
+  //int val = hwparams->rate;
+  //snd_pcm_hw_params_get_period_time(params, &val, &dir);
+  Wav_buffer *wav = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
+
+  n = snd_pcm_readi(priv->handle, buffer, frames);
+
+  /* Record time at the end of the audio read. */
+  gettimeofday(&wav->tv, NULL);
+
+  if (buffer[size] != 0x55)  {
+    fprintf(stderr, "overwrote audio buffer!\n");
+  }
+
+  if (n == frames) {
+    // fprintf(stderr, "read %d frames\n", (int) n);
+    if (pi->outputs[OUTPUT_WAV].destination) {
+      //Log(LOG_WAV, "%s allocated wav @ %p", __func__, wav);
+      wav->data = buffer;  buffer = 0L;	/* Assign, do not free below. */
+      wav->data_length = n * priv->format_bytes * priv->channels;
+      Wav_buffer_finalize(wav);
+
+      if (priv->analyze) {
+	analyze_rate(priv, wav);
+      }
+
+      PostData(wav, pi->outputs[OUTPUT_WAV].destination);
+      static int x = 0;
+      wav->seq = x++;
+      wav = 0L;
+    }
+    else {
+      Wav_buffer_discard(&wav);
+    }
+  }
+  else {
+    fprintf(stderr, "snd_pcm_readi %s: %s\n", priv->device, snd_strerror((int)n));
+    fprintf(stderr, "attempting snd_pcm_prepare() to correct...\n");
+    snd_pcm_prepare(priv->handle);
+  }
+  
+  if (buffer) {
+    Mem_free(buffer);
+  }
+}
+
+/* Playback init... */
+static void ALSAPlayback_instance_init(Instance *pi)
+{
+  ALSAio_private *priv = Mem_calloc(1, sizeof(*priv));
+  priv->frames_per_io = 64;
+  priv->mode = SND_PCM_STREAM_PLAYBACK;
+  pi->data = priv;
+}
+
+static Template ALSAPlayback_template = {
+  .label = "ALSAPlayback",
+  .inputs = ALSAPlayback_inputs,
+  .num_inputs = table_size(ALSAPlayback_inputs),
+  .outputs = ALSAPlayback_outputs,
+  .num_outputs = table_size(ALSAPlayback_outputs),
+  .tick = ALSAPlayback_tick,
+  .instance_init = ALSAPlayback_instance_init,
+};
+
+
+void ALSAPlayback_init(void)
+{
+  Template_register(&ALSAPlayback_template);
+}
+
+
+/* Capture init... */
+static void ALSACapture_instance_init(Instance *pi)
+{
+  ALSAio_private *priv = Mem_calloc(1, sizeof(*priv));
+  priv->frames_per_io = 64;
+  priv->mode = SND_PCM_STREAM_CAPTURE;
+  priv->total_encoded_delta = 48000*2*2*1;
+  priv->total_encoded_next = priv->total_encoded_delta;
+  priv->total_wait_for_it = 1000;
+  pi->data = priv;
+}
+
+static Template ALSACapture_template = {
+  .label = "ALSACapture",
+  .inputs = ALSACapture_inputs,
+  .num_inputs = table_size(ALSACapture_inputs),
+  .outputs = ALSACapture_outputs,
+  .num_outputs = table_size(ALSACapture_outputs),
+  .tick = ALSACapture_tick,
+  .instance_init = ALSACapture_instance_init,
+};
+
+void ALSACapture_init(void)
+{
+  Template_register(&ALSACapture_template);
+}
