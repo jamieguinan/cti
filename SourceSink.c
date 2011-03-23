@@ -14,7 +14,7 @@
 
 typedef struct {
   FILE *f;			/* file */
-  FILE *p;			/* popen pipe */
+  FILE *p;			/* pipe (popen) */
   int s;			/* socket */
   int state;			/* Relevant for sockets, may want to start with a POST. */
 } Sink_private;
@@ -22,6 +22,7 @@ typedef struct {
 
 typedef struct {
   FILE *f;			/* file */
+  long file_size;
   int s;			/* socket */
 } Source_private;
 
@@ -74,20 +75,26 @@ Sink *Sink_new(char *name)
 
     freeaddrinfo(results);  results = 0L;
   }
-  else if (name[0] == '|') {
-    /* Open as pipe. */
-    priv->p = popen(name+1, "w");
-  }
-  else {
-    /* Open as file.  Apply strftime() to allow time-based naming. */
+  else { 
+    /* Apply strftime() to allow time-based naming. */
     char out_name[256];
     time_t t = time(NULL);
     struct tm *lt = localtime(&t);
     if (!lt) {
+      perror("localtime");
       goto out;
     }
-    strftime(out_name, sizeof(out_name), name, lt);
-    priv->f = fopen(out_name, "wb");
+
+    if (name[0] == '|') {
+      /* Open as pipe. */
+      strftime(out_name, sizeof(out_name), name, lt);
+      priv->p = popen(out_name+1, "w");
+    }
+    else {
+      /* Open as file. */
+      strftime(out_name, sizeof(out_name), name, lt);
+      priv->f = fopen(out_name, "wb");
+    }
   }
   
  out:
@@ -98,16 +105,15 @@ Sink *Sink_new(char *name)
 void Sink_write(Sink *sink, void *data, int length)
 {
   Sink_private *priv = (Sink_private *)sink;
+  int n;
 
   if (priv->f) {
-    int n;
     n = fwrite(data, length, 1, priv->f);
     if (n != 1) {
       perror("fwrite");
     }
   }
   else if (priv->p) {
-    int n;
     n = fwrite(data, length, 1, priv->p);
     if (n != 1) {
       perror("fwrite");
@@ -116,7 +122,6 @@ void Sink_write(Sink *sink, void *data, int length)
   else if (priv->s != -1) {   
     int sent = 0;
     while (sent < length) {
-      int n;
       /* FIXME: This send() can block, which can cause the calling
 	 Instance's Inputs to back up.  Not sure how to resolve this,
 	 but should have some kind of solution or at least a
@@ -196,6 +201,12 @@ Source *Source_new(char *name)
     if (!priv->f) {
       perror(name);
     }
+    else {
+      if (fseek(priv->f, 0, SEEK_END) == 0) {
+	priv->file_size = ftell(priv->f);
+	fseek(priv->f, 0, SEEK_SET);
+      }
+    }
   }
   
  out:
@@ -254,7 +265,13 @@ int Source_seek(Source *source, long amount)
   Source_private *priv = (Source_private *)source;
 
   if (priv->f) {
-    return fseek(priv->f, amount, SEEK_CUR);
+    int rc = fseek(priv->f, amount, SEEK_CUR);
+    long pos = ftell(priv->f);
+    if (priv->file_size) {
+      printf("offset %ld: %ld%%\n", pos, (pos*100)/priv->file_size);
+    }
+    
+    return rc;
   }
   else if (priv->s != -1) {
     fprintf(stderr, "can't seek sockets!\n");

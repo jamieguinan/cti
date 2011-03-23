@@ -495,7 +495,12 @@ static void ALSAPlayback_tick(Instance *pi)
   else if (priv->enable) {
     /* Filler... */
     Wav_buffer *wav_in;
-    printf("filler\n");
+    if (cfg.verbosity) { 
+      static int n = 0;
+      if (n++ % 100 == 0) {
+	printf("filler\n");
+      }
+    }
     int i;
     wav_in = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
     wav_in->data_length = 16*priv->channels*priv->format_bytes;

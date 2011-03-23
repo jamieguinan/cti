@@ -96,6 +96,18 @@ typedef struct {
   float nominal_period;
 } O511_buffer;
 
+/* H264 buffer */
+typedef struct {
+  int width;
+  int height;
+  uint8_t *data;
+  int data_length;		/* Provisional. */
+  int encoded_length;		/* Actual encoded size. */
+  struct timeval tv;
+  float nominal_period;
+} H264_buffer;
+
+
 extern Gray_buffer *Gray_buffer_new(int width, int height);
 extern void Gray_buffer_discard(Gray_buffer *gray);
 
@@ -132,5 +144,8 @@ extern void Jpeg_buffer_discard(Jpeg_buffer *jpeg);
 extern O511_buffer *O511_buffer_new(int width, int height);
 extern O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int height);
 extern void O511_buffer_discard(O511_buffer *o511);
+
+extern H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int height);
+extern void H264_buffer_discard(H264_buffer *h264);
 
 #endif

@@ -20,6 +20,10 @@ extern String * ArrayU8_to_string(ArrayU8 **a);
 extern String * ArrayU8_extract_string(ArrayU8 *a, int i1, int i2);
 extern int ArrayU8_search(ArrayU8 *a, int offset, const ArrayU8 *target);
 
+/* FIXME: Can probably use varargs to figure out n value for .len and .available. */
 #define ArrayU8_temp_const(x, n)  & (ArrayU8) { .data = (uint8_t*)x, .len = n, .available = n } 
+
+
+#define ArrayU8_append_bytes(a, ...)  do { uint8_t tmp[] = { __VA_ARGS__ }; ArrayU8_append(a, ArrayU8_temp_const(tmp, sizeof(tmp))); } while (0)
 
 #endif

@@ -42,7 +42,10 @@
 #include "LibQuickTimeOutput.h"
 #include "OggOutput.h"
 #include "SonyPTZ.h"
-#include "MpegTS.h"
+#include "MpegTSMux.h"
+#include "MpegTSDemux.h"
+#include "H264.h"
+#include "Tap.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -84,10 +87,14 @@ int main(int argc, char *argv[])
   HalfWidth_init();
   Mp2Enc_init();
   Mpeg2Enc_init();
-  MpegTS_init();
+  MpegTSMux_init();
+  MpegTSDemux_init();
   VFilter_init();
   AudioLimiter_init();
+  MpegTSMux_init();
   MpegTSDemux_init();
+  H264_init();
+  Tap_init();
   //ScriptSession_init();
 
   return app_code(argc, argv);

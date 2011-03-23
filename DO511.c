@@ -17,7 +17,7 @@ static Input DO511_inputs[] = {
 
 enum { OUTPUT_420P, OUTPUT_RGB3, OUTPUT_GRAY };
 static Output DO511_outputs[] = {
-  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },
+  [ OUTPUT_420P ] = {.type_label = "Y420P_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
 };

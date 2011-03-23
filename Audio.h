@@ -27,4 +27,16 @@ typedef struct {
 extern Audio_buffer *Audio_buffer_new(int rate, int channels, Audio_type t);
 extern void Audio_buffer_discard(Audio_buffer **buffer);
 
+/* Also, AAC.  */
+typedef struct {
+  uint8_t *data;
+  int data_length;
+} AAC_buffer;
+
+extern AAC_buffer *AAC_buffer_from(uint8_t *data, int data_length);
+extern void AAC_buffer_discard(AAC_buffer **buffer);
+
+/* Maybe bring WAV in here too? */
+
+
 #endif

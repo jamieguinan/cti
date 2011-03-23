@@ -37,6 +37,8 @@ FileInput.c
 FileInput.h
 FileOutput.c
 FileOutput.h
+H264.c
+H264.h
 HalfWidth.c
 HalfWidth.h
 Images.c
@@ -71,6 +73,9 @@ Mpeg2Enc.h
 MpegTS.c
 MpegTS.h
 MpegTSDemux.c
+MpegTSDemux.h
+MpegTSMux.c
+MpegTSMux.h
 Null.c
 Null.h
 Numbers.c
@@ -98,6 +103,8 @@ String.c
 String.h
 TCPOutput.c
 TCPOutput.h
+Tap.c
+Tap.h
 Template.c
 Template.h
 Uvc.c
@@ -165,6 +172,10 @@ dvdgen.cmd
 dvdgen_main.c
 example.c
 example.h
+extract.cmd
+fyv-www.cmd
+h264test01.cmd
+h264test02.cmd
 jmemdst.c
 jmemdst.h
 jmemsrc.c
@@ -188,6 +199,7 @@ list01.c
 locks.c
 locks.h
 logitech-cairo-01.cmd
+logitech-h264-ts.cmd
 logitech-oggfwd-01.cmd
 logitech.cmd
 ltsend.cmd
@@ -195,7 +207,9 @@ main.c
 manifest
 mjplay.c
 mjxplay.cmd
+mjxtoh264.cmd
 mjxtomp2.c
+mpegtsdemux01.cmd
 ncjpeg.c
 ov511-oggfwd-01.cmd
 ov511-server.cmd
@@ -223,3 +237,4 @@ x4.cmd
 x5.cmd
 xkled.c
 xx.c
+xx2.c

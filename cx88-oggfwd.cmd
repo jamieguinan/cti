@@ -11,13 +11,14 @@ new MotionDetect md
 # is set up for the same FPS, but it works.
 config y4mout fps_nom 29.97
 config y4mout fps_denom 1
-config y4mout output |ffmpeg2theora - -V 300 --soft-target -o /dev/stdout 2> /dev/null | pipebench -b 8000 | oggfwd localhost 8000 hackme /tv
+config y4mout output |ffmpeg2theora - -V 100 --soft-target -o /dev/stdout 2> /dev/null | pipebench -b 8000 | oggfwd localhost 8000 hackme /tv
+# 
 
 config vc device /dev/video0
-config vc format MJPG
 config vc format BGR3
 config vc size 640x480
 config vc input Television
+config vc frequency 205250
 config vc mute 0
 config vc Contrast 63
 config vc enable 1

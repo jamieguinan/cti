@@ -485,3 +485,23 @@ void O511_buffer_discard(O511_buffer *o511)
 }
 
 
+H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int height)
+{
+  H264_buffer *h264 = Mem_malloc(sizeof(H264_buffer));
+  h264->width = width;
+  h264->height = height;
+  h264->data_length = data_length;
+  h264->data = Mem_calloc(1, h264->data_length);
+  memcpy(h264->data, data, data_length);
+  h264->encoded_length = h264->data_length; /* same as data_length */
+
+  return h264;
+}
+
+
+void H264_buffer_discard(H264_buffer *h264)
+{
+  Mem_free(h264->data);
+  memset(h264, 0, sizeof(*h264));
+  Mem_free(h264);
+}

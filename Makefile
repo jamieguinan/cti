@@ -77,12 +77,13 @@ OBJS= \
 	$(OBJDIR)/HalfWidth.o \
 	$(OBJDIR)/Mp2Enc.o \
 	$(OBJDIR)/Mpeg2Enc.o \
-	$(OBJDIR)/MpegTS.o \
 	$(OBJDIR)/VFilter.o \
 	$(OBJDIR)/AudioLimiter.o \
 	$(OBJDIR)/DVDgen2.o \
 	$(OBJDIR)/Cryptor.o \
+	$(OBJDIR)/MpegTSMux.o \
 	$(OBJDIR)/MpegTSDemux.o \
+	$(OBJDIR)/Tap.o \
 	$(OBJDIR)/main.o \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
@@ -121,6 +122,14 @@ OBJS+=$(OBJDIR)/OggOutput.o
 CPPFLAGS+=$$(pkg-config vorbisenc theoraenc --cflags)
 LDFLAGS+=$$(pkg-config vorbisenc theoraenc --libs)
 endif
+
+# H264
+ifneq ($(ARCH),armeb)
+OBJS+=$(OBJDIR)/H264.o
+CPPFLAGS+=$$(pkg-config x264 --cflags)
+LDFLAGS+=$$(pkg-config x264 --libs)
+endif
+
 
 $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \

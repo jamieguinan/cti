@@ -293,7 +293,11 @@ void Connect(Instance *from, const char *label, Instance *to)
   for (i=0; i < from->num_outputs ; i++) {
     if (from->outputs[i].type_label && streq(from->outputs[i].type_label, label)) {
       from_index = i;
-      break;
+      if (from->outputs[i].destination == 0L) {
+	/* This is a bit subtle.  The code will set the output to the first matching
+	   and unset output, or the override the last set output. */
+	break;
+      }
     }
   }
 
@@ -312,8 +316,8 @@ void Connect(Instance *from, const char *label, Instance *to)
   }
 
   if (to_index == -1) {
-    exit(1);
     fprintf(stderr, "Instance does not have an input labelled '%s'\n", label);
+    exit(1);
     return;
   }
 

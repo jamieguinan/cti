@@ -107,6 +107,8 @@ void OggOutput_init(void)
 
 #pragma GCC diagnostic ignored "-Wparentheses"
 
+#define fwrite_check(b, s, c, f) { int n = fwrite(b, s, c, f); if (n != c) perror("fwrite"); }
+
 
 /********************************************************************
  *                                                                  *
@@ -1778,8 +1780,8 @@ static int oggoutput_main(int argc,char *argv[]){
         fprintf(stderr,"Internal Ogg library error.\n");
         exit(1);
       }
-      fwrite(og.header,1,og.header_len,outfile);
-      fwrite(og.body,1,og.body_len,outfile);
+      fwrite_check(og.header,1,og.header_len,outfile);
+      fwrite_check(og.body,1,og.body_len,outfile);
     }
     /* create the remaining theora headers */
     for(;;){
@@ -1802,8 +1804,8 @@ static int oggoutput_main(int argc,char *argv[]){
         fprintf(stderr,"Internal Ogg library error.\n");
         exit(1);
       }
-      fwrite(og.header,1,og.header_len,outfile);
-      fwrite(og.body,1,og.body_len,outfile);
+      fwrite_check(og.header,1,og.header_len,outfile);
+      fwrite_check(og.body,1,og.body_len,outfile);
       /* remaining vorbis header packets */
       ogg_stream_packetin(&vo,&header_comm);
       ogg_stream_packetin(&vo,&header_code);
@@ -1820,8 +1822,8 @@ static int oggoutput_main(int argc,char *argv[]){
           exit(1);
         }
         if(result==0)break;
-        fwrite(og.header,1,og.header_len,outfile);
-        fwrite(og.body,1,og.body_len,outfile);
+        fwrite_check(og.header,1,og.header_len,outfile);
+        fwrite_check(og.body,1,og.body_len,outfile);
       }
     }
     if(audio && passno!=1){
@@ -1833,8 +1835,8 @@ static int oggoutput_main(int argc,char *argv[]){
           exit(1);
         }
         if(result==0)break;
-        fwrite(og.header,1,og.header_len,outfile);
-        fwrite(og.body,1,og.body_len,outfile);
+        fwrite_check(og.header,1,og.header_len,outfile);
+        fwrite_check(og.body,1,og.body_len,outfile);
       }
     }
     /* setup complete.  Raw processing loop */

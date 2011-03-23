@@ -64,6 +64,7 @@ typedef struct  {
   char *saturation;
   char *contrast;
 
+  struct v4l2_frequency freq;
   /* int channel; */  /* There might be more to this, like tuner, etc... */
   int width;
   int height;
@@ -680,6 +681,34 @@ static int set_size(Instance *pi, const char *value)
   
 }
 
+
+static int set_frequency(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = pi->data;
+  int rc = -1;
+  struct v4l2_frequency freq = {};
+
+  freq.tuner = 0;
+
+  rc = ioctl(priv->fd, VIDIOC_G_FREQUENCY, &freq);
+  if (rc == -1) {
+    perror("VIDIOC_G_FREQUENCY");
+    goto out;
+  }
+
+  freq.frequency = atol(value);
+
+  rc = ioctl(priv->fd, VIDIOC_S_FREQUENCY, &freq);
+  if (rc == -1) {
+    perror("VIDIOC_S_FREQUENCY");
+    goto out;
+  }
+  printf("Tuner frequency set to %d\n", freq.frequency);
+ out:
+  return rc;
+}
+
+
 static int set_enable(Instance *pi, const char *value)
 {
   V4L2Capture_private *priv = pi->data;
@@ -720,6 +749,7 @@ static Config config_table[] = {
   { "exposure",   set_exposure, 0L, 0L},
   { "mute",       set_mute,   0L, 0L},
   { "fps",        set_fps,   0L, 0L},
+  { "frequency",  set_frequency,  0L, 0L},
 };
 
 

@@ -42,6 +42,8 @@ static Output MjpegMux_outputs[] = {
 typedef struct {
   char *output;		/* File or host:port, used to intialize sink. */
   Sink *sink;
+  int seq;
+  int every;
 } MjpegMux_private;
 
 static int set_output(Instance *pi, const char *value)
@@ -56,13 +58,23 @@ static int set_output(Instance *pi, const char *value)
 
   priv->output = strdup(value);
   priv->sink = Sink_new(priv->output);
+  priv->every = 1;
 
+  return 0;
+}
+
+
+static int set_every(Instance *pi, const char *value)
+{
+  MjpegMux_private *priv = pi->data;
+  priv->every = atoi(value);
   return 0;
 }
 
 
 static Config config_table[] = {
   { "output", set_output , 0L, 0L },
+  { "every", set_every , 0L, 0L },
 };
 
 
@@ -94,6 +106,13 @@ static void Jpeg_handler(Instance *pi, void *data)
 {
   MjpegMux_private *priv = pi->data;  
   Jpeg_buffer *jpeg_in = data;
+  
+  priv->seq += 1;
+
+  if (priv->seq % priv->every != 0) {
+    goto out;
+  }
+  
   String *header = String_sprintf(part_format,
 				  BOUNDARY,
 				  "image/jpeg",
@@ -117,13 +136,8 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   String_free(&header);
 
-  /* Allow passing along the Jpeg data (basically a "tee").  FIXME:  Make a "Tee" template... */
-  if (pi->outputs[OUTPUT_JPEG].destination) {
-    PostData(jpeg_in, pi->outputs[OUTPUT_JPEG].destination);
-  }
-  else {
-    Jpeg_buffer_discard(jpeg_in);
-  }
+ out:
+  Jpeg_buffer_discard(jpeg_in);
 }
 
 
