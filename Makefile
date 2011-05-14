@@ -84,6 +84,10 @@ OBJS= \
 	$(OBJDIR)/MpegTSMux.o \
 	$(OBJDIR)/MpegTSDemux.o \
 	$(OBJDIR)/Tap.o \
+	$(OBJDIR)/Keycodes.o \
+	$(OBJDIR)/ResourceMonitor.o \
+	$(OBJDIR)/TV.o \
+	$(OBJDIR)/ChannelMaps.o \
 	$(OBJDIR)/main.o \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
@@ -95,10 +99,17 @@ OBJS+=\
 	$(OBJDIR)/Uvc.o \
 	$(OBJDIR)/V4L2Capture.o \
 	$(OBJDIR)/ALSAio.o \
+	$(OBJDIR)/ALSAMixer.o \
 	$(OBJDIR)/FFmpegEncode.o \
 	$(OBJDIR)/SonyPTZ.o \
 	../../platform/$(ARCH)/jpeg-7/libjpeg.la
 LDFLAGS+=-lvisca
+endif
+
+# Lirc
+ifneq ($(ARCH),armeb)
+OBJS+= $(OBJDIR)/Lirc.o
+LDFLAGS+=-llirc_client
 endif
 
 
@@ -107,6 +118,13 @@ ifneq ($(ARCH),armeb)
 OBJS+=	$(OBJDIR)/CairoContext.o
 CPPFLAGS+=$$(pkg-config cairo --cflags)
 LDFLAGS+=$$(pkg-config cairo --libs)
+endif
+
+# libdv
+ifneq ($(ARCH),armeb)
+OBJS+=	$(OBJDIR)/LibDV.o
+CPPFLAGS+=$$(pkg-config libdv --cflags)
+LDFLAGS+=$$(pkg-config libdv --libs)
 endif
 
 # Quicktime

@@ -1,3 +1,5 @@
+ALSAMixer.c
+ALSAMixer.h
 ALSAio.c
 ALSAio.h
 AVIDemux.c
@@ -16,6 +18,8 @@ CairoContext.c
 CairoContext.h
 Cfg.c
 Cfg.h
+ChannelMaps.c
+ChannelMaps.h
 Collection.c
 Collection.h
 Control.c
@@ -51,10 +55,16 @@ JpegSource.c
 JpegSource.h
 JpegTran.c
 JpegTran.h
+Keycodes.c
+Keycodes.h
 LQTOutput.h
 Layer.h
+LibDV.c
+LibDV.h
 LibQuickTimeOutput.c
 LibQuickTimeOutput.h
+Lirc.c
+Lirc.h
 Log.c
 Log.h
 Makefile
@@ -84,6 +94,8 @@ OggOutput.c
 OggOutput.h
 Playback.c
 Range.c
+ResourceMonitor.c
+ResourceMonitor.h
 SDL.c
 SDLstuff.c
 SDLstuff.h
@@ -103,6 +115,8 @@ String.c
 String.h
 TCPOutput.c
 TCPOutput.h
+TV.c
+TV.h
 Tap.c
 Tap.h
 Template.c
@@ -195,6 +209,8 @@ l8-test.cmd
 l8.cmd
 l8b.cmd
 l9.cmd
+libdv1.cmd
+lirc1.cmd
 list01.c
 locks.c
 locks.h
@@ -209,7 +225,9 @@ mjplay.c
 mjxplay.cmd
 mjxtoh264.cmd
 mjxtomp2.c
+mpegtsdemux00.cmd
 mpegtsdemux01.cmd
+mpegtsdemux02.cmd
 ncjpeg.c
 ov511-oggfwd-01.cmd
 ov511-server.cmd
@@ -223,9 +241,12 @@ pb2.cmd
 playback.cmd
 qt.cmd
 sample-broken-test.cmd
+ss.cmd
 test.cmd
 topro.cmd
 tv.cmd
+tv1.cmd
+tv2.cmd
 uvc_compat.h
 uvcvideo.h
 v4ltonull.cmd
@@ -238,3 +259,4 @@ x5.cmd
 xkled.c
 xx.c
 xx2.c
+xx3.c

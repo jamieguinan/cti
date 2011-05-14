@@ -29,6 +29,18 @@ typedef struct {
 } WaitLock;
 #endif
 
+#ifdef __MSP430__
+/* Just for testing the compiler... */
+typedef struct {
+} Lock;
+
+typedef struct {
+} Event;
+
+typedef struct {
+} WaitLock;
+#endif
+
 extern void Lock_init(Lock *lock);
 extern void Lock_acquire(Lock *lock);
 extern void Lock_release(Lock *lock);

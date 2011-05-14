@@ -50,6 +50,8 @@ typedef struct {
   TSPacket *last_packet;
 
   uint32_t continuity_counter;
+
+  time_t tv_sec_offset;
 } MpegTSMux_private;
 
 
@@ -80,9 +82,22 @@ static void H264_handler(Instance *pi, void *msg)
 {
   MpegTSMux_private *priv = pi->data;
   H264_buffer *h264 = msg;
-  MpegTimeStamp pts = {}; 		/* FIXME: assign from h264 timestamp */
-  MpegTimeStamp dts = {}; 		/* FIXME: assign from h264 timestamp */
+  MpegTimeStamp pts = {};
+  MpegTimeStamp dts = {};
   uint16_t pid = 258;
+  uint64_t tv90k;
+
+  /* Map timestamp to 33-bit 90KHz units. */
+  tv90k = ((h264->tv.tv_sec - priv->tv_sec_offset) * 90000) + (h264->tv.tv_usec * 9 / 100);
+
+  /* Assign to PTS, and same to DTS. */
+  pts.set = 1;
+  pts.hi_bit = ((tv90k/2) >> 31 & 1);
+  pts.value = (tv90k & 0xFFFFFFFF);
+
+  dts.set = 1;
+  dts.hi_bit = pts.hi_bit;
+  dts.value = pts.value;
 
   if (1) {
     /* Debug testing... */
@@ -130,7 +145,7 @@ static void H264_handler(Instance *pi, void *msg)
   }
 
   if (dts.set) {
-    /* Pack DTS, same as above... */
+    /* Pack DTS, same format as PTS. */
     ArrayU8_append_bytes(pes,
 			 0x21 | ( dts.hi_bit << 3) | (( dts.value & 0xC0000000) >> 30),
 			 (( dts.value & 0x3fc00000 ) >> 22),
@@ -180,7 +195,22 @@ static void H264_handler(Instance *pi, void *msg)
 
     if (payload_index == 0) {
       packet->data[3] |= (1 << 5); /* adaptation field */
-      afLen = 7; /* FIXME: Set flags and PCR... */
+      afLen = 7; 
+
+      /* Using timestamp value stored in pts to fill in PCR.
+	 FIXME: Verify that PCR is formatted correctly. */
+      ArrayU8_append_bytes(pes,
+			   (1<<4), /* Flags: PCR */
+			   (pts.hi_bit << 7) | ((pts.value & 0xfe000000) >> 25),
+			   ((pts.value & 0x01fe0000) >> 17),
+			   ((pts.value & 0x0001fe00) >> 9),
+			   ((pts.value & 0x000001fe) >> 1),
+			   ((pts.value & 0x00000001) << 7) /* low bit of 33 bits */
+			      | (0x3f << 1)  /* 6 bits reserved/padding */
+			      | (0<<0),	/* 9th bit of extension */
+			   (0x00)	/* bits 8:0 of exntension */
+			   );
+      
       int available_payload_size = (188 - 4 - 1 - afLen);
       if (pes_remaining < available_payload_size) {
 	/* Everything fits into one packet! */
@@ -286,6 +316,10 @@ static void MpegTSMux_instance_init(Instance *pi)
 {
   MpegTSMux_private *priv = Mem_calloc(1, sizeof(*priv));
   pi->data = priv;
+  /* FIXME: This is arbitrary, based on an early 2011 epoch date.  The
+     real problem is I don't know to handle PTS wraps.  Should fix
+     that sometime... */
+  priv->tv_sec_offset = 1300000000;  
 }
 
 

@@ -49,7 +49,7 @@ static void y422p_handler(Instance *pi, void *data)
       printf("posting %dx%d image to output\n", y422p_out->width, y422p_out->height);
     }
     y422p_out->tv = y422p_in->tv;
-    PostMessage(y422p_out, pi->outputs[OUTPUT_422P].destination);
+    PostData(y422p_out, pi->outputs[OUTPUT_422P].destination);
   }
   Y422P_buffer_discard(y422p_in);
 }

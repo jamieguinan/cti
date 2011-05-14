@@ -220,8 +220,8 @@ static void Feedback_handler(Instance *pi, void *data)
 
 static void MjpegDemux_tick(Instance *pi)
 {
-  MjpegDemux_private *priv = pi->data;
   Handler_message *hm;
+  MjpegDemux_private *priv = pi->data;
   int sleep_and_return = 0;
 
   /* FIXME: Could use a wait_flag and set if pending_feedback, but

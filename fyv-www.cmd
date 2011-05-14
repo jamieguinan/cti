@@ -98,8 +98,8 @@ config y4mout output | ffmpeg2theora - -V 180 -o /dev/stdout 2> /dev/null | tee 
 # Connect everything up
 connect mjd Jpeg_buffer jt
 connect jt Jpeg_buffer tap1
-connect tap1 Jpeg_buffer dj
-connect tap1 Jpeg_buffer mux1
+connect tap1:Jpeg_buffer.1 dj:Jpeg_buffer
+connect tap1:Jpeg_buffer.2 mux1:Jpeg_buffer
 connect dj RGB3_buffer cc
 connect dj GRAY_buffer md
 connect cc RGB3_buffer y4mout

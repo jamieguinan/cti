@@ -136,7 +136,7 @@ static int set_enable(Instance *pi, const char *value)
   rc = bind(priv->listen_socket, (struct sockaddr *)&sa, sizeof(sa));
   if (rc == -1) { 
     /* FIXME: see Socket.log_error in modc code */
-    fprintf(stderr, "bind\n"); 
+    perror("bind"); 
     close(priv->listen_socket); priv->listen_socket = -1;
     return 1;
   }
@@ -320,6 +320,9 @@ static void SocketServer_tick(Instance *pi)
       perror("accept");
       Mem_free(cc);
       goto out;
+    }
+    else {
+      printf("accepted connection on port %d\n", priv->v4port);
     }
 
     cc->state = CC_INIT;

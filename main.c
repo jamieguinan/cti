@@ -46,6 +46,10 @@
 #include "MpegTSDemux.h"
 #include "H264.h"
 #include "Tap.h"
+#include "ResourceMonitor.h"
+#include "Lirc.h"
+#include "TV.h"
+#include "LibDV.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -59,6 +63,7 @@ int main(int argc, char *argv[])
   Signals_init();
   ALSACapture_init();
   ALSAPlayback_init();
+  ALSAMixer_init();
   V4L2Capture_init();
   SDLstuff_init();
   SonyPTZ_init();
@@ -66,6 +71,9 @@ int main(int argc, char *argv[])
   CairoContext_init();
   LibQuickTimeOutput_init();
   OggOutput_init();
+  H264_init();
+  Lirc_init();
+  LibDV_init();
 #endif
 #endif
   CJpeg_init();
@@ -93,8 +101,9 @@ int main(int argc, char *argv[])
   AudioLimiter_init();
   MpegTSMux_init();
   MpegTSDemux_init();
-  H264_init();
   Tap_init();
+  ResourceMonitor_init();
+  TV_init();
   //ScriptSession_init();
 
   return app_code(argc, argv);

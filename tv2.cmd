@@ -1,3 +1,5 @@
+new TV tv
+new Lirc lirc
 new V4L2Capture vc
 new SDLstuff sdl
 new ALSACapture ac
@@ -5,6 +7,8 @@ new ALSAPlayback ap
 
 connect vc BGR3_buffer sdl
 config sdl mode GL
+config sdl width 1280
+config sdl height 960
 
 connect ac Wav_buffer ap
 
@@ -28,7 +32,9 @@ config vc mute 0
 config vc Contrast 63
 config vc enable 1
 
+connect lirc Keycode_message tv
+connect tv:VC_Config_msg vc:Config_msg
+
 #system sleep 3
 #Zoom SDL viewport, this actually works!
-#config sdl width 1280
-#config sdl height 960
+#system sleep 3

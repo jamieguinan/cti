@@ -5,7 +5,7 @@ new SDLstuff sdl
 connect vc Jpeg_buffer dj
 connect dj RGB3_buffer sdl
 
-config vc device /dev/video0
+config vc device /dev/video2
 config vc format MJPG
 config vc size 640x480
 config vc fps 30

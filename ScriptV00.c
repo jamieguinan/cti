@@ -29,14 +29,18 @@ static void expand(char token[256])
 
 static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
 {
-  char token1[256], token2[256], token3[256];
+  char token1[256], token2[256], token3[256], token4[256];
 
   if ((sscanf(line->bytes, "new %255s %255s", token1, token2) == 2)) {
     /* template, label */
     InstanceGroup_add(priv->g, token1, String_new(token2));
   }
+  else if ((sscanf(line->bytes, "connect %255[A-Za-z0-9._]:%255[A-Za-z0-9._] %255[A-Za-z0-9._]:%255[A-Za-z0-9._]", token1, token2, token3, token4) == 4)) {
+    /* instance:label, instance:label */
+    InstanceGroup_connect2(priv->g, String_new(token1), token2, String_new(token3), token4);
+  }
   else if ((sscanf(line->bytes, "connect %255s %255s %255s", token1, token2, token3) == 3)) {
-    /* label1, cid, label2 */
+    /* instance, label, instance */
     InstanceGroup_connect(priv->g, String_new(token1), token2, String_new(token3));
   }
   else if ((sscanf(line->bytes, "config %255s %255s %255s", token1, token2, token3) == 3)) {

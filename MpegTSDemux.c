@@ -287,7 +287,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	  if (cfg.verbosity) printf("  high priority \n");
 	}
 	if (MpegTS_AF_PCRI(packet)) {
-	  if (cfg.verbosity) printf("  PCR present:  %02x %02x %02x %02x %01x  %02x  %03x\n",
+	  if (0 && cfg.verbosity) printf("  PCR present:  %02x %02x %02x %02x %01x  %02x  %03x\n",
 		 /* 33 bits, 90KHz */
 		 packet[6],
 		 packet[7],
@@ -299,7 +299,16 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 		 /* 9 bits, 27MHz */
 		 ((packet[10] & 1) << 8) | packet[11]);
 
-	  /* FIXME: Add 42 bits, or 6 bytes??? */
+	  if (cfg.verbosity) {
+	    printf("  PCR present:  [%02x] 90kHz:%d",
+		   /* 33 bits, 90KHz */
+		   packet[6],
+		   (packet[6] << 25) | (packet[7] << 17) | (packet[8] << 9) | (packet[9] << 1) | (packet[10] >> 7));
+	    /* 6 bits "reserved", see iso13818-1.pdf Table 2-6 */
+	    printf(" res:%d", (packet[10] >> 1) & 0x3f);
+	    /* 9 bits, 27MHz */
+	    printf(" [%02x, %02x] 27MHz:%d\n", packet[10], packet[11], ((packet[10] & 1) << 8) | packet[11]);
+	  }
 	}
 	if (MpegTS_AF_OPCRI(packet)) {
 	  if (cfg.verbosity) printf("  OPCR present\n");
@@ -320,6 +329,9 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
       }
 
       if (MpegTS_PDE(packet)) {
+	if (!s->data) {
+	  s->data = ArrayU8_new();
+	}
 	ArrayU8_append(s->data, ArrayU8_temp_const(packet+payloadOffset, payloadLen));
       }
       else {

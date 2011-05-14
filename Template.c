@@ -30,10 +30,10 @@ void Instance_loop_thread(Instance *pi)
 }
 
 
-void _PostMessage(void *message, Input *input)
-{
-  fprintf(stderr, "obsolete %s called!\n", __func__); exit(1);
-}
+//void _PostMessage(void *message, Input *input)
+//
+//  fprintf(stderr, "obsolete %s called!\n", __func__); exit(1);
+//}
 
 int CheckMessage(Instance *pi, int wait)
 {
@@ -295,7 +295,7 @@ void Connect(Instance *from, const char *label, Instance *to)
       from_index = i;
       if (from->outputs[i].destination == 0L) {
 	/* This is a bit subtle.  The code will set the output to the first matching
-	   and unset output, or the override the last set output. */
+	   and unset output, or override the last set output. */
 	break;
       }
     }
@@ -324,6 +324,52 @@ void Connect(Instance *from, const char *label, Instance *to)
   from->outputs[from_index].destination = &to->inputs[to_index];
 
   fprintf(stderr, "connected: %s.%d [%s] %s.%d\n", from->label, from_index, label, to->label, to_index);
+}
+
+
+void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *tolabel)
+{
+  int i;
+  int from_index = -1;
+  int to_index = -1;
+  
+  for (i=0; i < from->num_outputs ; i++) {
+    if (from->outputs[i].type_label && streq(from->outputs[i].type_label, fromlabel)) {
+      from_index = i;
+      if (from->outputs[i].destination == 0L) {
+	/* This is a bit subtle.  The code will set the output to the first matching
+	   and unset output, or override the last set output. */
+	break;
+      }
+    }
+  }
+
+  if (from_index == -1) {
+    fprintf(stderr, "Instance does not have an output labelled '%s'\n", fromlabel);
+    fflush(stderr);
+    exit(1);
+    return;
+  }
+
+  for (i=0; i < to->num_inputs ; i++) {
+    if (to->inputs[i].type_label && streq(to->inputs[i].type_label, tolabel)) {
+      to_index = i;
+      break;
+    }
+  }
+
+  if (to_index == -1) {
+    fprintf(stderr, "Instance does not have an input labelled '%s'\n", tolabel);
+    exit(1);
+    return;
+  }
+
+  /* Verify that labels match up... */
+
+
+  from->outputs[from_index].destination = &to->inputs[to_index];
+
+  fprintf(stderr, "connected: %s:%s %s:%s\n", from->label, fromlabel, to->label, tolabel);
 }
 
 
@@ -382,6 +428,21 @@ void InstanceGroup_connect(InstanceGroup *g,
   Instance *pi2 = InstanceGroup_find(g, instanceLabel2);
   if (!pi2) {  fprintf(stderr, "could not find instance '%s'\n", instanceLabel2->bytes); return; }
   Connect(pi1, ioLabel, pi2);
+}
+
+
+void InstanceGroup_connect2(InstanceGroup *g, 
+			    String * instanceLabel1,
+			    const char *oLabel,
+			    String * instanceLabel2,
+			    const char *iLabel
+			    )
+{
+  Instance *pi1 = InstanceGroup_find(g, instanceLabel1);
+  if (!pi1) {  fprintf(stderr, "could not find instance '%s'\n", instanceLabel1->bytes); return; }
+  Instance *pi2 = InstanceGroup_find(g, instanceLabel2);
+  if (!pi2) {  fprintf(stderr, "could not find instance '%s'\n", instanceLabel2->bytes); return; }
+  Connect2(pi1, oLabel, pi2, iLabel);
 }
 
 

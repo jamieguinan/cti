@@ -24,8 +24,9 @@ typedef struct _Collection
 #define COLLECTION_EASY        (1<<1)
 #define COLLECTION_DELETE_AT   (1<<2)
 
-#define COLLECTION_EMPTY_ERROR (1<<30)
-#define COLLECTION_FULL_ERROR  (1<<31)
+/* Reduced this to fit 16-bit for MSP. */
+#define COLLECTION_EMPTY_ERROR (1<<14)
+#define COLLECTION_FULL_ERROR  (1<<15)
 
 void _Collection_init(void **set, int elem_size, Collection *c);
 int Collection_prepare_putlast(Collection *c);

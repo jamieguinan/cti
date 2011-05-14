@@ -106,6 +106,7 @@ static int set_device(Instance *pi, const char *value)
   V4L2Capture_private *priv = pi->data;
   int rc = -1;
   struct v4l2_capability v4l2_caps = {};
+  struct v4l2_tuner tuner = {};
 
   if (priv->devpath) {
     free(priv->devpath);
@@ -134,8 +135,21 @@ static int set_device(Instance *pi, const char *value)
     priv->fd = -1;
     goto out;
   }
-
   /* FIXME: Store ".driver" field from result. */
+  fprintf(stderr, "card: %s\n", v4l2_caps.card);
+
+
+  /* Check tuner capabilities */
+  rc = ioctl(priv->fd, VIDIOC_G_TUNER, &tuner);
+  if (-1 == rc) {
+    perror(priv->devpath);
+  }
+  else {
+    printf("tuner:\n");
+    printf("  capability=%x\n", tuner.capability);
+    printf("  rangelow=%x\n", tuner.rangelow);
+    printf("  rangehigh=%x\n", tuner.rangehigh);
+  }
 
   fprintf(stderr, "card: %s\n", v4l2_caps.card);
 
@@ -620,6 +634,8 @@ static int set_fps(Instance *pi, const char *value)
   int n = 0, d = 0;
   float fps = atof(value);
 
+  /* FIXME: Should stop/restart the video for UVC. */
+
   float_to_fraction(fps, &n, &d);
   setfps.parm.capture.timeperframe.numerator = d;
   setfps.parm.capture.timeperframe.denominator = n;
@@ -646,6 +662,10 @@ static int set_size(Instance *pi, const char *value)
   struct v4l2_format format = {};
   int n, w, h;
   int rc;
+
+  /* FIXME: For certain capture devices, like UVC, if currently
+     running, need to stop and drain frames, then restart after
+     resizing. */
 
   n = sscanf(value, "%dx%d", &w, &h);
   if (n != 2) {
@@ -684,6 +704,7 @@ static int set_size(Instance *pi, const char *value)
 
 static int set_frequency(Instance *pi, const char *value)
 {
+  /* value should be frequency in Hz. */
   V4L2Capture_private *priv = pi->data;
   int rc = -1;
   struct v4l2_frequency freq = {};
@@ -696,13 +717,22 @@ static int set_frequency(Instance *pi, const char *value)
     goto out;
   }
 
-  freq.frequency = atol(value);
+  /* 
+   * http://v4l2spec.bytesex.org/spec/r11094.htm: "Tuning frequency in
+   * units of 62.5 kHz, or if the struct v4l2_tuner or struct
+   * v4l2_modulator capabilities flag V4L2_TUNER_CAP_LOW is set, in
+   * units of 62.5 Hz."
+   */
+  freq.frequency = atol(value)/62500;
 
+#if 1
   rc = ioctl(priv->fd, VIDIOC_S_FREQUENCY, &freq);
   if (rc == -1) {
     perror("VIDIOC_S_FREQUENCY");
     goto out;
   }
+#endif
+
   printf("Tuner frequency set to %d\n", freq.frequency);
  out:
   return rc;

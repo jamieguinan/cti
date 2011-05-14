@@ -16,11 +16,11 @@ static Input Tap_inputs[] = {
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
 };
 
-enum { OUTPUT_JPEG1, OUTPUT_JPEG2 };
+enum { OUTPUT_JPEG_1, OUTPUT_JPEG_2 };
 
 static Output Tap_outputs[] = {
-  [ OUTPUT_JPEG1 ] = { .type_label = "Jpeg_buffer", .destination = 0L },
-  [ OUTPUT_JPEG2 ] = { .type_label = "Jpeg_buffer", .destination = 0L },
+  [ OUTPUT_JPEG_1 ] = { .type_label = "Jpeg_buffer.1", .destination = 0L },
+  [ OUTPUT_JPEG_2 ] = { .type_label = "Jpeg_buffer.2", .destination = 0L },
 };
 
 typedef struct {
@@ -35,22 +35,22 @@ static void Jpeg_handler(Instance *pi, void *msg)
 {
   Jpeg_buffer *jpeg = msg;
 
-  if (pi->outputs[OUTPUT_JPEG1].destination && pi->outputs[OUTPUT_JPEG2].destination) {
+  if (pi->outputs[OUTPUT_JPEG_1].destination && pi->outputs[OUTPUT_JPEG_2].destination) {
     /* Clone buffer, post to both. */
     Jpeg_buffer *clone = Mem_malloc(sizeof(*clone));
     memcpy(clone, jpeg, sizeof(*jpeg));
     clone->data = Mem_malloc(clone->encoded_length); /* Reset data to new block. */
     memcpy(clone->data, jpeg->data, clone->encoded_length); /* Copy. */
-    PostData(jpeg, pi->outputs[OUTPUT_JPEG1].destination);
-    PostData(clone, pi->outputs[OUTPUT_JPEG2].destination);
+    PostData(jpeg, pi->outputs[OUTPUT_JPEG_1].destination);
+    PostData(clone, pi->outputs[OUTPUT_JPEG_2].destination);
   }
-  else if (pi->outputs[OUTPUT_JPEG1].destination) {
+  else if (pi->outputs[OUTPUT_JPEG_1].destination) {
     /* Pass along. */
-    PostData(jpeg, pi->outputs[OUTPUT_JPEG1].destination);
+    PostData(jpeg, pi->outputs[OUTPUT_JPEG_1].destination);
   }
-  else if (pi->outputs[OUTPUT_JPEG2].destination) {
+  else if (pi->outputs[OUTPUT_JPEG_2].destination) {
     /* Pass along. */    
-    PostData(jpeg, pi->outputs[OUTPUT_JPEG2].destination); 
+    PostData(jpeg, pi->outputs[OUTPUT_JPEG_2].destination); 
   }
   else {
     /* No output, discard buffer! */

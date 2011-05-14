@@ -179,9 +179,10 @@ typedef struct _Instance {
   Handler_message *msg_last;
 } Instance;
 
-extern void Connect(Instance *out, const char *label, Instance *in);
-extern void _PostMessage(void *message, Input *destination);
-#define PostMessage(m, d) do { _PostMessage(m, d); m = 0L; } while (0)
+extern void Connect(Instance *from, const char *label, Instance *to);
+extern void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *tolabel);
+//extern void _PostMessage(void *message, Input *destination);
+//#define PostMessage(m, d) do { _PostMessage(m, d); m = 0L; } while (0)
 extern int CheckMessage(Instance *pi, int wait);
 extern void *PopMessage(Input *input);
 
@@ -276,7 +277,14 @@ extern void InstanceGroup_free(InstanceGroup **g);
 extern void InstanceGroup_connect(InstanceGroup *g, 
 				  String * instanceLabel1,
 				  const char *ioLabel,
-				   String * instanceLabel2);
+				  String * instanceLabel2);
+
+extern void InstanceGroup_connect2(InstanceGroup *g, 
+				   String * instanceLabel1,
+				   const char *ioLabel1,
+				   String * instanceLabel2,
+				   const char *ioLabel2);
+
 
 
 /* Raw data buffer */
