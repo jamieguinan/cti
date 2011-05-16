@@ -53,6 +53,7 @@ enum {
   CC_COMMAND_POP_GROUP,
   CC_COMMAND_IDENTITY_MATRIX,
 
+  CC_COMMAND_SET_FONT_SIZE,
   CC_COMMAND_SHOW_TEXT,
 
   /* I made these up, they make use of the date stamp in the input RGB buffer. */
@@ -60,6 +61,8 @@ enum {
   CC_COMMAND_ROTATE_SECONDS,
   CC_COMMAND_ROTATE_MINUTES,
   CC_COMMAND_ROTATE_HOURS,
+
+  CC_COMMAND_TIMEOUT,
 };
 
 /* Map text strings to commands. */
@@ -89,6 +92,7 @@ static struct {
   { .label = "pop_group", .command = CC_COMMAND_POP_GROUP, .num_double_args = 0 },
   { .label = "identity_matrix", .command = CC_COMMAND_IDENTITY_MATRIX, .num_double_args = 0 },
 
+  { .label = "set_font_size", .command = CC_COMMAND_SET_FONT_SIZE, .num_double_args = 1 },
   { .label = "show_text", .command = CC_COMMAND_SHOW_TEXT, .num_double_args = 0 },
 
   { .label = "rotate_subseconds", .command = CC_COMMAND_ROTATE_SUBSECONDS, .num_double_args = 0 },
@@ -104,6 +108,8 @@ typedef struct {
   int height;
   XArray(CairoCommand, commands);
   char *text;
+  long timeout;
+  long timeout_timestamp;
 } CairoContext_private;
 
 
@@ -122,6 +128,13 @@ static int set_height(Instance *pi, const char *value)
   return 0;
 }
 
+static int set_timeout(Instance *pi, const char *value)
+{
+  CairoContext_private *priv = pi->data;
+  priv->timeout = atol(value);
+  return 0;
+}
+
 
 static int set_text(Instance *pi, const char *value)
 {
@@ -130,6 +143,14 @@ static int set_text(Instance *pi, const char *value)
     free(priv->text);
   }
   priv->text = strdup(value);
+
+  if (priv->timeout) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    priv->timeout_timestamp = tv.tv_sec;
+  }
+      
+
   return 0;
 }
 
@@ -239,6 +260,9 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
       cairo_identity_matrix(priv->context);
       break;
 
+    case CC_COMMAND_SET_FONT_SIZE:
+      cairo_set_font_size(priv->context, cmd->args[0]);
+      break;
     case CC_COMMAND_SHOW_TEXT:
       if (priv->text) {
 	cairo_show_text(priv->context, priv->text);
@@ -296,8 +320,19 @@ static void rgb3_handler(Instance *pi, void *msg)
 {
   CairoContext_private *priv = pi->data;
   RGB3_buffer * rgb3 = msg;
-  
-  apply_commands(priv, rgb3);
+  int do_apply = 1;
+
+  if (priv->timeout) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    if (priv->timeout_timestamp + priv->timeout <  tv.tv_sec) {
+      do_apply = 0;
+    }
+  }
+
+  if (do_apply) {
+    apply_commands(priv, rgb3);
+  }
   
   if (pi->outputs[OUTPUT_RGB3].destination) {
     PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
@@ -312,6 +347,7 @@ static Config config_table[] = {
   { "height",    set_height, 0L, 0L },
   { "command",   add_command, 0L, 0L },
   { "text",      set_text, 0L, 0L },
+  { "timeout",   set_timeout, 0L, 0L },
 };
 
 static void Config_handler(Instance *pi, void *data)

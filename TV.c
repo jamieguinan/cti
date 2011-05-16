@@ -19,10 +19,11 @@ static Input TV_inputs[] = {
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_message", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_VC_CONFIG, OUTPUT_MIXER_CONFIG };
+enum { OUTPUT_VC_CONFIG, OUTPUT_MIXER_CONFIG, OUTPUT_CAIRO_CONFIG };
 static Output TV_outputs[] = {
   [ OUTPUT_VC_CONFIG] = { .type_label = "VC_Config_msg", .destination = 0L },
   [ OUTPUT_MIXER_CONFIG] = { .type_label = "Mixer_Config_msg", .destination = 0L },
+  [ OUTPUT_CAIRO_CONFIG] = { .type_label = "Cairo_Config_msg", .destination = 0L },
 };
 
 /* States. */
@@ -74,6 +75,13 @@ static void change_channel(Instance *pi)
 
   printf("channel %d\n", priv->current_channel);
   String_free(&channel_str);
+
+  if (pi->outputs[OUTPUT_CAIRO_CONFIG].destination) {
+    char temp[64];
+    snprintf(temp, sizeof(temp), "%d", priv->current_channel);
+    PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
+  }
+
 }
 
 
@@ -81,7 +89,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 {
   TV_private *priv = pi->data;
   Keycode_message *km = msg;
-
+  int d = 0;
   // printf("%s: %d\n", __func__, km->keycode);
 
   switch (km->keycode) {
@@ -102,6 +110,13 @@ static void Keycode_handler(Instance *pi, void *msg)
       change_channel(pi);
       priv->new_channel = 0;
       priv->digits_index = 0;
+    }
+    else {
+      if (pi->outputs[OUTPUT_CAIRO_CONFIG].destination) {
+	char temp[64];
+	snprintf(temp, sizeof(temp), "%d", priv->new_channel);
+	PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
+      }
     }
     break;
 
@@ -130,10 +145,29 @@ static void Keycode_handler(Instance *pi, void *msg)
     }
     change_channel(pi);
     break;
+
+  case CTI__KEY_VOLUMEDOWN:
+    d = -5;
+    goto next;
+  case CTI__KEY_VOLUMEUP:
+    d = +5;
+    goto next;
+  case CTI__KEY_MUTE:
+  next:
+    if (pi->outputs[OUTPUT_MIXER_CONFIG].destination) {
+      Value value = {};
+      char temp[64];
+      GetConfigValue(pi->outputs[OUTPUT_MIXER_CONFIG].destination, "volume", &value);
+      printf("got volume: %d\n", value.u.int_value);
+      sprintf(temp, "%d", value.u.int_value + d);
+      PostData(Config_buffer_new("volume", temp), pi->outputs[OUTPUT_MIXER_CONFIG].destination);
+    }
+    break;
   }
 
-  /* Probably do a state machine of sorts here... */
-  
+
+  /* Probably do a state machine of sorts here... if its needed. */
+
 }
 
 

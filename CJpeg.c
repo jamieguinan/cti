@@ -63,16 +63,16 @@ static void get_quality(Instance *pi, Value **value)
 {
   CJpeg_private *priv = pi->data;
   Value *v = Value_new(RANGE_INTS);
-  v->_x.int_value = priv->quality;
+  v->u.int_value = priv->quality;
   *value = v;
 }
 
 static void get_quality_range(Instance *pi, Range **range)
 {
   Range *r = Range_new(RANGE_INTS);
-  r->x.ints.min = 50;
-  r->x.ints.max = 100;
-  r->x.ints.step = 1;
+  r->u.ints.min = 50;
+  r->u.ints.max = 100;
+  r->u.ints.step = 1;
   *range = r;
 }
 

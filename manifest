@@ -144,6 +144,7 @@ a2.cmd
 alsa.cmd
 alsacaptest.c
 alsaloop.cmd
+amixer1.cmd
 ava.cmd
 avcap-124.cmd
 avcap-wii.cmd

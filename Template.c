@@ -12,6 +12,7 @@
 #include "Cfg.h"
 
 
+
 static void * Instance_thread_main(void *vp)
 {
   Instance *pi = vp;
@@ -100,9 +101,8 @@ void PostData(void *data, Input *input)
 
 Handler_message *GetData(Instance *pi, int wait_flag)
 {
-  /* Return handler message in available.  If no message available, return NULL if
+  /* Return handler message if available.  If no message available, return NULL if
      wait_flag is 0, else wait until a message is available and return it. */
-
   Handler_message *hm = 0L;
 
   Lock_acquire(&pi->inputs_lock);
@@ -139,6 +139,7 @@ out:
 
   return hm;
 }
+
 
 int CountPendingMessages(Instance *pi)
 {
@@ -243,44 +244,66 @@ Instance * Instantiate(const char *label)
   return 0L;
 }
 
+
 Config_buffer *Config_buffer_new(const char *label, const char *value)
 {
-  Config_buffer *cb = Mem_malloc(sizeof(*cb));
+  Config_buffer *cb = Mem_calloc(1, sizeof(*cb));
   cb->label = String_new(label);
-  cb->value = String_new(value);
+  if (value) {
+    cb->value = String_new(value);
+  }
   return cb;
 }
+
+
+Config_buffer *Config_buffer_vrreq_new(const char *label, const char *value, Value *vreq, Range *rreq,
+				       Event *event)
+{
+  Config_buffer *cb = Config_buffer_new(label, value);
+  cb->vreq = vreq;
+  cb->rreq = rreq;
+  cb->wake = event;
+  return cb;
+}
+
 
 void Config_buffer_discard(Config_buffer **cb)
 {
   String_free(&(*cb)->label);
-  String_free(&(*cb)->value);
+  if ((*cb)->value) {
+    String_free(&(*cb)->value);
+  }
   Mem_free(*cb);
   *cb = 0L;
 }
 
 
-void GetConfigRange(Instance *pi, const char *label, Range **range)
+void GetConfigValue(Input *pi, const char *label, Value *vreq)
 {
-#if 0
-  int i;
+  Lock lock = {};
+  Event event = {};
+  Config_buffer *cb;
 
-  if (!pi->config_table) {
-    fprintf(stderr, "%s has no config table!\n", pi->label);
-    return;
-  }
+  Lock_init(&lock);
+  cb = Config_buffer_vrreq_new(label, 0L, vreq, 0L, &event);
+  Lock_acquire(&lock);
+  PostData(cb, pi);
+  Lock_release__event_wait__lock_acquire(&lock, &event);
+  Lock_release(&lock);
+}
 
-  for (i=0; i < pi->num_config_table_entries; i++) {
-    if (streq(pi->config_table[i].label, label)) {
-      pi->config_table[i].get_range(pi, range);
-      break;
-    }
-  }
+void GetConfigRange(Input *pi, const char *label, Range *rreq)
+{
+  Lock lock = {};
+  Event event = {};
+  Config_buffer *cb;
 
-  if (i == pi->num_config_table_entries) {
-    fprintf(stderr, "could not find config entry for '%s'\n", label);
-  }
-#endif
+  Lock_init(&lock);
+  cb = Config_buffer_vrreq_new(label, 0L, 0L, rreq, &event);
+  Lock_acquire(&lock);
+  PostData(cb, pi);
+  Lock_release__event_wait__lock_acquire(&lock, &event);
+  Lock_release(&lock);
 }
 
 
@@ -472,7 +495,7 @@ Value *Value_new(int type)
 void Value_free(Value *v)
 {
   if (v->type == RANGE_STRINGS) {
-    String_free(&v->_x.string_value);
+    String_free(&v->u.string_value);
   }
   Mem_free(v);
 }

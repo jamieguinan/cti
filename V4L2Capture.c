@@ -40,9 +40,10 @@ static Input V4L2Capture_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-enum { OUTPUT_BGR3, OUTPUT_422P, OUTPUT_JPEG, OUTPUT_O511, OUTPUT_H264 };
+enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_422P, OUTPUT_JPEG, OUTPUT_O511, OUTPUT_H264 };
 static Output V4L2Capture_outputs[] = {
   [ OUTPUT_BGR3 ] = { .type_label = "BGR3_buffer", .destination = 0L },
+  [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_O511 ] = { .type_label = "O511_buffer", .destination = 0L },
@@ -161,8 +162,9 @@ static int set_device(Instance *pi, const char *value)
 }
 
 
-static void get_device_range(Instance *pi, Range **range)
+static void get_device_range(Instance *pi, Range *range)
 {
+#if 0
   /* Return list of "/dev/video*" and correspoding names from /sys. */
 
   DIR *d;
@@ -200,6 +202,8 @@ static void get_device_range(Instance *pi, Range **range)
   }
 
   *range = r;
+#endif
+
 }
 
 static int set_input(Instance *pi, const char *value)
@@ -306,8 +310,9 @@ static int set_format(Instance *pi, const char *value)
   return rc;
 }
 
-static void get_format_range(Instance *pi, Range **range)
+static void get_format_range(Instance *pi, Range *range)
 {
+#if 0
   V4L2Capture_private *priv = pi->data;
   int rc;
   int i;
@@ -338,12 +343,14 @@ static void get_format_range(Instance *pi, Range **range)
     i += 1;
   }
 
-  *range = r;
+  range = r;
+#endif
 }
 
 
-static void get_input_range(Instance *pi, Range **range)
+static void get_input_range(Instance *pi, Range *range)
 {
+#if 0
   V4L2Capture_private *priv = pi->data;
   int rc;
   int i;
@@ -383,6 +390,7 @@ static void get_input_range(Instance *pi, Range **range)
   }
 
   *range = r;
+#endif
 }
 
 
@@ -456,8 +464,9 @@ static int generic_v4l2_set(V4L2Capture_private *priv, uint32_t cid, int value)
 }
 
 static void generic_v4l2_get_range(V4L2Capture_private *priv, uint32_t cid, const char *label,
-				   Range **range)
+				   Range *range)
 {
+#if 0
   int rc = 0;
   struct v4l2_queryctrl queryctrl = {};
 
@@ -486,21 +495,22 @@ static void generic_v4l2_get_range(V4L2Capture_private *priv, uint32_t cid, cons
 
  out:
   return;
+#endif
 }
 
-static void get_brightness_range(Instance *pi, Range **range)
+static void get_brightness_range(Instance *pi, Range *range)
 {
   V4L2Capture_private *priv = pi->data;
   generic_v4l2_get_range(priv, V4L2_CID_BRIGHTNESS, "brightness", range);
 }
 
-static void get_contrast_range(Instance *pi, Range **range)
+static void get_contrast_range(Instance *pi, Range *range)
 {
   V4L2Capture_private *priv = pi->data;
   generic_v4l2_get_range(priv, V4L2_CID_CONTRAST, "contrast", range);
 }
 
-static void get_saturation_range(Instance *pi, Range **range)
+static void get_saturation_range(Instance *pi, Range *range)
 {
   V4L2Capture_private *priv = pi->data;
   generic_v4l2_get_range(priv, V4L2_CID_SATURATION, "saturation", range);
@@ -1122,10 +1132,15 @@ static void V4L2Capture_tick(Instance *pi)
     /* Format not set! */
   }
   else if (streq(priv->format, "BGR3")) {
+    BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height);
+    memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
     if (pi->outputs[OUTPUT_BGR3].destination) {
-      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height);
-      memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
       PostData(bgr3, pi->outputs[OUTPUT_BGR3].destination);
+    }
+    else if (pi->outputs[OUTPUT_RGB3].destination) {
+      RGB3_buffer *rgb3 = 0L;
+      bgr3_to_rgb3(&bgr3, &rgb3);
+      PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
     }
   }
   else if (streq(priv->format, "422P")) {

@@ -106,8 +106,13 @@ typedef struct {
       float min;
       float max;
     } floats;
-  } x;
+  } u;
 } Range;
+
+typedef struct {
+  const char *label;
+  Range *range;
+} Range_request;
 
 extern Range *Range_new(int type);
 extern int Range_match_substring(Range *r, const char *substr);
@@ -119,7 +124,7 @@ typedef struct {
     String *string_value;  		/* Dynamically allocated. */
     int int_value;
     float float_value;
-  } _x;				/* Please use accessor functions... */
+  } u;				/* Please use accessor functions... */
 } Value;
 
 extern Value *Value_new(int type);
@@ -140,8 +145,8 @@ extern String * Value_get_string(Value *v);
 typedef struct {
   const char *label;
   int (*set)(struct _Instance *pi, const char *value); /* Setter function. */
-  void (*get_value)(struct _Instance *pi, Value **value);
-  void (*get_range)(struct _Instance *pi, Range **range);
+  void (*get_value)(struct _Instance *pi, Value *value);
+  void (*get_range)(struct _Instance *pi, Range *range);
 } Config;
 
 enum { INSTANCE_STATE_RUNNING,  INSTANCE_STATE_QUIT };
@@ -164,6 +169,9 @@ typedef struct _Instance {
 
   Output *outputs;
   int num_outputs;
+
+  //Config *configs;
+  //int num_configs;
 
   int state;
   int counter;			/* Update in tick function. */
@@ -189,6 +197,7 @@ extern void *PopMessage(Input *input);
 extern void PostData(void *pmsg, Input *destination);
 #define PostDataAndClear(m, d) do {PostData(m, d); m = 0L; } while (0)
 extern Handler_message *GetData(Instance *pi, int wait_flag);
+extern Handler_message *GetData_and_requests(Instance *pi, int wait_flag, Config *config_table, int num_configs);
 extern void ReleaseMessage(Handler_message **);
 extern int CountPendingMessages(Instance *pi);
 
@@ -206,6 +215,9 @@ typedef struct _Template {
 
   Output *outputs;
   int num_outputs;
+
+  //Config *configs;
+  //int num_configs;
 
   void (*tick)(struct _Instance *pi); /* One "unit" of processing. */
 
@@ -227,14 +239,18 @@ extern Instance * Instantiate(const char *label);
 typedef struct {
   String *label;
   String *value;
+  Value *vreq;
+  Range *rreq;
+  Event *wake;
 } Config_buffer;
 
 extern Config_buffer *Config_buffer_new(const char *label, const char *value);
+extern Config_buffer *Config_buffer_vrreq_new(const char *label, const char *value, Value *vreq, Range *rreq, Event *event);
 extern void Config_buffer_discard(Config_buffer **cb);
 
 extern int SetConfig(Instance *pi, const char *label, const char *value);
-extern void GetConfigValue(Instance *pi, const char *label, Value **value);
-extern void GetConfigRange(Instance *pi, const char *label, Range **range);
+extern void GetConfigValue(Input *pi, const char *label, Value *vreq);
+extern void GetConfigRange(Input *pi, const char *label, Range *rreq);
 
 typedef struct {
   ISet(Instance) instances;

@@ -128,8 +128,9 @@ static int set_device(Instance *pi, const char *value)
 }
 
 
-static void get_device_range(Instance *pi, Range **range)
+static void get_device_range(Instance *pi, Range *range)
 {
+#if 0
   DIR *d;
   struct dirent *de;
 
@@ -162,6 +163,7 @@ static void get_device_range(Instance *pi, Range **range)
   }
 
   *range = r;
+#endif
 }
 
 
@@ -192,8 +194,9 @@ static int set_rate(Instance *pi, const char *value)
 }
 
 
-static void get_rate_range(Instance *pi, Range **range)
+static void get_rate_range(Instance *pi, Range *range)
 {
+#if 0
   /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
@@ -210,6 +213,7 @@ static void get_rate_range(Instance *pi, Range **range)
       printf("  rate %d is available\n", rates[i]);
     }
   }
+#endif
 }
 
 
@@ -239,8 +243,9 @@ static int set_channels(Instance *pi, const char *value)
   return rc;
 }
 
-static void get_channels_range(Instance *pi, Range **range)
+static void get_channels_range(Instance *pi, Range *range)
 {
+#if 0
   /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
@@ -257,6 +262,7 @@ static void get_channels_range(Instance *pi, Range **range)
       printf("  %d-channel sampling available\n", channels[i]);
     }
   }
+#endif
 }
 
 
@@ -298,8 +304,9 @@ static int set_format(Instance *pi, const char *value)
   return rc;
 }
 
-static void get_format_range(Instance *pi, Range **range)
+static void get_format_range(Instance *pi, Range *range)
 {
+#if 0
   /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
@@ -316,6 +323,7 @@ static void get_format_range(Instance *pi, Range **range)
       printf("  %s sampling available\n", formats[i].label);
     }
   }
+#endif
 }
 
 static int set_frames_per_io(Instance *pi, const char *value)
