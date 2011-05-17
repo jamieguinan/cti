@@ -6,6 +6,7 @@
 
 #include "Template.h"
 #include "ALSAio.h"
+#include "ALSAMixer.h"
 #include "CJpeg.h"
 #include "DJpeg.h"
 #include "DO511.h"
@@ -99,8 +100,6 @@ int main(int argc, char *argv[])
   MpegTSDemux_init();
   VFilter_init();
   AudioLimiter_init();
-  MpegTSMux_init();
-  MpegTSDemux_init();
   Tap_init();
   ResourceMonitor_init();
   TV_init();

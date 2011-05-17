@@ -38,10 +38,39 @@ typedef struct {
   int new_channel;
   int digits_index;
   const char *map;
+  uint32_t skip_channels[1000/32]; /* 1000 channels, one bit per channel */
 } TV_private;
 
+
+static int set_skip_channel(Instance *pi, const char *value)
+{
+  TV_private *priv = pi->data;  
+  int channel = atoi(value);
+  if (0 < channel && channel < 1000) {
+    priv->skip_channels[channel/32] |= (1 << channel % 32);
+    return 0;
+  }
+  else {
+    fprintf(stderr, "channel %d out of range\n", channel);
+    return 1;
+  }
+}
+  
+
+static int _get_skip_channel(TV_private *priv, int channel)
+{
+  
+  if (priv->skip_channels[channel/32] & (1 << (channel % 32))) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+}
+
+
 static Config config_table[] = {
-  // { "...",    set_..., get_..., get_..._range },
+  { "skip_channel",  set_skip_channel, 0L, 0L },
 };
 
 
@@ -90,6 +119,7 @@ static void Keycode_handler(Instance *pi, void *msg)
   TV_private *priv = pi->data;
   Keycode_message *km = msg;
   int d = 0;
+  int mute = 0;
   // printf("%s: %d\n", __func__, km->keycode);
 
   switch (km->keycode) {
@@ -130,13 +160,19 @@ static void Keycode_handler(Instance *pi, void *msg)
     break;
 
   case CTI__KEY_CHANNELUP:
-    if (priv->current_channel < 78) {
+    while (priv->current_channel < 78) {
       priv->current_channel += 1;
+      if (_get_skip_channel(priv, priv->current_channel) == 0) {
+	break;
+      }
     }
     goto channelchange;
   case CTI__KEY_CHANNELDOWN: 
-    if (priv->current_channel > 2) {
+    while (priv->current_channel > 2) {
       priv->current_channel -= 1;
+      if (_get_skip_channel(priv, priv->current_channel) == 0) {
+	break;
+      }
     }
   channelchange:
     if (priv->digits_index) {
@@ -153,18 +189,31 @@ static void Keycode_handler(Instance *pi, void *msg)
     d = +5;
     goto next;
   case CTI__KEY_MUTE:
+    mute = 1;
   next:
     if (pi->outputs[OUTPUT_MIXER_CONFIG].destination) {
       Value value = {};
+      Range range = {};
       char temp[64];
+      int newvol;
+      GetConfigRange(pi->outputs[OUTPUT_MIXER_CONFIG].destination, "volume", &range);
       GetConfigValue(pi->outputs[OUTPUT_MIXER_CONFIG].destination, "volume", &value);
-      printf("got volume: %d\n", value.u.int_value);
-      sprintf(temp, "%d", value.u.int_value + d);
+      newvol = value.u.int_value  + d;
+      // if (mute) ...
+      if (newvol < range.u.ints.min) newvol = range.u.ints.min;
+      else if (newvol > range.u.ints.max) newvol = range.u.ints.max;
+      sprintf(temp, "%d", newvol);
       PostData(Config_buffer_new("volume", temp), pi->outputs[OUTPUT_MIXER_CONFIG].destination);
+
+      snprintf(temp, sizeof(temp), "VOL %d%%", (newvol*100/range.u.ints.max));
+      PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
     }
     break;
-  }
 
+  case CTI__KEY_POWER:
+    exit(0);
+    break;
+  }
 
   /* Probably do a state machine of sorts here... if its needed. */
 

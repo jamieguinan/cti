@@ -757,6 +757,10 @@ static int my_event_loop(void *data)
 	break;
       }
     }
+    else if (ev.type == SDL_QUIT) {
+      exit(0);
+    }
+
   }
 
   return 0;

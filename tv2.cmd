@@ -7,14 +7,24 @@ new ALSAPlayback ap
 new ALSAMixer am
 new CairoContext cc
 
-config cc width 100
-config cc height 100
+# Set up cc to display channels in large text in upper left of display.
+config cc width 400
+config cc height 60
 config cc timeout 5
 config cc command set_source_rgb 0.3 0.9 0.2
 config cc command identity_matrix
 config cc command move_to 10.0 60.0
 config cc command set_font_size 50.0
 config cc command show_text
+
+# Maybe also volume.
+#config cc command marker VOLUME
+#config cc command set_source_rgb 0.3 0.9 0.2
+#config cc command identity_matrix
+#config cc command move_to 10.0 460.0
+#config cc command set_font_size 50.0
+#config cc command show_text
+
 
 connect vc RGB3_buffer cc
 connect cc RGB3_buffer sdl
@@ -38,6 +48,12 @@ config ap format signed.16-bit.little.endian
 config ap enable 1
 
 config am card M66
+
+config tv skip_channel 5
+config tv skip_channel 6
+config tv skip_channel 10
+config tv skip_channel 14
+config tv skip_channel 34
 
 config vc device /dev/video0
 config vc format BGR3

@@ -60,6 +60,7 @@ typedef struct  {
 
   /* Mostly relevant for TV/RGB */
   char *input;
+  int input_index;
   char *std;
   char *brightness;
   char *saturation;
@@ -228,6 +229,7 @@ static int set_input(Instance *pi, const char *value)
     
     if (streq((char*)input.name, value)) {
       printf("Found input: %s\n", input.name);
+      priv->input_index = i;
       break;
     }
     i += 1;
@@ -1124,6 +1126,20 @@ static void V4L2Capture_tick(Instance *pi)
 	   pi->counter);
   }
   pi->counter += 1;
+
+  /* Check for lack of sync.  I suspect the BTTV would set V4L2_IN_ST_NO_H_LOCK, but cx88 does not,
+     so I don't care about it for now. */
+  if (0) {
+    struct v4l2_input input = { .index = priv->input_index };
+    rc = ioctl(priv->fd, VIDIOC_ENUMINPUT, &input);
+    if (rc == -1) {
+      perror("VIDIOC_ENUMINPUT");
+    }
+    else if (cfg.verbosity >= 2) {
+      printf("status: 0x%08x\n", input.status);
+    }
+  }
+  
 
   /* Process if needed.  Maybe keep minimal, do processing in other Instances...*/
 
