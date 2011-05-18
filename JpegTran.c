@@ -16,12 +16,12 @@
 #include "jmemdst.h"
 #include "jpeghufftables.h"
 
-static void config_handler(Instance *pi, void *data);
+static void Config_handler(Instance *pi, void *data);
 static void jpeg_handler(Instance *pi, void *data);
 
 enum { INPUT_CONFIG, INPUT_JPEG };
 static Input JpegTran_inputs[] = {
-  [ INPUT_CONFIG ] = { .type_label = "Config_msg",  .handler = config_handler },
+  [ INPUT_CONFIG ] = { .type_label = "Config_msg",  .handler = Config_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = jpeg_handler },
 };
 
@@ -247,21 +247,9 @@ static void jpeg_handler(Instance *pi, void *msg)
 }
 
 
-static void config_handler(Instance *pi, void *data)
+static void Config_handler(Instance *pi, void *data)
 {
-  Config_buffer *cb_in = data;
-  int i;
-
-  /* Walk the config table. */
-  for (i=0; i < table_size(config_table); i++) {
-    if (streq(config_table[i].label, cb_in->label->bytes)) {
-      int rc;		/* FIXME: What to do with this? */
-      rc = config_table[i].set(pi, cb_in->value->bytes);
-      break;
-    }
-  }
-  
-  Config_buffer_discard(&cb_in);
+  Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
 

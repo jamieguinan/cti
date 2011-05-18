@@ -11,7 +11,7 @@
 #define _min(a, b)  ((a) < (b) ? (a) : (b))
 #define _max(a, b)  ((a) > (b) ? (a) : (b))
 
-static void config_handler(Instance *pi, void *msg);
+static void Config_handler(Instance *pi, void *msg);
 static void rgb3_handler(Instance *pi, void *msg);
 static void bgr3_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
@@ -19,7 +19,7 @@ static void y422p_handler(Instance *pi, void *msg);
 /* VSmoother Instance and Template implementation. */
 enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_422P };
 static Input VSmoother_inputs[] = { 
-  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = config_handler },
+  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = bgr3_handler },
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
@@ -121,21 +121,9 @@ static void smooth(VSmoother_private *priv,
 }
 
 
-static void config_handler(Instance *pi, void *data)
+static void Config_handler(Instance *pi, void *data)
 {
-  Config_buffer *cb_in = data;
-  int i;
-
-  /* Walk the config table. */
-  for (i=0; i < table_size(config_table); i++) {
-    if (streq(config_table[i].label, cb_in->label->bytes)) {
-      int rc;		/* FIXME: What to do with this? */
-      rc = config_table[i].set(pi, cb_in->value->bytes);
-      break;
-    }
-  }
-  
-  Config_buffer_discard(&cb_in);
+  Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
 static void rgb3_handler(Instance *pi, void *data)
