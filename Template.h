@@ -248,6 +248,8 @@ extern Config_buffer *Config_buffer_new(const char *label, const char *value);
 extern Config_buffer *Config_buffer_vrreq_new(const char *label, const char *value, Value *vreq, Range *rreq, Event *event);
 extern void Config_buffer_discard(Config_buffer **cb);
 
+extern void Generic_config_handler(Instance *pi, void *data, Config *config_table, int config_table_size);
+
 extern int SetConfig(Instance *pi, const char *label, const char *value);
 extern void GetConfigValue(Input *pi, const char *label, Value *vreq);
 extern void GetConfigRange(Input *pi, const char *label, Range *rreq);

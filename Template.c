@@ -278,6 +278,43 @@ void Config_buffer_discard(Config_buffer **cb)
 }
 
 
+void Generic_config_handler(Instance *pi, void *data, Config *config_table, int config_table_size)
+{
+  /* Most modules can use this function to handle config messages. */
+  Config_buffer *cb_in = data;
+  int i;
+
+  /* Walk the config table. */
+  for (i=0; i < config_table_size; i++) {
+    if (streq(config_table[i].label, cb_in->label->bytes)) {
+
+      /* If value is passed in, call the set function. */
+      if (cb_in->value) {
+	int rc;		/* FIXME: What to do with this? */
+	rc = config_table[i].set(pi, cb_in->value->bytes);
+      }
+
+      /* Check and full range/value requests. */
+      if (cb_in->vreq && config_table[i].get_value) {
+	config_table[i].get_value(pi, cb_in->vreq);
+      }
+
+      if (cb_in->rreq && config_table[i].get_range) {
+	config_table[i].get_range(pi, cb_in->rreq);
+      }
+
+      /* Wake caller if they asked for it. */
+      if (cb_in->wake) {
+	Event_signal(cb_in->wake);
+      }
+      break;
+    }
+  }
+  
+  Config_buffer_discard(&cb_in);
+}
+
+
 void GetConfigValue(Input *pi, const char *label, Value *vreq)
 {
   Lock lock = {};

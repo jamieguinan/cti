@@ -565,21 +565,7 @@ static void post_render_frame(Instance *pi)
 
 static void Config_handler(Instance *pi, void *data)
 {
-  int i;
-  Config_buffer *cb_in = data;
-
-  printf("%s:%s\n", __FILE__, __func__);
-
-  /* Walk the config table. */
-  for (i=0; i < table_size(config_table); i++) {
-    if (streq(config_table[i].label, cb_in->label->bytes)) {
-      int rc;		/* FIXME: What to do with this? */
-      rc = config_table[i].set(pi, cb_in->value->bytes);
-      break;
-    }
-  }
-    
-  Config_buffer_discard(&cb_in);
+  Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
 
