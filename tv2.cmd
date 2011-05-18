@@ -48,6 +48,7 @@ config ap format signed.16-bit.little.endian
 config ap enable 1
 
 config am card M66
+config am control_name DAC
 
 config tv skip_channel 5
 config tv skip_channel 6

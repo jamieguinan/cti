@@ -25,7 +25,7 @@ typedef struct {
   snd_mixer_t *handle;
   int volume;
   // int max_volume;
-  String *control_list;
+  String *control_name;
 } ALSAMixer_private;
 
 static int set_card(Instance *pi, const char *value)
@@ -76,21 +76,24 @@ static int set_volume(Instance *pi, const char *value)
     return 1;
   }
 
+  if (!priv->control_name) {
+    fprintf(stderr, "no control_name!\n");
+    return 1;
+  }
+
+
   snd_mixer_selem_id_alloca(&sid);
 
-  /* FIXME: For M66, I know I want to get/set DAC,0 and DAC,1 (and
-     mabye 3 and 4 for the subwoofer).  To make this more generic,
-     maybe make a list as a priv member, and iterate through it. */
+  /* Using the control name, iterate through index values until one
+     isn't found.  Typical PC soundcards will only have 1, but M66 has
+     4 for DAC and H/W, for example. */
+  snd_mixer_selem_id_set_name(sid, priv->control_name->bytes);
   for (i=0; i < 4; i++) {
-      snd_mixer_selem_id_set_name(sid, "DAC");
       snd_mixer_selem_id_set_index(sid, i);
       elem = snd_mixer_find_selem(priv->handle, sid);    
 
       if (!elem) {
-	fprintf(stderr, "unable to find control %s %d\n", 
-		snd_mixer_selem_id_get_name(sid), 
-		snd_mixer_selem_id_get_index(sid));
-	return 1;
+	break;
       }
 
       if (!snd_mixer_selem_has_playback_volume(elem)) {
@@ -106,6 +109,13 @@ static int set_volume(Instance *pi, const char *value)
 	printf("volume: %ld -> %d\n", vol, temp);
       }
 
+  }
+
+  if (i == 0) {
+    /* Warn if no controls matching control_name were found. */
+    fprintf(stderr, "unable to find control %s %d\n", 
+	    snd_mixer_selem_id_get_name(sid), 
+	    snd_mixer_selem_id_get_index(sid));
   }
 
   return 0;
@@ -128,7 +138,12 @@ static void get_volume(Instance *pi, Value *value)
 
   snd_mixer_selem_id_alloca(&sid);
 
-  snd_mixer_selem_id_set_name(sid, "DAC");
+  if (!priv->control_name) {
+    fprintf(stderr, "no control_name!\n");    
+    return;
+  }
+
+  snd_mixer_selem_id_set_name(sid, priv->control_name->bytes);
   snd_mixer_selem_id_set_index(sid, i);
   elem = snd_mixer_find_selem(priv->handle, sid);    
 
@@ -165,7 +180,11 @@ static void get_volume_range(Instance *pi, Range *range)
 
   snd_mixer_selem_id_alloca(&sid);
 
-  snd_mixer_selem_id_set_name(sid, "DAC");
+  if (!priv->control_name) {
+    fprintf(stderr, "no control_name!\n");    
+    return;
+  }
+  snd_mixer_selem_id_set_name(sid, priv->control_name->bytes);
   snd_mixer_selem_id_set_index(sid, i);
   elem = snd_mixer_find_selem(priv->handle, sid);    
 
@@ -189,10 +208,17 @@ static void get_volume_range(Instance *pi, Range *range)
 }
 
 
+static int set_control_name(Instance *pi, const char *value)
+{
+  ALSAMixer_private *priv = pi->data;
+  priv->control_name = String_new(value);
+  return 0;
+}
+
 static Config config_table[] = {
   { "card",    set_card, 0L, 0L },
   { "volume",  set_volume, get_volume, get_volume_range },
-  { "control_list", set_control_list, 0L, 0L },
+  { "control_name", set_control_name, 0L, 0L },
 };
 
 
