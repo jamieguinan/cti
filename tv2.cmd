@@ -54,6 +54,7 @@ config tv skip_channel 6
 config tv skip_channel 10
 config tv skip_channel 14
 config tv skip_channel 34
+config tv skip_channel 63
 
 config vc device /dev/video0
 config vc format BGR3

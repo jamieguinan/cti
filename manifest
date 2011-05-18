@@ -171,7 +171,6 @@ c310play.cmd
 c310send.cmd
 cairo-test-01.cmd
 cairo-test-02.cmd
-cairo-test-03.cmd
 cap.c
 cjbench.c
 ctest.c
@@ -188,6 +187,7 @@ dvdgen_main.c
 example.c
 example.h
 extract.cmd
+fyv-local.cmd
 fyv-www.cmd
 h264test01.cmd
 h264test02.cmd
@@ -250,6 +250,7 @@ tv1.cmd
 tv2.cmd
 uvc_compat.h
 uvcvideo.h
+v4l-bad-channel.cmd
 v4ltonull.cmd
 wrmem.c
 wrmem.h

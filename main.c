@@ -61,14 +61,14 @@ int main(int argc, char *argv[])
   argv0 = argv[0];
 
 #ifdef __linux__
-  Signals_init();
   ALSACapture_init();
   ALSAPlayback_init();
   ALSAMixer_init();
   V4L2Capture_init();
-  SDLstuff_init();
   SonyPTZ_init();
 #ifndef __ARMEB__
+  SDLstuff_init();
+  Signals_init();
   CairoContext_init();
   LibQuickTimeOutput_init();
   OggOutput_init();

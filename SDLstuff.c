@@ -727,6 +727,8 @@ static int my_event_loop(void *data)
       ReleaseMessage(&hm);
     }
     else if (ev.type == SDL_KEYUP) {
+      /* FIXME:  All these key events should really be passing generic CTI__KEY messages to 
+	 [OUTPUT_CONFIG].destination, instead of doing calculations in here. */
       char numstr[64];
       switch (ev.key.keysym.sym) {
       case SDLK_UP: 
@@ -748,9 +750,11 @@ static int my_event_loop(void *data)
 	break;
 
       case SDLK_RIGHT: 
-	sprintf(numstr, "%ld", priv->seek_amount);
-	fprintf(stderr, "seek forward %ld\n", priv->seek_amount);	  
-	PostData(Config_buffer_new("seek", numstr), pi->outputs[OUTPUT_CONFIG].destination);
+	if (pi->outputs[OUTPUT_CONFIG].destination) {
+	  sprintf(numstr, "%ld", priv->seek_amount);
+	  fprintf(stderr, "seek forward %ld\n", priv->seek_amount);	  
+	  PostData(Config_buffer_new("seek", numstr), pi->outputs[OUTPUT_CONFIG].destination);
+	}
 	break;
 
       default: 

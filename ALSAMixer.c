@@ -25,6 +25,7 @@ typedef struct {
   snd_mixer_t *handle;
   int volume;
   // int max_volume;
+  String *control_list;
 } ALSAMixer_private;
 
 static int set_card(Instance *pi, const char *value)
@@ -191,6 +192,7 @@ static void get_volume_range(Instance *pi, Range *range)
 static Config config_table[] = {
   { "card",    set_card, 0L, 0L },
   { "volume",  set_volume, get_volume, get_volume_range },
+  { "control_list", set_control_list, 0L, 0L },
 };
 
 

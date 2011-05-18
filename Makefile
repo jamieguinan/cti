@@ -17,19 +17,12 @@ OBJDIR ?= .
 
 #default1: $(OBJDIR)/avcap$(EXEEXT) $(OBJDIR)/avidemux$(EXEEXT) $(OBJDIR)/cjbench$(EXEEXT) $(OBJDIR)/dvdgen$(EXEEXT) $(OBJDIR)/avtest$(EXEEXT) $(OBJDIR)/demux$(EXEEXT) $(OBJDIR)/alsacaptest$(EXEEXT) $(OBJDIR)/mjxtomp2$(EXEEXT) $(OBJDIR)/cti$(EXEEXT)
 
-ifeq ($(ARCH),armeb)
-SDLLIBS=
-else
-SDLLIBS=$$(sdl-config --libs) $$(pkg-config glu --libs)
-endif
-
 default1:  $(OBJDIR)/cti$(EXEEXT)
 
 #	@echo wd=$(shell pwd)
 #	@echo VPATH=$(VPATH)
 
 # For SDL.
-CPPFLAGS+=$$(sdl-config --cflags) -I/usr/include/GL
 
 # Another app.
 OBJS= \
@@ -59,7 +52,6 @@ OBJS= \
 	$(OBJDIR)/SourceSink.o \
 	$(OBJDIR)/String.o \
 	$(OBJDIR)/ScriptV00.o \
-	$(OBJDIR)/SDLstuff.o \
 	$(OBJDIR)/Wav.o \
 	$(OBJDIR)/Audio.o \
 	$(OBJDIR)/Numbers.o \
@@ -72,7 +64,6 @@ OBJS= \
 	$(OBJDIR)/Y4MInput.o \
 	$(OBJDIR)/Y4MOutput.o \
 	$(OBJDIR)/XArray.o \
-	$(OBJDIR)/Signals.o \
 	$(OBJDIR)/JpegSource.o \
 	$(OBJDIR)/HalfWidth.o \
 	$(OBJDIR)/Mp2Enc.o \
@@ -104,6 +95,20 @@ OBJS+=\
 	$(OBJDIR)/SonyPTZ.o \
 	../../platform/$(ARCH)/jpeg-7/libjpeg.la
 LDFLAGS+=-lvisca
+endif
+
+# SDL
+ifeq ($(ARCH),armeb)
+SDLLIBS=
+else
+OBJS+=$(OBJDIR)/SDLstuff.o
+CPPFLAGS+=$$(sdl-config --cflags) -I/usr/include/GL
+LDFLAGS+=$$(sdl-config --libs) $$(pkg-config glu --libs)
+endif
+
+# Signals
+ifneq ($(ARCH),armeb)
+OBJS+=$(OBJDIR)/Signals.o
 endif
 
 # Lirc
@@ -153,7 +158,7 @@ $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \
 	$(OBJDIR)/cti.o
 	@echo LINK
-	$(CC) $(filter %.o, $^) -o $@ $(SDLLIBS) $(LDFLAGS)
+	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 #	$(STRIP) $@
 
 
