@@ -3,7 +3,7 @@
 #include <string.h>		/* memcpy */
 
 #include "Images.h"
-#include "Template.h"
+#include "CTI.h"
 #include "Cfg.h"
 
 static void Config_handler(Instance *pi, void *msg);

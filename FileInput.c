@@ -7,7 +7,7 @@
 #include <stdio.h>		/* fopen */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "XMixedReplace.h"
 #include "Mem.h"
 

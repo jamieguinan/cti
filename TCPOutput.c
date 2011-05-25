@@ -14,7 +14,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 
 enum { INPUT_ANY };
 static Input TCPOutput_inputs[] = {

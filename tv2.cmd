@@ -41,7 +41,8 @@ config ac channels 2
 config ac format signed.16-bit.little.endian
 config ac enable 1
 
-config ap device hw:0
+# config ap device hw:0
+config ap device out1234
 config ap rate 48000
 config ap channels 2
 config ap format signed.16-bit.little.endian

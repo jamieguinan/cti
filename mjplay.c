@@ -7,7 +7,7 @@
 #define streq(a, b) (strcmp(a, b) == 0 ? 1 : 0)
 #include "DJpeg.h"
 #include "Images.h"
-#include "Template.h"
+#include "CTI.h"
 #include "ALSAPlayback.h"
 #include "MjpegDemux.h"
 #include "SDLstuff.h"

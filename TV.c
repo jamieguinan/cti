@@ -5,7 +5,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "TV.h"
 #include "Keycodes.h"
 #include "ChannelMaps.h"
@@ -205,6 +205,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 
   /* Probably do a state machine of sorts here... if its needed. */
 
+  Keycode_message_cleanup(&km);
 }
 
 

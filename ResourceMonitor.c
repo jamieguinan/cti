@@ -6,8 +6,9 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 
-#include "Template.h"
+#include "CTI.h"
 #include "ResourceMonitor.h"
+#include "Cfg.h"
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -73,9 +74,11 @@ static void ResourceMonitor_tick(Instance *pi)
 
   rc = getrusage(RUSAGE_SELF, &usage);
   if (rc == 0) {
-    // printf("ru_maxrss=%ld\n", usage.ru_maxrss);
-    if (priv->rss_limit && priv->rss_limit > usage.ru_maxrss) {
-      fprintf(stderr, "rss_limit exceded!\n");
+    if (cfg.verbosity) {
+      printf("ru_maxrss=%ld\n", usage.ru_maxrss);
+    }
+    if (priv->rss_limit && usage.ru_maxrss > priv->rss_limit) {
+      fprintf(stderr, "%s: rss_limit exceded (%ld > %ld)!\n", __func__, usage.ru_maxrss, priv->rss_limit);
       exit(1);
     }
   }

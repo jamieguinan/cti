@@ -3,7 +3,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "Images.h"
 
 enum { INPUT_CONFIG, INPUT_RGB3, INPUT_422P };

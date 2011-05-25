@@ -8,7 +8,7 @@
 #include <string.h>		/* memcpy */
 #include <unistd.h>		/* sleep */
 
-#include "Template.h"
+#include "CTI.h"
 #include "LibDV.h"
 #include "SourceSink.h"
 #include "Cfg.h"

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "Mem.h"
 
 //enum { /* INPUT_... */ };

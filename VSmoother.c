@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>		/* gettimeofday */
-#include "Template.h"
+#include "CTI.h"
 #include "VSmoother.h"
 #include "Images.h"
 #include "Mem.h"

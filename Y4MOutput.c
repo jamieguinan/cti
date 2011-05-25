@@ -3,7 +3,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "SourceSink.h"
 #include "Images.h"
 #include "Y4MOutput.h"

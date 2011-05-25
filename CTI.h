@@ -1,5 +1,5 @@
-#ifndef _TEMPLATE_H_
-#define _TEMPLATE_H_
+#ifndef _CTI_H_
+#define _CTI_H_
 
 #include <stdint.h>
 #include "locks.h"

@@ -7,7 +7,7 @@
 
 #define streq(a, b)  (strcmp(a, b) == 0)
 
-#include "Template.h"
+#include "CTI.h"
 #include "Mem.h"
 #include "Cfg.h"
 

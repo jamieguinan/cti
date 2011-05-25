@@ -9,7 +9,7 @@
 #include "cdjpeg.h"
 #include "transupp.h"
 
-#include "Template.h"
+#include "CTI.h"
 #include "JpegTran.h"
 #include "Images.h"
 #include "jmemsrc.h"

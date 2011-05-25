@@ -4,7 +4,7 @@
 #include <sys/time.h>
 #include <string.h>
 #define streq(a, b) (strcmp(a, b) == 0 ? 1 : 0)
-#include "Template.h"
+#include "CTI.h"
 #include "AVIDemux.h"
 
 int main(int argc, char *argv[])

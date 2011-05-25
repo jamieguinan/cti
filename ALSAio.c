@@ -4,7 +4,7 @@
 #include <dirent.h>		/* readdir */
 #include <alsa/asoundlib.h>	/* ALSA library */
 
-#include "Template.h"
+#include "CTI.h"
 #include "ALSAio.h"
 #include "Wav.h"
 #include "Audio.h"

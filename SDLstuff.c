@@ -8,7 +8,7 @@
 #include <gl.h>
 // #include <glu.h>
 
-#include "Template.h"
+#include "CTI.h"
 #include "Images.h"
 #include "Cfg.h"
 

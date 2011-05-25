@@ -4,7 +4,7 @@
 #include <time.h>		/* localtime */
 #include <math.h>		/* M_2_PI */
 
-#include "Template.h"
+#include "CTI.h"
 #include "CairoContext.h"
 #include "Images.h"
 #include "XArray.h"

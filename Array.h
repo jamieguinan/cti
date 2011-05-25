@@ -2,7 +2,7 @@
 #define _CTI_ARRAY_H_
 
 #include <stdint.h>
-#include "Template.h"
+#include "CTI.h"
 
 typedef struct {
   uint8_t *data;

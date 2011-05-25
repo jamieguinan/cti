@@ -9,7 +9,7 @@
 #include <string.h>		/* memcpy */
 #include <alsa/asoundlib.h>	/* ALSA library */
 
-#include "Template.h"
+#include "CTI.h"
 #include "ALSAMixer.h"
 
 static void Config_handler(Instance *pi, void *msg);

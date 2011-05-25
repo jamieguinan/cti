@@ -10,7 +10,7 @@
 #include "jmemsrc.h"
 #include "jpeghufftables.h"
 
-#include "Template.h"
+#include "CTI.h"
 #include "DJpeg.h"
 #include "Images.h"
 #include "Mem.h"

@@ -6,7 +6,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "MpegTSDemux.h"
 #include "MpegTS.h"
 #include "SourceSink.h"

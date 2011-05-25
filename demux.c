@@ -7,7 +7,7 @@
 #include "DJpeg.h"
 #include "JpegFiler.h"
 #include "Images.h"
-#include "Template.h"
+#include "CTI.h"
 #include "VFilter.h"
 #include "MjpegDemux.h"
 #include "Mpeg2Enc.h"

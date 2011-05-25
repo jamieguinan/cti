@@ -4,7 +4,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "Template.h"
+#include "CTI.h"
 #include "ALSAio.h"
 #include "ALSAMixer.h"
 #include "CJpeg.h"
@@ -25,7 +25,6 @@
 #include "ScriptSession.h"
 #include "SDLstuff.h"
 #include "String.h"
-#include "Template.h"
 #include "V4L2Capture.h"
 #include "VFilter.h"
 #include "AudioLimiter.h"
@@ -51,6 +50,7 @@
 #include "Lirc.h"
 #include "TV.h"
 #include "LibDV.h"
+#include "Spawn.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
   H264_init();
   Lirc_init();
   LibDV_init();
+  Spawn_init();
 #endif
 #endif
   CJpeg_init();

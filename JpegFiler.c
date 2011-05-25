@@ -5,7 +5,7 @@
 #include "JpegFiler.h"
 #include "Images.h"
 #include "Cfg.h"
-#include "Template.h"
+#include "CTI.h"
 
 static void Config_handler(Instance *pi, void *msg);
 static void Jpeg_handler(Instance *pi, void *msg);

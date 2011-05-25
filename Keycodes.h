@@ -56,4 +56,6 @@ typedef struct {
 extern Keycode_message* Keycode_message_new(int keycode);
 extern void Keycode_message_cleanup(Keycode_message **);
 
+int Keycode_from_string(const char *string);
+
 #endif

@@ -24,7 +24,7 @@
 
 #include "linux/videodev2.h"
 
-#include "Template.h"
+#include "CTI.h"
 #include "V4L2Capture.h"
 #include "Images.h"
 #include "String.h"

@@ -3,7 +3,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "Cryptor.h"
 #include "Array.h"
 #include "File.h"

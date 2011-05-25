@@ -7,7 +7,7 @@
 #include <math.h>		/* modf */
 #include <unistd.h>		/* sleep */
 
-#include "Template.h"
+#include "CTI.h"
 #include "Images.h"
 #include "Wav.h"
 #include "Mem.h"

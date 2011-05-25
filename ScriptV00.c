@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Template.h"
+#include "CTI.h"
 #include "Cfg.h"
 
 static void Config_handler(Instance *pi, void *data);
@@ -18,6 +18,7 @@ static Output ScriptV00_outputs[] = {
 typedef struct {
   InstanceGroup *g;
   int is_stdin;
+  int exit_on_eof;
 }  ScriptV00_private;
 
 static void expand(char token[256])
@@ -70,8 +71,15 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   else if ((strstr(line->bytes, "mt") == line->bytes)) {
     cfg.mem_tracking = !cfg.mem_tracking;
   }
+  else if ((strstr(line->bytes, "tl") == line->bytes)) {
+    Template_list();
+  }
   else if ((strstr(line->bytes, "abort") == line->bytes)) {
     abort();
+  }
+  else if ((strstr(line->bytes, "ignoreeof") == line->bytes)) {
+    priv->exit_on_eof = 0;
+    printf("exit_on_eof disabled!\n");
   }
   else if ((sscanf(line->bytes, "%255s %255s", token1, token2) == 2)) {
     if (streq(token1, "v")) {
@@ -142,18 +150,19 @@ static int set_input(Instance *pi, const char *value)
     fprintf(stdout, "\n");
   }
 
-  if (!priv->is_stdin) {
-    fclose(f);
+  if (priv->exit_on_eof) {
+    printf("exiting!\n");
+    exit(0);
   }
   else {
-    exit(0);
+    printf("got eof, but hanging around anyway...\n");
   }
 
   return 0;
 }
 
 static Config config_table[] = {
-  { "input",    set_input, 0L, 0L },
+  { "input",       set_input, 0L, 0L },
 };
 
 static void Config_handler(Instance *pi, void *data)
@@ -180,6 +189,7 @@ static void ScriptV00_instance_init(Instance *pi)
   ScriptV00_private *priv = Mem_calloc(1, sizeof(*priv));
   pi->data = priv;
   priv->g = InstanceGroup_new();
+  priv->exit_on_eof = 1;
 }
 
 

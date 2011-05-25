@@ -6,7 +6,7 @@
 #include "CJpeg.h"
 #include "DJpeg.h"
 #include "Images.h"
-#include "Template.h"
+#include "CTI.h"
 #include "JpegFiler.h"
 
 #error This module is obsolete now, use a .cmd script instead.

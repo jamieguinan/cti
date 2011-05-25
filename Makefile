@@ -2,6 +2,12 @@ default: default1
 
 include ../platforms.make
 
+HOSTARCH=$(shell uname -m)-$(shell uname -s)
+
+ifeq ($(ARCH),$(HOSTARCH))
+LDFLAGS+=-Wl,-rpath,$(shell pwd)/../../platform/$(ARCH)/lib
+endif
+
 CFLAGS += -g -Wall $(CMDLINE_CFLAGS)
 # -std=c99 
 CPPFLAGS += -I../../platform/$(ARCH)/include -I../jpeg-7
@@ -26,7 +32,7 @@ default1:  $(OBJDIR)/cti$(EXEEXT)
 
 # Another app.
 OBJS= \
-	$(OBJDIR)/Template.o \
+	$(OBJDIR)/CTI.o \
 	$(OBJDIR)/locks.o \
 	$(OBJDIR)/Mem.o \
 	$(OBJDIR)/Index.o \
@@ -79,6 +85,7 @@ OBJS= \
 	$(OBJDIR)/ResourceMonitor.o \
 	$(OBJDIR)/TV.o \
 	$(OBJDIR)/ChannelMaps.o \
+	$(OBJDIR)/Spawn.o \
 	$(OBJDIR)/main.o \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 

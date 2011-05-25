@@ -7,7 +7,7 @@
 #include "cdjpeg.h"
 #include "jmemdst.h"
 
-#include "Template.h"
+#include "CTI.h"
 #include "CJpeg.h"
 #include "Images.h"
 #include "Mem.h"

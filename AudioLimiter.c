@@ -3,7 +3,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "Wav.h"
 
 static void Config_handler(Instance *pi, void *msg);

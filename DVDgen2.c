@@ -9,7 +9,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
-#include "Template.h"
+#include "CTI.h"
 #include "DVDgen2.h"
 #include "Images.h"
 

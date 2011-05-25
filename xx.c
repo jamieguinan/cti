@@ -1,22 +1,14 @@
 #include <stdio.h>
+#include <sys/time.h>
 
-void foo(void **ptr)
+int main()
 {
-  char *p = *ptr;
-  *ptr = 0L;
-  printf("foo: %p %s\n", p, p);
-}
+  struct timeval tv;
 
-#define count_args(a, ...)  &(ArrayU8) { }
+  printf("sizes...\n");
+  printf("timeval.tv_sec: %ld (time_t)\n", sizeof(tv.tv_sec));
+  printf("timeval.tv_usec: %ld (suseconds_t)\n", sizeof(tv.tv_usec));
 
-int main(int argc, char *argv[])
-{
-
-#define ArrayU8_append_bytes(a, ...)  Array_append(ArrayU8 *a, & (ArrayU8) { .data = { __VA_ARGS__ }, .len = n, .available = n } 
-
-  char *p = argv[0];
-  printf("%p %s\n", p, p);
-  foo((void **)&p);
-  printf("%p\n", p);
   return 0;
 }
+

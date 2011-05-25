@@ -7,7 +7,7 @@
 #include "wrmem.h"
 #include "jmemsrc.h"
 
-#include "Template.h"
+#include "CTI.h"
 #include "MotionDetect.h"
 #include "Images.h"
 #include "MotionDetect.h"

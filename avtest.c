@@ -6,7 +6,7 @@
 #define streq(a, b) (strcmp(a, b) == 0 ? 1 : 0)
 //#include "CJpeg.h"
 #include "Images.h"
-#include "Template.h"
+#include "CTI.h"
 #include "V4L2Capture.h"
 #include "ALSACapture.h"
 //#include "TCPOutput.h"

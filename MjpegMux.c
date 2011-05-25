@@ -8,7 +8,7 @@
 #include <stdlib.h>		/* free */
 #include <sys/time.h>		/* gettimeofday */
 
-#include "Template.h"
+#include "CTI.h"
 #include "String.h"
 #include "Images.h"
 // #include "XMixedReplace.h"
