@@ -4,15 +4,14 @@
 #include <string.h>
 #include <unistd.h>
 
-#define streq(a, b) (strcmp(a, b) == 0 ? 1 : 0)
 #include "DJpeg.h"
 #include "Images.h"
 #include "CTI.h"
-#include "ALSAPlayback.h"
+#include "ALSAio.h"
 #include "MjpegDemux.h"
 #include "SDLstuff.h"
 
-int main(int argc, char *argv[])
+int app_code(int argc, char *argv[])
 {
   MjpegDemux_init();
   DJpeg_init();

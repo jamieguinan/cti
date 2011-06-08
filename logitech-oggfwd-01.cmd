@@ -82,9 +82,9 @@ config cc command show_text
 # is set up for the same FPS, but it works.
 config y4mout fps_nom 15
 config y4mout fps_denom 1
-config y4mout output |ffmpeg2theora - -V 150 -o /dev/stdout 2> /dev/null | oggfwd localhost 8000 hackme /frontyard.ogv
+config y4mout output |ffmpeg2theora - -V 150 -o /dev/stdout 2> /dev/null | oggfwd localhost 8000 hackme /basement1.ogv
 
-config vc device /dev/video1
+config vc device /dev/video2
 config vc format MJPG
 config vc size 640x360
 config vc fps 15

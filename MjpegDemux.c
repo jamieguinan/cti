@@ -107,6 +107,14 @@ static int set_input(Instance *pi, const char *value)
 }
 
 
+static int set_retry(Instance *pi, const char *value)
+{
+  MjpegDemux_private *priv = pi->data;
+  priv->retry = atoi(value);
+  return 0;
+}
+
+
 static int set_enable(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = pi->data;
@@ -162,6 +170,7 @@ static int do_seek(Instance *pi, const char *value)
 static Config config_table[] = {
   { "input", set_input, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
+  { "retry", set_retry, 0L, 0L },
   { "use_feedback", set_use_feedback, 0L, 0L },
   /* The following are more "controls" than "configs", but maybe they are essentially the same anyway. */
   //{ "rate", set_rate, 0L, 0L},
@@ -273,8 +282,17 @@ static void MjpegDemux_tick(Instance *pi)
       if (priv->retry) {
 	fprintf(stderr, "%s: retrying.\n", __func__);
 	sleep(1);
+	fprintf(stderr, "Source_free\n");
 	Source_free(&priv->source);
+	fprintf(stderr, "Source_new\n");
 	priv->source = Source_new(priv->input);
+
+	/* FIXME: These few lines are duplicated elsewhere... */
+	if (priv->chunk) {
+	  ArrayU8_cleanup(&priv->chunk);
+	}
+	priv->chunk = ArrayU8_new();
+	
       }
       else {
 	priv->enable = 0;

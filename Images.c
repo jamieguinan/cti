@@ -383,6 +383,26 @@ Y420P_buffer *Y422P_to_Y420P(Y422P_buffer *y422p)
   return y420p;
 }
 
+Y422P_buffer *Y422P_copy(Y422P_buffer *y422p, int x, int y, int width, int height)
+{
+  Y422P_buffer *newbuf = 0L;
+
+  if (x+width > y422p->width || y+height > y422p->height) {
+    fprintf(stderr, "copy outside bounds!\n");
+    return 0L;
+  }
+
+  /* FIXME: tbd... */
+  
+  return newbuf;
+}
+
+
+void Y422P_paste(Y422P_buffer *dest, Y422P_buffer *src, int x, int y, int width, int height)
+{
+}
+
+
 
 RGB3_buffer *Y420P_to_RGB3(Y420P_buffer *y420p)
 {

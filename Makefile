@@ -86,6 +86,8 @@ OBJS= \
 	$(OBJDIR)/TV.o \
 	$(OBJDIR)/ChannelMaps.o \
 	$(OBJDIR)/Spawn.o \
+	$(OBJDIR)/XPlaneControl.o \
+	$(OBJDIR)/FaceTracker.o \
 	$(OBJDIR)/main.o \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
@@ -169,10 +171,19 @@ $(OBJDIR)/cti$(EXEEXT): \
 #	$(STRIP) $@
 
 
+$(OBJDIR)/mjplay$(EXEEXT): \
+	$(OBJS) \
+	$(OBJDIR)/mjplay.o
+	@echo LINK
+	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
+#	$(STRIP) $@
+
+
 $(OBJDIR)/ctest$(EXEEXT): \
 	$(OBJDIR)/Collection.o \
 	$(OBJDIR)/ctest.o
 	$(CC) $(filter %.o, $^) -o $@
+
 
 
 $(OBJDIR)/%.o: %.c Makefile

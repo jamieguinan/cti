@@ -59,21 +59,17 @@ static int set_quality(Instance *pi, const char *value)
   }
 }
 
-static void get_quality(Instance *pi, Value **value)
+static void get_quality(Instance *pi, Value *v)
 {
   CJpeg_private *priv = pi->data;
-  Value *v = Value_new(RANGE_INTS);
   v->u.int_value = priv->quality;
-  *value = v;
 }
 
-static void get_quality_range(Instance *pi, Range **range)
+static void get_quality_range(Instance *pi, Range *r)
 {
-  Range *r = Range_new(RANGE_INTS);
   r->u.ints.min = 50;
   r->u.ints.max = 100;
   r->u.ints.step = 1;
-  *range = r;
 }
 
 static Config config_table[] = {

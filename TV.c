@@ -1,4 +1,4 @@
-/* TV controller module.  An TV instance lists for IR or other input,
+/* TV controller module.  An TV instance listens for IR or other input,
    maintains state, and sends configuration messages to other
    instances that do the actual work.*/
 #include <stdio.h>		/* fprintf */
@@ -37,8 +37,10 @@ typedef struct {
   int current_channel;
   int new_channel;
   int digits_index;
+  int mute_save_vol;
+  int muted;
   const char *map;
-  uint32_t skip_channels[1000/32]; /* 1000 channels, one bit per channel */
+  uint32_t skip_channels[1000/32]; /* 1000 channels, represented by one bit per channel */
 } TV_private;
 
 
@@ -183,17 +185,39 @@ static void Keycode_handler(Instance *pi, void *msg)
       Value value = {};
       Range range = {};
       char temp[64];
-      int newvol;
+      int vol;
       GetConfigRange(pi->outputs[OUTPUT_MIXER_CONFIG].destination, "volume", &range);
       GetConfigValue(pi->outputs[OUTPUT_MIXER_CONFIG].destination, "volume", &value);
-      newvol = value.u.int_value  + d;
-      // if (mute) ...
-      if (newvol < range.u.ints.min) newvol = range.u.ints.min;
-      else if (newvol > range.u.ints.max) newvol = range.u.ints.max;
-      sprintf(temp, "%d", newvol);
+      vol = value.u.int_value  + d;
+      if (mute) {
+	if (!priv->muted) {
+	  priv->mute_save_vol = vol;
+	  vol = 0;
+	  priv->muted = 1;
+	}
+	else {
+	  vol = priv->mute_save_vol;
+	  priv->muted = 0;
+	}
+      }
+      else {
+	/* Volume up/down selected. */
+	if (priv->muted) {
+	  vol = priv->mute_save_vol;
+	  priv->muted = 0;
+	}
+      }
+      if (vol < range.u.ints.min) vol = range.u.ints.min;
+      else if (vol > range.u.ints.max) vol = range.u.ints.max;
+      sprintf(temp, "%d", vol);
       PostData(Config_buffer_new("volume", temp), pi->outputs[OUTPUT_MIXER_CONFIG].destination);
 
-      snprintf(temp, sizeof(temp), "VOL %d%%", (newvol*100/range.u.ints.max));
+      if (priv->muted) {
+	snprintf(temp, sizeof(temp), "MUTE");
+      }
+      else {
+	snprintf(temp, sizeof(temp), "VOL %d%%", (vol*100/range.u.ints.max));
+      }
       PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
     }
     break;

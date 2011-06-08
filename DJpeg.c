@@ -110,6 +110,15 @@ static void Jpeg_handler(Instance *pi, void *data)
     cinfo.client_data = &jb;
     error = setjmp(jb);
     if (error) {
+      printf("%s:%d\n", __func__, __LINE__);
+      FILE *f = fopen("error.jpg", "wb");
+      int n = fwrite(jpeg_in->data, 1, jpeg_in->data_length, f);
+      if (n != jpeg_in->data_length) {
+	perror("fwrite"); 
+      } else {
+	printf("saved erroneous jpeg to error.jpg\n");
+	fclose(f);
+      }
       goto check_errors_1;
     }
 
@@ -199,6 +208,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     cinfo.client_data = &jb;
     error = setjmp(jb);
     if (error) {
+      printf("%s:%d\n", __func__, __LINE__);
       goto check_errors_2;
     }
 
@@ -401,6 +411,17 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length)
   cinfo.client_data = &jb;
   error = setjmp(jb);
   if (error) {
+    {
+      printf("%s:%d\n", __func__, __LINE__);
+      FILE *f = fopen("error.jpg", "wb");
+      int n = fwrite(data, 1, data_length, f);
+      if (n != data_length) {
+	perror("fwrite"); 
+      } else {
+	printf("saved erroneous jpeg to error.jpg\n");
+	fclose(f);
+      }
+    }
     goto out;
   }
 

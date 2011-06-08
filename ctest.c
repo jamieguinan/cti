@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
   Collection_init(words, words_c);
   for (i=0; i < n; i++) {
     putlast((i & 0xffffffff), words, &words_c);
-    if ((i+1) % 100 == 0) {      
+    if ((i+1) % (n/10) == 0) {      
       takefirst(v32, words, &words_c);
       printf("took %d\n", v32);
     }

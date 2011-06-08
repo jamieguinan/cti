@@ -14,16 +14,19 @@
 
 static void Config_handler(Instance *pi, void *msg);
 static void rgb3_handler(Instance *pi, void *msg);
+static void y422p_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_RGB3 };
+enum { INPUT_CONFIG, INPUT_RGB3, INPUT_422P };
 static Input CairoContext_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
+  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_RGB3 };
+enum { OUTPUT_RGB3, OUTPUT_422P };
 static Output CairoContext_outputs[] = {
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
+  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
 };
 
 
@@ -341,6 +344,45 @@ static void rgb3_handler(Instance *pi, void *msg)
     RGB3_buffer_discard(rgb3);
   }
 }
+
+static void y422p_handler(Instance *pi, void *msg)
+{
+  CairoContext_private *priv = pi->data;
+  Y422P_buffer * y422p = msg;
+  int do_apply = 1;
+
+  if (priv->timeout) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    if (priv->timeout_timestamp + priv->timeout <  tv.tv_sec) {
+      do_apply = 0;
+    }
+  }
+
+  if (do_apply) {
+    Y422P_buffer * temp;
+    RGB3_buffer * rgb3;
+    /* I could avoid some of the "temp" buffers here by setting up
+       in-place structures, if strides are used correctly in the image
+       code. */
+    temp = Y422P_copy(y422p, 0, 0, priv->width, priv->height);
+    rgb3 = Y422P_to_RGB3(temp);
+    Y422P_buffer_discard(temp);
+    apply_commands(priv, rgb3);
+    temp = RGB3_toY422P(rgb3);
+    RGB3_buffer_discard(rgb3);
+    Y422P_paste(y422p, temp, 0, 0, priv->width, priv->height);
+    Y422P_buffer_discard(temp);
+  }
+  
+  if (pi->outputs[OUTPUT_422P].destination) {
+    PostData(y422p, pi->outputs[OUTPUT_422P].destination);
+  }
+  else {
+    Y422P_buffer_discard(y422p);
+  }
+}
+
 
 static Config config_table[] = {
   { "width",     set_width, 0L, 0L },

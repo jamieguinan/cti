@@ -37,6 +37,8 @@ DVDgen2.h
 Effects01.c
 Effects01.h
 FFmpegEncode.c
+FaceTracker.c
+FaceTracker.h
 File.c
 File.h
 FileInput.c
@@ -137,6 +139,7 @@ XArray.c
 XArray.h
 XMixedReplace.c
 XMixedReplace.h
+XPlaneControl.c
 XfcePanelPlugin.c
 Y4MInput.c
 Y4MInput.h
@@ -168,6 +171,7 @@ avv.cmd
 avv_rgb.cmd
 avv_yuv.cmd
 br.cmd
+bug01.cmd
 c310-server-cryptor.cmd
 c310-server.cmd
 c310play.cmd
@@ -190,6 +194,7 @@ dvdgen_main.c
 example.c
 example.h
 extract.cmd
+fyv-local-plain.cmd
 fyv-local.cmd
 fyv-www.cmd
 h264test01.cmd

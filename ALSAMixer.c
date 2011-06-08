@@ -98,6 +98,8 @@ static int set_volume(Instance *pi, const char *value)
       elem = snd_mixer_find_selem(priv->handle, sid);    
 
       if (!elem) {
+	/* Break if not found.  So this should work with single-index
+	   controls, as well as 4-index controls like M66. */
 	break;
       }
 
@@ -139,7 +141,6 @@ static void get_volume(Instance *pi, Value *value)
     fprintf(stderr, "no handle yet!\n");
     return;
   }
-
 
   snd_mixer_selem_id_alloca(&sid);
 
