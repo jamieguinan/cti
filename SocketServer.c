@@ -21,6 +21,10 @@
 #include "SocketServer.h"
 #include "Images.h"
 
+#ifdef __APPLE__
+#define MSG_NOSIGNAL 0
+#endif
+
 /* FIXME: See arch-specific define over in modc code... */
 #ifndef set_reuseaddr
 #define set_reuseaddr 1
@@ -304,7 +308,7 @@ static void SocketServer_tick(Instance *pi)
     /* Add client connection. */
     cc = Mem_calloc(1, sizeof(*cc));
     cc->addrlen = sizeof(cc->addr);
-    cc->fd = accept(priv->listen_socket, &cc->addr, &cc->addrlen);
+    cc->fd = accept(priv->listen_socket, (struct sockaddr *)&cc->addr, &cc->addrlen);
     if (cc->fd == -1) {
       /* This is unlikely but possible.  If it happens, just clean up
 	 and return... */

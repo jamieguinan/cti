@@ -165,7 +165,7 @@ endif
 
 $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \
-	$(OBJDIR)/cti.o
+	$(OBJDIR)/cti_app.o
 	@echo LINK
 	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 #	$(STRIP) $@

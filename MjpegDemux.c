@@ -286,18 +286,18 @@ static void MjpegDemux_tick(Instance *pi)
 	Source_free(&priv->source);
 	fprintf(stderr, "Source_new\n");
 	priv->source = Source_new(priv->input);
-
-	/* FIXME: These few lines are duplicated elsewhere... */
-	if (priv->chunk) {
-	  ArrayU8_cleanup(&priv->chunk);
-	}
-	priv->chunk = ArrayU8_new();
-	
       }
       else {
 	priv->enable = 0;
       }
-      return;
+
+      /* Reset chunk. */
+      if (priv->chunk) {
+	ArrayU8_cleanup(&priv->chunk);
+      }
+      priv->chunk = ArrayU8_new();
+
+      goto out2;
     }
 
     ArrayU8_append(priv->chunk, newChunk);
@@ -389,8 +389,6 @@ static void MjpegDemux_tick(Instance *pi)
     else {
       fprintf(stderr, "Gah!  Did not get all the headers needed.  What to do?\n");
       goto out;
-      //priv->enable = 0;
-      //return;
     }
   }
 
@@ -480,6 +478,8 @@ static void MjpegDemux_tick(Instance *pi)
  out:
   /* trim consumed data from chunk, reset "current" variables. */
   ArrayU8_trim_left(priv->chunk, priv->current.eoh + 4 + priv->current.content_length);
+
+ out2:
   priv->current.content_length = 0;
   priv->current.timestamp = 0.0;
   priv->current.width = 0;

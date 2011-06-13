@@ -20,9 +20,9 @@ static Input FaceTracker_inputs[] = {
   [ INPUT_GRAY] = { .type_label = "GRAY_buffer", .handler = gray_handler },
 };
 
-//enum { /* OUTPUT_... */ };
+enum { OUTPUT_POSITION };
 static Output FaceTracker_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
+  [ OUTPUT_POSITION ] = { .type_label = "Position_msg", .destination = 0L },
 };
 
 typedef struct {
@@ -50,7 +50,17 @@ static void gray_handler(Instance *pi, void *msg)
 {
   FaceTracker_private *priv = pi->data;
   Gray_buffer *gray = msg;
-  
+
+  /* Position message will contain 3D coordinate offset and 3D rotation offset. */
+
+  /* confirm previous measurements, and adjust with score */
+  /* Check for "wink" to reset position offsets to 0. */
+
+  /* find eyes, and angle */
+  /* find mouth */
+  /* find nose */
+  /* estimate skin tone? would require a color buffer */
+  /* measure visible face on sides of eyes */
   
 
   Gray_buffer_discard(gray);

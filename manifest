@@ -181,7 +181,7 @@ cairo-test-02.cmd
 cap.c
 cjbench.c
 ctest.c
-cti.c
+cti_app.c
 cx88-audio-video-oggfwd.cmd
 cx88-oggfwd.cmd
 cx88-qt.cmd
