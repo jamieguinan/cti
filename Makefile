@@ -1,5 +1,7 @@
 default: default1
 
+MAIN=main.o
+
 include ../platforms.make
 
 HOSTARCH=$(shell uname -m)-$(shell uname -s)
@@ -27,8 +29,6 @@ default1:  $(OBJDIR)/cti$(EXEEXT)
 
 #	@echo wd=$(shell pwd)
 #	@echo VPATH=$(VPATH)
-
-# For SDL.
 
 # Another app.
 OBJS= \
@@ -88,7 +88,8 @@ OBJS= \
 	$(OBJDIR)/Spawn.o \
 	$(OBJDIR)/XPlaneControl.o \
 	$(OBJDIR)/FaceTracker.o \
-	$(OBJDIR)/main.o \
+	$(OBJDIR)/cti_main.o \
+	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
 #	$(OBJDIR)/ScriptSession.o \
@@ -110,6 +111,13 @@ endif
 ifeq ($(ARCH),armeb)
 SDLLIBS=
 else
+
+ifeq ($(ARCH),i386-Darwin)
+MAIN=SDLMain.o
+OBJS+=$(OBJDIR)/sdl_main.o
+endif
+
+
 OBJS+=$(OBJDIR)/SDLstuff.o
 CPPFLAGS+=$$(sdl-config --cflags) -I/usr/include/GL
 LDFLAGS+=$$(sdl-config --libs) $$(pkg-config glu --libs)
@@ -190,6 +198,9 @@ $(OBJDIR)/%.o: %.c Makefile
 	@echo CC $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
+$(OBJDIR)/%.o: %.m Makefile
+	@echo CC $@
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -vf $(OBJDIR)/*.o  $(OBJDIR)/*.dep

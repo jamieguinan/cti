@@ -101,6 +101,8 @@ Range.c
 ResourceMonitor.c
 ResourceMonitor.h
 SDL.c
+SDLMain.h
+SDLMain.m
 SDLstuff.c
 SDLstuff.h
 ScriptSession.c
@@ -182,6 +184,7 @@ cap.c
 cjbench.c
 ctest.c
 cti_app.c
+cti_main.c
 cx88-audio-video-oggfwd.cmd
 cx88-oggfwd.cmd
 cx88-qt.cmd
@@ -229,6 +232,7 @@ logitech-oggfwd-01.cmd
 logitech.cmd
 ltsend.cmd
 main.c
+make-manifest
 manifest
 mjplay.c
 mjxplay.cmd
@@ -251,6 +255,7 @@ playback.cmd
 qt.cmd
 rsm1.cmd
 sample-broken-test.cmd
+sdl_main.c
 ss.cmd
 test.cmd
 topro.cmd
