@@ -19,13 +19,15 @@ static void Config_handler(Instance *pi, void *data);
 static void Y422P_handler(Instance *pi, void *data);
 static void RGB3_handler(Instance *pi, void *data);
 static void BGR3_handler(Instance *pi, void *data);
+static void GRAY_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3, INPUT_BGR3 };
+enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3, INPUT_BGR3, INPUT_GRAY };
 static Input SDLstuff_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = BGR3_handler },
+  [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = GRAY_handler },
 };
 
 enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG };
@@ -682,6 +684,48 @@ static void BGR3_handler(Instance *pi, void *data)
 
   if (bgr3) {
     BGR3_buffer_discard(bgr3);
+  }
+}
+
+
+static void GRAY_handler(Instance *pi, void *data)
+{
+  SDLstuff_private *priv = pi->data;
+  Gray_buffer *gray = data;
+
+  //handle_playback_timing(priv, &bgr3->tv);
+   
+  pre_render_frame(priv, gray->width, gray->height);
+  switch (priv->renderMode) {
+  case RENDER_MODE_GL: 
+    {
+      //RGB3_buffer *rgb3 = 0L;
+      /* FIXME: Do this efficiently...*/
+      //bgr3_to_rgb3(&bgr3, &rgb3);
+      //render_frame_gl(priv, rgb3);
+      //RGB3_buffer_discard(rgb3);
+    }
+    break;
+  case RENDER_MODE_OVERLAY: 
+    {
+      Y422P_buffer *y422p = Y422P_buffer_new(gray->width, gray->height);
+      memcpy(y422p->y, gray->data, gray->data_length);
+      memset(y422p->cb, 128, y422p->cb_length);
+      memset(y422p->cr, 128, y422p->cr_length);
+      render_frame_overlay(priv, y422p);
+      Y422P_buffer_discard(y422p);      
+    }
+    break;
+  case RENDER_MODE_SOFTWARE: 
+    {
+      // render_frame_software(priv, bgr3);
+    }
+    break;
+  }
+  post_render_frame(pi);  
+
+  if (gray) {
+    Gray_buffer_discard(gray);
   }
 }
 

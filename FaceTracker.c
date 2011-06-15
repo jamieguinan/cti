@@ -20,9 +20,10 @@ static Input FaceTracker_inputs[] = {
   [ INPUT_GRAY] = { .type_label = "GRAY_buffer", .handler = gray_handler },
 };
 
-enum { OUTPUT_POSITION };
+enum { OUTPUT_POSITION, OUTPUT_GRAY };
 static Output FaceTracker_outputs[] = {
   [ OUTPUT_POSITION ] = { .type_label = "Position_msg", .destination = 0L },
+  [ OUTPUT_GRAY ] = { .type_label = "GRAY_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -61,9 +62,15 @@ static void gray_handler(Instance *pi, void *msg)
   /* find nose */
   /* estimate skin tone? would require a color buffer */
   /* measure visible face on sides of eyes */
+
   
 
-  Gray_buffer_discard(gray);
+  if (pi->outputs[OUTPUT_GRAY].destination) {
+    PostData(gray, pi->outputs[OUTPUT_GRAY].destination);
+  }
+  else {
+    Gray_buffer_discard(gray);
+  }
 }
 
 

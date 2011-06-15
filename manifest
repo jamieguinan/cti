@@ -197,6 +197,7 @@ dvdgen_main.c
 example.c
 example.h
 extract.cmd
+facetracker01.cmd
 fyv-local-plain.cmd
 fyv-local.cmd
 fyv-www.cmd
