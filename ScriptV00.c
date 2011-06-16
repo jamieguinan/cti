@@ -136,41 +136,26 @@ static int set_input(Instance *pi, const char *value)
   const char *prompt = 0L;
   ScriptV00_private *priv = pi->data;
 
-  if (strlen(value) == 0) {
-    /* If "", use stdin. */
-    f = stdin;
-    priv->is_stdin = 1;
-    prompt = "cti> ";
+  if (strlen(value) != 0) {
+    priv->is_stdin = 0;
+    scan_file(priv, value);
   }
-  else {
-    f = fopen(value, "r");
-    if (!f) {
-      return -1;
-    }
-  }
+
+  /* Now switch to stdin. */
+  f = stdin;
+  priv->is_stdin = 1;
+  prompt = "cti> ";
 
   while (1) {
     char line[256];
     char *s;
     String *st;
 
-    if (prompt) {
-      fprintf(stdout, "%s", prompt); fflush(stdout);
-    }
+    fprintf(stdout, "%s", prompt); fflush(stdout);
 
     s = fgets(line, sizeof(line), f);
     if (!s) {
-      if (!priv->is_stdin) {
-	fclose(f);
-	f = stdin;
-	priv->is_stdin = 1;
-	prompt = "cti> ";
-	// fprintf(stdout, "%s", prompt); fflush(stdout);
-	continue;
-      }
-      else {
-	break;
-      }
+      break;
     }
 
     st = String_new(line);
