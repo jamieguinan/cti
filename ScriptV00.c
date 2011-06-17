@@ -102,18 +102,16 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
 }
 
 
-static void scan_file(ScriptV00_private *priv, const char *filename)
+static void scan_lines(ScriptV00_private *priv, FILE *f, const char *prompt)
 {
-  FILE *f;
-  f = fopen(filename, "r");
-  if (!f) {
-    return;
-  }
-
   while (1) {
     char line[256];
     char *s;
     String *st;
+
+    if (prompt) {
+      fprintf(stdout, "%s", prompt); fflush(stdout);
+    }
 
     s = fgets(line, sizeof(line), f);
     if (!s) {
@@ -125,6 +123,19 @@ static void scan_file(ScriptV00_private *priv, const char *filename)
 
     scan_line(priv, st, priv->is_stdin);
   }
+}
+
+
+static void scan_file(ScriptV00_private *priv, const char *filename)
+{
+  FILE *f;
+  f = fopen(filename, "r");
+  if (!f) {
+    return;
+  }
+
+  scan_lines(priv, f, NULL);
+
   fclose(f);
 }
 
@@ -146,23 +157,7 @@ static int set_input(Instance *pi, const char *value)
   priv->is_stdin = 1;
   prompt = "cti> ";
 
-  while (1) {
-    char line[256];
-    char *s;
-    String *st;
-
-    fprintf(stdout, "%s", prompt); fflush(stdout);
-
-    s = fgets(line, sizeof(line), f);
-    if (!s) {
-      break;
-    }
-
-    st = String_new(line);
-    String_trim_right(st);
-
-    scan_line(priv, st, priv->is_stdin);
-  }
+  scan_lines(priv, f, prompt);
 
   if (prompt) {
     fprintf(stdout, "\n");

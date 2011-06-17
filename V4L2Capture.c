@@ -83,7 +83,7 @@ typedef struct  {
   /* Capture buffers.  For many drivers, it is possible to queue more
      than 2 buffers, but I don't see much point.  If the system is too
      busy to schedule the dequeue-ing code, then maybe it is
-     underpowered for the application. */
+     underpowered for the application.  Well, I'll use 4... */
 #define NUM_BUFFERS 4
   struct {
     uint8_t *data;
