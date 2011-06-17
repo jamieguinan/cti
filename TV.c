@@ -207,8 +207,8 @@ static void Keycode_handler(Instance *pi, void *msg)
 	  priv->muted = 0;
 	}
       }
-      if (vol < range.u.ints.min) vol = range.u.ints.min;
-      else if (vol > range.u.ints.max) vol = range.u.ints.max;
+      if (vol < range.ints.min) vol = range.ints.min;
+      else if (vol > range.ints.max) vol = range.ints.max;
       sprintf(temp, "%d", vol);
       PostData(Config_buffer_new("volume", temp), pi->outputs[OUTPUT_MIXER_CONFIG].destination);
 
@@ -216,7 +216,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 	snprintf(temp, sizeof(temp), "MUTE");
       }
       else {
-	snprintf(temp, sizeof(temp), "VOL %d%%", (vol*100/range.u.ints.max));
+	snprintf(temp, sizeof(temp), "VOL %d%%", (vol*100/range.ints.max));
       }
       PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
     }

@@ -67,9 +67,9 @@ static void get_quality(Instance *pi, Value *v)
 
 static void get_quality_range(Instance *pi, Range *r)
 {
-  r->u.ints.min = 50;
-  r->u.ints.max = 100;
-  r->u.ints.step = 1;
+  r->ints.min = 50;
+  r->ints.max = 100;
+  r->ints.step = 1;
 }
 
 static Config config_table[] = {

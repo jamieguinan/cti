@@ -28,8 +28,6 @@ static void expand(char token[256])
   }
 }
 
-static void scan_file(ScriptV00_private *priv, const char *filename);
-
 static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
 {
   char token1[256], token2[256], token3[256], token4[256];
@@ -60,9 +58,6 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       printf("posting config message %s %s to %s\n", token2, token3, inst->label);
       PostData(c, &inst->inputs[0]);
     }
-  }
-  else if ((sscanf(line->bytes, "include %255s", token1) == 1)) {
-    scan_file(priv, token1);
   }
   else if ((strstr(line->bytes, "system ") == line->bytes)) {
     int rc = system(line->bytes + strlen("system "));
@@ -101,9 +96,26 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
 
 }
 
-
-static void scan_lines(ScriptV00_private *priv, FILE *f, const char *prompt)
+static int set_input(Instance *pi, const char *value)
 {
+  /* Note that this does NOT return until the input reaches EOF. */
+  FILE *f;
+  const char *prompt = 0L;
+  ScriptV00_private *priv = pi->data;
+
+  if (strlen(value) == 0) {
+    /* If "", use stdin. */
+    f = stdin;
+    priv->is_stdin = 1;
+    prompt = "cti> ";
+  }
+  else {
+    f = fopen(value, "r");
+    if (!f) {
+      return -1;
+    }
+  }
+
   while (1) {
     char line[256];
     char *s;
@@ -115,7 +127,17 @@ static void scan_lines(ScriptV00_private *priv, FILE *f, const char *prompt)
 
     s = fgets(line, sizeof(line), f);
     if (!s) {
-      break;
+      if (!priv->is_stdin) {
+	fclose(f);
+	f = stdin;
+	priv->is_stdin = 1;
+	prompt = "cti> ";
+	// fprintf(stdout, "%s", prompt); fflush(stdout);
+	continue;
+      }
+      else {
+	break;
+      }
     }
 
     st = String_new(line);
@@ -123,41 +145,6 @@ static void scan_lines(ScriptV00_private *priv, FILE *f, const char *prompt)
 
     scan_line(priv, st, priv->is_stdin);
   }
-}
-
-
-static void scan_file(ScriptV00_private *priv, const char *filename)
-{
-  FILE *f;
-  f = fopen(filename, "r");
-  if (!f) {
-    return;
-  }
-
-  scan_lines(priv, f, NULL);
-
-  fclose(f);
-}
-
-
-static int set_input(Instance *pi, const char *value)
-{
-  /* Note that this does NOT return until the input reaches EOF. */
-  FILE *f;
-  const char *prompt = 0L;
-  ScriptV00_private *priv = pi->data;
-
-  if (strlen(value) != 0) {
-    priv->is_stdin = 0;
-    scan_file(priv, value);
-  }
-
-  /* Now switch to stdin. */
-  f = stdin;
-  priv->is_stdin = 1;
-  prompt = "cti> ";
-
-  scan_lines(priv, f, prompt);
 
   if (prompt) {
     fprintf(stdout, "\n");

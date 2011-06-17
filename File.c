@@ -5,6 +5,7 @@
 ArrayU8 * File_load_data(const char *filename)
 {
   long len;
+  long n;
   FILE *f = fopen(filename, "rb");
 
   if (!f) {
@@ -18,8 +19,9 @@ ArrayU8 * File_load_data(const char *filename)
 
   ArrayU8 *a = ArrayU8_new();
   ArrayU8_extend(a, len);
-  if (fread(a->data, len, 1, f) != 1) {
-    perror("fread");
+  n = fread(a->data, 1, len, f);
+  if (n != len) {
+    fprintf(stderr, "warning: only read %ld of %ld expected bytes from %s\n", n, len, filename);
   }
 
   fclose(f);

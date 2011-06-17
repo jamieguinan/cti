@@ -176,7 +176,7 @@ $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJDIR)/cti_app.o
 	@echo LINK
 	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
-#	$(STRIP) $@
+	$(STRIP) $@
 
 
 $(OBJDIR)/mjplay$(EXEEXT): \

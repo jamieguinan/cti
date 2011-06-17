@@ -213,7 +213,7 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
   if (jpeg_out) {
     if (error) {
       Jpeg_buffer_discard(jpeg_out);
-      /* Caller should check for result being NULL. */
+      /* Caller should checl for result being NULL. */
       jpeg_out = 0L;
     }
     else {

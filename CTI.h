@@ -63,13 +63,6 @@ enum {
   RANGE_FLOATS,
 };
 
-
-/* FIXME: Use these structures, clean up big generic Range structure... */
-typedef struct {
-  String **values; int values_avail; int values_count;
-  String **descriptions;  int descriptions_avail; int descriptions_count;
-} StringRange;
-
 typedef struct {
   int min;
   int max;
@@ -84,35 +77,11 @@ typedef struct {
 
 typedef struct {
   int type;			/* One of the enum values just above. */
-  union { 
-    struct {
-      /* Q: Should these lists be pointers to List? */
-      //List values;
-      //char **values;		/* Dynamically allocated. */
-      //int values_max;
-      //int values_count;
-      //List descriptions;
-      //char **descriptions;	/* Should correspond 1:1 with "values". */
-      //int descriptions_max;
-      //int descriptions_count;
-    } strings;
-    struct {
-      int min;
-      int max;
-      int step;
-      int _default;
-    } ints;
-    struct {
-      float min;
-      float max;
-    } floats;
-  } u;
+  ISet(String) strings;
+  ISet(String) descriptions;
+  IntRange ints;
+  FloatRange floats;
 } Range;
-
-typedef struct {
-  const char *label;
-  Range *range;
-} Range_request;
 
 extern Range *Range_new(int type);
 extern int Range_match_substring(Range *r, const char *substr);
@@ -260,7 +229,7 @@ typedef struct {
 
 /* I admit C++ would do a better job at keeping code size down here.  On the
    other hand, data sets are typically huge by comparison, compilers might
-   be able to find and coalesce common code, and C++ much other baggage
+   be able to find and coalesce common code, and C++ has much other baggage
    that I'm happy to avoid. */
 #define ISet_add(iset, pitem) {  \
   if (iset.items == 0L) { \

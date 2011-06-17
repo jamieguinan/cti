@@ -83,7 +83,7 @@ typedef struct  {
   /* Capture buffers.  For many drivers, it is possible to queue more
      than 2 buffers, but I don't see much point.  If the system is too
      busy to schedule the dequeue-ing code, then maybe it is
-     underpowered for the application.  Well, I'll use 4... */
+     underpowered for the application. */
 #define NUM_BUFFERS 4
   struct {
     uint8_t *data;
@@ -103,21 +103,39 @@ typedef struct  {
 } V4L2Capture_private;
 
 
+static void get_device_range(Instance *pi, Range *range);
+
 static int set_device(Instance *pi, const char *value)
 {
   V4L2Capture_private *priv = pi->data;
   int rc = -1;
   struct v4l2_capability v4l2_caps = {};
   struct v4l2_tuner tuner = {};
+  int i;
 
   if (priv->devpath) {
     free(priv->devpath);
+    priv->devpath = NULL;
   }
-  priv->devpath = strdup(value);
 
   if (priv->fd != -1) {
     close(priv->fd);
     priv->fd = -1;
+  }
+  
+  /* Try matching by description first... */
+  Range available_v4l_devices = {};
+  get_device_range(pi, &available_v4l_devices);
+  for (i=0; i < available_v4l_devices.descriptions.count; i++) {
+    if (strstr(available_v4l_devices.descriptions.items[i]->bytes, value)) {
+      puts("found it!");
+      priv->devpath = strdup(available_v4l_devices.strings.items[i]->bytes);
+    }
+  }
+  
+  if (!priv->devpath) {
+    /* Not found, try value. */
+    priv->devpath = strdup(value);
   }
 
   priv->fd = open(priv->devpath, O_RDWR);
@@ -153,8 +171,6 @@ static int set_device(Instance *pi, const char *value)
     printf("  rangehigh=%x\n", tuner.rangehigh);
   }
 
-  fprintf(stderr, "card: %s\n", v4l2_caps.card);
-
   add_focus_control(priv->fd);
   add_led1_control(priv->fd);
 
@@ -165,14 +181,13 @@ static int set_device(Instance *pi, const char *value)
 
 static void get_device_range(Instance *pi, Range *range)
 {
-#if 0
   /* Return list of "/dev/video*" and correspoding names from /sys. */
 
   DIR *d;
   struct dirent *de;
   // V4L2Capture_private *priv = pi->data;
 
-  Range *r = Range_new(RANGE_STRINGS);
+  range->type = RANGE_STRINGS;
 
   d = opendir("/dev");
 
@@ -190,21 +205,19 @@ static void get_device_range(Instance *pi, Range *range)
       String_cat1(s, de->d_name);
       //String_list_append(&r->x.strings.values, &s);
 
-      s = String_new("");
-      String_cat3(s, "/sys/class/video4linux/", de->d_name, "/name");
-
-      String *desc = File_load_text(s->bytes);
-      String_free(&s);
+      String *s2 = String_new("");
+      String_cat3(s2, "/sys/class/video4linux/", de->d_name, "/name");
+      String *desc = File_load_text(s2->bytes);
+      String_free(&s2);
       
       String_trim_right(desc);
 
-      //String_list_append(&r->x.strings.descriptions, &desc);
+      printf("%s\n", desc->bytes);
+
+      ISet_add(range->strings, s); s = NULL;		/* ISet takes ownership. */
+      ISet_add(range->descriptions, desc); desc = NULL;		/* ISet takes ownership. */
     }
   }
-
-  *range = r;
-#endif
-
 }
 
 static int set_input(Instance *pi, const char *value)

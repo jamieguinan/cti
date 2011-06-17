@@ -207,10 +207,10 @@ static void get_volume_range(Instance *pi, Range *range)
   
   snd_mixer_selem_get_playback_volume_range(elem, &vmin, &vmax);
   range->type = RANGE_INTS;
-  range->u.ints.min = vmin;
-  range->u.ints.max = vmax;
-  range->u.ints.step = 1;
-  range->u.ints._default = 0;
+  range->ints.min = vmin;
+  range->ints.max = vmax;
+  range->ints.step = 1;
+  range->ints._default = 0;
 }
 
 
