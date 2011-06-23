@@ -31,15 +31,10 @@ Range *Range_new(int type)
 }
 
 
-void Range_free(Range **r)
+void Range_free(Range *range)
 {
-  Range *r1 = *r;
-  if (r1) {
-    if (r1->type == RANGE_STRINGS) {
-      //List_free(&r1->x.strings.values);
-      //List_free(&r1->x.strings.descriptions);
-    }
-    Mem_free(r1);
-  }
-  *r = 0L;
+  ISet_clear(range->strings);
+  ISet_clear(range->descriptions);
+  memset(range, 0, sizeof(*range));
 }
+

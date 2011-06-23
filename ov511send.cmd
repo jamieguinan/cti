@@ -14,7 +14,7 @@ config mjm output 192.168.2.20:5000
 # Bad performance at 64, 128.  256 seems Ok.
 #config ac frames_per_io 64
 
-config vc device /dev/video1
+config vc device gspca
 config vc format O511
 config vc size 640x480
 

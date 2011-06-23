@@ -14,7 +14,7 @@ config y4mout fps_denom 1
 config y4mout output |ffmpeg2theora - -V 100 --soft-target -o /dev/stdout 2> /dev/null | pipebench -b 8000 | oggfwd localhost 8000 hackme /tv
 # 
 
-config vc device /dev/video0
+config vc device cx88
 config vc format BGR3
 config vc size 640x480
 config vc input Television

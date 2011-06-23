@@ -7,7 +7,7 @@ connect do511 RGB3_buffer sdl
 
 config sdl label Back Door
 
-config vc device /dev/video2
+config vc device gspca
 config vc format O511
 config vc size 640x480
 config vc contrast 200

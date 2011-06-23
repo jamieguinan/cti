@@ -30,6 +30,7 @@ typedef struct {
 //};
 
 
+#if 0
 static void junk(O511_buffer *o511_in, Y420P_buffer *y420p_out)
 {
   {
@@ -63,7 +64,7 @@ static void junk(O511_buffer *o511_in, Y420P_buffer *y420p_out)
     }
   }
 }
-
+#endif
 
 /* From libv4l-0.6.4/libv4lconvert/ov511-decomp.c:
    Remove all 0 blocks from input */

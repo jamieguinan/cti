@@ -11,6 +11,7 @@
 #include "CTI.h"
 #include "Images.h"
 #include "Cfg.h"
+#include "Keycodes.h"
 
 #define _min(a, b)  ((a) < (b) ? (a) : (b))
 #define _max(a, b)  ((a) > (b) ? (a) : (b))
@@ -30,10 +31,11 @@ static Input SDLstuff_inputs[] = {
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = GRAY_handler },
 };
 
-enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG };
+enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG, OUTPUT_KEYCODE };
 static Output SDLstuff_outputs[] = {
   [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
+  [ OUTPUT_KEYCODE ] = { .type_label = "Keycode_msg", .destination = 0L },
 };
 
 enum { RENDER_MODE_GL, RENDER_MODE_OVERLAY, RENDER_MODE_SOFTWARE };
@@ -699,11 +701,16 @@ static void GRAY_handler(Instance *pi, void *data)
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
-      //RGB3_buffer *rgb3 = 0L;
+      RGB3_buffer *rgb3 = RGB3_buffer_new(gray->width, gray->height);
+      int i;
+      int j = 0;
       /* FIXME: Do this efficiently...*/
-      //bgr3_to_rgb3(&bgr3, &rgb3);
-      //render_frame_gl(priv, rgb3);
-      //RGB3_buffer_discard(rgb3);
+      for (i=0; i < gray->width*gray->height; i++) {
+	rgb3->data[j] = rgb3->data[j+1] = rgb3->data[j+2] = gray->data[i];
+	j += 3;
+      }
+      render_frame_gl(priv, rgb3);
+      RGB3_buffer_discard(rgb3);
     }
     break;
   case RENDER_MODE_OVERLAY: 
@@ -718,7 +725,16 @@ static void GRAY_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_SOFTWARE: 
     {
-      // render_frame_software(priv, bgr3);
+      BGR3_buffer *bgr3 = BGR3_buffer_new(gray->width, gray->height);
+      int i;
+      int j = 0;
+      /* FIXME: Do this efficiently...*/
+      for (i=0; i < gray->width*gray->height; i++) {
+	bgr3->data[j] = bgr3->data[j+1] = bgr3->data[j+2] = gray->data[i];
+	j += 3;
+      }
+      render_frame_software(priv, bgr3);
+      BGR3_buffer_discard(bgr3);
     }
     break;
   }
@@ -784,6 +800,13 @@ static int my_event_loop(void *data)
 	  sprintf(numstr, "%ld", priv->seek_amount);
 	  fprintf(stderr, "seek forward %ld\n", priv->seek_amount);	  
 	  PostData(Config_buffer_new("seek", numstr), pi->outputs[OUTPUT_CONFIG].destination);
+	}
+	break;
+
+      case SDLK_s:
+	if (pi->outputs[OUTPUT_KEYCODE].destination) {
+	  PostData(Keycode_message_new(CTI__KEY_S),
+		   pi->outputs[OUTPUT_KEYCODE].destination);
 	}
 	break;
 

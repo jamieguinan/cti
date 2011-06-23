@@ -8,6 +8,8 @@
 #include "Mem.h"
 #include "String.h"
 
+#include <string.h> /* memset */
+
 typedef struct _hash_node {
   struct _hash_node *left;
   struct _hash_node *right;
@@ -178,4 +180,28 @@ void Index_analyze(Index *idx)
 
   printf("max depth=%d, %d left nodes, %d right nodes, %d collisions\n", 
 	 maxDepth, leftNodes, rightNodes, idx->collisions);
+}
+
+static void clear_nodes(Index_node *p)
+{
+  if (p->left) {
+    clear_nodes(p->left);
+  }
+  if (p->right) {
+    clear_nodes(p->right);
+  }
+  if (p->keyStr) {
+    String_free(&p->keyStr);
+  }
+  memset(p, 0, sizeof(*p));
+  Mem_free(p);
+}
+
+void Index_clear(Index **_idx)
+{
+  Index *idx = *_idx;
+  Index_node *p = idx->_nodes;
+  clear_nodes(p);
+  Mem_free(idx);
+  *_idx = NULL;
 }

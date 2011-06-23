@@ -13,7 +13,7 @@ config ac channels 2
 config ac format signed.16-bit.little.endian
 config ac enable 1
 
-config vc device /dev/video0
+config vc device cx88
 config vc format BGR3
 config vc size 640x480
 config vc input Television

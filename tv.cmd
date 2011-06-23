@@ -3,7 +3,7 @@ new SDLstuff sdl
 #new ALSACapture ac
 connect vc BGR3_buffer sdl
 #connect ac Wav_buffer mjm
-config vc device /dev/video0
+config vc device cx88
 config vc format BGR3
 config vc size 640x480
 config vc input Television

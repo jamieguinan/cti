@@ -53,8 +53,6 @@ typedef struct {
   Input *destination;		/* Pointer to an Input. */
 } Output;
 
-struct _Instance;
-
 /* Range, set of values that a config item can take. */
 enum { 
   RANGE_UNKNOWN=0, 	/* default for unset */
@@ -85,7 +83,7 @@ typedef struct {
 
 extern Range *Range_new(int type);
 extern int Range_match_substring(Range *r, const char *substr);
-extern void Range_free(Range **r);
+extern void Range_free(Range *r);
 
 typedef struct {
   int type;
@@ -145,7 +143,6 @@ typedef struct _Instance {
   int state;
   int counter;			/* Update in tick function. */
 
-  int pending_messages;		/* FIXME: get rid of this. */
   WaitLock notification_lock;
 
   Lock inputs_lock;		
@@ -154,6 +151,7 @@ typedef struct _Instance {
 
   Handler_message *msg_first;
   Handler_message *msg_last;
+  int pending_messages;		/* FIXME: get rid of this? */
 } Instance;
 
 extern void Connect(Instance *from, const char *label, Instance *to);
@@ -254,6 +252,13 @@ typedef struct {
   iset.count -= 1; \
   memmove(iset.items, &iset.items[1], iset.count * sizeof(iset.items[0])); \
   iset.items[iset.count] = 0; \
+}
+
+#define ISet_clear(iset) { \
+  if (iset.items) Mem_free(iset.items); \
+  if (iset.index) Index_clear(&iset.index);	\
+  memset(&iset, 0, sizeof(iset));	\
+  /* FIXME: Clear the index! */ \
 }
 
 extern InstanceGroup *InstanceGroup_new(void);

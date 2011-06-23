@@ -47,6 +47,12 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
+static void analysis_00(FaceTracker_private *priv, Gray_buffer *gray)
+{
+  
+}
+
+
 static void gray_handler(Instance *pi, void *msg)
 {
   FaceTracker_private *priv = pi->data;
@@ -63,6 +69,7 @@ static void gray_handler(Instance *pi, void *msg)
   /* estimate skin tone? would require a color buffer */
   /* measure visible face on sides of eyes */
 
+  analysis_00(priv, gray);
   
 
   if (pi->outputs[OUTPUT_GRAY].destination) {

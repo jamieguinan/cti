@@ -95,19 +95,20 @@ static void Jpeg_handler(Instance *pi, void *data)
 {
   MjpegMux_private *priv = pi->data;  
   Jpeg_buffer *jpeg_in = data;
-  
+
   priv->seq += 1;
 
-  if (priv->seq % priv->every != 0) {
+  if (priv->every && (priv->seq % priv->every != 0)) {
     goto out;
   }
-  
+
   String *header = String_sprintf(part_format,
 				  BOUNDARY,
 				  "image/jpeg",
 				  jpeg_in->tv.tv_sec, jpeg_in->tv.tv_usec,
 				  "",
 				  jpeg_in->encoded_length);
+
 
   if (priv->sink) {
     /* Format header. */

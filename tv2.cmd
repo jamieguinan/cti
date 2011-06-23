@@ -58,7 +58,7 @@ config tv skip_channel 14
 config tv skip_channel 34
 config tv skip_channel 63
 
-config vc device /dev/video0
+config vc device cx88
 config vc format BGR3
 config vc size 640x480
 config vc input Television

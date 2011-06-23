@@ -182,6 +182,7 @@ cairo-test-01.cmd
 cairo-test-02.cmd
 cap.c
 cjbench.c
+clock.cmd
 ctest.c
 cti_app.c
 cti_main.c
@@ -230,6 +231,7 @@ locks.h
 logitech-cairo-01.cmd
 logitech-h264-ts.cmd
 logitech-oggfwd-01.cmd
+logitech-yuyv.cmd
 logitech.cmd
 ltsend.cmd
 main.c
@@ -269,6 +271,7 @@ uvc_compat.h
 uvcvideo.h
 v4l-bad-channel.cmd
 v4ltonull.cmd
+vtest.cmd
 wrmem.c
 wrmem.h
 x.cmd

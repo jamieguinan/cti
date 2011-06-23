@@ -23,7 +23,7 @@ connect vc BGR3_buffer qto
 #config ap format signed.16-bit.little.endian
 #config ap enable 1
 
-config vc device /dev/video0
+config vc device cx88
 config vc format BGR3
 config vc size 640x480
 config vc input Television

@@ -32,15 +32,18 @@
 #include "Log.h"
 #include "Cfg.h"
 #include "Uvc.h"		/* Special code for UVC devices. */
+#include "Keycodes.h"
 
 static void Config_handler(Instance *pi, void *data);
+static void Keycode_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG };
+enum { INPUT_CONFIG, INPUT_KEYCODE };
 static Input V4L2Capture_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_422P, OUTPUT_JPEG, OUTPUT_O511, OUTPUT_H264 };
+enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_422P, OUTPUT_JPEG, OUTPUT_O511, OUTPUT_H264, OUTPUT_GRAY };
 static Output V4L2Capture_outputs[] = {
   [ OUTPUT_BGR3 ] = { .type_label = "BGR3_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
@@ -48,6 +51,7 @@ static Output V4L2Capture_outputs[] = {
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_O511 ] = { .type_label = "O511_buffer", .destination = 0L },
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
+  [ OUTPUT_GRAY ] = { .type_label = "GRAY_buffer", .destination = 0L },
 };
 
 typedef struct  {
@@ -132,6 +136,8 @@ static int set_device(Instance *pi, const char *value)
       priv->devpath = strdup(available_v4l_devices.strings.items[i]->bytes);
     }
   }
+
+  Range_free(&available_v4l_devices);
   
   if (!priv->devpath) {
     /* Not found, try value. */
@@ -200,6 +206,7 @@ static void get_device_range(Instance *pi, Range *range)
     if (strncmp(de->d_name, "video", strlen("video")) == 0
 	&& isdigit(de->d_name[strlen("video")])) {
       String *s;
+      String *desc;
 
       s = String_new("/dev/");
       String_cat1(s, de->d_name);
@@ -207,7 +214,7 @@ static void get_device_range(Instance *pi, Range *range)
 
       String *s2 = String_new("");
       String_cat3(s2, "/sys/class/video4linux/", de->d_name, "/name");
-      String *desc = File_load_text(s2->bytes);
+      desc = File_load_text(s2->bytes);
       String_free(&s2);
       
       String_trim_right(desc);
@@ -1040,6 +1047,18 @@ static void Config_handler(Instance *pi, void *data)
   Config_buffer_discard(&cb_in);
 }
 
+static void Keycode_handler(Instance *pi, void *msg)
+{
+  V4L2Capture_private *priv = pi->data;
+  Keycode_message *km = msg;
+  
+  if (km->keycode == CTI__KEY_S) {
+    priv->snapshot += 1;
+  }
+
+  Keycode_message_cleanup(&km);
+}
+
 static double period = 0.0;
 static int count = 0;
 static struct timeval tv_last = { };
@@ -1067,6 +1086,52 @@ static void calc_fps(struct timeval *tv)
 
  out:
   tv_last = *tv;
+}
+
+
+static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
+{
+  /* NOTE: These typically don't include the default huffman tables. */
+  V4L2Capture_private *priv = pi->data;
+  FILE *f;
+  char filename[64];
+  sprintf(filename, "snap%04d.jpg", pi->counter);
+  fprintf(stderr, "%s\n", filename);
+  f = fopen(filename, "wb");
+  if (f) {
+    if (fwrite(j->data, j->encoded_length, 1, f) != 1) { perror("fwrite"); }
+    fclose(f);
+  }
+  priv->snapshot -= 1;	  
+}
+
+
+static void bgr3_snapshot(Instance *pi, BGR3_buffer *bgr3)
+{
+  V4L2Capture_private *priv = pi->data;
+  FILE *f;
+  char filename[64];
+  sprintf(filename, "snap%04d.ppm", pi->counter);
+  f = fopen(filename, "wb");
+  if (f) {
+    int x, y;
+    fprintf(f, "P6\n%d %d\n255\n", bgr3->width, bgr3->height);
+    for (y=0; y < bgr3->height; y++) {
+      uint8_t *src = bgr3->data + y*bgr3->width*3;
+      uint8_t line[bgr3->width*3];
+      uint8_t *dst = &line[0];
+      for (x=0; x < bgr3->width; x++) {
+	dst[0] = src[2];
+	dst[1] = src[1];
+	dst[2] = src[0];
+	dst += 3;
+	src += 3;
+      }
+      if (fwrite(bgr3->data, bgr3->width*3, 1, f) != 1) { perror("fwrite"); }
+    }
+    fclose(f);
+  }
+  priv->snapshot -= 1;	  
 }
 
 
@@ -1152,7 +1217,6 @@ static void V4L2Capture_tick(Instance *pi)
       printf("status: 0x%08x\n", input.status);
     }
   }
-  
 
   /* Process if needed.  Maybe keep minimal, do processing in other Instances...*/
 
@@ -1163,6 +1227,9 @@ static void V4L2Capture_tick(Instance *pi)
   else if (streq(priv->format, "BGR3")) {
     BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height);
     memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
+    if (priv->snapshot > 0) {
+      bgr3_snapshot(pi, bgr3);
+    }
     if (pi->outputs[OUTPUT_BGR3].destination) {
       PostData(bgr3, pi->outputs[OUTPUT_BGR3].destination);
     }
@@ -1202,15 +1269,7 @@ static void V4L2Capture_tick(Instance *pi)
       }
       else {
 	if (priv->snapshot > 0) {
-	  FILE *f;
-	  char filename[64];
-	  sprintf(filename, "snap%04d.jpg", pi->counter);
-	  f = fopen(filename, "wb");
-	  if (f) {
-	    if (fwrite(j->data, j->encoded_length, 1, f) != 1) { perror("fwrite"); }
-	    fclose(f);
-	  }
-	  priv->snapshot -= 1;	  
+	  jpeg_snapshot(pi, j);
 	}
 	PostData(j, pi->outputs[OUTPUT_JPEG].destination);
       }
@@ -1230,6 +1289,48 @@ static void V4L2Capture_tick(Instance *pi)
       else {
 	PostData(o, pi->outputs[OUTPUT_O511].destination);
       }
+    }
+  }
+  else if (streq(priv->format, "YUYV")) {
+    if (30 == pi->counter) {
+      printf("YUYV frame number 30\n");
+      FILE *f = fopen("yuyv.out", "wb");
+      if (fwrite(priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused, 1, f) != 1) {
+	perror("fwrite");
+      }
+      fclose(f);
+    }
+
+    if (priv->vbuffer.bytesused != priv->width*priv->height*2) {
+      fprintf(stderr, "%s: YUYV buffer is not the expected size!\n", __func__);
+    }
+
+    if (pi->outputs[OUTPUT_422P].destination) {
+      int i;
+      int iy = 0;
+      int icr = 0;
+      int icb = 0;
+      uint8_t *p = priv->buffers[priv->wait_on].data;
+      Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height);
+      gettimeofday(&y422p->tv, NULL);
+      for (i=0; i < priv->vbuffer.bytesused/4; i++) {
+	y422p->y[iy++] = *p++;
+	y422p->cb[icb++] = *p++;
+	y422p->y[iy++] = *p++;
+	y422p->cr[icr++] = *p++;
+      }
+      PostData(y422p, pi->outputs[OUTPUT_422P].destination);
+    }
+
+
+    if (pi->outputs[OUTPUT_GRAY].destination) {
+      int i = 0;
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height);
+      /* Every 2nd pixel will be a gray value. */
+      for (i=0; i < priv->vbuffer.bytesused/2; i++) {
+	g->data[i] = priv->buffers[priv->wait_on].data[i*2];
+      }
+      PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
   else {

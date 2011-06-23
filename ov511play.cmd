@@ -5,7 +5,7 @@ new DO511 do511
 connect vc O511_buffer do511
 connect do511 RGB3_buffer sdl
 
-config vc device /dev/video2
+config vc device gspca
 config vc format O511
 config vc size 640x480
 config vc contrast 200

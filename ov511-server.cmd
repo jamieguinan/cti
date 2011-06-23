@@ -8,7 +8,7 @@ connect mjm RawData_buffer ss
 config ss v4port 6666
 config ss enable 1
 
-config vc device /dev/video2
+config vc device gspca
 config vc format O511
 config vc size 640x480
 #config vc fps 15

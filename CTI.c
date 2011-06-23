@@ -362,7 +362,7 @@ void Connect(Instance *from, const char *label, Instance *to)
   }
 
   if (from_index == -1) {
-    fprintf(stderr, "Instance does not have an output labelled '%s'\n", label);
+    fprintf(stderr, "Instance of %s does not have an output labelled '%s'\n", from->label, label);
     fflush(stderr);
     exit(1);
     return;
@@ -376,7 +376,7 @@ void Connect(Instance *from, const char *label, Instance *to)
   }
 
   if (to_index == -1) {
-    fprintf(stderr, "Instance does not have an input labelled '%s'\n", label);
+    fprintf(stderr, "Instance of %s does not have an input labelled '%s'\n", to->label, label);
     exit(1);
     return;
   }
@@ -405,7 +405,7 @@ void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *t
   }
 
   if (from_index == -1) {
-    fprintf(stderr, "Instance does not have an output labelled '%s'\n", fromlabel);
+    fprintf(stderr, "Instance of %s does not have an output labelled '%s'\n", from->label, fromlabel);
     fflush(stderr);
     exit(1);
     return;
@@ -419,7 +419,7 @@ void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *t
   }
 
   if (to_index == -1) {
-    fprintf(stderr, "Instance does not have an input labelled '%s'\n", tolabel);
+    fprintf(stderr, "Instance of %s does not have an input labelled '%s'\n", to->label, tolabel);
     exit(1);
     return;
   }
