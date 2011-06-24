@@ -37,6 +37,7 @@ typedef struct {
   /* Jpeg decode context... */
   int use_green_for_gray;
   int sampling_warned;
+  int max_messages;
 } 
 DJpeg_private;
 
@@ -73,6 +74,13 @@ static void jerr_error_handler(j_common_ptr cinfo)
 }
 
 
+static int set_max_messages(Instance *pi, const char *value)
+{
+  DJpeg_private *priv = pi->data;
+  priv->max_messages = atoi(value);
+  return 0;
+}
+
 static int do_quit(Instance *pi, const char *value)
 {
   exit(0);
@@ -81,6 +89,7 @@ static int do_quit(Instance *pi, const char *value)
 
 
 static Config config_table[] = {
+  { "max_messages", set_max_messages, 0L, 0L},
   { "quit",    do_quit, 0L, 0L },
 };
 
@@ -99,6 +108,12 @@ static void Jpeg_handler(Instance *pi, void *data)
   int save_height = 0;
   Jpeg_buffer *jpeg_in = data;
   int gray_handled = 0;
+
+  if (priv->max_messages && pi->pending_messages > priv->max_messages) {
+    /* Skip without decoding. */
+    fprintf(stderr, "DJpeg skipping %d\n", pi->counter);
+    goto out;
+  }
 
   gettimeofday(&t1, 0L);
 
@@ -355,6 +370,8 @@ static void Jpeg_handler(Instance *pi, void *data)
     jpeg_destroy_decompress(&cinfo);
   }
 
+
+ out:
   /* Discard input buffer. */
   Jpeg_buffer_discard(jpeg_in);
   pi->counter += 1;

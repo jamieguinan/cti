@@ -52,6 +52,7 @@
 #include "LibDV.h"
 #include "Spawn.h"
 #include "FaceTracker.h"
+#include "UI001.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -106,6 +107,7 @@ int cti_main(int argc, char *argv[])
   ResourceMonitor_init();
   TV_init();
   FaceTracker_init();
+  UI001_init();
   //ScriptSession_init();
 
   return app_code(argc, argv);

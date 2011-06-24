@@ -70,7 +70,6 @@ static void gray_handler(Instance *pi, void *msg)
   /* measure visible face on sides of eyes */
 
   analysis_00(priv, gray);
-  
 
   if (pi->outputs[OUTPUT_GRAY].destination) {
     PostData(gray, pi->outputs[OUTPUT_GRAY].destination);

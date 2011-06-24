@@ -88,6 +88,7 @@ OBJS= \
 	$(OBJDIR)/Spawn.o \
 	$(OBJDIR)/XPlaneControl.o \
 	$(OBJDIR)/FaceTracker.o \
+	$(OBJDIR)/UI001.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o

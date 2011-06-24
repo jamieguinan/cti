@@ -772,6 +772,13 @@ static int my_event_loop(void *data)
       hm->handler(pi, hm->data);
       ReleaseMessage(&hm);
     }
+    else if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
+      printf("button %d, state %d, (%d, %d)\n", 
+	     ev.button.button,
+	     ev.button.state,
+	     ev.button.x,
+	     ev.button.y);
+    }
     else if (ev.type == SDL_KEYUP) {
       /* FIXME:  All these key events should really be passing generic CTI__KEY messages to 
 	 [OUTPUT_CONFIG].destination, instead of doing calculations in here. */
@@ -803,15 +810,15 @@ static int my_event_loop(void *data)
 	}
 	break;
 
-      case SDLK_s:
-	if (pi->outputs[OUTPUT_KEYCODE].destination) {
-	  PostData(Keycode_message_new(CTI__KEY_S),
-		   pi->outputs[OUTPUT_KEYCODE].destination);
-	}
-	break;
-
       default: 
-	break;
+	/* Handle ranges here. */
+	if (SDLK_a <= ev.key.keysym.sym && ev.key.keysym.sym <= SDLK_z) {
+	  if (pi->outputs[OUTPUT_KEYCODE].destination) {
+	    PostData(Keycode_message_new((ev.key.keysym.sym - SDLK_a) + CTI__KEY_A),
+		     pi->outputs[OUTPUT_KEYCODE].destination);
+	  }
+	  break;
+	}
       }
     }
     else if (ev.type == SDL_QUIT) {
