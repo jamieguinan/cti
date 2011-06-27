@@ -6,23 +6,129 @@
 #include "UI001.h"
 
 static void Config_handler(Instance *pi, void *msg);
+static void pointer_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG };
+enum { INPUT_CONFIG, INPUT_POINTER };
 static Input UI001_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_POINTER ] = { .type_label = "Pointer_msg", .handler = pointer_handler },
 };
 
-//enum { /* OUTPUT_... */ };
+enum { OUTPUT_CAIRO_CONFIG };
 static Output UI001_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
+  [ OUTPUT_CAIRO_CONFIG] = { .type_label = "Cairo_Config_msg", .destination = 0L },
 };
+
+enum { UI_BUTTON };
+typedef struct {
+  int type;
+  int x, y;
+  unsigned int width, height;
+  String *text;
+  uint32_t fgcolor;
+  uint32_t bgcolor;
+  uint32_t border;
+} UIWidget;
 
 typedef struct {
-  // int ...;
+  ISet(UIWidget) widgets;
+  int down_flag, down_x, down_y;
 } UI001_private;
 
+
+enum { PARSING_KEY, PARSING_VALUE };
+
+static void set_kv(UIWidget *w, const char *key, const char *value, const char *endp)
+{
+  int key_len = value - key - 1;
+  int value_len = endp - value;
+  char key_init[key_len+1];
+  char value_init[value_len+1];
+
+  strncpy(key_init, key, key_len); key_init[key_len] = 0;
+  strncpy(value_init, value, value_len); value_init[value_len] = 0;
+
+  if (streq(key_init, "text")) {
+    if (w->text) {
+      String_free(&w->text);
+    }
+    w->text = String_new(value_init);
+    fprintf(stderr, "text set to %s\n", value_init);
+  }
+  else if (streq(key_init, "width")) {
+    w->width = strtoul(value_init, NULL, 0);
+    fprintf(stderr, "width set to %d\n", w->width);
+  }
+  else if (streq(key_init, "height")) {
+    w->height = strtoul(value_init, NULL, 0);
+    fprintf(stderr, "height set to %d\n", w->height);
+  }
+  else if (streq(key_init, "fgcolor")) {
+    w->fgcolor = strtoul(value_init, NULL, 0);
+    fprintf(stderr, "fgcolor set to %d\n", w->fgcolor);
+  }
+  else if (streq(key_init, "bgcolor")) {
+    w->bgcolor = strtoul(value_init, NULL, 0);
+    fprintf(stderr, "bgcolor set to %d\n", w->bgcolor);
+  }
+  else if (streq(key_init, "border")) {
+    w->border = strtoul(value_init, NULL, 0);
+    fprintf(stderr, "border set to %d\n", w->border);
+  }
+}
+
+
+static int add_button(Instance *pi, const char *init)
+{
+  UI001_private *priv = pi->data;
+  UIWidget *w = Mem_calloc(1, sizeof(*w));
+  const char *key = NULL;
+  const char *value = NULL;
+  const char *p;
+  int state = PARSING_KEY;
+
+  w->type = UI_BUTTON;
+
+  /* Assign non-zero defaults. */
+  w->fgcolor = 0x808080;
+  w->width = 40;
+  w->height = 30;
+  
+  p = key = init;
+  while (*p) {
+    if (state == PARSING_KEY) {
+      if (*p == '=') {
+	value = p+1;
+	state = PARSING_VALUE;
+      }	
+    }
+    else if (state == PARSING_VALUE) {
+      if (*p == ';') {
+	state = PARSING_KEY;
+	set_kv(w, key, value, p);
+	key = p+1;
+	value = NULL;
+      }	
+    }
+    p++;
+  }
+
+  if (key && value) {
+    set_kv(w, key, value, p);
+  }
+
+  ISet_add(priv->widgets, w);
+  return 0;
+}
+
+
+static void pointer_handler(Instance *pi, void *msg)
+{
+}
+
+
 static Config config_table[] = {
-  // { "...",    set_..., get_..., get_..._range },
+  { "add_button",  add_button,  0L, 0L },
 };
 
 

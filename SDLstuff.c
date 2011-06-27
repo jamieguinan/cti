@@ -31,11 +31,12 @@ static Input SDLstuff_inputs[] = {
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = GRAY_handler },
 };
 
-enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG, OUTPUT_KEYCODE };
+enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG, OUTPUT_KEYCODE, OUTPUT_POINTER };
 static Output SDLstuff_outputs[] = {
   [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
   [ OUTPUT_KEYCODE ] = { .type_label = "Keycode_msg", .destination = 0L },
+  [ OUTPUT_POINTER ] = { .type_label = "Pointer_msg", .destination = 0L },
 };
 
 enum { RENDER_MODE_GL, RENDER_MODE_OVERLAY, RENDER_MODE_SOFTWARE };

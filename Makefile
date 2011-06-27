@@ -153,8 +153,8 @@ endif
 # Quicktime
 ifneq ($(ARCH),armeb)
 OBJS+=$(OBJDIR)/LibQuickTimeOutput.o
-CPPFLAGS+=$$(lqt-config --cflags)
-LDFLAGS+=$$(lqt-config --libs)
+CPPFLAGS+=$$(pkg-config libquicktime --cflags)
+LDFLAGS+=$$(pkg-config libquicktime --libs)
 endif
 
 # Ogg
