@@ -141,6 +141,7 @@ Wav_buffer *Wav_buffer_from(unsigned char *src_bytes, int src_length)
 
   /* Copy header. */
   memcpy(buffer->header, src_bytes, 44);  
+  buffer->header_length = 44;
 
   /* Copy data. */
   buffer->data = Mem_malloc(wav_data_length);

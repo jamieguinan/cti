@@ -110,7 +110,7 @@ void Sink_write(Sink *sink, void *data, int length)
   if (priv->f) {
     n = fwrite(data, length, 1, priv->f);
     if (n != 1) {
-      perror("fwrite");
+      fprintf(stderr, "fwrite wrote %d/%d bytes\n", n, length);
     }
   }
   else if (priv->p) {

@@ -11,6 +11,7 @@
 #include "String.h"
 #include "Mem.h"
 #include "Cfg.h"
+#include "File.h"
 
 int asize1;
 
@@ -40,6 +41,8 @@ static Output ALSACapture_outputs[] = {
 };
 
 
+#if 0
+/* FIXME: Use these when ready. */
 static int rates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 96000, 192000 };
 
 static int channels[] = { 
@@ -49,6 +52,7 @@ static int channels[] = {
   6,				/* 5.1 */
   12,				/* envy24 output (note: input is 10 channels) */
 };
+#endif
 
 static struct {
   const char *label;
@@ -87,10 +91,14 @@ typedef struct {
 } ALSAio_private;
 
 
+static void get_device_range(Instance *pi, Range *range);
+
+
 static int set_device(Instance *pi, const char *value)
 {
   ALSAio_private *priv = pi->data;
   int rc = 0;
+  int i;
 
   if (priv->device) {
     free(priv->device);
@@ -99,6 +107,24 @@ static int set_device(Instance *pi, const char *value)
 
   if (priv->handle) {
     snd_pcm_close(priv->handle);
+  }
+
+  /* Try matching by description first... */
+  Range available_alsa_devices = {};
+  get_device_range(pi, &available_alsa_devices);
+  for (i=0; i < available_alsa_devices.descriptions.count; i++) {
+    if (strstr(available_alsa_devices.descriptions.items[i]->bytes, value)) {
+      puts("found it!");
+      priv->device = strdup(available_alsa_devices.strings.items[i]->bytes);
+      break;
+    }
+  }
+
+  Range_free(&available_alsa_devices);
+
+  if (!priv->device) {
+    /* Not found, try value as supplied. */
+    priv->device = strdup(value);
   }
   
   rc = snd_pcm_open(&priv->handle, priv->device, priv->mode, 0);
@@ -130,12 +156,10 @@ static int set_device(Instance *pi, const char *value)
 
 static void get_device_range(Instance *pi, Range *range)
 {
-#if 0
   DIR *d;
   struct dirent *de;
 
-  Range *r = Range_new(RANGE_STRINGS);
-  // range->strings.num_strs = 0;
+  range->type = RANGE_STRINGS;
 
   d = opendir("/proc/asound");
 
@@ -148,22 +172,22 @@ static void get_device_range(Instance *pi, Range *range)
     char c = de->d_name[strlen("card")];
     if (strncmp(de->d_name, "card", strlen("card")) == 0
 	&& c >= '0' && c <= '9' ) {
-      //char *syspath = 0L;
-      //String_cat3(&syspath, "/proc/asound/", de->d_name, "/id");
-      //puts(syspath);
-      // List_append(range->strings.values, &range->strings.num_values, syspath);
-      //Mem_free(syspath);
+      String *s;
+      String *hw;
+      String *desc;
+
+      s = String_sprintf("/proc/asound/%s/id", de->d_name);
+      hw = String_sprintf("hw:%c", c);
+      desc = File_load_text(s->bytes);
+
+      printf("%s %s -> %s\n", hw->bytes, s->bytes, desc->bytes);
+
+      String_free(&s);
+
+      ISet_add(range->strings, hw); hw = NULL;		/* ISet takes ownership. */
+      ISet_add(range->descriptions, desc); desc = NULL;		/* ISet takes ownership. */
     }
-
-#if 0
-    Stringlist_append(&range->strings.values, &range->strings.num_values, de->d_name);
-    char *data = File_load(syspath);
-    Stringlist_append(&range->strings.values, &range->strings.num_values, syspath);
-#endif
   }
-
-  *range = r;
-#endif
 }
 
 

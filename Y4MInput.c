@@ -300,16 +300,22 @@ static void Y4MInput_tick(Instance *pi)
     int i;
     for (i=0; i < ls->things_count; i++) {
       String *t = ls->things[i];
-      int width, width_set = 0;
-      int height, height_set = 0;
-      int frame_numerator, frame_numerator_set = 0;
-      int frame_denominator, frame_denominator_set = 0;
-      int aspect_numerator, aspect_numerator_set = 0;
-      int aspect_denominator, aspect_denominator_set = 0;
+      int width;
+      //int width_set = 0;
+      int height;
+      //int height_set = 0;
+      int frame_numerator;
+      //int frame_numerator_set = 0;
+      int frame_denominator;
+      //int frame_denominator_set = 0;
+      int aspect_numerator;
+      //int aspect_numerator_set = 0;
+      int aspect_denominator;
+      //int aspect_denominator_set = 0;
       char chroma_subsamping[32+1];
-      int chroma_subsamping_set = 0;
+      //int chroma_subsamping_set = 0;
       char interlacing;
-      int interlacing_set = 0;
+      //int interlacing_set = 0;
 
       if (sscanf(t->bytes, "W%d", &width) == 1) {
       }

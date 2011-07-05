@@ -13,12 +13,14 @@
 #include "cairo.h"
 
 static void Config_handler(Instance *pi, void *msg);
+static void Command_handler(Instance *pi, void *msg);
 static void rgb3_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_RGB3, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_COMMAND, INPUT_RGB3, INPUT_422P };
 static Input CairoContext_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_COMMAND ] = { .type_label = "CairoCommand", .handler = Command_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
 };
@@ -29,44 +31,6 @@ static Output CairoContext_outputs[] = {
   [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
 };
 
-
-#define CC_MAX_DOUBLE_ARGS 6
-/* A cairo command with up to 6 double parameters. */
-typedef struct {
-  int command;
-  double args[CC_MAX_DOUBLE_ARGS];
-} CairoCommand;
-
-enum {
-  CC_COMMAND__ZERO_IS_INVALID,
-  CC_COMMAND_SET_SOURCE_RGB,
-  CC_COMMAND_SET_SOURCE_RGBA,
-  CC_COMMAND_SET_LINE_WIDTH,
-  CC_COMMAND_MOVE_TO,
-  CC_COMMAND_LINE_TO,
-  CC_COMMAND_REL_MOVE_TO,
-  CC_COMMAND_REL_LINE_TO,
-  CC_COMMAND_CLOSE_PATH,
-  CC_COMMAND_TRANSLATE,
-  CC_COMMAND_SCALE,
-  CC_COMMAND_ROTATE,
-  CC_COMMAND_FILL,
-  CC_COMMAND_STROKE,
-  CC_COMMAND_PUSH_GROUP,
-  CC_COMMAND_POP_GROUP,
-  CC_COMMAND_IDENTITY_MATRIX,
-
-  CC_COMMAND_SET_FONT_SIZE,
-  CC_COMMAND_SHOW_TEXT,
-
-  /* I made these up, they make use of the date stamp in the input RGB buffer. */
-  CC_COMMAND_ROTATE_SUBSECONDS,
-  CC_COMMAND_ROTATE_SECONDS,
-  CC_COMMAND_ROTATE_MINUTES,
-  CC_COMMAND_ROTATE_HOURS,
-
-  CC_COMMAND_TIMEOUT,
-};
 
 /* Map text strings to commands. */
 static struct {
@@ -96,6 +60,7 @@ static struct {
   { .label = "identity_matrix", .command = CC_COMMAND_IDENTITY_MATRIX, .num_double_args = 0 },
 
   { .label = "set_font_size", .command = CC_COMMAND_SET_FONT_SIZE, .num_double_args = 1 },
+  // { .label = "set_text", .command = CC_COMMAND_SET_TEXT, .num_double_args = 0 },
   { .label = "show_text", .command = CC_COMMAND_SHOW_TEXT, .num_double_args = 0 },
 
   { .label = "rotate_subseconds", .command = CC_COMMAND_ROTATE_SUBSECONDS, .num_double_args = 0 },
@@ -139,7 +104,7 @@ static int set_timeout(Instance *pi, const char *value)
 }
 
 
-static int set_text(Instance *pi, const char *value)
+static int set_show_text(Instance *pi, const char *value)
 {
   CairoContext_private *priv = pi->data;
   if (priv->text) {
@@ -152,7 +117,6 @@ static int set_text(Instance *pi, const char *value)
     gettimeofday(&tv, NULL);
     priv->timeout_timestamp = tv.tv_sec;
   }
-      
 
   return 0;
 }
@@ -166,6 +130,7 @@ static int add_command(Instance *pi, const char *value)
   int i;
   int j;
   int n;
+  int found = 0;
 
   n = sscanf(value, "%255s %lf %lf %lf %lf %lf %lf",
 	     label,
@@ -175,6 +140,14 @@ static int add_command(Instance *pi, const char *value)
 	     &cmd.args[3],
 	     &cmd.args[4],
 	     &cmd.args[5]);
+
+  if (streq(value, "set_text") && value[strlen(value)] != 0) {
+    cmd.command = CC_COMMAND_SET_TEXT;
+    cmd.text = String_new(value + strlen(label) + 1);
+    XArray_append(priv->commands, &cmd);
+    found = 1;
+    goto out;
+  }
 	     
   for (i=0; i < table_size(CairoCommandMap); i++) {
     if (streq(label, CairoCommandMap[i].label)
@@ -186,9 +159,20 @@ static int add_command(Instance *pi, const char *value)
       }
       printf("\n");
       XArray_append(priv->commands, &cmd);
+      found = 1;
+      goto out;
+    }
+  }
+
+  if (!found) {
+    n = sscanf(value, "%255s",
+	       label);
+    if (streq(label, "reset")) {
+      XArray_cleanup(priv->commands);
     }
   }
   
+ out:  
   return 0;
 }
 
@@ -265,6 +249,11 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
 
     case CC_COMMAND_SET_FONT_SIZE:
       cairo_set_font_size(priv->context, cmd->args[0]);
+      break;
+    case CC_COMMAND_SET_TEXT:
+      if (cmd->text) {
+	cairo_show_text(priv->context, cmd->text->bytes);
+      }
       break;
     case CC_COMMAND_SHOW_TEXT:
       if (priv->text) {
@@ -388,7 +377,7 @@ static Config config_table[] = {
   { "width",     set_width, 0L, 0L },
   { "height",    set_height, 0L, 0L },
   { "command",   add_command, 0L, 0L },
-  { "text",      set_text, 0L, 0L },
+  { "text",      set_show_text, 0L, 0L },
   { "timeout",   set_timeout, 0L, 0L },
 };
 
@@ -396,6 +385,12 @@ static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
+
+static void Command_handler(Instance *pi, void *data)
+{
+  /* Binary command interface, avoids generating and parsing commands. */
+}
+
 
 static void CairoContext_tick(Instance *pi)
 {

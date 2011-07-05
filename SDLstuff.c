@@ -12,6 +12,8 @@
 #include "Images.h"
 #include "Cfg.h"
 #include "Keycodes.h"
+#include "Pointer.h"
+
 
 #define _min(a, b)  ((a) < (b) ? (a) : (b))
 #define _max(a, b)  ((a) > (b) ? (a) : (b))
@@ -36,7 +38,7 @@ static Output SDLstuff_outputs[] = {
   [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
   [ OUTPUT_KEYCODE ] = { .type_label = "Keycode_msg", .destination = 0L },
-  [ OUTPUT_POINTER ] = { .type_label = "Pointer_msg", .destination = 0L },
+  [ OUTPUT_POINTER ] = { .type_label = "Pointer_event", .destination = 0L },
 };
 
 enum { RENDER_MODE_GL, RENDER_MODE_OVERLAY, RENDER_MODE_SOFTWARE };
@@ -493,6 +495,8 @@ static inline void tv_clear(struct timeval *tv)
 }
 
 
+#if 0
+/* FIXME: Use this or delete it. */
 static void handle_playback_timing(SDLstuff_private *priv, struct timeval *tv_current)
 {
   struct timeval now;
@@ -533,6 +537,8 @@ static void handle_playback_timing(SDLstuff_private *priv, struct timeval *tv_cu
  out1:
   priv->tv_last = *tv_current;
 }
+#endif
+
 
 static void pre_render_frame(SDLstuff_private *priv, int width, int height)
 {
@@ -774,11 +780,11 @@ static int my_event_loop(void *data)
       ReleaseMessage(&hm);
     }
     else if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
-      printf("button %d, state %d, (%d, %d)\n", 
-	     ev.button.button,
-	     ev.button.state,
-	     ev.button.x,
-	     ev.button.y);
+      if (pi->outputs[OUTPUT_POINTER].destination) {
+	Pointer_event *p = Pointer_event_new(ev.button.x,ev.button.y,
+					     ev.button.button, ev.button.state);
+	PostData(p, pi->outputs[OUTPUT_POINTER].destination);
+      }
     }
     else if (ev.type == SDL_KEYUP) {
       /* FIXME:  All these key events should really be passing generic CTI__KEY messages to 

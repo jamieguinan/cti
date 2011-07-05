@@ -99,6 +99,7 @@ static Config config_table[] = {
 };
 
 
+#if 0
 static void push_ycc(LibQuickTimeOutput_private *priv, Y422P_buffer *ycc)
 {
   int rc;
@@ -149,6 +150,7 @@ static void push_ycc(LibQuickTimeOutput_private *priv, Y422P_buffer *ycc)
 
   free(video_buffer);
 }
+#endif
 
 
 static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)

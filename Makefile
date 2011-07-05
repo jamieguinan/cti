@@ -76,12 +76,12 @@ OBJS= \
 	$(OBJDIR)/Mpeg2Enc.o \
 	$(OBJDIR)/VFilter.o \
 	$(OBJDIR)/AudioLimiter.o \
-	$(OBJDIR)/DVDgen2.o \
 	$(OBJDIR)/Cryptor.o \
 	$(OBJDIR)/MpegTSMux.o \
 	$(OBJDIR)/MpegTSDemux.o \
 	$(OBJDIR)/Tap.o \
 	$(OBJDIR)/Keycodes.o \
+	$(OBJDIR)/Pointer.o \
 	$(OBJDIR)/ResourceMonitor.o \
 	$(OBJDIR)/TV.o \
 	$(OBJDIR)/ChannelMaps.o \
@@ -89,6 +89,7 @@ OBJS= \
 	$(OBJDIR)/XPlaneControl.o \
 	$(OBJDIR)/FaceTracker.o \
 	$(OBJDIR)/UI001.o \
+	$(OBJDIR)/WavOutput.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
@@ -177,7 +178,7 @@ $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJDIR)/cti_app.o
 	@echo LINK
 	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
-	$(STRIP) $@
+#	$(STRIP) $@
 
 
 $(OBJDIR)/mjplay$(EXEEXT): \

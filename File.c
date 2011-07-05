@@ -1,6 +1,8 @@
 #include <stdio.h>
+#include <string.h>
 #include "CTI.h"
 #include "File.h"
+
 
 ArrayU8 * File_load_data(const char *filename)
 {
@@ -13,16 +15,22 @@ ArrayU8 * File_load_data(const char *filename)
     return 0L;
   }
 
-  fseek(f, 0, SEEK_END);
-  len = ftell(f);
-  fseek(f, 0, SEEK_SET);
+  if (strncmp("/proc/", filename, strlen("/proc/")) == 0) {
+    len = 32768;
+  }
+  else {
+    fseek(f, 0, SEEK_END);
+    len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+  }
 
   ArrayU8 *a = ArrayU8_new();
   ArrayU8_extend(a, len);
   n = fread(a->data, 1, len, f);
-  if (n != len) {
+  if (n < len) {
     fprintf(stderr, "warning: only read %ld of %ld expected bytes from %s\n", n, len, filename);
   }
+  a->data[n] = 0;
 
   fclose(f);
 

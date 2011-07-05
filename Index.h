@@ -14,5 +14,6 @@ typedef struct {
 
 extern void Index_update(Index **idx_, String *keyStr, void *item);
 extern void * Index_find(Index *idx_, String *keyStr, int *found);
+extern void Index_clear(Index **_idx);
 
 #endif

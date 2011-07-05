@@ -32,8 +32,6 @@ DJpeg.c
 DJpeg.h
 DO511.c
 DO511.h
-DVDgen2.c
-DVDgen2.h
 Effects01.c
 Effects01.h
 FFmpegEncode.c
@@ -97,6 +95,8 @@ Numbers.h
 OggOutput.c
 OggOutput.h
 Playback.c
+Pointer.c
+Pointer.h
 Range.c
 ResourceMonitor.c
 ResourceMonitor.h
@@ -139,6 +139,8 @@ VSmoother.c
 VSmoother.h
 Wav.c
 Wav.h
+WavOutput.c
+WavOutput.h
 XArray.c
 XArray.h
 XMixedReplace.c
@@ -155,6 +157,7 @@ alsa.cmd
 alsacaptest.c
 alsaloop.cmd
 amixer1.cmd
+atest.cmd
 ava.cmd
 avcap-124.cmd
 avcap-wii.cmd
@@ -203,6 +206,7 @@ extract.cmd
 facetracker01.cmd
 fyv-local-plain.cmd
 fyv-local.cmd
+fyv-test.cmd
 fyv-www.cmd
 h264test01.cmd
 h264test02.cmd
@@ -264,11 +268,13 @@ sdl_main.c
 ss.cmd
 test.cmd
 topro.cmd
+tv-server.cmd
 tv.cmd
 tv1.cmd
 tv2.cmd
 tvstarter.c
 tvstarter.cmd
+ui01.cmd
 uvc_compat.h
 uvcvideo.h
 v4l-bad-channel.cmd

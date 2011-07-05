@@ -38,7 +38,6 @@
 #include "CairoContext.h"
 #include "Signals.h"
 #include "JpegSource.h"
-#include "DVDgen2.h"
 #include "LibQuickTimeOutput.h"
 #include "OggOutput.h"
 #include "SonyPTZ.h"
@@ -53,6 +52,7 @@
 #include "Spawn.h"
 #include "FaceTracker.h"
 #include "UI001.h"
+#include "WavOutput.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -95,7 +95,6 @@ int cti_main(int argc, char *argv[])
   VSmoother_init();
   Y4MOutput_init();
   MotionDetect_init();
-  DVDgen2_init();
   HalfWidth_init();
   Mp2Enc_init();
   Mpeg2Enc_init();
@@ -108,7 +107,7 @@ int cti_main(int argc, char *argv[])
   TV_init();
   FaceTracker_init();
   UI001_init();
-  //ScriptSession_init();
+  WavOutput_init();
 
   return app_code(argc, argv);
 }

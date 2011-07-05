@@ -134,6 +134,7 @@ static int set_device(Instance *pi, const char *value)
     if (strstr(available_v4l_devices.descriptions.items[i]->bytes, value)) {
       puts("found it!");
       priv->devpath = strdup(available_v4l_devices.strings.items[i]->bytes);
+      break;
     }
   }
 

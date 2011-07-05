@@ -104,7 +104,7 @@ static void Y420P_handler(Instance *pi, void *msg)
 
 static void Y422P_handler(Instance *pi, void *msg)
 {
-  int rc;
+  // int rc;
   Y422P_buffer *y422 = msg;
   Y420P_buffer *y420 = Y422P_to_Y420P(y422);
   Y420P_handler(pi, y420);

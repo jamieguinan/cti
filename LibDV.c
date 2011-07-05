@@ -198,9 +198,8 @@ static void LibDV_tick(Instance *pi)
   }
 
 
- out:
+//out:
   /* FIXME: trim consumed data from chunk, reset "current" variables. */
-
 
   pi->counter++;
 }

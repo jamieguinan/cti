@@ -66,7 +66,7 @@ static int set_mode(Instance *pi, const char *value)
 
 static Config config_table[] = {
   { "vout", set_vout, 0L, 0L},
-  // { "mode", set_mode, 0L, 0L},
+  { "mode", set_mode, 0L, 0L},
 };
 
 
@@ -80,6 +80,7 @@ static void Y422p_handler(Instance *pi, void *msg)
 {
   Mpeg2Enc_private *priv = pi->data;
   Y422P_buffer *y422p_in = msg;
+  int n = 0;
 
 #if 0    
   if (y422p_in == 0L) {
@@ -112,9 +113,14 @@ static void Y422p_handler(Instance *pi, void *msg)
   
   /* Create and write one frame. */
   fprintf(priv->po, "FRAME\n");
-  fwrite(y422p_in->y, y422p_in->y_length, 1, priv->po);
-  fwrite(y422p_in->cb, y422p_in->cb_length, 1, priv->po);
-  fwrite(y422p_in->cr, y422p_in->cr_length, 1, priv->po);
+  
+  n += fwrite(y422p_in->y, y422p_in->y_length, 1, priv->po);
+  n += fwrite(y422p_in->cb, y422p_in->cb_length, 1, priv->po);
+  n += fwrite(y422p_in->cr, y422p_in->cr_length, 1, priv->po);
+
+  if (n != 3) {
+    fprintf(stderr, "%s: write error\n", __func__);
+  }
 
   if (pi->outputs[OUTPUT_FEEDBACK].destination) {
     Feedback_buffer *fb = Feedback_buffer_new();

@@ -6,6 +6,7 @@ new Y4MOutput y4mout
 new DJpeg dj
 # new JpegTran jt
 new MotionDetect md
+new WavOutput wo
 
 new CairoContext cc
 
@@ -42,7 +43,23 @@ config mjd input 192.168.2.123:6666
 # is set up for the same FPS, but it works.
 config y4mout fps_nom 25
 config y4mout fps_denom 1
-config y4mout output | ffmpeg2theora - -V 180 -o /dev/stdout 2> /dev/null | tee cap.ogv | oggfwd localhost 8000 hackme /frontyard.ogv
+
+system rm -f fifo.y4m
+system mkfifo fifo.y4m
+system rm -f fifo.wav
+system mkfifo fifo.wav
+
+config y4mout output fifo.y4m
+config wo output fifo.wav
+
+system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -v 3 -f 25 -F 1 | tee cap.ogv | oggfwd localhost 8000 hackme /frontyard.ogv &
+
+# -A 20 -V 160
+# Additional encoder_example options to try:
+#  -k 2  [ or more ]
+#  -d 25  [ or more ]
+#  --soft-target
+
 
 # Connect everything up
 
@@ -50,7 +67,7 @@ config y4mout output | ffmpeg2theora - -V 180 -o /dev/stdout 2> /dev/null | tee 
 #connect jt Jpeg_buffer dj
 
 connect mjd Jpeg_buffer dj
-# connect mjd Wav_buffer null
+connect mjd Wav_buffer wo
 
 connect dj RGB3_buffer cc
 connect dj GRAY_buffer md

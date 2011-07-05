@@ -72,10 +72,13 @@ static void ResourceMonitor_tick(Instance *pi)
     nanosleep(&(struct timespec){.tv_sec = 1, .tv_nsec = 0}, NULL);
   }
 
-  rc = getrusage(RUSAGE_SELF, &usage);
+  // rc = getrusage(RUSAGE_SELF, &usage);
+  int id = (pi->counter % 3) - 1;
+  rc = getrusage(id, &usage);  
   if (rc == 0) {
     if (cfg.verbosity) {
       printf("ru_maxrss=%ld\n", usage.ru_maxrss);
+      printf("ixrss=%ld\n", usage.ru_ixrss);
     }
     if (priv->rss_limit && usage.ru_maxrss > priv->rss_limit) {
       fprintf(stderr, "%s: rss_limit exceded (%ld > %ld)!\n", __func__, usage.ru_maxrss, priv->rss_limit);

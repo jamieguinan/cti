@@ -80,7 +80,7 @@ static void Effects01_tick(Instance *pi)
       if (priv->invert) {
 	invert_plane(rgb3_in->data, rgb3_in->data_length);
       }
-      PostMessage(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
+      PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
     }
     else {
       RGB3_buffer_discard(rgb3_in);
@@ -96,7 +96,7 @@ static void Effects01_tick(Instance *pi)
 	invert_plane(y422p_in->cb, y422p_in->cb_length);
 	invert_plane(y422p_in->cr, y422p_in->cr_length);
       }
-      PostMessage(y422p_in, pi->outputs[OUTPUT_422P].destination);
+      PostData(y422p_in, pi->outputs[OUTPUT_422P].destination);
     }
     else {
       Y422P_buffer_discard(y422p_in);

@@ -16,3 +16,14 @@ void _XArray_append(void **elements, void *element_ptr, int element_size, XArray
   memcpy( ((uint8_t*)(*elements)) + (info->count * element_size), element_ptr, element_size);
   info->count += 1; 
 }
+
+
+extern void _XArray_cleanup(void **elements, XArrayInfo *info)
+{
+  if (*elements) {
+    Mem_free(*elements);
+    *elements = NULL;
+    info->available = 0;
+    info->count = 0;
+  }
+}

@@ -5,6 +5,8 @@
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
+#include <unistd.h>		/* sleep */
+#include <inttypes.h>
 
 #include "CTI.h"
 #include "MpegTSDemux.h"
@@ -176,12 +178,12 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
       /* Append data. */
 
       if (MpegTS_sync_byte(packet) != 0x47) {
-	printf("invalid packet at offset %ld\n", priv->offset);
+	printf("invalid packet at offset %" PRIu64 "\n", priv->offset);
 	return;
       }
     
       if (MpegTS_TEI(packet)) {
-	printf("transport error at offset %ld\n", priv->offset);
+	printf("transport error at offset %" PRIu64 "\n", priv->offset);
 	return;
       }
 
@@ -214,7 +216,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 		       (s->data->data[9] >> 1) & 7,
 		       (s->data->data[9] >> 0) & 1);
 
-		printf(" %ld", MpegTS_PTS(s->data->data + 9));
+		printf(" %" PRIu64 "", MpegTS_PTS(s->data->data + 9));
 
 		printf("\n");
 	      }
@@ -228,7 +230,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 		       (s->data->data[14] >> 1) & 7,
 		       (s->data->data[14] >> 0) & 1);
 
-		printf(" %ld", MpegTS_PTS(s->data->data + 14));
+		printf(" %" PRIu64, MpegTS_PTS(s->data->data + 14));
 
 		printf("\n");
 	      }
