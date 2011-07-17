@@ -8,6 +8,7 @@ ArrayU8 * File_load_data(const char *filename)
 {
   long len;
   long n;
+  int procflag = 0;
   FILE *f = fopen(filename, "rb");
 
   if (!f) {
@@ -17,6 +18,7 @@ ArrayU8 * File_load_data(const char *filename)
 
   if (strncmp("/proc/", filename, strlen("/proc/")) == 0) {
     len = 32768;
+    procflag = 1;
   }
   else {
     fseek(f, 0, SEEK_END);
@@ -27,7 +29,7 @@ ArrayU8 * File_load_data(const char *filename)
   ArrayU8 *a = ArrayU8_new();
   ArrayU8_extend(a, len);
   n = fread(a->data, 1, len, f);
-  if (n < len) {
+  if (n < len && !procflag) {
     fprintf(stderr, "warning: only read %ld of %ld expected bytes from %s\n", n, len, filename);
   }
   a->data[n] = 0;

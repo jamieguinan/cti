@@ -9,5 +9,6 @@ typedef struct {
 } Pointer_event;
 
 Pointer_event *Pointer_event_new(int x, int y, uint8_t button, uint8_t state);
+void Pointer_event_discard(Pointer_event *p);
 
 #endif

@@ -10,3 +10,9 @@ Pointer_event *Pointer_event_new(int x, int y, uint8_t button, uint8_t state)
   p->state = state;
   return p;
 }
+
+
+void Pointer_event_discard(Pointer_event *p)
+{
+  Mem_free(p);
+}

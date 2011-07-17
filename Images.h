@@ -24,6 +24,17 @@ typedef struct {
 } Gray_buffer;
 
 
+/* Gray 32-bit buffer */
+typedef struct {
+  int width;
+  int height;
+  uint32_t *data;
+  int data_length;
+  struct timeval tv;
+  float nominal_period;
+} Gray32_buffer;
+
+
 /* RGB3 buffer. */
 typedef struct {
   int width;
@@ -110,6 +121,9 @@ typedef struct {
 
 extern Gray_buffer *Gray_buffer_new(int width, int height);
 extern void Gray_buffer_discard(Gray_buffer *gray);
+
+extern Gray32_buffer *Gray32_buffer_new(int width, int height);
+extern void Gray32_buffer_discard(Gray32_buffer *gray);
 
 extern RGB3_buffer *RGB3_buffer_new(int width, int height);
 extern void RGB3_buffer_discard(RGB3_buffer *rgb);

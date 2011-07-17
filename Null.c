@@ -14,6 +14,14 @@ static void Jpeg_handler(Instance *pi, void *data)
   Jpeg_buffer_discard(jpeg_in);
 }
 
+
+static void Gray_handler(Instance *pi, void *data)
+{
+  Gray_buffer *jpeg_in = data;
+  Gray_buffer_discard(jpeg_in);
+}
+
+
 static void RGB3_handler(Instance *pi, void *data)
 {
   RGB3_buffer *rgb3_in = data;
@@ -54,9 +62,10 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-enum { INPUT_CONFIG, INPUT_JPEG, INPUT_422P, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_RAWDATA };
+enum { INPUT_CONFIG, INPUT_GRAY, INPUT_JPEG, INPUT_422P, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_RAWDATA };
 static Input Null_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = Gray_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },

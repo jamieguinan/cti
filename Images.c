@@ -24,6 +24,24 @@ void Gray_buffer_discard(Gray_buffer *gray)
 }
 
 
+Gray32_buffer *Gray32_buffer_new(int width, int height)
+{
+  Gray32_buffer *gray32 = Mem_malloc(sizeof(Gray32_buffer));
+  gray32->width = width;
+  gray32->height = height;
+  gray32->data_length = width * height;
+  gray32->data = Mem_calloc(1, sizeof(*gray32->data) * gray32->data_length); 	/* Caller must fill in data! */
+  return gray32;
+}
+
+void Gray32_buffer_discard(Gray32_buffer *gray32)
+{
+  Mem_free(gray32->data);
+  memset(gray32, 0, sizeof(*gray32));
+  Mem_free(gray32);
+}
+
+
 RGB3_buffer *RGB3_buffer_new(int width, int height)
 {
   RGB3_buffer *rgb = Mem_malloc(sizeof(*rgb));

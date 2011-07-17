@@ -26,72 +26,6 @@ static Output OggOutput_outputs[] = {
   //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
 };
 
-typedef struct {
-  // int ...;
-} OggOutput_private;
-
-static Config config_table[] = {
-  // { "...",    set_..., get_..., get_..._range },
-};
-
-
-static void Config_handler(Instance *pi, void *data)
-{
-  Generic_config_handler(pi, data, config_table, table_size(config_table));
-}
-
-
-static void Y422P_handler(Instance *pi, void *data)
-{
-}
-
-
-static void BGR3_handler(Instance *pi, void *data)
-{
-}
-
-
-static void Wav_handler(Instance *pi, void *data)
-{
-}
-
-
-static void OggOutput_tick(Instance *pi)
-{
-  Handler_message *hm;
-
-  hm = GetData(pi, 1);
-  if (hm) {
-    hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
-  }
-
-  pi->counter++;
-}
-
-static void OggOutput_instance_init(Instance *pi)
-{
-  OggOutput_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
-}
-
-
-static Template OggOutput_template = {
-  .label = "OggOutput",
-  .inputs = OggOutput_inputs,
-  .num_inputs = table_size(OggOutput_inputs),
-  .outputs = OggOutput_outputs,
-  .num_outputs = table_size(OggOutput_outputs),
-  .tick = OggOutput_tick,
-  .instance_init = OggOutput_instance_init,
-};
-
-void OggOutput_init(void)
-{
-  Template_register(&OggOutput_template);
-}
-
-
 
 #pragma GCC diagnostic ignored "-Wparentheses"
 
@@ -133,12 +67,6 @@ void OggOutput_init(void)
 #endif
 
 #include <stdio.h>
-#if !defined(_WIN32)
-#include <getopt.h>
-#include <unistd.h>
-#else
-#include "getopt.h"
-#endif
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -161,6 +89,7 @@ static double rint(double x)
 }
 #endif
 
+#if 0
 const char *optstring = "b:e:o:a:A:v:V:s:S:f:F:ck:d:z:\1\2\3\4";
 struct option options [] = {
   {"begin-time",required_argument,NULL,'b'},
@@ -184,6 +113,7 @@ struct option options [] = {
   {"second-pass",required_argument,NULL,'\4'},
   {NULL,0,NULL,0}
 };
+#endif
 
 /* You'll go to Hell for using globals. */
 
@@ -238,6 +168,7 @@ static long begin_usec=0;
 static long end_sec=-1;
 static long end_usec=0;
 
+#if 0
 static void usage(void){
   fprintf(stderr,
           "Usage: encoder_example [options] [audio_file] video_file\n\n"
@@ -314,6 +245,8 @@ static void usage(void){
           "YUV4MPEG2 uncompressed video.\n\n");
   exit(1);
 }
+
+#endif
 
 static int y4m_parse_tags(char *_tags){
   int   got_w;
@@ -1307,6 +1240,7 @@ static int ilog(unsigned _v){
   return ret;
 }
 
+#if 0
 static int oggoutput_main(int argc,char *argv[]){
   int c,long_option_index,ret;
 
@@ -1527,6 +1461,8 @@ static int oggoutput_main(int argc,char *argv[]){
     }
   }
 
+  /* JSG: ogg_setup begin */
+
   if(soft_target){
     if(video_r<=0){
       fprintf(stderr,"Soft rate target (--soft-target) requested without a bitrate (-V).\n");
@@ -1596,7 +1532,9 @@ static int oggoutput_main(int argc,char *argv[]){
     vorbis_block_init(&vd,&vb);
   }
 
+
   for(passno=(twopass==3?1:twopass);passno<=(twopass==3?2:twopass);passno++){
+
     /* Set up Theora encoder */
     if(!video){
       fprintf(stderr,"No video files submitted for compression?\n");
@@ -1827,6 +1765,9 @@ static int oggoutput_main(int argc,char *argv[]){
         fwrite_check(og.body,1,og.body_len,outfile);
       }
     }
+
+    /* JSG: ogg_setup end */
+
     /* setup complete.  Raw processing loop */
       switch(passno){
       case 0: case 2:
@@ -1836,7 +1777,11 @@ static int oggoutput_main(int argc,char *argv[]){
         fprintf(stderr,"\rScanning first pass....                                  \n");
         break;
       }
+
     for(;;){
+
+    /* JSG: ogg_tick start */
+
       int audio_or_video=-1;
       if(passno==1){
         ogg_packet op;
@@ -1898,6 +1843,8 @@ static int oggoutput_main(int argc,char *argv[]){
                 hours,minutes,seconds,hundredths,akbps,vkbps);
       }
     }
+
+    /* JSG: ogg_tick end */
     if(video)th_encode_free(td);
   }
 
@@ -1923,4 +1870,507 @@ static int oggoutput_main(int argc,char *argv[]){
 
   return(0);
 
+}
+
+#endif
+
+
+typedef struct {
+  uint8_t wav_header[44];
+  uint64_t wav_index;
+
+  FILE *video;
+
+  int frame_w;
+  int frame_h;
+  int pic_w;
+  int pic_h;
+  int pic_x;
+  int pic_y;
+  int video_fps_n;
+  int video_fps_d;
+  int video_par_n;
+  int video_par_d;
+  char interlace;
+  int src_c_dec_h;
+  int src_c_dec_v;
+  int dst_c_dec_h;
+  int dst_c_dec_v;
+  char chroma_type[16];
+
+  th_info          ti;
+  th_enc_ctx      *td;
+  int soft_target;
+  int twopass;
+  int passno;
+  FILE *twopass_file;
+  FILE *outfile;
+  fpos_t video_rewind_pos;
+  int speed;
+  th_comment       tc;
+
+  ogg_stream_state to; /* take physical pages, weld into a logical
+                           stream of packets */
+  ogg_stream_state vo; /* take physical pages, weld into a logical
+                           stream of packets */
+  ogg_page         og; /* one Ogg bitstream page.  Vorbis packets are inside */
+  ogg_packet       op; /* one raw packet of data for decode */
+  vorbis_comment   vc; /* struct that stores all the user comments */
+  vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
+  vorbis_info      vi; /* struct that stores all the static vorbis bitstream */
+
+  double timebase;
+
+  int audioflag;
+  int videoflag;
+  vorbis_block     vb; /* local working space for packet->PCM decode */
+  ogg_int64_t audio_bytesout;
+  ogg_int64_t video_bytesout;
+  int vkbps;
+  int akbps;
+} OggOutput_private;
+
+static Config config_table[] = {
+  // { "...",    set_..., get_..., get_..._range },
+};
+
+
+
+
+static void Config_handler(Instance *pi, void *data)
+{
+  Generic_config_handler(pi, data, config_table, table_size(config_table));
+}
+
+
+static void Y422P_handler(Instance *pi, void *data)
+{
+}
+
+
+static void BGR3_handler(Instance *pi, void *data)
+{
+}
+
+
+static void Wav_handler(Instance *pi, void *data)
+{
+  
+}
+
+
+static void OggOutput_tick(Instance *pi)
+{
+  Handler_message *hm;
+
+  hm = GetData(pi, 1);
+  if (hm) {
+    hm->handler(pi, hm->data);
+    ReleaseMessage(&hm);
+  }
+
+  pi->counter++;
+}
+
+static void OggOutput_instance_init(Instance *pi)
+{
+  OggOutput_private *priv = Mem_calloc(1, sizeof(*priv));
+  pi->data = priv;
+}
+
+
+static Template OggOutput_template = {
+  .label = "OggOutput",
+  .inputs = OggOutput_inputs,
+  .num_inputs = table_size(OggOutput_inputs),
+  .outputs = OggOutput_outputs,
+  .num_outputs = table_size(OggOutput_outputs),
+  .tick = OggOutput_tick,
+  .instance_init = OggOutput_instance_init,
+};
+
+void OggOutput_init(void)
+{
+  Template_register(&OggOutput_template);
+}
+
+
+
+static void ogg_setup(OggOutput_private *priv)
+{
+  int ret;
+  fpos_t video_rewind_pos = {};
+  int passno;
+
+  if(priv->soft_target){
+    if(video_r<=0){
+      fprintf(stderr,"Soft rate target (--soft-target) requested without a bitrate (-V).\n");
+      exit(1);
+    }
+    if(video_q==-1)
+      video_q=0;
+  }else{
+    if(video_q==-1){
+      if(video_r>0)
+        video_q=0;
+      else
+        video_q=48;
+    }
+  }
+
+  if(keyframe_frequency<=0){
+    /*Use a default keyframe frequency of 64 for 1-pass (streaming) mode, and
+       256 for two-pass mode.*/
+    keyframe_frequency=priv->twopass?256:64;
+  }
+
+  //while(optind<argc){
+  ///* assume that anything following the options must be a filename */
+  //id_file(argv[optind]);
+  //optind++;
+  //}
+
+  if(priv->twopass==3){
+    /* verify that the input is seekable! */
+    if(video){
+      if(fseek(video,0,SEEK_CUR)){
+        fprintf(stderr,"--two-pass (automatic two-pass) requires the video input\n"
+                "to be seekable.  For non-seekable input, encoder_example\n"
+                "must be run twice, first with the --first-pass option, then\n"
+                "with the --second-pass option.\n\n");
+        exit(1);
+      }
+      if(fgetpos(video,&video_rewind_pos)<0){
+        fprintf(stderr,"Unable to determine start position of video data.\n");
+        exit(1);
+      }
+    }
+  }
+
+  /* Set up Ogg output stream */
+  srand(time(NULL));
+  ogg_stream_init(&priv->to,rand()); /* oops, add one ot the above */
+
+  /* initialize Vorbis assuming we have audio to compress. */
+  if(audio && priv->twopass!=1){
+    ogg_stream_init(&priv->vo,rand());
+    vorbis_info_init(&priv->vi);
+    if(audio_q>-99)
+      ret = vorbis_encode_init_vbr(&priv->vi,audio_ch,audio_hz,audio_q);
+    else
+      ret = vorbis_encode_init(&priv->vi,audio_ch,audio_hz,-1,
+                               (int)(64870*(ogg_int64_t)audio_r>>16),-1);
+    if(ret){
+      fprintf(stderr,"The Vorbis encoder could not set up a mode according to\n"
+              "the requested quality or bitrate.\n\n");
+      exit(1);
+    }
+
+    vorbis_comment_init(&priv->vc);
+    vorbis_analysis_init(&priv->vd,&priv->vi);
+    vorbis_block_init(&priv->vd,&priv->vb);
+  }
+
+  for(passno=(priv->twopass==3?1:priv->twopass);passno<=(priv->twopass==3?2:priv->twopass);passno++){
+    /* Set up Theora encoder */
+    if(!priv->video){
+      fprintf(stderr,"No video files submitted for compression?\n");
+      exit(1);
+    }
+    /* Theora has a divisible-by-sixteen restriction for the encoded frame size */
+    /* scale the picture size up to the nearest /16 and calculate offsets */
+    priv->frame_w=priv->pic_w+15&~0xF;
+    priv->frame_h=priv->pic_h+15&~0xF;
+    /*Force the offsets to be even so that chroma samples line up like we
+       expect.*/
+    priv->pic_x=priv->frame_w-priv->pic_w>>1&~1;
+    priv->pic_y=priv->frame_h-priv->pic_h>>1&~1;
+    th_info_init(&priv->ti);
+    priv->ti.frame_width=priv->frame_w;
+    priv->ti.frame_height=priv->frame_h;
+    priv->ti.pic_width=priv->pic_w;
+    priv->ti.pic_height=priv->pic_h;
+    priv->ti.pic_x=priv->pic_x;
+    priv->ti.pic_y=priv->pic_y;
+    priv->ti.fps_numerator=video_fps_n;
+    priv->ti.fps_denominator=video_fps_d;
+    priv->ti.aspect_numerator=video_par_n;
+    priv->ti.aspect_denominator=video_par_d;
+    priv->ti.colorspace=TH_CS_UNSPECIFIED;
+    /*Account for the Ogg page overhead.
+      This is 1 byte per 255 for lacing values, plus 26 bytes per 4096 bytes for
+       the page header, plus approximately 1/2 byte per packet (not accounted for
+       here).*/
+    priv->ti.target_bitrate=(int)(64870*(ogg_int64_t)video_r>>16);
+    priv->ti.quality=video_q;
+    priv->ti.keyframe_granule_shift=ilog(keyframe_frequency-1);
+    if(dst_c_dec_h==2){
+      if(dst_c_dec_v==2)priv->ti.pixel_fmt=TH_PF_420;
+      else priv->ti.pixel_fmt=TH_PF_422;
+    }
+    else priv->ti.pixel_fmt=TH_PF_444;
+    priv->td=th_encode_alloc(&priv->ti);
+    th_info_clear(&priv->ti);
+    /* setting just the granule shift only allows power-of-two keyframe
+       spacing.  Set the actual requested spacing. */
+    ret=th_encode_ctl(priv->td,TH_ENCCTL_SET_KEYFRAME_FREQUENCY_FORCE,
+     &keyframe_frequency,sizeof(keyframe_frequency-1));
+    if(ret<0){
+      fprintf(stderr,"Could not set keyframe interval to %d.\n",(int)keyframe_frequency);
+    }
+    if(vp3_compatible){
+      ret=th_encode_ctl(priv->td,TH_ENCCTL_SET_VP3_COMPATIBLE,&vp3_compatible,
+       sizeof(vp3_compatible));
+      if(ret<0||!vp3_compatible){
+        fprintf(stderr,"Could not enable strict VP3 compatibility.\n");
+        if(ret>=0){
+          fprintf(stderr,"Ensure your source format is supported by VP3.\n");
+          fprintf(stderr,
+           "(4:2:0 pixel format, width and height multiples of 16).\n");
+        }
+      }
+    }
+    if(priv->soft_target){
+      /* reverse the rate control flags to favor a 'long time' strategy */
+      int arg = TH_RATECTL_CAP_UNDERFLOW;
+      ret=th_encode_ctl(priv->td,TH_ENCCTL_SET_RATE_FLAGS,&arg,sizeof(arg));
+      if(ret<0)
+        fprintf(stderr,"Could not set encoder flags for --soft-target\n");
+      /* Default buffer control is overridden on two-pass */
+      if(!priv->twopass&&buf_delay<0){
+        if((keyframe_frequency*7>>1) > 5*video_fps_n/video_fps_d)
+          arg=keyframe_frequency*7>>1;
+        else
+          arg=5*video_fps_n/video_fps_d;
+        ret=th_encode_ctl(priv->td,TH_ENCCTL_SET_RATE_BUFFER,&arg,sizeof(arg));
+        if(ret<0)
+          fprintf(stderr,"Could not set rate control buffer for --soft-target\n");
+      }
+    }
+    /* set up two-pass if needed */
+    if(priv->passno==1){
+      unsigned char *buffer;
+      int bytes;
+      bytes=th_encode_ctl(priv->td,TH_ENCCTL_2PASS_OUT,&buffer,sizeof(buffer));
+      if(bytes<0){
+        fprintf(stderr,"Could not set up the first pass of two-pass mode.\n");
+        fprintf(stderr,"Did you remember to specify an estimated bitrate?\n");
+        exit(1);
+      }
+      /*Perform a seek test to ensure we can overwrite this placeholder data at
+         the end; this is better than letting the user sit through a whole
+         encode only to find out their pass 1 file is useless at the end.*/
+      if(fseek(priv->twopass_file,0,SEEK_SET)<0){
+        fprintf(stderr,"Unable to seek in two-pass data file.\n");
+        exit(1);
+      }
+      if(fwrite(buffer,1,bytes,priv->twopass_file)<bytes){
+        fprintf(stderr,"Unable to write to two-pass data file.\n");
+        exit(1);
+      }
+      fflush(priv->twopass_file);
+    }
+    if(priv->passno==2){
+      /*Enable the second pass here.
+        We make this call just to set the encoder into 2-pass mode, because
+         by default enabling two-pass sets the buffer delay to the whole file
+         (because there's no way to explicitly request that behavior).
+        If we waited until we were actually encoding, it would overwite our
+         settings.*/
+      if(th_encode_ctl(priv->td,TH_ENCCTL_2PASS_IN,NULL,0)<0){
+        fprintf(stderr,"Could not set up the second pass of two-pass mode.\n");
+        exit(1);
+      }
+      if(priv->twopass==3){
+        /* 'automatic' second pass */
+        if(fsetpos(priv->video,&priv->video_rewind_pos)<0){
+          fprintf(stderr,"Could not rewind video input file for second pass!\n");
+          exit(1);
+        }
+        if(fseek(priv->twopass_file,0,SEEK_SET)<0){
+          fprintf(stderr,"Unable to seek in two-pass data file.\n");
+          exit(1);
+        }
+        frame_state=0;
+        frames=0;
+      }
+    }
+    /*Now we can set the buffer delay if the user requested a non-default one
+       (this has to be done after two-pass is enabled).*/
+    if(priv->passno!=1&&buf_delay>=0){
+      ret=th_encode_ctl(priv->td,TH_ENCCTL_SET_RATE_BUFFER,
+       &buf_delay,sizeof(buf_delay));
+      if(ret<0){
+        fprintf(stderr,"Warning: could not set desired buffer delay.\n");
+      }
+    }
+    /*Speed should also be set after the current encoder mode is established,
+       since the available speed levels may change depending.*/
+    if(priv->speed>=0){
+      int speed_max;
+      int ret;
+      ret=th_encode_ctl(priv->td,TH_ENCCTL_GET_SPLEVEL_MAX,
+       &speed_max,sizeof(speed_max));
+      if(ret<0){
+        fprintf(stderr,"Warning: could not determine maximum speed level.\n");
+        speed_max=0;
+      }
+      ret=th_encode_ctl(priv->td,TH_ENCCTL_SET_SPLEVEL,&priv->speed,sizeof(priv->speed));
+      if(ret<0){
+        fprintf(stderr,"Warning: could not set speed level to %i of %i\n",
+         priv->speed,speed_max);
+        if(priv->speed>speed_max){
+          fprintf(stderr,"Setting it to %i instead\n",speed_max);
+        }
+        ret=th_encode_ctl(priv->td,TH_ENCCTL_SET_SPLEVEL,
+         &speed_max,sizeof(speed_max));
+        if(ret<0){
+          fprintf(stderr,"Warning: could not set speed level to %i of %i\n",
+           speed_max,speed_max);
+        }
+      }
+    }
+    /* write the bitstream header packets with proper page interleave */
+    th_comment_init(&priv->tc);
+    /* first packet will get its own page automatically */
+    if(th_encode_flushheader(priv->td,&priv->tc,&priv->op)<=0){
+      fprintf(stderr,"Internal Theora library error.\n");
+      exit(1);
+    }
+    if(priv->passno!=1){
+      ogg_stream_packetin(&priv->to,&priv->op);
+      if(ogg_stream_pageout(&priv->to,&priv->og)!=1){
+        fprintf(stderr,"Internal Ogg library error.\n");
+        exit(1);
+      }
+      fwrite_check(priv->og.header,1,priv->og.header_len,priv->outfile);
+      fwrite_check(priv->og.body,1,priv->og.body_len,priv->outfile);
+    }
+    /* create the remaining theora headers */
+    for(;;){
+      ret=th_encode_flushheader(priv->td,&priv->tc,&priv->op);
+      if(ret<0){
+        fprintf(stderr,"Internal Theora library error.\n");
+        exit(1);
+      }
+      else if(!ret)break;
+      if(priv->passno!=1)ogg_stream_packetin(&priv->to,&priv->op);
+    }
+    if(audio && priv->passno!=1){
+      ogg_packet header;
+      ogg_packet header_comm;
+      ogg_packet header_code;
+      vorbis_analysis_headerout(&priv->vd,&priv->vc,&header,&header_comm,&header_code);
+      ogg_stream_packetin(&priv->vo,&header); /* automatically placed in its own
+                                           page */
+      if(ogg_stream_pageout(&priv->vo,&priv->og)!=1){
+        fprintf(stderr,"Internal Ogg library error.\n");
+        exit(1);
+      }
+      fwrite_check(priv->og.header,1,priv->og.header_len,priv->outfile);
+      fwrite_check(priv->og.body,1,priv->og.body_len,priv->outfile);
+      /* remaining vorbis header packets */
+      ogg_stream_packetin(&priv->vo,&header_comm);
+      ogg_stream_packetin(&priv->vo,&header_code);
+    }
+    /* Flush the rest of our headers. This ensures
+       the actual data in each stream will start
+       on a new page, as per spec. */
+    if(priv->passno!=1){
+      for(;;){
+        int result = ogg_stream_flush(&priv->to,&priv->og);
+        if(result<0){
+          /* can't get here */
+          fprintf(stderr,"Internal Ogg library error.\n");
+          exit(1);
+        }
+        if(result==0)break;
+        fwrite_check(priv->og.header,1,priv->og.header_len,priv->outfile);
+        fwrite_check(priv->og.body,1,priv->og.body_len,priv->outfile);
+      }
+    }
+    if(audio && priv->passno!=1){
+      for(;;){
+        int result=ogg_stream_flush(&priv->vo,&priv->og);
+        if(result<0){
+          /* can't get here */
+          fprintf(stderr,"Internal Ogg library error.\n");
+          exit(1);
+        }
+        if(result==0)break;
+        fwrite_check(priv->og.header,1,priv->og.header_len,priv->outfile);
+        fwrite_check(priv->og.body,1,priv->og.body_len,priv->outfile);
+      }
+    }
+  }
+}
+
+
+static void ogg_tick(OggOutput_private *priv)
+{
+  {
+    int ii;
+    for (ii=0; ii<1; ii++){
+      int audio_or_video=-1;
+      if(priv->passno==1){
+        ogg_packet op;
+        int ret=fetch_and_process_video_packet(video,priv->twopass_file,priv->passno,priv->td,&op);
+        if(ret<0)break;
+        if(op.e_o_s)break; /* end of stream */
+        priv->timebase=th_granule_time(priv->td,op.granulepos);
+        audio_or_video=1;
+      }else{
+        double audiotime;
+        double videotime;
+        ogg_page audiopage;
+        ogg_page videopage;
+        /* is there an audio page flushed?  If not, fetch one if possible */
+        priv->audioflag=fetch_and_process_audio(audio,&audiopage,&priv->vo,&priv->vd,&priv->vb,priv->audioflag);
+        /* is there a video page flushed?  If not, fetch one if possible */
+        priv->videoflag=fetch_and_process_video(video,&videopage,&priv->to,priv->td,priv->twopass_file,priv->passno,priv->videoflag);
+        /* no pages of either?  Must be end of stream. */
+        if(!priv->audioflag && !priv->videoflag)break;
+        /* which is earlier; the end of the audio page or the end of the
+           video page? Flush the earlier to stream */
+        audiotime=
+        priv->audioflag?vorbis_granule_time(&priv->vd,ogg_page_granulepos(&audiopage)):-1;
+        videotime=
+        priv->videoflag?th_granule_time(priv->td,ogg_page_granulepos(&videopage)):-1;
+        if(!priv->audioflag){
+          audio_or_video=1;
+        } else if(!priv->videoflag) {
+          audio_or_video=0;
+        } else {
+          if(audiotime<videotime)
+            audio_or_video=0;
+          else
+            audio_or_video=1;
+        }
+        if(audio_or_video==1){
+          /* flush a video page */
+          priv->video_bytesout+=fwrite(videopage.header,1,videopage.header_len,priv->outfile);
+          priv->video_bytesout+=fwrite(videopage.body,1,videopage.body_len,priv->outfile);
+          priv->videoflag=0;
+          priv->timebase=videotime;
+        }else{
+          /* flush an audio page */
+          priv->audio_bytesout+=fwrite(audiopage.header,1,audiopage.header_len,priv->outfile);
+          priv->audio_bytesout+=fwrite(audiopage.body,1,audiopage.body_len,priv->outfile);
+          priv->audioflag=0;
+          priv->timebase=audiotime;
+        }
+      }
+      if(priv->timebase > 0){
+        int hundredths=(int)(priv->timebase*100-(long)priv->timebase*100);
+        int seconds=(long)priv->timebase%60;
+        int minutes=((long)priv->timebase/60)%60;
+        int hours=(long)priv->timebase/3600;
+        if(audio_or_video)priv->vkbps=(int)rint(priv->video_bytesout*8./priv->timebase*.001);
+        else priv->akbps=(int)rint(priv->audio_bytesout*8./priv->timebase*.001);
+        fprintf(stderr,
+                "\r      %d:%02d:%02d.%02d audio: %dkbps video: %dkbps                 ",
+                hours,minutes,seconds,hundredths,priv->akbps,priv->vkbps);
+      }
+    }
+  }
 }

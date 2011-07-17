@@ -97,6 +97,8 @@ OggOutput.h
 Playback.c
 Pointer.c
 Pointer.h
+Position.c
+Position.h
 Range.c
 ResourceMonitor.c
 ResourceMonitor.h
@@ -146,6 +148,7 @@ XArray.h
 XMixedReplace.c
 XMixedReplace.h
 XPlaneControl.c
+XPlaneControl.h
 XfcePanelPlugin.c
 Y4MInput.c
 Y4MInput.h
@@ -204,6 +207,7 @@ example.c
 example.h
 extract.cmd
 facetracker01.cmd
+ft01.cmd
 fyv-local-plain.cmd
 fyv-local.cmd
 fyv-test.cmd
@@ -251,6 +255,8 @@ mpegtsdemux00.cmd
 mpegtsdemux01.cmd
 mpegtsdemux02.cmd
 ncjpeg.c
+ov511-basement.cmd
+ov511-direct-serve.cmd
 ov511-oggfwd-01.cmd
 ov511-server.cmd
 ov511.cmd
