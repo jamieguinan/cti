@@ -83,6 +83,16 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     puts("");			/* Wrap line on console. */
     abort();
   }
+  else if (streq(line->bytes, "p")) {
+    if (is_stdin) {
+      cfg.pause = 1;
+      /* Wait until newline then reset. */
+      if (fgets(token1, 255, stdin) == NULL) {
+	/* Handle EOF. */
+      }
+      cfg.pause = 0;
+    }
+  }
   else if ((strstr(line->bytes, "ignoreeof") == line->bytes)) {
     priv->exit_on_eof = 0;
     printf("exit_on_eof disabled!\n");

@@ -207,7 +207,7 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
     goto nocalc;
   }
 
-  /* Absolute value difference between frames. */
+  /* Do IIR filter adding squared absolute value difference between frames. */
   int sum = 0;
   for (i=0; i < num_pixels; i++) {
     uint32_t pixel = priv->sum->data[i];
@@ -225,6 +225,7 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
   }
 
   if (priv->search_ready) {
+    /* The steps here are approximate dimensions of eyes relative to camera field of view. */
     y_step = priv->sum->height / 35;
     x_step = priv->sum->width / 22;
     memset(&maximums, 0, sizeof(maximums));
@@ -233,7 +234,8 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
     for (y=priv->sum->height/4; y < priv->sum->height*3/4; y += 1) {
       for (x=priv->sum->width/3; x <  priv->sum->width*2/3; x += 1) {
 	localsum = 0;
-	/* Search for maximum contiguous area, which should correspond to one of the eyes. */
+	/* Search for maximum contiguous area, which should correspond
+	   to one of the eyes being blinked. */
 	for (yy = 0; yy < y_step; yy++) {
 	  for (xx = 0; xx < x_step; xx++) {
 	    int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
@@ -268,8 +270,10 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
       }
     }
 
-    for (ii=0; ii < 2; ii++) {
-      printf("maximums[%d] (%d, %d): %d\n",  ii, maximums[ii].x,  maximums[ii].y,  maximums[ii].sum);
+    if (maximums[1].sum) {
+      for (ii=0; ii < 2; ii++) {
+	printf("maximums[%d] (%d, %d): %d\n",  ii, maximums[ii].x,  maximums[ii].y,  maximums[ii].sum);
+      }
     }
 
   }

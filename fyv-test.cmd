@@ -52,7 +52,7 @@ system mkfifo fifo.wav
 config y4mout output fifo.y4m
 config wo output fifo.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -v 4 -f 25 -F 1 | tee cap.ogv | oggfwd localhost 8000 hackme /frontyard.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 150 -f 25 -F 1 2> /dev/null | tee cap.ogv | oggfwd localhost 8000 hackme /frontyard.ogv &
 
 # "-v" values work out to roughly (value * 25
 # -v 3

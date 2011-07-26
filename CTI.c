@@ -105,6 +105,11 @@ Handler_message *GetData(Instance *pi, int wait_flag)
      wait_flag is 0, else wait until a message is available and return it. */
   Handler_message *hm = 0L;
 
+  /* This is a quick hack "pause all the things" implementation. */
+  while (cfg.pause) {
+    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/50}, NULL);
+  }
+
   Lock_acquire(&pi->inputs_lock);
 
   if (pi->msg_first == 0L && pi->msg_last == 0L && wait_flag == 0)  {

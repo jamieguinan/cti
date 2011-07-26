@@ -5,6 +5,7 @@ typedef struct {
   int verbosity;
   int logging;
   int mem_tracking;
+  int pause;
 } Cfg;
 
 extern Cfg cfg;
