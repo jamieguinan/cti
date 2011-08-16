@@ -68,6 +68,7 @@ static struct {
 typedef struct {
   snd_pcm_t *handle;
   char *device;			/* "hw:0", etc. */
+  int useplug;
   snd_pcm_hw_params_t *hwparams;
   snd_pcm_stream_t mode;
 
@@ -92,6 +93,16 @@ typedef struct {
 
 
 static void get_device_range(Instance *pi, Range *range);
+
+
+static int set_useplug(Instance *pi, const char *value)
+{
+  ALSAio_private *priv = pi->data;
+  priv->useplug = atoi(value);
+  printf("ALSA useplug set to %d\n", priv->useplug);
+
+  return 0;
+}
 
 
 static int set_device(Instance *pi, const char *value)
@@ -158,6 +169,7 @@ static void get_device_range(Instance *pi, Range *range)
 {
   DIR *d;
   struct dirent *de;
+  ALSAio_private *priv = pi->data;
 
   range->type = RANGE_STRINGS;
 
@@ -177,7 +189,12 @@ static void get_device_range(Instance *pi, Range *range)
       String *desc;
 
       s = String_sprintf("/proc/asound/%s/id", de->d_name);
-      hw = String_sprintf("hw:%c", c);
+      if (priv->useplug) {
+	hw = String_sprintf("plughw:%c", c);
+      }
+      else {
+	hw = String_sprintf("hw:%c", c);
+      }
       desc = File_load_text(s->bytes);
 
       printf("%s %s -> %s\n", hw->bytes, s->bytes, desc->bytes);
@@ -385,6 +402,7 @@ static int set_enable(Instance *pi, const char *value)
 
 
 static Config config_table[] = {
+  { "useplug",  set_useplug, 0L, 0L },
   { "device",  set_device, 0L, get_device_range },
   { "rate",  set_rate, 0L, get_rate_range },
   { "channels",  set_channels, 0L, get_channels_range },

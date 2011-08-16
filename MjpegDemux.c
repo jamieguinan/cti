@@ -61,14 +61,19 @@ typedef struct {
 
   struct {
     double last_timestamp;
-    double nomimal_period;
+    double last_playback;
+    double nominal_period;
   } video;
+
+  int seen_audio;
 
   float rate_multiplier;
 
   int use_feedback;
   int pending_feedback;
   int feedback_threshold;
+
+  int use_timestamps;
 
   int retry;
 
@@ -139,6 +144,17 @@ static int set_use_feedback(Instance *pi, const char *value)
   return 0;
 }
 
+
+static int set_use_timestamps(Instance *pi, const char *value)
+{
+  MjpegDemux_private *priv = pi->data;
+  priv->use_timestamps = atoi(value);
+  printf("MjpegDemux use_timestamps set to %d\n", priv->use_timestamps);
+  return 0;
+}
+
+
+
 static int do_seek(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = pi->data;
@@ -162,6 +178,8 @@ static int do_seek(Instance *pi, const char *value)
     String_free(&priv->current.content_type);
   }
   priv->state = PARSING_HEADER;
+
+  priv->video.last_timestamp = 0.0;
   
   return 0;
 }
@@ -172,6 +190,7 @@ static Config config_table[] = {
   { "enable", set_enable, 0L, 0L },
   { "retry", set_retry, 0L, 0L },
   { "use_feedback", set_use_feedback, 0L, 0L },
+  { "use_timestamps", set_use_timestamps, 0L, 0L },
   /* The following are more "controls" than "configs", but maybe they are essentially the same anyway. */
   //{ "rate", set_rate, 0L, 0L},
   { "seek", do_seek, 0L, 0L},
@@ -415,6 +434,10 @@ static void MjpegDemux_tick(Instance *pi)
       goto out;
     }
 
+    if (!priv->seen_audio) {
+      priv->seen_audio = 1;
+    }
+
     if (pi->outputs[OUTPUT_WAV].destination) {
       PostData(w, pi->outputs[OUTPUT_WAV].destination);
       if (priv->use_feedback & (1<<0)) {
@@ -433,13 +456,31 @@ static void MjpegDemux_tick(Instance *pi)
 				      priv->current.content_length);
     j->tv.tv_sec = priv->current.timestamp;
     j->tv.tv_usec = fmod(priv->current.timestamp, 1.0) * 1000000;
-    // j->nominal_period = ???;
-    // printf("%s: %ld.%06ld\n", __func__, j->tv.tv_sec, j->tv.tv_usec);
 
     if (pi->outputs[OUTPUT_JPEG].destination) {
-      //while (pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages >= 2) {
-      //   usleep(5000);		/* 5ms */
-      //}
+      /* Use timestamps if configured to do so, and only if haven't
+	 seen any audio, which is normally used with feedback. */
+      if (priv->use_timestamps && !priv->seen_audio) {
+	struct timeval t1;
+	double tnow;
+	double sleep_time;
+	gettimeofday(&t1, 0L);
+	tnow = timeval_to_double(t1);
+	if (priv->video.last_timestamp > 0.1) {
+	  /* Use IIR filter for period. */
+	  priv->video.nominal_period = 
+	    (priv->video.nominal_period * 0.95) + ((priv->current.timestamp - priv->video.last_timestamp) * 0.05);
+	}
+	else {
+	  priv->video.nominal_period = 0.045; /* Midpoint between 15fps and 30fps. */
+	}
+	sleep_time = priv->video.last_playback + priv->video.nominal_period - tnow;
+	if (sleep_time > 0.0) {
+	  nanosleep( double_to_timespec(sleep_time), NULL);
+	}
+	priv->video.last_timestamp = priv->current.timestamp;
+	priv->video.last_playback = tnow;
+      }
       PostData(j, pi->outputs[OUTPUT_JPEG].destination);
       if (priv->use_feedback & (1<<1)) {
 	priv->pending_feedback += 1;

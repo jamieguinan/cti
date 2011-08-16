@@ -7,6 +7,7 @@ new DJpeg dj
 # new JpegTran jt
 new MotionDetect md
 new WavOutput wo
+new VFilter vf
 
 new CairoContext cc
 
@@ -62,6 +63,7 @@ system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20
 #  -d 25  [ or more ]
 #  --soft-target
 
+# config vf trim 4
 
 # Connect everything up
 
@@ -73,7 +75,11 @@ connect mjd Wav_buffer wo
 
 connect dj RGB3_buffer cc
 connect dj GRAY_buffer md
+
 connect cc RGB3_buffer y4mout
+#connect cc RGB3_buffer vf
+#connect vf RGB3_buffer y4mout
+
 connect md Config_msg cc
 
 # Enable mjd to start the whole thing running.

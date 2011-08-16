@@ -204,7 +204,7 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
   /* Do calculations only if have 2 buffers to work with. */
   if (priv->iir_last == 0) {
     priv->iir_last = Gray_buffer_new(gray->width, gray->height);
-    goto nocalc;
+    goto postcalc;
   }
 
   /* Do IIR filter adding squared absolute value difference between frames. */
@@ -224,77 +224,88 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
     sum += pixel;
   }
 
-  if (priv->search_ready) {
-    /* The steps here are approximate dimensions of eyes relative to camera field of view. */
-    y_step = priv->sum->height / 35;
-    x_step = priv->sum->width / 22;
-    memset(&maximums, 0, sizeof(maximums));
-
-    /* Search only center portion of screen. */
-    for (y=priv->sum->height/4; y < priv->sum->height*3/4; y += 1) {
-      for (x=priv->sum->width/3; x <  priv->sum->width*2/3; x += 1) {
-	localsum = 0;
-	/* Search for maximum contiguous area, which should correspond
-	   to one of the eyes being blinked. */
-	for (yy = 0; yy < y_step; yy++) {
-	  for (xx = 0; xx < x_step; xx++) {
-	    int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
-	    localsum += value;
-	  }
-	}
-	if (localsum > maximums[0].sum) {
-	  //printf("localsum=%d  %d %d\n", localsum,  maximums[0].sum, maximums[1].sum);
-	  maximums[0].sum = localsum;
-	  maximums[0].x = x;
-	  maximums[0].y = y;
-	}
-      }
-    }
-
-    /* Search for other eye, either to left or right */
-    for (y=maximums[0].y, dx = -1 ; dx <= 1; dx += 2) {
-      for (x=maximums[0].x + (dx*x_step); (x > 0) && (x < priv->sum->width - x_step); x += dx) {
-	localsum = 0;
-	/* Search for maximum contiguous area, which should correspond to one of the eyes. */
-	for (yy = 0; yy < y_step; yy++) {
-	  for (xx = 0; xx < x_step; xx++) {
-	    int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
-	    localsum += value;
-	  }
-	}
-	if (localsum > maximums[1].sum && localsum > (maximums[0].sum * 1 / 3 )) {
-	  maximums[1].sum = localsum;
-	  maximums[1].x = x;
-	  maximums[1].y = y;
-	}
-      }
-    }
-
-    if (maximums[1].sum) {
-      for (ii=0; ii < 2; ii++) {
-	printf("maximums[%d] (%d, %d): %d\n",  ii, maximums[ii].x,  maximums[ii].y,  maximums[ii].sum);
-      }
-    }
-
-  }
-  else if (sum < num_pixels * 3/2) {
+  if (sum < num_pixels * 3/2) {
     priv->search_ready = 1;
     printf("->Search Ready!\n");
   }
+  else {
+    goto postcalc;
+  }
+
+  /* The steps here are approximate dimensions of eyes relative to camera field of view. */
+  y_step = priv->sum->height / 35;
+  x_step = priv->sum->width / 22;
+  memset(&maximums, 0, sizeof(maximums));
+  
+  /* Search only center portion of screen. */
+  for (y=priv->sum->height/4; y < priv->sum->height*3/4; y += 1) {
+    for (x=priv->sum->width/3; x <  priv->sum->width*2/3; x += 1) {
+      /* Search for contiguous area with maximum sum, which should correspond
+	 to one of the eyes being blinked. */
+      localsum = 0;
+      for (yy = 0; yy < y_step; yy++) {
+	for (xx = 0; xx < x_step; xx++) {
+	  int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
+	  localsum += value;
+	}
+      }
+      if (localsum > maximums[0].sum) {
+	//printf("localsum=%d  %d %d\n", localsum,  maximums[0].sum, maximums[1].sum);
+	maximums[0].sum = localsum;
+	maximums[0].x = x;
+	maximums[0].y = y;
+      }
+    }
+  }
+  
+  /* Search for other eye, either to left or right */
+  for (y=maximums[0].y, dx = -1 ; dx <= 1; dx += 2) {
+    for (x=maximums[0].x + (dx*x_step); (x > 0) && (x < priv->sum->width - x_step); x += dx) {
+      /* Search for contiguous area with maximum sum, which should correspond the other eye. */
+      localsum = 0;
+      for (yy = 0; yy < y_step; yy++) {
+	for (xx = 0; xx < x_step; xx++) {
+	  int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
+	  localsum += value;
+	}
+      }
+      /* Sum should be at least 1/3 of other sum. */
+      if (localsum > maximums[1].sum && localsum > (maximums[0].sum * 1 / 3 )) {
+	maximums[1].sum = localsum;
+	maximums[1].x = x;
+	maximums[1].y = y;
+      }
+    }
+  }
+  
+  if (maximums[1].sum) {
+    for (ii=0; ii < 2; ii++) {
+      printf("maximums[%d] (%d, %d): %d\n",  
+	     ii, maximums[ii].x,  maximums[ii].y,  maximums[ii].sum);
+    }
+  }
+
+  if (maximums[1].sum) {
+    /* Found possible eye match, now search for other features. */
+    /* Then take a "template" of the face, morph it for
+       up/down/left/right and store the patterns for later
+       matching. */
+    /* Or find mouth, nostrils, cheek patches and use them for calculations. */
+  }
   
   
- nocalc:
+ postcalc:
   /* Save a copy of the frame. */
   memcpy(priv->iir_last->data, gray->data, gray->data_length);
   
-  /* Diagnostic output. */
+  /* Replace grey image with diagnostic output. */
   for (i=0; i < num_pixels; i++) {
     uint32_t pixel = priv->sum->data[i];
     gray->data[i] = cti_min(255, pixel);
   }
 
 
-  /* Draw a box around the maximum regions. */
+  /* Draw boxes around the maximum regions, if 2 were found. */
   if (maximums[1].sum) {
     for (ii=0; ii < 2; ii++) {
       for (yy=maximums[ii].y; yy < maximums[ii].y+y_step; yy++) {

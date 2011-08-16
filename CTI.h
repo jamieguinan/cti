@@ -302,5 +302,7 @@ extern void Feedback_buffer_discard(Feedback_buffer *raw);
 #define copy_list(a, b, c, d) do { int n = sizeof(*a)*b; *c = Mem_malloc(n); memcpy(*c, a, n); *d = b;} while (0);
 #define table_size(x) (sizeof(x)/sizeof(x[0]))
 #define streq(a, b)  (strcmp(a, b) == 0)
+#define timeval_to_double(t) ((double)(t.tv_sec + t.tv_usec/1000000.0))
+#define double_to_timespec(d) (&(struct timespec) { .tv_sec = floor(d), .tv_nsec = fmod(d, 1.0)  * 1000000000})
 
 #endif

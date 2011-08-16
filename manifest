@@ -1,3 +1,5 @@
+AAC.c
+AAC.h
 ALSAMixer.c
 ALSAMixer.h
 ALSAio.c
@@ -228,6 +230,7 @@ l4.cmd
 l5.cmd
 l6.cmd
 l7.cmd
+l8-audio-25-fps.cmd
 l8-receive.cmd
 l8-test.cmd
 l8.cmd

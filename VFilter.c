@@ -15,21 +15,25 @@
 
 static void Config_handler(Instance *pi, void *msg);
 static void Y422p_handler(Instance *pi, void *msg);
+static void RGB3_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3 };
 static Input VFilter_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422p_handler },
+  [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
 };
 
-enum { OUTPUT_422P };
+enum { OUTPUT_422P, OUTPUT_RGB3 };
 static Output VFilter_outputs[] = {
   [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
 };
 
 typedef struct {
   int left_right_crop;
   int linear_blend;
+  int trim;
 } VFilter_private;
 
 static int set_left_right_crop(Instance *pi, const char *value)
@@ -63,9 +67,26 @@ static int set_linear_blend(Instance *pi, const char *value)
 }
 
 
+static int set_trim(Instance *pi, const char *value)
+{
+  VFilter_private *priv = pi->data;
+
+  int tmp =  atoi(value);
+  if (tmp < 0) {
+    fprintf(stderr, "invalid trim value %d\n", tmp);
+    return -1;
+  }
+  else {
+    priv->trim = tmp;
+  }
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "left_right_crop",  set_left_right_crop, 0L, 0L },
   { "linear_blend",  set_linear_blend, 0L, 0L },
+  { "trim",  set_trim, 0L, 0L },
 };
 
 
@@ -111,6 +132,16 @@ static void single_121_linear_blend(uint8_t *data_in, uint8_t *data_out, int wid
 }
 
 
+static void single_trim(VFilter_private * priv, uint8_t *data_in, uint8_t *data_out, int width, int height)
+{
+  int i;
+  uint8_t mask = (255 - (1 << priv->trim) - 1);
+  for (i=0; i < (width*height); i++) {
+    data_out[i] = data_in[i] & mask;
+  }
+}
+
+
 static void Y422p_handler(Instance *pi, void *msg)
 {
   VFilter_private * priv = pi->data;
@@ -141,6 +172,13 @@ static void Y422p_handler(Instance *pi, void *msg)
     single_121_linear_blend(y422p_src->cr, y422p_out->cr, y422p_src->width/2, y422p_src->height);
     Y422P_buffer_discard(y422p_src);
   }
+
+  if (priv->trim) {
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height);
+    single_trim(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
+    Y422P_buffer_discard(y422p_src);
+  }
   
   if (!y422p_out) {
     y422p_out = y422p_in;
@@ -152,6 +190,26 @@ static void Y422p_handler(Instance *pi, void *msg)
   else {
     Y422P_buffer_discard(y422p_out);
   }
+  
+}
+
+
+static void RGB3_handler(Instance *pi, void *msg)
+{
+  VFilter_private * priv = pi->data;
+  RGB3_buffer *rgb3_in = msg;  
+
+  if (priv->trim) {
+    single_trim(priv, rgb3_in->data, rgb3_in->data, rgb3_in->width*3, rgb3_in->height);
+  }
+
+  if (pi->outputs[OUTPUT_RGB3].destination) {
+    PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
+  }
+  else {
+    RGB3_buffer_discard(rgb3_in);
+  }
+
   
 }
 

@@ -44,6 +44,7 @@
 #include "MpegTSMux.h"
 #include "MpegTSDemux.h"
 #include "H264.h"
+#include "AAC.h"
 #include "Tap.h"
 #include "ResourceMonitor.h"
 #include "Lirc.h"
@@ -75,6 +76,7 @@ int cti_main(int argc, char *argv[])
   LibQuickTimeOutput_init();
   OggOutput_init();
   H264_init();
+  AAC_init();
   Lirc_init();
   LibDV_init();
   Spawn_init();

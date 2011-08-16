@@ -172,7 +172,7 @@ static void H264_handler(Instance *pi, void *msg)
       packet->data[2] = (pid & 0xff); /* pid[7:0] */
     }
     
-    // packet->data[3] = (0x0 << 6) /* not scrambled */
+    packet->data[3] = (0x0 << 6); /* not scrambled */
 
     /* Always pack in a payload. */
     packet->data[3] |= (1 << 4);    
@@ -258,8 +258,8 @@ static void AAC_handler(Instance *pi, void *msg)
   // MpegTSMux_private *priv = pi->data;
   AAC_buffer *aac = msg;
 
-  /* Assemble TS packets, and either write out, or save in a list so
-     they can be smoothly interleaved with audio packets. */
+  /* Assemble TS packets, save in a list so they can be smoothly
+     interleaved with video packets. */
   
   /* Discard AAC data. */
   AAC_buffer_discard(&aac);

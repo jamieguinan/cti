@@ -173,6 +173,12 @@ CPPFLAGS+=$$(pkg-config x264 --cflags)
 LDFLAGS+=$$(pkg-config x264 --libs)
 endif
 
+# AAC
+ifneq ($(ARCH),armeb)
+OBJS+=$(OBJDIR)/AAC.o
+LDFLAGS+=-lfaac
+endif
+
 
 $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \
