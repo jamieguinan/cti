@@ -11,9 +11,6 @@
 #include "FaceTracker.h"
 #include "Images.h"
 
-#define cti_min(a, b)  ( (a) < (b) ? (a) : (b) )
-#define cti_max(a, b)  ( (a) > (b) ? (a) : (b) )
-
 static void Config_handler(Instance *pi, void *msg);
 static void gray_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);

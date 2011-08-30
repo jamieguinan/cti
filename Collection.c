@@ -1,4 +1,4 @@
-#include "Collection.h"
+#include "CTI.h" 		/* this indirectly includes Collection.h */
 
 #include <string.h>
 #include <stdio.h>

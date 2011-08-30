@@ -2,6 +2,10 @@
 #define _CTI_H_
 
 #include <stdint.h>
+
+#define cti_min(a, b)  ( (a) < (b) ? (a) : (b) )
+#define cti_max(a, b)  ( (a) > (b) ? (a) : (b) )
+
 #include "locks.h"
 
 /* This "List" structure will probably be obviated by ISet.  Or not. */
@@ -17,6 +21,7 @@ typedef List VPList;
 #include "String.h"
 #include "Mem.h"
 #include "Index.h"
+
 #include "Collection.h"
 
 extern List *String_split(String *s, const char *splitter);
@@ -304,5 +309,6 @@ extern void Feedback_buffer_discard(Feedback_buffer *raw);
 #define streq(a, b)  (strcmp(a, b) == 0)
 #define timeval_to_double(t) ((double)(t.tv_sec + t.tv_usec/1000000.0))
 #define double_to_timespec(d) (&(struct timespec) { .tv_sec = floor(d), .tv_nsec = fmod(d, 1.0)  * 1000000000})
+
 
 #endif

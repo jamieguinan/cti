@@ -56,6 +56,4 @@ int Collection_prepare_takefirst(Collection *c);
 #define clear_flag(flags, bit)  do { flags &= (~bit); } while(0)
 #define set_flag(flags, bit)  do { flags |= (bit); } while(0)
 
-#define cti_min(a, b)  ( (a) < (b) ? (a) : (b) )
-
 #endif
