@@ -91,6 +91,7 @@ OBJS= \
 	$(OBJDIR)/Position.o \
 	$(OBJDIR)/UI001.o \
 	$(OBJDIR)/WavOutput.o \
+	$(OBJDIR)/MjxRepair.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
@@ -193,7 +194,7 @@ ifeq ($(ARCH),x86_64-Linux)
 	@cp -Lvu $$(ldd $@ | grep -E '264|png' | sed -e 's,.*/usr,/usr,g' -e 's, .*$$,,') $(HOME)/lib/
 # Or ../../platform/$(ARCH)/lib/
 endif
-	$(STRIP) $@
+#	$(STRIP) $@
 
 
 $(OBJDIR)/mjplay$(EXEEXT): \

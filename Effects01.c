@@ -1,4 +1,3 @@
-/* Search and replace "Effects01" with new module name. */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -6,21 +5,23 @@
 #include "CTI.h"
 #include "Images.h"
 
-enum { INPUT_CONFIG, INPUT_RGB3, INPUT_422P };
+static void Config_handler(Instance *pi, void *msg);
+static void RGB3_handler(Instance *pi, void *data);
+
+enum { INPUT_CONFIG, INPUT_RGB3 };
 static Input Effects01_inputs[] = {
-  [ INPUT_CONFIG ] = { .type_label = "Config_msg" },
-  [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer" },
-  [ INPUT_422P ] = { .type_label = "422P_buffer" },
+  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_422P };
+enum { OUTPUT_RGB3 };
 static Output Effects01_outputs[] = {
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
-  [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
 };
 
 typedef struct {
   uint8_t invert;
+  int rotate;
 } Effects01_private;
 
 static int set_invert(Instance *pi, const char *value)
@@ -35,9 +36,24 @@ static int set_invert(Instance *pi, const char *value)
   return 0;
 }
 
+static int set_rotate(Instance *pi, const char *value)
+{
+  Effects01_private *priv = pi->data;
+  priv->rotate = atoi(value);
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "invert",   set_invert, 0L, 0L },
+  { "rotate",   set_rotate, 0L, 0L },
 };
+
+static void Config_handler(Instance *pi, void *data)
+{
+  Generic_config_handler(pi, data, config_table, table_size(config_table));
+}
+
 
 static void invert_plane(uint8_t *p, int length)
 {
@@ -48,63 +64,83 @@ static void invert_plane(uint8_t *p, int length)
 }
 
 
-static void Effects01_tick(Instance *pi)
+static void rotate_rgb_90(uint8_t *src, uint8_t *dst, int src_width, int src_height)
+{
+  int src_x, src_y;
+  int dst_width = src_height;
+  for (src_y = 0; src_y < src_height; src_y++) {
+    uint8_t *p_in = src + src_y*src_width*3;
+    uint8_t *p_out = dst + (dst_width - 1 - src_y)*3;
+    for (src_x = 0; src_x < src_width; src_x++) {
+      *p_out++ = *p_in++; 
+      *p_out++ = *p_in++; 
+      *p_out++ = *p_in++;
+      p_out += (dst_width*3 - 3);
+    }
+  }
+}
+
+
+static void rotate_rgb_270(uint8_t *src, uint8_t *dst, int src_width, int src_height)
+{
+  int src_x, src_y;
+  int dst_width = src_height;
+  int dst_height = src_width;
+  for (src_y = 0; src_y < src_height; src_y++) {
+    uint8_t *p_in = src + src_y*src_width*3;
+    uint8_t *p_out = dst + (dst_width * (dst_height - 1) + src_y) * 3;
+    for (src_x = 0; src_x < src_width; src_x++) {
+      *p_out++ = *p_in++; 
+      *p_out++ = *p_in++; 
+      *p_out++ = *p_in++;
+      p_out -= 3;
+      p_out -= dst_width*3;
+    }
+  }
+}
+
+
+static void RGB3_handler(Instance *pi, void *data)
 {
   Effects01_private *priv = pi->data;
-  int i;
-
-  if (CheckMessage(pi, 1) == 0) {
-    /* Weird... */
-    fprintf(stderr, "%s: nothing to do!\n", __func__);
-    return;
-  }
-
-  if (0) {
-    Config_buffer *cb_in = PopMessage(&pi->inputs[INPUT_CONFIG]);
-
-    /* Walk the config table. */
-    for (i=0; i < table_size(config_table); i++) {
-      if (streq(config_table[i].label, cb_in->label->bytes)) {
-	int rc;		/* FIXME: What to do with this? */
-	rc = config_table[i].set(pi, cb_in->value->bytes);
-	break;
-      }
+  RGB3_buffer *rgb3_in = data;
+  if (pi->outputs[OUTPUT_RGB3].destination) {
+    /* Operate in-place, pass along to output... */
+    if (priv->invert) {
+      invert_plane(rgb3_in->data, rgb3_in->data_length);
     }
-    
-    Config_buffer_discard(&cb_in);
-  }
-  else if (0)  {
-    RGB3_buffer *rgb3_in = PopMessage(&pi->inputs[INPUT_RGB3]);
-    if (pi->outputs[OUTPUT_RGB3].destination) {
-      /* Operate in-place, pass along to output... */
-      if (priv->invert) {
-	invert_plane(rgb3_in->data, rgb3_in->data_length);
-      }
-      PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
-    }
-    else {
+    if (priv->rotate == 90) {
+      RGB3_buffer *rgb3_new = RGB3_buffer_new(rgb3_in->height, rgb3_in->width);
+      rotate_rgb_90(rgb3_in->data, rgb3_new->data, rgb3_in->width, rgb3_in->height);
       RGB3_buffer_discard(rgb3_in);
+      rgb3_in = rgb3_new;
     }
+    if (priv->rotate == 270) {
+      RGB3_buffer *rgb3_new = RGB3_buffer_new(rgb3_in->height, rgb3_in->width);
+      rotate_rgb_270(rgb3_in->data, rgb3_new->data, rgb3_in->width, rgb3_in->height);
+      RGB3_buffer_discard(rgb3_in);
+      rgb3_in = rgb3_new;
+    }
+    PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
+  }
+  else {
+    RGB3_buffer_discard(rgb3_in);
   }
 
-  else if (0)  {
-    Y422P_buffer *y422p_in = PopMessage(&pi->inputs[INPUT_422P]);
-    if (pi->outputs[OUTPUT_422P].destination) {
-      /* Operate in-place, pass along to output... */
-      if (priv->invert) {
-	invert_plane(y422p_in->y, y422p_in->y_length);
-	invert_plane(y422p_in->cb, y422p_in->cb_length);
-	invert_plane(y422p_in->cr, y422p_in->cr_length);
-      }
-      PostData(y422p_in, pi->outputs[OUTPUT_422P].destination);
-    }
-    else {
-      Y422P_buffer_discard(y422p_in);
-    }
+}
+
+
+static void Effects01_tick(Instance *pi)
+{
+  Handler_message *hm;
+
+  hm = GetData(pi, 1);
+  if (hm) {
+    hm->handler(pi, hm->data);
+    ReleaseMessage(&hm);
   }
 
-
-  
+  pi->counter++;
 }
 
 static void Effects01_instance_init(Instance *pi)

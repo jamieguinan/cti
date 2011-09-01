@@ -873,7 +873,7 @@ static void SDLstuff_tick(Instance *pi)
 
 static void SDLstuff_instance_init(Instance *pi)
 {
-  SDLstuff_private *priv = calloc(1, sizeof(*priv));
+  SDLstuff_private *priv = Mem_calloc(1, sizeof(*priv));
 
   //priv->width = 720;
   priv->width = 640;

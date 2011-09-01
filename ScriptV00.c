@@ -142,6 +142,7 @@ static void scan_file(ScriptV00_private *priv, const char *filename)
   FILE *f;
   f = fopen(filename, "r");
   if (!f) {
+    fprintf(stderr, "(count not open %s)\n", filename);
     return;
   }
 
@@ -158,8 +159,14 @@ static int set_input(Instance *pi, const char *value)
   ScriptV00_private *priv = pi->data;
 
   if (strlen(value) != 0) {
+    char *e;
     priv->is_stdin = 0;
     scan_file(priv, value);
+    e = getenv("SCRIPTV00_EXTRA");
+    if (e) {
+      printf("*** scanning %s\n", e);
+      scan_file(priv, e);
+    }
   }
 
   /* Now switch to stdin. */

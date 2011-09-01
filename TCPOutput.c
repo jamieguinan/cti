@@ -67,7 +67,7 @@ static void TCPOutput_loop(Instance *pi)
 
 static Instance *TCPOutput_new(Template *t)
 {
-  Instance *pi = calloc(1, sizeof(*pi));
+  Instance *pi = Mem_calloc(1, sizeof(*pi));
   int i;
 
   pi->label = t->label;
@@ -79,7 +79,7 @@ static Instance *TCPOutput_new(Template *t)
     pi->inputs[i].parent = pi;
   }
 
-  pi->data = calloc(1, sizeof(TCPOutput_private));
+  pi->data = Mem_calloc(1, sizeof(TCPOutput_private));
   pi->tick = TCPOutput_tick;
   pi->loop = TCPOutput_loop;
 

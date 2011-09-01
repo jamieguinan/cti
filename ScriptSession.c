@@ -145,7 +145,7 @@ static void ScriptSession_loop(Instance *pi)
 
 static Instance *ScriptSession_new(Template *t)
 {
-  Instance *pi = calloc(1, sizeof(*pi));
+  Instance *pi = Mem_calloc(1, sizeof(*pi));
   int i;
 
   pi->label = t->label;
@@ -160,7 +160,7 @@ static Instance *ScriptSession_new(Template *t)
     pi->inputs[i].parent = pi;
   }
 
-  ScriptSession_private *priv = calloc(1, sizeof(*priv));
+  ScriptSession_private *priv = Mem_calloc(1, sizeof(*priv));
   // priv->... = ...;
 
   pi->data = priv;

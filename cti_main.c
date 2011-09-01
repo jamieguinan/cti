@@ -54,6 +54,7 @@
 #include "FaceTracker.h"
 #include "UI001.h"
 #include "WavOutput.h"
+#include "MjxRepair.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -110,6 +111,7 @@ int cti_main(int argc, char *argv[])
   FaceTracker_init();
   UI001_init();
   WavOutput_init();
+  MjxRepair_init();
 
   return app_code(argc, argv);
 }

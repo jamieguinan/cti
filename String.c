@@ -18,7 +18,7 @@ void String_cat1(String *s, const char *s1)
     s->available *= 2;
   }
 
-  s->bytes = realloc(s->bytes, s->available);
+  s->bytes = Mem_realloc(s->bytes, s->available);
   strcat(s->bytes, s1);
 }
 
@@ -31,7 +31,7 @@ void String_cat2(String *s, const char *s1, const char *s2)
     s->available *= 2;
   }
 
-  s->bytes = realloc(s->bytes, s->available);
+  s->bytes = Mem_realloc(s->bytes, s->available);
   strcat(s->bytes, s1);
   strcat(s->bytes, s2);
 }
@@ -45,7 +45,7 @@ void String_cat3(String *s, const char *s1, const char *s2, const char *s3)
     s->available *= 2;
   }
 
-  s->bytes = realloc(s->bytes, s->available);
+  s->bytes = Mem_realloc(s->bytes, s->available);
   strcat(s->bytes, s1);
   strcat(s->bytes, s2);
   strcat(s->bytes, s3);
@@ -54,7 +54,7 @@ void String_cat3(String *s, const char *s1, const char *s2, const char *s3)
 
 String *String_new(const char *init)
 {
-  String *s = calloc(1, sizeof(*s));
+  String *s = Mem_calloc(1, sizeof(*s));
   if (!init) {
     fprintf(stderr, "String_new needs an initial string, even if \"\"...\n");
     exit(1);
@@ -65,7 +65,7 @@ String *String_new(const char *init)
   while (s->available <= init_len) {
     s->available *= 2;
   }
-  s->bytes = malloc(s->available);
+  s->bytes = Mem_malloc(s->available);
   strcpy(s->bytes, init);
   s->len = init_len;
   return s;
@@ -74,8 +74,8 @@ String *String_new(const char *init)
 
 void String_free(String **s)
 {
-  free((*s)->bytes);
-  free(*s);
+  Mem_free((*s)->bytes);
+  Mem_free(*s);
   *s = 0L;
 }
 
@@ -83,7 +83,7 @@ void String_free(String **s)
 void _String_list_append(List *l, String **s, void (*free)(String **))
 {
   if (!l->free) {
-    l->free = free;
+    l->free = String_free;
   }
   List_append(l, *s); /* List takes ownership. */
   *s = 0L;			
@@ -109,11 +109,11 @@ void List_append(List *l, void *thing)
 {
   if (l->things == 0L) {
     l->things_max = 2;
-    l->things = calloc(l->things_max, sizeof(*l->things));
+    l->things = Mem_calloc(l->things_max, sizeof(*l->things));
   }
   else if (l->things_count == l->things_max) {
     l->things_max *= 2;
-    l->things = realloc(l->things, l->things_max * sizeof(*l->things));
+    l->things = Mem_realloc(l->things, l->things_max * sizeof(*l->things));
   }
   l->things[l->things_count] = thing;
   l->things_count += 1;
@@ -147,7 +147,7 @@ void List_free(List *l)
       l->free(&p);
     }
   }
-  free(l->things);
+  Mem_free(l->things);
   memset(l, 0, sizeof(l));
 }
 

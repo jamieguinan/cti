@@ -3,6 +3,8 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 
+#ifndef __tune_pentium4__
+
 #include "CTI.h"
 #include "H264.h"
 #include "Images.h"
@@ -151,3 +153,10 @@ void H264_init(void)
 {
   Template_register(&H264_template);
 }
+#else
+void H264_init(void)
+{
+  /* H264 module requires an updated x264 package, and I don't want to
+     update and rebuild aria at this time. */
+}
+#endif

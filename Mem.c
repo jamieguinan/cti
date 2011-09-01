@@ -60,7 +60,13 @@ static void store(void *ptr, int size, const char *func)
       return;
     }
   }
+
   fprintf(stderr, "no more tracking slots left!\n");
+  FILE *f = fopen("mem.csv", "w");
+  for (i=0; i < NUM_ALLOCATIONS; i++) {
+    fprintf(f, "%p %d %s\n", allocations[i].ptr, allocations[i].size, allocations[i].func);
+  }
+  fclose(f);
   exit(1);
 }
 

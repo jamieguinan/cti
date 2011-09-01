@@ -30,7 +30,7 @@ typedef struct {
 Sink *Sink_new(char *name)
 {
   int rc;
-  Sink_private *priv = calloc(1, sizeof(*priv));
+  Sink_private *priv = Mem_calloc(1, sizeof(*priv));
 
   priv->s = -1;			/* Default to invalid socket value. */
 
@@ -151,7 +151,7 @@ void Sink_free(Sink **sink)
 Source *Source_new(char *name)
 {
   int rc;
-  Source_private *priv = calloc(1, sizeof(*priv));
+  Source_private *priv = Mem_calloc(1, sizeof(*priv));
 
   priv->s = -1;			/* Default to invalid socket value. */
 

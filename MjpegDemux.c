@@ -60,9 +60,8 @@ typedef struct {
   } current;
 
   struct {
-    double last_timestamp;
-    double last_playback;
-    double nominal_period;
+    double stream_t0;
+    double playback_t0;
   } video;
 
   int seen_audio;
@@ -179,7 +178,7 @@ static int do_seek(Instance *pi, const char *value)
   }
   priv->state = PARSING_HEADER;
 
-  priv->video.last_timestamp = 0.0;
+  priv->video.stream_t0 = -1.0;
   
   return 0;
 }
@@ -376,7 +375,20 @@ static void MjpegDemux_tick(Instance *pi)
 	  String_parse_string(line, b, &priv->current.content_type);
 	}
 	else if ((a = String_find(line, 0, "Timestamp:", &b)) != -1) {
+#if 0
+	  int n, dot = 0;
+	  n = String_find(line, 0, ".", &dot);
+	  if (n != -1  && strlen(line->bytes+dot) == 5) {
+	    /* Fix up early mjx files that misformatted Timestamp. */
+	    printf("%s -> ", line->bytes);
+	    String_cat1(line, " ");
+	    memmove(line->bytes+dot+1, line->bytes+dot, 5);
+	    line->bytes[dot] = '0';
+	    printf("%s\n", line->bytes);
+	  }
+#endif
 	  String_parse_double(line, b, &priv->current.timestamp);
+	  printf("%f [%s]\n", priv->current.timestamp, line->bytes);
 	}
 	else if ((a = String_find(line, 0, "Width:", &b)) != -1) {
 	  String_parse_int(line, b, &priv->current.width);
@@ -454,33 +466,37 @@ static void MjpegDemux_tick(Instance *pi)
   else if (streq(priv->current.content_type->bytes, "image/jpeg")) {
     Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
 				      priv->current.content_length);
+    /* Reconstruct timeval timestamp for Jpeg buffer.  Not actually used here, though. */
     j->tv.tv_sec = priv->current.timestamp;
     j->tv.tv_usec = fmod(priv->current.timestamp, 1.0) * 1000000;
 
     if (pi->outputs[OUTPUT_JPEG].destination) {
       /* Use timestamps if configured to do so, and only if haven't
 	 seen any audio, which is normally used with feedback. */
+      // printf("%d %d\n", priv->use_timestamps, !priv->seen_audio);
       if (priv->use_timestamps && !priv->seen_audio) {
-	struct timeval t1;
+	struct timeval tv_now;
 	double tnow;
-	double sleep_time;
-	gettimeofday(&t1, 0L);
-	tnow = timeval_to_double(t1);
-	if (priv->video.last_timestamp > 0.1) {
-	  /* Use IIR filter for period. */
-	  priv->video.nominal_period = 
-	    (priv->video.nominal_period * 0.95) + ((priv->current.timestamp - priv->video.last_timestamp) * 0.05);
+	gettimeofday(&tv_now, 0L);
+	tnow = timeval_to_double(tv_now);
+	
+	if (priv->video.stream_t0 < 0.0) {
+	  /* New stream, or seek occurred. */
+	  priv->video.stream_t0 = priv->current.timestamp;
+	  priv->video.playback_t0 = tnow;
 	}
 	else {
-	  priv->video.nominal_period = 0.045; /* Midpoint between 15fps and 30fps. */
+	  double stream_diff = priv->current.timestamp - priv->video.stream_t0;
+	  double playback_diff = tnow - priv->video.playback_t0;
+	  double delay = stream_diff - playback_diff;
+	  if (delay > 0.0) {
+	    printf("%f %f\n", stream_diff, playback_diff);
+	    nanosleep( double_to_timespec(delay), NULL);
+	  }
 	}
-	sleep_time = priv->video.last_playback + priv->video.nominal_period - tnow;
-	if (sleep_time > 0.0) {
-	  nanosleep( double_to_timespec(sleep_time), NULL);
-	}
-	priv->video.last_timestamp = priv->current.timestamp;
-	priv->video.last_playback = tnow;
+
       }
+
       PostData(j, pi->outputs[OUTPUT_JPEG].destination);
       if (priv->use_feedback & (1<<1)) {
 	priv->pending_feedback += 1;
@@ -541,6 +557,7 @@ static void MjpegDemux_instance_init(Instance *pi)
   priv->max_chunk_size = 1024*1024*4;
   priv->retry = 0;
   priv->use_feedback = 0;
+  priv->video.stream_t0 = -1.0;
   priv->feedback_threshold = 20;
   pi->data = priv;
 }

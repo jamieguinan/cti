@@ -84,3 +84,5 @@ connect md Config_msg cc
 
 # Enable mjd to start the whole thing running.
 config mjd enable 1
+
+mt

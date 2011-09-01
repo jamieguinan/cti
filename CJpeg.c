@@ -101,6 +101,8 @@ static void compress_and_post(Instance *pi,
   jpeg_out->width = width;
   jpeg_out->height = height;
 
+  jpeg_out->tv = t1;		/* Store timestamp! */
+
   if (c2 && c3) {
     int w2 = (width/8)*8;
     int h2 = (height/8)*8;
