@@ -64,10 +64,13 @@ static void store(void *ptr, int size, const char *func)
   fprintf(stderr, "no more tracking slots left!\n");
   FILE *f = fopen("mem.csv", "w");
   for (i=0; i < NUM_ALLOCATIONS; i++) {
-    fprintf(f, "%p %d %s\n", allocations[i].ptr, allocations[i].size, allocations[i].func);
+    fprintf(f, "%s, %p, %d,\n", allocations[i].func, allocations[i].ptr, allocations[i].size);
   }
   fclose(f);
   exit(1);
+  printf("wtf?\n");
+  abort();
+  printf("wwwtf?\n");
 }
 
 static void clear(void *ptr, const char *func)

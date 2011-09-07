@@ -819,13 +819,17 @@ static int my_event_loop(void *data)
 
       default: 
 	/* Handle ranges here. */
-	if (SDLK_a <= ev.key.keysym.sym && ev.key.keysym.sym <= SDLK_z) {
-	  if (pi->outputs[OUTPUT_KEYCODE].destination) {
+	if (pi->outputs[OUTPUT_KEYCODE].destination) {
+	  if (SDLK_a <= ev.key.keysym.sym && ev.key.keysym.sym <= SDLK_z) {
 	    PostData(Keycode_message_new((ev.key.keysym.sym - SDLK_a) + CTI__KEY_A),
 		     pi->outputs[OUTPUT_KEYCODE].destination);
 	  }
-	  break;
+	  else if (SDLK_0 <= ev.key.keysym.sym && ev.key.keysym.sym <= SDLK_9) {
+	    PostData(Keycode_message_new((ev.key.keysym.sym - SDLK_0) + CTI__KEY_0),
+		     pi->outputs[OUTPUT_KEYCODE].destination);
+	  }
 	}
+	break;
       }
     }
     else if (ev.type == SDL_QUIT) {

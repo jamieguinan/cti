@@ -388,7 +388,7 @@ static void MjpegDemux_tick(Instance *pi)
 	  }
 #endif
 	  String_parse_double(line, b, &priv->current.timestamp);
-	  printf("%f [%s]\n", priv->current.timestamp, line->bytes);
+	  // printf("%f [%s]\n", priv->current.timestamp, line->bytes);
 	}
 	else if ((a = String_find(line, 0, "Width:", &b)) != -1) {
 	  String_parse_int(line, b, &priv->current.width);
@@ -490,7 +490,7 @@ static void MjpegDemux_tick(Instance *pi)
 	  double playback_diff = tnow - priv->video.playback_t0;
 	  double delay = stream_diff - playback_diff;
 	  if (delay > 0.0) {
-	    printf("%f %f\n", stream_diff, playback_diff);
+	    if (cfg.verbosity) { printf("%f %f\n", stream_diff, playback_diff); }
 	    nanosleep( double_to_timespec(delay), NULL);
 	  }
 	}

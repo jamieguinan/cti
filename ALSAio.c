@@ -88,7 +88,7 @@ typedef struct {
   uint64_t total_encoded_bytes;
   uint64_t total_encoded_next;
   uint64_t total_encoded_delta;
-  
+
 } ALSAio_private;
 
 
@@ -211,7 +211,7 @@ static void get_device_range(Instance *pi, Range *range)
 static int set_rate(Instance *pi, const char *value)
 {
   int rc;
-  int rate = atoi(value);
+  unsigned int rate = atoi(value);
   ALSAio_private *priv = pi->data;
 
   if (!priv->handle) {
@@ -228,7 +228,8 @@ static int set_rate(Instance *pi, const char *value)
     priv->rate = rate;
   }
   else {
-    fprintf(stderr, "error setting rate %d\n", rate);
+    fprintf(stderr, "error setting rate %d (%s)\n", rate, snd_strerror(rc));
+    
   }
 
   return rc;
@@ -429,6 +430,24 @@ static void Wav_handler(Instance *pi, void *data)
     return;
   }
 
+  if (!priv->rate) {
+    char rate[32];
+    sprintf(rate, "%d", wav_in->params.rate);
+    set_rate(pi, rate);
+  }
+
+  if (!priv->channels) {
+    char channels[32];
+    sprintf(channels, "%d", wav_in->params.channels);
+    set_channels(pi, channels);
+  }
+
+  if (!priv->format) {
+    char channels[32];
+    sprintf(channels, "%d", wav_in->params.channels);
+    set_channels(pi, channels);
+  }
+
   state = snd_pcm_state(priv->handle);
 
   if (state == SND_PCM_STATE_OPEN || state == SND_PCM_STATE_SETUP) {
@@ -462,14 +481,6 @@ static void Wav_handler(Instance *pi, void *data)
     rc = snd_pcm_prepare(priv->handle);
     state = snd_pcm_state(priv->handle);
     printf("state=%d\n", state);
-  }
-
-  if (wav_in->params.rate &&
-      wav_in->params.rate != priv->rate) {
-    /* FIXME: Adjust rate.  May need to stop/start stream.  Or, resample. */
-    // char rate[32];
-    // sprintf(rate, "%d", wav_in->params.rate);
-    // set_rate(pi, rate);
   }
 
   int out_frames = wav_in->data_length / (priv->channels * priv->format_bytes);
@@ -530,16 +541,11 @@ static void ALSAPlayback_tick(Instance *pi)
       ReleaseMessage(&hm);
     }
   }
-  else if (priv->enable) {
+  else if (priv->enable && priv->rate) {
     /* Filler... */
     Wav_buffer *wav_in;
-    if (cfg.verbosity) { 
-      static int n = 0;
-      if (n++ % 100 == 0) {
-	printf("filler\n");
-      }
-    }
     int i;
+    printf("filler\n");
     wav_in = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
     wav_in->data_length = 16*priv->channels*priv->format_bytes;
     wav_in->data = Mem_calloc(1, wav_in->data_length);

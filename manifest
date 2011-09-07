@@ -45,6 +45,8 @@ FileInput.c
 FileInput.h
 FileOutput.c
 FileOutput.h
+GdkCapture.c
+GdkCapture.h
 H264.c
 H264.h
 HalfWidth.c
@@ -78,6 +80,9 @@ MjpegDemux.c
 MjpegDemux.h
 MjpegMux.c
 MjpegMux.h
+MjpegRepair.c
+MjxRepair.c
+MjxRepair.h
 MotionDetect.c
 MotionDetect.h
 Mp2Enc.c
@@ -215,6 +220,8 @@ fyv-local.cmd
 fyv-mjx-save.cmd
 fyv-test.cmd
 fyv-www.cmd
+gdkplay.cmd
+gdksave.cmd
 h264test01.cmd
 h264test02.cmd
 jmemdst.c
@@ -272,11 +279,13 @@ pb1.cmd
 pb2.cmd
 playback.cmd
 qt.cmd
+repair.cmd
 rsm1.cmd
 sample-broken-test.cmd
 sdl_main.c
 ss.cmd
 test.cmd
+text.cmd
 topro.cmd
 tv-server.cmd
 tv.cmd

@@ -92,6 +92,7 @@ OBJS= \
 	$(OBJDIR)/UI001.o \
 	$(OBJDIR)/WavOutput.o \
 	$(OBJDIR)/MjxRepair.o \
+	$(OBJDIR)/GdkCapture.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o

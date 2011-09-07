@@ -17,22 +17,7 @@ config cc height 100
 config cc command set_line_width 2.0
 
 include clock.cmd
-
-# Draw text underlay.
-config cc command set_source_rgb 0.2 0.2 0.2
-config cc command identity_matrix
-config cc command move_to 10.0 0.0
-config cc command rel_line_to 80.0 0.0
-config cc command rel_line_to 0.0 15.0
-config cc command rel_line_to -80.0 0.0
-config cc command close_path
-config cc command fill
-
-# Draw text.
-config cc command set_source_rgb 0.9 0.9 0.9
-config cc command identity_matrix
-config cc command move_to 10.0 10.0
-config cc command show_text
+include text.cmd
 
 
 # Demuxer setup.
@@ -53,7 +38,10 @@ system mkfifo fifo.wav
 config y4mout output fifo.y4m
 config wo output fifo.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 150 -f 25 -F 1 2> /dev/null | tee cap.ogv | oggfwd localhost 8000 hackme /frontyard.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 25 -F 1  2> /dev/null | tee cap-%s.ogv |  oggfwd localhost 8000 hackme /frontyard.ogv &
+
+#system cat fifo.y4m > /dev/null &
+#system cat fifo.wav > /dev/null &
 
 # "-v" values work out to roughly (value * 25
 # -v 3
@@ -85,4 +73,4 @@ connect md Config_msg cc
 # Enable mjd to start the whole thing running.
 config mjd enable 1
 
-mt
+# mt

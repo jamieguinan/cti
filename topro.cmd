@@ -9,7 +9,7 @@ connect dj RGB3_buffer sdl
 
 config mjm output cap-%Y%m%d-%H%M%S.mjx
 
-config vc device /dev/video3
+config vc device gspca
 config vc format JPEG
 config vc size 640x480
 
