@@ -424,6 +424,7 @@ static void Wav_handler(Instance *pi, void *data)
   int state;
   int dir = 0;
   int rc;
+  int i;
   snd_pcm_sframes_t n;
 
   if (!priv->enable) {
@@ -431,21 +432,33 @@ static void Wav_handler(Instance *pi, void *data)
   }
 
   if (!priv->rate) {
+    /* Set rate. */
+    char channels[32];
     char rate[32];
     sprintf(rate, "%d", wav_in->params.rate);
     set_rate(pi, rate);
-  }
 
-  if (!priv->channels) {
-    char channels[32];
+    /* Set channels. */
     sprintf(channels, "%d", wav_in->params.channels);
     set_channels(pi, channels);
-  }
 
-  if (!priv->format) {
-    char channels[32];
-    sprintf(channels, "%d", wav_in->params.channels);
-    set_channels(pi, channels);
+    /* Set format. */
+    for (i=0; i < table_size(formats); i++) {
+      if (formats[i].bytes * 8 == wav_in->params.bits_per_sample) {
+	priv->format = formats[i].value;
+	rc = snd_pcm_hw_params_set_format(priv->handle, priv->hwparams, priv->format);
+	if (rc < 0) {
+	  fprintf(stderr, "snd_pcm_hw_params_set_format %s: %s\n", priv->device, snd_strerror(rc));
+	}
+	break;
+      }
+    }
+    
+    if (i == table_size(formats)) {
+      fprintf(stderr, "format for %d bits-per-sample not found!\n",
+	      wav_in->params.bits_per_sample);
+    }
+
   }
 
   state = snd_pcm_state(priv->handle);
@@ -545,7 +558,7 @@ static void ALSAPlayback_tick(Instance *pi)
     /* Filler... */
     Wav_buffer *wav_in;
     int i;
-    printf("filler\n");
+    // fprintf(stderr, "filler\n");
     wav_in = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
     wav_in->data_length = 16*priv->channels*priv->format_bytes;
     wav_in->data = Mem_calloc(1, wav_in->data_length);

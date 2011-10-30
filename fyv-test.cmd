@@ -19,6 +19,8 @@ config cc command set_line_width 2.0
 include clock.cmd
 include text.cmd
 
+# DJpeg setup
+config dj dct_method islow
 
 # Demuxer setup.
 config mjd use_feedback 0
@@ -38,7 +40,7 @@ system mkfifo fifo.wav
 config y4mout output fifo.y4m
 config wo output fifo.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 25 -F 1  2> /dev/null | tee cap-%s.ogv |  oggfwd localhost 8000 hackme /frontyard.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 25 -F 1  2> /dev/null | tee cap-$(now).ogv |  oggfwd localhost 8000 hackme /frontyard.ogv &
 
 #system cat fifo.y4m > /dev/null &
 #system cat fifo.wav > /dev/null &
@@ -61,10 +63,13 @@ system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20
 connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer wo
 
-connect dj RGB3_buffer cc
+##connect dj RGB3_buffer cc
+connect dj 422P_buffer cc
 connect dj GRAY_buffer md
 
-connect cc RGB3_buffer y4mout
+##connect cc RGB3_buffer y4mout
+connect cc 422P_buffer y4mout
+
 #connect cc RGB3_buffer vf
 #connect vf RGB3_buffer y4mout
 

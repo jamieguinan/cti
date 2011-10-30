@@ -13,6 +13,17 @@ typedef struct {
 } Layer;
 
 
+/* Enumerate image types, CTI internal use only. */
+typedef enum {
+  IMAGE_TYPE_UNKNOWN,
+  IMAGE_TYPE_JPEG,
+  IMAGE_TYPE_PGM,
+  IMAGE_TYPE_PPM,
+} ImageType;
+
+extern ImageType Image_guess_type(uint8_t * data, int len);
+
+
 /* Gray buffer */
 typedef struct {
   int width;
@@ -120,12 +131,14 @@ typedef struct {
 
 
 extern Gray_buffer *Gray_buffer_new(int width, int height);
+extern Gray_buffer *PGM_buffer_from(uint8_t *data, int len);
 extern void Gray_buffer_discard(Gray_buffer *gray);
 
 extern Gray32_buffer *Gray32_buffer_new(int width, int height);
 extern void Gray32_buffer_discard(Gray32_buffer *gray);
-
+extern RGB3_buffer *PPM_buffer_from(uint8_t *data, int len);
 extern RGB3_buffer *RGB3_buffer_new(int width, int height);
+
 extern void RGB3_buffer_discard(RGB3_buffer *rgb);
 extern void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int height, int stride);
 

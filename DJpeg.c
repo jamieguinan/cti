@@ -26,11 +26,12 @@ static Input DJpeg_inputs[] = {
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_422P };
+enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_422P, OUTPUT_JPEG };
 static Output DJpeg_outputs[] = { 
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
   [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_JPEG ] = {.type_label = "Jpeg_buffer", .destination = 0L }, /* pass-through */
 };
 
 typedef struct {
@@ -38,6 +39,9 @@ typedef struct {
   int use_green_for_gray;
   int sampling_warned;
   int max_messages;
+  int dct_method;
+
+  int every;
 } 
 DJpeg_private;
 
@@ -81,6 +85,27 @@ static int set_max_messages(Instance *pi, const char *value)
   return 0;
 }
 
+
+static int set_dct_method(Instance *pi, const char *value)
+{
+  DJpeg_private *priv = pi->data;
+
+  if (streq(value, "islow")) {
+    priv->dct_method = JDCT_ISLOW;
+  }
+  else if (streq(value, "ifast")) {
+    priv->dct_method = JDCT_IFAST;
+  }
+  else if (streq(value, "float")) {
+    priv->dct_method = JDCT_FLOAT;
+  }
+  else {
+    fprintf(stderr, "%s: unknown method %s\n", __func__, value);
+  }
+  return 0;
+}
+
+
 static int do_quit(Instance *pi, const char *value)
 {
   exit(0);
@@ -88,8 +113,18 @@ static int do_quit(Instance *pi, const char *value)
 }
 
 
+static int set_every(Instance *pi, const char *value)
+{
+  DJpeg_private *priv = pi->data;
+  priv->every = atoi(value);
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "max_messages", set_max_messages, 0L, 0L},
+  { "dct_method", set_dct_method, 0L, 0L},
+  { "every", set_every, 0L, 0L },
   { "quit",    do_quit, 0L, 0L },
 };
 
@@ -109,9 +144,14 @@ static void Jpeg_handler(Instance *pi, void *data)
   Jpeg_buffer *jpeg_in = data;
   int gray_handled = 0;
 
+  if (priv->every && (pi->counter % priv->every != 0)) {
+    goto out;
+  }
+
   if (priv->max_messages && pi->pending_messages > priv->max_messages) {
     /* Skip without decoding. */
-    fprintf(stderr, "DJpeg skipping %d\n", pi->counter);
+    fprintf(stderr, "DJpeg skipping %d (%d %d)\n", pi->counter,
+	    pi->pending_messages, priv->max_messages);
     goto out;
   }
 
@@ -168,11 +208,9 @@ static void Jpeg_handler(Instance *pi, void *data)
 
     dest_mgr = jinit_write_mem(&cinfo, rgb_out->data, rgb_out->data_length);
 
-    (void) jpeg_start_decompress(&cinfo);
+    cinfo.dct_method = priv->dct_method; /* Ah, we have to set this up here! */
 
-    /* Note: I'm not sure if this gets overridden.  It definitely does in the 
-       422p case below.  Anyway, should set desired JDCT_DEFAULT in jconfig.h. */
-    cinfo.dct_method = JDCT_FLOAT;
+    (void) jpeg_start_decompress(&cinfo);
 
     (*dest_mgr->start_output) (&cinfo, dest_mgr);
 
@@ -310,11 +348,15 @@ static void Jpeg_handler(Instance *pi, void *data)
       cinfo.ac_huff_tbl_ptrs[1] = ac_huff_tbl_ptrs[1];
     }
 	   
+    cinfo.dct_method = priv->dct_method;
+
     (void) jpeg_start_decompress(&cinfo);
 
     /* Note: setting cinfo.dct_method here does not make any differnce, libjpeg 
-       resets it in the jpeg_consume_input()default_decompress_parms() path. 
-       Solution is to #define JDCT_DEFAULT it to desired value in jconfig.h */
+       resets it in the jpeg_consume_input()/default_decompress_parms() path. 
+       Solution is to #define JDCT_DEFAULT it to desired value in jconfig.h.
+       Update 2011-Sep-22: Hm, actually it *does* work. */
+    cinfo.dct_method = priv->dct_method;
 
     uint8_t *buffers[3] = { y422p_out->y, y422p_out->cb, y422p_out->cr};
     // printf("cinfo.output_scanline=%d cinfo.output_height=%d\n", cinfo.output_scanline , cinfo.output_height);
@@ -343,7 +385,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   check_errors_2:
     if (!error) {
       (void) jpeg_finish_decompress(&cinfo);
-      
+
       y422p_out->tv = jpeg_in->tv;
       
       if (pi->outputs[OUTPUT_GRAY].destination && !gray_handled) {
@@ -372,8 +414,13 @@ static void Jpeg_handler(Instance *pi, void *data)
 
 
  out:
-  /* Discard input buffer. */
-  Jpeg_buffer_discard(jpeg_in);
+  /* Discard or pass along input buffer. */
+  if (pi->outputs[OUTPUT_JPEG].destination) {
+    PostData(jpeg_in, pi->outputs[OUTPUT_JPEG].destination);
+  }
+  else {
+    Jpeg_buffer_discard(jpeg_in);
+  }
   pi->counter += 1;
 
   /* Calculate decompress time. */
@@ -401,6 +448,7 @@ static void DJpeg_instance_init(Instance *pi)
 {
   DJpeg_private *priv = Mem_calloc(1, sizeof(*priv));
   priv->use_green_for_gray = 1;
+  priv->dct_method = JDCT_DEFAULT;
   pi->data = priv;
 }
 

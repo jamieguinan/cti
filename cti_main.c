@@ -20,6 +20,8 @@
 #include "MjpegMux.h"
 #include "MjpegDemux.h"
 #include "MjpegMux.h"
+#include "MjpegLocalBuffer.h"
+#include "MjpegStreamBuffer.h"
 #include "Mp2Enc.h"
 #include "Mpeg2Enc.h"
 #include "ScriptSession.h"
@@ -56,6 +58,7 @@
 #include "WavOutput.h"
 #include "MjxRepair.h"
 #include "GdkCapture.h"
+#include "ImageLoader.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -71,19 +74,38 @@ int cti_main(int argc, char *argv[])
   ALSAMixer_init();
   V4L2Capture_init();
   SonyPTZ_init();
+  Signals_init();
 #ifndef __ARMEB__
   SDLstuff_init();
-  Signals_init();
   CairoContext_init();
-  LibQuickTimeOutput_init();
-  OggOutput_init();
-  H264_init();
-  AAC_init();
-  Lirc_init();
-  LibDV_init();
   Spawn_init();
 #endif
 #endif
+
+#ifdef HAVE_AAC
+  AAC_init();
+#endif
+
+#ifdef HAVE_H264
+  H264_init();
+#endif
+
+#ifdef HAVE_OGGOUTPUT
+  OggOutput_init();
+#endif
+
+#ifdef HAVE_LIBDV
+  LibDV_init();
+#endif
+
+#ifdef HAVE_LIBQUICKTIME
+  LibQuickTimeOutput_init();
+#endif
+
+#ifdef HAVE_LIRC
+  Lirc_init();
+#endif
+
   CJpeg_init();
   DJpeg_init();
   JpegFiler_init();
@@ -91,6 +113,8 @@ int cti_main(int argc, char *argv[])
   JpegSource_init();
   MjpegMux_init();
   MjpegDemux_init();
+  MjpegLocalBuffer_init();
+  MjpegStreamBuffer_init();
   ScriptV00_init();
   Null_init();
   DO511_init();
@@ -114,6 +138,7 @@ int cti_main(int argc, char *argv[])
   WavOutput_init();
   MjxRepair_init();
   GdkCapture_init();
+  ImageLoader_init();
 
   return app_code(argc, argv);
 }

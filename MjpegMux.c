@@ -33,10 +33,9 @@ static Input MjpegMux_inputs[] = {
   [ INPUT_AUDIO ] = { .type_label = "Audio_buffer", .handler = Audio_handler },
 };
 
-enum { OUTPUT_RAWDATA, OUTPUT_JPEG };
+enum { OUTPUT_RAWDATA };
 static Output MjpegMux_outputs[] = {
   [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
-  [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -45,6 +44,7 @@ typedef struct {
   int seq;
   int every;
 } MjpegMux_private;
+
 
 static int set_output(Instance *pi, const char *value)
 {
@@ -56,9 +56,25 @@ static int set_output(Instance *pi, const char *value)
     Sink_free(&priv->sink);
   }
 
+  fprintf(stderr, "set_output(%s)\n", value);
+
   priv->output = strdup(value);
   priv->sink = Sink_new(priv->output);
   priv->every = 1;
+
+  return 0;
+}
+
+
+static int do_restart(Instance *pi, const char *value)
+{
+  MjpegMux_private *priv = pi->data;
+  if (priv->output) {
+    /* Assuming output had a %s in it, just restart it. */
+    char output[strlen(priv->output)+1];
+    strcpy(output, priv->output);
+    set_output(pi, output);
+  }
 
   return 0;
 }
@@ -73,8 +89,9 @@ static int set_every(Instance *pi, const char *value)
 
 
 static Config config_table[] = {
-  { "output", set_output , 0L, 0L },
-  { "every", set_every , 0L, 0L },
+  { "output", set_output, 0L, 0L },
+  { "restart", do_restart, 0L, 0L },
+  { "every", set_every, 0L, 0L },
 };
 
 

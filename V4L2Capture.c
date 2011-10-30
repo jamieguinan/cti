@@ -56,6 +56,7 @@ static Output V4L2Capture_outputs[] = {
 
 typedef struct  {
   /* Many of these variables might end up being strings, and interpreted in set_* functions. */
+  char *drivermatch;            /* Optional, I use this for matching gspca sub-devices. */
   char *devpath;
   int fd;
   int enable;			/* Set this to start capturing. */
@@ -162,9 +163,16 @@ static int set_device(Instance *pi, const char *value)
     priv->fd = -1;
     goto out;
   }
+
+  if (priv->drivermatch && !streq((const char*)v4l2_caps.driver, priv->drivermatch)) {
+    fprintf(stderr, "driver mismatch %s != %s\n", v4l2_caps.driver, priv->drivermatch);
+    close(priv->fd);
+    priv->fd = -1;
+    goto out;
+  }
+
   /* FIXME: Store ".driver" field from result. */
   fprintf(stderr, "card: %s\n", v4l2_caps.card);
-
 
   /* Check tuner capabilities */
   rc = ioctl(priv->fd, VIDIOC_G_TUNER, &tuner);
@@ -213,10 +221,10 @@ static void get_device_range(Instance *pi, Range *range)
       String_cat1(s, de->d_name);
       //String_list_append(&r->x.strings.values, &s);
 
-      String *s2 = String_new("");
-      String_cat3(s2, "/sys/class/video4linux/", de->d_name, "/name");
-      desc = File_load_text(s2->bytes);
-      String_free(&s2);
+      String *tmp = String_new("");
+      String_cat3(tmp, "/sys/class/video4linux/", de->d_name, "/name");
+      desc = File_load_text(tmp->bytes);
+      String_free(&tmp);
       
       String_trim_right(desc);
 
@@ -797,9 +805,21 @@ static int set_snapshot(Instance *pi, const char *value)
 }
 
 
+static int set_drivermatch(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = pi->data;
+  if (priv->drivermatch) {
+    free(priv->drivermatch);
+  }
+  priv->drivermatch = strdup(value);
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "snapshot",   set_snapshot, 0L, 0L},
   { "device",     set_device, 0L, get_device_range},
+  { "drivermatch",     set_drivermatch, 0L, 0L},
   { "enable",     set_enable, 0L, 0L },
   { "format",     set_format, 0L, get_format_range},
   { "size",       set_size,   0L, 0L},

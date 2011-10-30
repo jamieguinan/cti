@@ -90,7 +90,7 @@ void  gdk_to_rgb(uint8_t *data, int width, int height, int depth, int bpp, int b
 static void check_files(Instance *pi)
 {
   GdkCapture_private *priv = pi->data;
-
+  
   /* Poll for file, because I don't have a good IPC mechanism yet. */
   if (priv->filename == 0L || 
       access(priv->filename->bytes, R_OK) != 0) {
@@ -119,6 +119,7 @@ static void check_files(Instance *pi)
     }
     n = sscanf(line, "%d %d %d %d %d", &width, &height, &depth, &bpp, &bpl);
     if (n != 5) {
+      fprintf(stderr, "%s: invalid header\n", __func__);
       goto out;
     }
     rgb = RGB3_buffer_new(width, height);

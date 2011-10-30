@@ -29,11 +29,12 @@ static Input MjpegDemux_inputs[] = {
   [ INPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .handler = Feedback_handler },
 };
 
-enum { OUTPUT_JPEG, OUTPUT_WAV, OUTPUT_O511 };
+enum { OUTPUT_JPEG, OUTPUT_WAV, OUTPUT_O511, OUTPUT_RAWDATA };
 static Output MjpegDemux_outputs[] = {
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_WAV ] = { .type_label = "Wav_buffer", .destination = 0L },
   [ OUTPUT_O511 ] = { .type_label = "O511_buffer", .destination = 0L },
+  [ OUTPUT_RAWDATA ] =  { .type_label = "RawData_buffer", .destination = 0L },
   // [ OUTPUT_STATUS ] = { .type_label = "Status_msg", .destination = 0L },
 };
 
@@ -534,10 +535,18 @@ static void MjpegDemux_tick(Instance *pi)
   }
 
  out:
-  /* trim consumed data from chunk, reset "current" variables. */
+  /* Trim consumed data from chunk, but also copy it to rawdata output if set. */
+  if (pi->outputs[OUTPUT_RAWDATA].destination) {
+    int size = (priv->current.eoh + 4 + priv->current.content_length);
+    RawData_buffer *raw = RawData_buffer_new(size);
+    memcpy(raw->data, priv->chunk->data, size);
+    PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
+  }
+  
   ArrayU8_trim_left(priv->chunk, priv->current.eoh + 4 + priv->current.content_length);
 
  out2:
+  /* Reset "current" variables */
   priv->current.content_length = 0;
   priv->current.timestamp = 0.0;
   priv->current.width = 0;

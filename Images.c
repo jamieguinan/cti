@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "Images.h"
+#include "Array.h"
 #include "Mem.h"
 #include "Cfg.h"
 
@@ -15,6 +16,62 @@ Gray_buffer *Gray_buffer_new(int width, int height)
   gray->data = Mem_calloc(1, gray->data_length); 	/* Caller must fill in data! */
   return gray;
 }
+
+
+Gray_buffer *PGM_buffer_from(uint8_t *data, int len)
+{
+  ArrayU8 *a = ArrayU8_temp_const(data,len); /* FIXME:  Maybe just pass in an ArrayU8? */
+  int i = 0, j = 0;
+  int x = 0, y = 0, maxval = 0;
+  int n;
+
+  ArrayU8 *PGMsignature = ArrayU8_temp_const("P5\n", strlen("P5\n"));
+  ArrayU8 *newline = ArrayU8_temp_const("\n", strlen("\n"));
+
+  if (ArrayU8_search(a, 0, PGMsignature) == -1) {
+    return 0L;
+  }
+
+  i = PGMsignature->len;
+  while (maxval == 0) {
+    j = ArrayU8_search(a, i, newline);
+    if (j == -1) {
+      fprintf(stderr, "not a PGM file\n");
+      return 0L;
+    }
+    if (!x) {
+      n = sscanf((char*)a->data+i, "%d %d", &x, &y);
+      if (n == 2) {
+	printf("%dx%d\n", x, y);
+      }
+    }
+    else {
+      n = sscanf((char*)a->data+i, "%d", &maxval);
+      if (n == 1) {
+	printf("%d\n", maxval);
+      }
+    }
+    
+    if (n == 0 && a->data[i] != '#') {
+      fprintf(stderr, "not a PGM file (no comment)\n");
+      return 0L;
+    }
+
+    i = j+1;
+  }
+
+  j += 1;			/* skip newline */
+
+  fprintf(stderr, "PGM: %dx%d %d expected %d found\n", x, y, x*y, len - j);
+  if (x*y == len-j) {
+    Gray_buffer *gray = Gray_buffer_new(x, y);
+    memcpy(gray->data, a->data+j, len-j);
+    return gray;
+  }
+  
+  return 0L;
+}
+
 
 void Gray_buffer_discard(Gray_buffer *gray)
 {
@@ -401,23 +458,64 @@ Y420P_buffer *Y422P_to_Y420P(Y422P_buffer *y422p)
   return y420p;
 }
 
-Y422P_buffer *Y422P_copy(Y422P_buffer *y422p, int x, int y, int width, int height)
+Y422P_buffer *Y422P_copy(Y422P_buffer *y422p, int xoffset, int yoffset, int width, int height)
 {
   Y422P_buffer *newbuf = 0L;
+  int x, y;
 
-  if (x+width > y422p->width || y+height > y422p->height) {
+  if (xoffset+width > y422p->width || yoffset+height > y422p->height) {
     fprintf(stderr, "copy outside bounds!\n");
     return 0L;
   }
 
-  /* FIXME: tbd... */
+  newbuf = Y422P_buffer_new(width, height);
+
+  for (y = 0; y < height; y+=1) {
+    uint8_t *ysrc = y422p->y + ((y + yoffset) * y422p->width) + xoffset;
+    uint8_t *ydst = newbuf->y + (y*newbuf->width);
+    uint8_t *crsrc = y422p->cr + ((y + yoffset) * y422p->width/2) + (xoffset/2);
+    uint8_t *crdst = newbuf->cr + (y*newbuf->width/2);
+    uint8_t *cbsrc = y422p->cb + ((y + yoffset) * y422p->width/2) + (xoffset/2);
+    uint8_t *cbdst = newbuf->cb + (y*newbuf->width/2);
+    for (x = 0; x < width; x+=1) {
+      *ydst++ = *ysrc++;
+
+      if (x % 2 == 0) {
+	*crdst++ = *crsrc++;
+	*cbdst++ = *cbsrc++;
+      }
+    }
+  }
   
   return newbuf;
 }
 
 
-void Y422P_paste(Y422P_buffer *dest, Y422P_buffer *src, int x, int y, int width, int height)
+void Y422P_paste(Y422P_buffer *dest, Y422P_buffer *src, int xoffset, int yoffset, int width, int height)
 {
+  int x, y;
+
+  if (xoffset+width > src->width || yoffset+height > src->height) {
+    fprintf(stderr, "copy outside bounds!\n");
+    return;
+  }
+
+  for (y = 0; y < height; y+=1) {
+    uint8_t *ysrc = src->y + ((y + yoffset) * src->width) + xoffset;
+    uint8_t *ydst = dest->y + (y*dest->width);
+    uint8_t *crsrc = src->cr + ((y + yoffset) * src->width/2) + (xoffset/2);
+    uint8_t *crdst = dest->cr + (y*dest->width/2);
+    uint8_t *cbsrc = src->cb + ((y + yoffset) * src->width/2) + (xoffset/2);
+    uint8_t *cbdst = dest->cb + (y*dest->width/2);
+    for (x = 0; x < width; x+=1) {
+      *ydst++ = *ysrc++;
+
+      if (x % 2 == 0) {
+	*crdst++ = *crsrc++;
+	*cbdst++ = *cbsrc++;
+      }
+    }
+  }
 }
 
 
@@ -542,4 +640,24 @@ void H264_buffer_discard(H264_buffer *h264)
   Mem_free(h264->data);
   memset(h264, 0, sizeof(*h264));
   Mem_free(h264);
+}
+
+
+
+ImageType Image_guess_type(uint8_t *data, int len)
+{
+  ImageType t = IMAGE_TYPE_UNKNOWN;
+  if (len > 4) {
+    if (data[0] == 'P' && data[1] == '5' && data[2] == '\n') {
+      t = IMAGE_TYPE_PGM;      
+    }
+    else if (data[0] == 'P' && data[1] == '6' && data[2] == '\n') {
+      t = IMAGE_TYPE_PPM;
+    }
+    else if (data[0] == 0xff && data[1] == 0xd8 && data[2] == 0xff && data[3] == 0xe0) {
+      t = IMAGE_TYPE_JPEG;
+    }
+  }
+
+  return t;
 }

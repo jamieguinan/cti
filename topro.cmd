@@ -9,6 +9,7 @@ connect dj RGB3_buffer sdl
 
 config mjm output cap-%Y%m%d-%H%M%S.mjx
 
+config vc drivermatch tp6800
 config vc device gspca
 config vc format JPEG
 config vc size 640x480

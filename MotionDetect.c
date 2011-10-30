@@ -15,23 +15,28 @@
 
 static void Config_handler(Instance *pi, void *msg);
 static void gray_handler(Instance *pi, void *msg);
+static void mask_handler(Instance *pi, void *msg);
 
 /* MotionDetect Instance and Template implementation. */
-enum { INPUT_CONFIG, INPUT_GRAY };
+enum { INPUT_CONFIG, INPUT_GRAY, INPUT_MASK };
 static Input MotionDetect_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_GRAY] = { .type_label = "GRAY_buffer", .handler = gray_handler },
+  [ INPUT_MASK] = { .type_label = "MASK_buffer", .handler = mask_handler },
 };
 
-enum { OUTPUT_CONFIG };
+enum { OUTPUT_CONFIG, OUTPUT_MOTIONDETECT };
 static Output MotionDetect_outputs[] = { 
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
+  [ OUTPUT_MOTIONDETECT ] = { .type_label = "MotionDetect_result", .destination = 0L },
 };
 
 typedef struct {
   Gray_buffer *accum;
+  Gray_buffer *mask;
   int running_sum;
 } MotionDetect_private;
+
 
 static Config config_table[] = {
 };
@@ -56,12 +61,18 @@ static void gray_handler(Instance *pi, void *msg)
 		    
   if (!priv->accum) {
     priv->accum = Gray_buffer_new(gray->width, gray->height);
+    memcpy(priv->accum->data, gray->data, gray->data_length);
   }
 
   sum = 0;
   for (y=0; y < gray->height; y+=10) {
     for (x=0; x < gray->width; x+=10) {
       int offset = y * gray->width + x;
+      if (priv->mask && priv->mask->height == gray->height && priv->mask->width == gray->width) {
+	if (priv->mask->data[offset] == 0) {
+	  continue;
+	}
+      }
       /* The abs() is redundant with the squaring (d*d) below, but I'm
          keeping it anyway in case I remove or change the squaring. */
       int d = abs(priv->accum->data[offset] - gray->data[offset]); 
@@ -80,15 +91,29 @@ static void gray_handler(Instance *pi, void *msg)
     PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CONFIG].destination);
   }
 
+  if (pi->outputs[ OUTPUT_MOTIONDETECT].destination) {
+    MotionDetect_result *md = MotionDetect_result_new();
+    md->sum = sum;
+    PostData(md, pi->outputs[ OUTPUT_MOTIONDETECT].destination);
+  }
+
   Gray_buffer_discard(gray);
-
-
   // printf("MotionDetect sum=%d\n", sum);
 }
 
+
+static void mask_handler(Instance *pi, void *msg)
+{
+  MotionDetect_private *priv = pi->data;
+  if (priv->mask) {
+    Gray_buffer_discard(priv->mask);
+  }
+  priv->mask = msg;
+}
+
+
 static void MotionDetect_tick(Instance *pi)
 {
-  /* Get motion score on past N gray frames. */
   Handler_message *hm;
 
   hm = GetData(pi, 1);
@@ -120,4 +145,18 @@ static Template MotionDetect_template = {
 void MotionDetect_init(void)
 {
   Template_register(&MotionDetect_template);
+}
+
+
+MotionDetect_result *MotionDetect_result_new(void)
+{
+  MotionDetect_result *md = Mem_calloc(1, sizeof(*md));
+  return md;
+}
+
+
+void MotionDetect_result_discard(MotionDetect_result **md)
+{
+  Mem_free(*md);
+  *md = 0L;
 }

@@ -356,6 +356,7 @@ static void y422p_handler(Instance *pi, void *msg)
        code. */
     temp = Y422P_copy(y422p, 0, 0, priv->width, priv->height);
     rgb3 = Y422P_to_RGB3(temp);
+    rgb3->tv = y422p->tv;	/* Preserve timestamp! */
     Y422P_buffer_discard(temp);
     apply_commands(priv, rgb3);
     temp = RGB3_toY422P(rgb3);

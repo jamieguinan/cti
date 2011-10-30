@@ -7,6 +7,7 @@
 #include "JpegSource.h"
 #include "Images.h"
 #include "File.h"
+#include "Cfg.h"
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -61,8 +62,10 @@ static int do_run(Instance *pi, const char *value)
 
   for (i=0; i < count; i++) {
     Jpeg_buffer *tmp = Jpeg_buffer_from(priv->jpeg->data, priv->jpeg->encoded_length);
-    printf("%d/%d (%d)\n", i, count,
-	   pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages);
+    if (cfg.verbosity) {
+      printf("%d/%d (%d)\n", i, count,
+	     pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages);
+    }
 
     while (pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages > 5) {
       /* Throttle output.  25ms sleep. */

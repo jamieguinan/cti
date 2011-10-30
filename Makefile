@@ -4,6 +4,8 @@ MAIN=main.o
 
 include ../platforms.make
 
+PKGCONFIGDIR ?= /usr/lib/pkgconfig
+
 HOSTARCH=$(shell uname -m)-$(shell uname -s)
 
 ifeq ($(ARCH),$(HOSTARCH))
@@ -93,6 +95,10 @@ OBJS= \
 	$(OBJDIR)/WavOutput.o \
 	$(OBJDIR)/MjxRepair.o \
 	$(OBJDIR)/GdkCapture.o \
+	$(OBJDIR)/MjpegLocalBuffer.o \
+	$(OBJDIR)/MjpegStreamBuffer.o \
+	$(OBJDIR)/ImageLoader.o \
+	$(OBJDIR)/Images.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
@@ -134,8 +140,9 @@ OBJS+=$(OBJDIR)/Signals.o
 endif
 
 # Lirc
-ifneq ($(ARCH),armeb)
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../liblirc_client.so))
 OBJS+= $(OBJDIR)/Lirc.o
+CPPFLAGS+=-DHAVE_LIRC
 LDFLAGS+=-llirc_client
 endif
 
@@ -148,37 +155,42 @@ LDFLAGS+=$$(pkg-config cairo --libs)
 endif
 
 # libdv
-ifneq ($(ARCH),armeb)
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libdv.pc))
 OBJS+=	$(OBJDIR)/LibDV.o
 CPPFLAGS+=$$(pkg-config libdv --cflags)
 LDFLAGS+=$$(pkg-config libdv --libs)
+CPPFLAGS+=-DHAVE_LIBDV
 endif
 
 # Quicktime
-ifneq ($(ARCH),armeb)
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libquicktime.pc))
 OBJS+=$(OBJDIR)/LibQuickTimeOutput.o
 CPPFLAGS+=$$(pkg-config libquicktime --cflags)
 LDFLAGS+=$$(pkg-config libquicktime --libs)
+CPPFLAGS+=-DHAVE_LIBQUICKTIME
 endif
 
 # Ogg
-ifneq ($(ARCH),armeb)
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/vorbisenc.pc))
 OBJS+=$(OBJDIR)/OggOutput.o
 CPPFLAGS+=$$(pkg-config vorbisenc theoraenc --cflags)
 LDFLAGS+=$$(pkg-config vorbisenc theoraenc --libs)
+CPPFLAGS+=-DHAVE_OGGOUTPUT
 endif
 
 # H264
-ifneq ($(ARCH),armeb)
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc))
 OBJS+=$(OBJDIR)/H264.o
 CPPFLAGS+=$$(pkg-config x264 --cflags)
 LDFLAGS+=$$(pkg-config x264 --libs)
+CPPFLAGS+=-DHAVE_X264
 endif
 
 # AAC
-ifneq ($(ARCH),armeb)
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../libfaac.a))
 OBJS+=$(OBJDIR)/AAC.o
 LDFLAGS+=-lfaac
+CPPFLAGS+=-DHAVE_AAC
 endif
 
 
@@ -195,8 +207,9 @@ ifeq ($(ARCH),x86_64-Linux)
 	@cp -Lvu $$(ldd $@ | grep -E '264|png' | sed -e 's,.*/usr,/usr,g' -e 's, .*$$,,') $(HOME)/lib/
 # Or ../../platform/$(ARCH)/lib/
 endif
+# if gdb not in cflags
 #	$(STRIP) $@
-
+# endif
 
 $(OBJDIR)/mjplay$(EXEEXT): \
 	$(OBJS) \
