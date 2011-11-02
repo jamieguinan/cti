@@ -230,7 +230,7 @@ static void reset_video(SDLstuff_private *priv)
     printf("SetVideoMode failed!\n");
     return;
   }
-  
+
   if (priv->renderMode == RENDER_MODE_GL) {
     /* Check if got wanted attributes. */
     int v;
@@ -307,21 +307,6 @@ static void render_frame_gl(SDLstuff_private *priv, RGB3_buffer *rgb3_in)
 
   rgb_final = rgb3_in;
 
-  {
-    static int n = 0;
-    n += 1;
-    if (n == 10) {
-      printf("Saving frame %d as ppm\n", n);
-      FILE *f;
-      f = fopen("x.ppm", "wb");
-      if (f) {
-	fprintf(f, "P6\n%d %d\n255\n", rgb_final->width, rgb_final->height);
-	if (fwrite(rgb_final->data, rgb_final->width * rgb_final->height *3, 1, f) != 1) { perror("fwrite"); }
-	fclose(f);
-      }
-    }
-  }
-
   /* 
    * Interestingly, the order of calling glPixelZoom and glDrawPixels doesn't seem to matter. 
    * Maybe its just setting up parts of the GL pipeline before it runs.
@@ -381,18 +366,34 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
   SDL_LockYUVOverlay(priv->overlay);
 
   /* Copy Y */
-  memcpy(priv->overlay->pixels[0], y422p_in->y, rect.w*rect.h);
+  int img_pitch = priv->surface->w;
+  if (priv->overlay->pitches[0] == img_pitch) {
+    memcpy(priv->overlay->pixels[0], y422p_in->y, rect.w*rect.h);
+  }
+  else {
+    /* Pitch may be different if width is not evenly divisible by 4.  */
+    int y;
+    unsigned char *src = y422p_in->y;
+    unsigned char *dst = priv->overlay->pixels[0];
+    for (y=0; y < priv->surface->h; y++) {
+      memcpy(dst, src, img_pitch);
+      src += img_pitch;
+      dst += priv->overlay->pitches[0];
+    }
+  }
 
   /* Copy Cr and Cb, while basically doing 422 to 420. */
-  {
+  if (1) {
     int x, y, src_index, dst_index, src_width;
-    dst_index = 0;
     src_index = 0;
-    src_width = priv->overlay->pitches[1];
-    for (y=0; y < priv->height; y+=2) {
-      for (x=0; x < priv->overlay->pitches[1]; x++) {
-	priv->overlay->pixels[1][dst_index] = (y422p_in->cr[src_index]+y422p_in->cr[src_index+src_width])/2;
-	priv->overlay->pixels[2][dst_index] = (y422p_in->cb[src_index]+y422p_in->cb[src_index+src_width])/2;
+    src_width = y422p_in->width/2;
+    for (y=0; y < (y422p_in->height/2); y+=1) {
+      dst_index = y * priv->overlay->pitches[1];
+      for (x=0; x < src_width; x++) {
+	priv->overlay->pixels[1][dst_index] = ((y422p_in->cr[src_index]+y422p_in->cr[src_index+src_width])/2);
+	priv->overlay->pixels[2][dst_index] = ((y422p_in->cb[src_index]+y422p_in->cb[src_index+src_width])/2);
+	//priv->overlay->pixels[1][dst_index] = -63;
+	//priv->overlay->pixels[2][dst_index] = -63;
 	dst_index += 1;
 	src_index += 1;
       }
@@ -416,7 +417,21 @@ static void render_frame_software(SDLstuff_private *priv, BGR3_buffer *bgr3_in)
       priv->surface->h == bgr3_in->height &&
       priv->surface->format->BitsPerPixel == 24) {
     // printf("rendering...\n");
-    memcpy(priv->surface->pixels, bgr3_in->data, bgr3_in->data_length);
+    int img_pitch = priv->surface->w * 3;
+    if (priv->surface->pitch == img_pitch) {
+      memcpy(priv->surface->pixels, bgr3_in->data, bgr3_in->data_length);
+    }
+    else {
+      /* Pitch may be different if width is not evenly divisible by 4.  */
+      int y;
+      unsigned char *src = bgr3_in->data;
+      unsigned char *dst = priv->surface->pixels;
+      for (y=0; y < priv->surface->h; y++) {
+	memcpy(dst, src, img_pitch);
+	src += img_pitch;
+	dst += priv->surface->pitch;
+      }
+    }
     SDL_UpdateRect(priv->surface, 0, 0, priv->surface->w, priv->surface->h);
   }
   else {
@@ -622,6 +637,23 @@ static void RGB3_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = pi->data;
   RGB3_buffer *rgb3 = data;
+
+
+  {
+    static int n = 0;
+    n += 1;
+    if (n == 10) {
+      printf("Saving frame %d as ppm\n", n);
+      FILE *f;
+      f = fopen("x.ppm", "wb");
+      if (f) {
+	fprintf(f, "P6\n%d %d\n255\n", rgb3->width, rgb3->height);
+	if (fwrite(rgb3->data, rgb3->width * rgb3->height *3, 1, f) != 1) { perror("fwrite"); }
+	fclose(f);
+      }
+    }
+  }
+
 
   //handle_playback_timing(priv, &rgb3->tv);
 
