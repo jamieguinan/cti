@@ -15,5 +15,6 @@ config vc drivermatch gspca_topro
 config vc device gspca
 config vc format JPEG
 config vc size 640x480
+config vc fps 5
 
 config vc enable 1

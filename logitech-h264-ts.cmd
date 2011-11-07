@@ -1,15 +1,15 @@
 new V4L2Capture vc
 new DJpeg dj
 new JpegTran jt
-new H264 h264
+new H264 h
 new MpegTSMux mtm
 
 connect vc Jpeg_buffer jt
 connect jt Jpeg_buffer dj
-connect dj 422P_buffer h264
-connect h264 H264_buffer mtm
+connect dj 422P_buffer h
+connect h H264_buffer mtm
 
-config vc device /dev/video2
+config vc device UVC
 config vc format MJPG
 config vc size 640x480
 config vc fps 30

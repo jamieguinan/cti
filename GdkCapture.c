@@ -71,6 +71,7 @@ void  gdk_to_rgb(uint8_t *data, int width, int height, int depth, int bpp, int b
   int x, y;
   uint8_t *src;
   uint8_t *dst;
+
   if (bpp != 4) {
     return;
   }

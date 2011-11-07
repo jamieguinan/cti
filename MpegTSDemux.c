@@ -194,7 +194,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	  if (s->data->len) {
 	    char name[32];
 	    FILE *f;
-	    sprintf(name, "%04d.%04d", s->pid, s->seq);
+	    sprintf(name, "%05d-%04d.%04d", packetCounter, s->pid, s->seq);
 	    f = fopen(name, "wb");
 	    if (f) {
 	      int n = fwrite(s->data->data, s->data->len, 1, f);
@@ -237,10 +237,10 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	    }
 
 
-	  }
+	  } /* if (s->data->len) */
 	  s->seq += 1;
 	  ArrayU8_cleanup(&s->data);
-	}
+	} /* if (s->data) */
 
 	if (cfg.verbosity) printf("  payload unit start\n");
 	s->data = ArrayU8_new();
@@ -341,7 +341,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 
   {
     char filename[256];
-    sprintf(filename, "tmp/ts%04d.%05d-%03d%s%s", pid, packetCounter, afLen, afLen ? "-AF" : "", isPUS ? "-PUS" : "");
+    sprintf(filename, "tmp/%05d-ts%04d-%03d%s%s", packetCounter, pid, afLen, afLen ? "-AF" : "", isPUS ? "-PUS" : "");
     FILE *f = fopen(filename, "wb");
     if (f) {
       int n = fwrite(packet, 188, 1, f);

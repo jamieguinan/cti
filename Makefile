@@ -183,7 +183,7 @@ ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc))
 OBJS+=$(OBJDIR)/H264.o
 CPPFLAGS+=$$(pkg-config x264 --cflags)
 LDFLAGS+=$$(pkg-config x264 --libs)
-CPPFLAGS+=-DHAVE_X264
+CPPFLAGS+=-DHAVE_H264
 endif
 
 # AAC

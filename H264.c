@@ -123,6 +123,8 @@ static void H264_tick(Instance *pi)
 {
   Handler_message *hm;
 
+  puts(__func__);
+
   hm = GetData(pi, 1);
   if (hm) {
     hm->handler(pi, hm->data);
@@ -151,6 +153,7 @@ static Template H264_template = {
 
 void H264_init(void)
 {
+  puts(__func__);
   Template_register(&H264_template);
 }
 #else
@@ -158,5 +161,6 @@ void H264_init(void)
 {
   /* H264 module requires an updated x264 package, and I don't want to
      update and rebuild aria at this time. */
+#warning dummy H264_init
 }
 #endif

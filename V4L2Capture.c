@@ -158,7 +158,7 @@ static int set_device(Instance *pi, const char *value)
   rc = ioctl(priv->fd, VIDIOC_QUERYCAP, &v4l2_caps);
   if (-1 == rc) {
     /* FIXME: Set error status, do not call perror. */
-    perror(priv->devpath);
+    perror("VIDIOC_QUERYCAP");
     close(priv->fd);
     priv->fd = -1;
     goto out;
@@ -177,7 +177,7 @@ static int set_device(Instance *pi, const char *value)
   /* Check tuner capabilities */
   rc = ioctl(priv->fd, VIDIOC_G_TUNER, &tuner);
   if (-1 == rc) {
-    perror(priv->devpath);
+    /* No big deal.  Maybe warn... */
   }
   else {
     printf("tuner:\n");
