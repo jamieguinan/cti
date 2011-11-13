@@ -31,7 +31,7 @@ config mjd input 192.168.2.123:6666
 
 # Parameters.  Only handles fixed FPS, and I have to make sure the source 
 # is set up for the same FPS, but it works.
-config y4mout fps_nom 10
+config y4mout fps_nom 25
 config y4mout fps_denom 1
 
 system rm -f fifo.y4m
@@ -42,7 +42,7 @@ system mkfifo fifo.wav
 config y4mout output fifo.y4m
 config wo output fifo.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 10 -F 1  2> /dev/null | tee cap-$(now).ogv |  oggfwd localhost 8000 hackme /frontyard.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 25 -F 1  2> /dev/null | tee cap-$(now).ogv |  oggfwd localhost 8000 hackme /frontyard.ogv &
 
 #system cat fifo.y4m > /dev/null &
 #system cat fifo.wav > /dev/null &

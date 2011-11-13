@@ -22,7 +22,7 @@ config mjd input 192.168.2.123:6667
 
 # Parameters.  Only handles fixed FPS, and I have to make sure the source 
 # is set up for the same FPS, but it works.
-config y4mout fps_nom 15
+config y4mout fps_nom 10
 config y4mout fps_denom 1
 
 system rm -f fishcam.y4m
@@ -33,7 +33,9 @@ system mkfifo fishcam.wav
 config y4mout output fishcam.y4m
 config wo output fishcam.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example fishcam.wav fishcam.y4m -A 20 -V 140 -f 15 -F 1  2> /dev/null | tee cap-$(now).ogv | pipebench -b 1024 | oggfwd localhost 8000 hackme /fishcam.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example fishcam.wav fishcam.y4m -A 20 -V 140 -f 10 -F 1  2> /dev/null | tee cap-$(now).ogv | oggfwd localhost 8000 hackme /fishcam.ogv &
+
+# | pipebench -b 1024 
 
 #system cat fishcam.y4m > /dev/null &
 #system cat fishcam.wav > /dev/null &
@@ -59,6 +61,8 @@ connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer wo
 
 connect dj 422P_buffer y4mout
+
+config mjd output fishcam-%Y%m%d-%H%M%S.mjx
 
 # Enable mjd to start the whole thing running.
 config mjd enable 1

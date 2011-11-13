@@ -32,6 +32,7 @@ static Output VFilter_outputs[] = {
 
 typedef struct {
   int left_right_crop;
+  int bottom_crop;
   int linear_blend;
   int trim;
 } VFilter_private;
@@ -47,6 +48,21 @@ static int set_left_right_crop(Instance *pi, const char *value)
   }
   else {
     priv->left_right_crop = tmp;
+  }
+  return 0;
+}
+
+static int set_bottom_crop(Instance *pi, const char *value)
+{
+  VFilter_private *priv = pi->data;
+  
+  int tmp =  atoi(value);
+  if (tmp < 0) {
+    fprintf(stderr, "invalid bottom_crop value %d\n", tmp);
+    return -1;
+  }
+  else {
+    priv->bottom_crop = tmp;
   }
   return 0;
 }
@@ -85,6 +101,7 @@ static int set_trim(Instance *pi, const char *value)
 
 static Config config_table[] = {
   { "left_right_crop",  set_left_right_crop, 0L, 0L },
+  { "bottom_crop",    set_bottom_crop, 0L, 0L },
   { "linear_blend",  set_linear_blend, 0L, 0L },
   { "trim",  set_trim, 0L, 0L },
 };
@@ -197,17 +214,24 @@ static void Y422p_handler(Instance *pi, void *msg)
 static void RGB3_handler(Instance *pi, void *msg)
 {
   VFilter_private * priv = pi->data;
-  RGB3_buffer *rgb3_in = msg;  
+  RGB3_buffer *rgb3 = msg;  
 
   if (priv->trim) {
-    single_trim(priv, rgb3_in->data, rgb3_in->data, rgb3_in->width*3, rgb3_in->height);
+    single_trim(priv, rgb3->data, rgb3->data, rgb3->width*3, rgb3->height);
+  }
+
+  if (priv->bottom_crop) {
+    RGB3_buffer *tmp = RGB3_buffer_new(rgb3->width, rgb3->height - priv->bottom_crop);
+    memcpy(tmp->data, rgb3->data, tmp->width * 3 * tmp->height);
+    RGB3_buffer_discard(rgb3);
+    rgb3 = tmp;
   }
 
   if (pi->outputs[OUTPUT_RGB3].destination) {
-    PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
+    PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
   }
   else {
-    RGB3_buffer_discard(rgb3_in);
+    RGB3_buffer_discard(rgb3);
   }
 
   

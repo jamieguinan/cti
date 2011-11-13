@@ -51,6 +51,9 @@ typedef struct {
 
   int enable;			/* Set this to start processing. */
 
+  char *output;			/* Side channel. */
+  Sink *output_sink;
+
   struct {
     int eoh;
     String *content_type;
@@ -107,6 +110,31 @@ static int set_input(Instance *pi, const char *value)
   priv->chunk = ArrayU8_new();
 
   priv->needData = 1;
+
+  return 0;
+}
+
+
+static int set_output(Instance *pi, const char *value)
+{
+  MjpegDemux_private *priv = pi->data;
+  if (priv->output) {
+    free(priv->output);
+  }
+  if (priv->output_sink) {
+    Sink_free(&priv->output_sink);
+  }
+
+  if (value[0] == '$') {
+    value = getenv(value+1);
+    if (!value) {
+      fprintf(stderr, "env var %s is not set\n", value+1);
+      return 1;
+    }
+  }
+  
+  priv->output = strdup(value);
+  priv->output_sink = Sink_new(priv->output);
 
   return 0;
 }
@@ -187,6 +215,7 @@ static int do_seek(Instance *pi, const char *value)
 
 static Config config_table[] = {
   { "input", set_input, 0L, 0L },
+  { "output", set_output, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
   { "retry", set_retry, 0L, 0L },
   { "use_feedback", set_use_feedback, 0L, 0L },
@@ -317,6 +346,10 @@ static void MjpegDemux_tick(Instance *pi)
       priv->chunk = ArrayU8_new();
 
       goto out2;
+    }
+
+    if (priv->output_sink) {
+      Sink_write(priv->output_sink, newChunk->data, newChunk->len);
     }
 
     ArrayU8_append(priv->chunk, newChunk);

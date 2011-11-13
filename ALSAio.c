@@ -178,6 +178,7 @@ static void get_device_range(Instance *pi, Range *range)
   while (1) {
     de = readdir(d);
     if (!de) {
+      closedir(d);
       break;
     }
 
