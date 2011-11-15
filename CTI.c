@@ -294,12 +294,12 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
     if (streq(config_table[i].label, cb_in->label->bytes)) {
 
       /* If value is passed in, call the set function. */
-      if (cb_in->value) {
+      if (cb_in->value && config_table[i].set) {
 	int rc;		/* FIXME: What to do with this? */
 	rc = config_table[i].set(pi, cb_in->value->bytes);
       }
 
-      /* Check and full range/value requests. */
+      /* Check and fill range/value requests. */
       if (cb_in->vreq && config_table[i].get_value) {
 	config_table[i].get_value(pi, cb_in->vreq);
       }

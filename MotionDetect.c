@@ -35,10 +35,22 @@ typedef struct {
   Gray_buffer *accum;
   Gray_buffer *mask;
   int running_sum;
+  int remove_dc_offset;
 } MotionDetect_private;
 
 
+static int set_remove_dc_offset(Instance *pi, const char *value)
+{
+  MotionDetect_private *priv = pi->data;
+  priv->remove_dc_offset = atoi(value);
+  printf("remove_dc_offset set to %d\n", priv->remove_dc_offset);
+  return 0;
+}
+
+
 static Config config_table[] = {
+  { "remove_dc_offset", set_remove_dc_offset, 0L, 0L },
+  /* ...Generic_set_int, offsetof(MotionDetect_private, remove_dc_offset) ... */
 };
 
 static void Config_handler(Instance *pi, void *data)
@@ -51,6 +63,7 @@ static void gray_handler(Instance *pi, void *msg)
   MotionDetect_private *priv = pi->data;
   Gray_buffer *gray = msg;
   int y, x, sum;
+  int mask_check;
 
   if (priv->accum &&
       (priv->accum->width != gray->width ||
@@ -64,19 +77,31 @@ static void gray_handler(Instance *pi, void *msg)
     memcpy(priv->accum->data, gray->data, gray->data_length);
   }
 
+  if (priv->mask &&
+      priv->mask->height == gray->height && 
+      priv->mask->width == gray->width) {
+    mask_check = 1;
+  }
+  else {
+    mask_check = 0;
+  }
+
   sum = 0;
   for (y=0; y < gray->height; y+=10) {
     for (x=0; x < gray->width; x+=10) {
       int offset = y * gray->width + x;
-      if (priv->mask && priv->mask->height == gray->height && priv->mask->width == gray->width) {
+
+      if (mask_check) {
 	if (priv->mask->data[offset] == 0) {
 	  continue;
 	}
       }
+
       /* The abs() is redundant with the squaring (d*d) below, but I'm
          keeping it anyway in case I remove or change the squaring. */
       int d = abs(priv->accum->data[offset] - gray->data[offset]); 
       sum += (d*d);
+
       /* Store with minimal IIR filtering. */
       priv->accum->data[offset] = (priv->accum->data[offset] * 2 +  gray->data[offset])/3;
     }
