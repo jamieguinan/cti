@@ -29,6 +29,17 @@ typedef struct {
 } WaitLock;
 #endif
 
+#ifdef __MINGW32__
+typedef struct {
+} Lock;
+
+typedef struct {
+} Event;
+
+typedef struct {
+} WaitLock;
+#endif
+
 #ifdef __MSP430__
 /* Just for testing the compiler... */
 typedef struct {

@@ -1,11 +1,11 @@
 new MjpegDemux mjd
-new JpegTran jt
 new JpegFiler jf
+new JpegTran jt
 
-config mjd input $MJX
-config mjd use_feedback 0
+config mjd input block.bin
 
 connect mjd Jpeg_buffer jt
 connect jt Jpeg_buffer jf
+
 
 config mjd enable 1

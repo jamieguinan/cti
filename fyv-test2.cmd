@@ -19,6 +19,7 @@ config cc height 100
 config cc command set_line_width 2.0
 
 include text.cmd
+include clock.cmd
 
 # DJpeg setup
 config dj dct_method ifast
@@ -66,6 +67,8 @@ system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20
 
 connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer wo
+
+config mjd output frontyard-%Y%m%d-%H%M%S.mjx
 
 ##connect dj RGB3_buffer cc
 connect dj 422P_buffer cc

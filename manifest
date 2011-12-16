@@ -222,6 +222,7 @@ example.c
 example.h
 extract.cmd
 facetracker01.cmd
+fishcam-playback.cmd
 fishcam-relay.cmd
 ft01.cmd
 fyv-local-plain.cmd
@@ -297,6 +298,7 @@ ov511play.cmd
 ov511send.cmd
 pb1.cmd
 pb2.cmd
+pick.cmd
 playback.cmd
 qt.cmd
 repair.cmd
