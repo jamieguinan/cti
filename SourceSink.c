@@ -283,6 +283,42 @@ int Source_seek(Source *source, long amount)
 }
 
 
+int Source_set_offset(Source *source, long amount)
+{
+  Source_private *priv = (Source_private *)source;
+
+  if (priv->f) {
+    int rc = fseek(priv->f, amount, SEEK_SET);
+    long pos = ftell(priv->f);
+    if (priv->file_size) {
+      printf("offset %ld: %ld%%\n", pos, (pos*100)/priv->file_size);
+    }
+    
+    return rc;
+  }
+  else if (priv->s != -1) {
+    fprintf(stderr, "can't seek sockets!\n");
+    return -1;
+  }
+  else {
+    return -1;
+  }
+}
+
+
+long Source_tell(Source *source)
+{
+  Source_private *priv = (Source_private *)source;
+
+  if (priv->f) {
+    return ftell(priv->f);
+  }
+  else {
+    return -1;
+  }
+}
+
+
 void Source_close_current(Source *source)
 {
   Source_private *priv = (Source_private *)source;

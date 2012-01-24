@@ -1,5 +1,6 @@
-#ifndef __ARMEB__
-
+/*
+ * SDL video output, keyboard input.
+ */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 #include <unistd.h>
@@ -23,14 +24,16 @@ static void Y422P_handler(Instance *pi, void *data);
 static void RGB3_handler(Instance *pi, void *data);
 static void BGR3_handler(Instance *pi, void *data);
 static void GRAY_handler(Instance *pi, void *data);
+static void Keycode_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3, INPUT_BGR3, INPUT_GRAY };
+enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3, INPUT_BGR3, INPUT_GRAY, INPUT_KEYCODE };
 static Input SDLstuff_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = BGR3_handler },
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = GRAY_handler },
+  [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
 enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG, OUTPUT_KEYCODE, OUTPUT_POINTER };
@@ -49,6 +52,8 @@ typedef struct {
   int videoOk;
   int inFrames;
   int vsync;
+  int toggle_fullscreen;
+  int fullscreen;
 
   struct timeval tv_sleep_until;
   struct timeval tv_last;
@@ -62,7 +67,7 @@ typedef struct {
   char *label;
   int label_set;
 
-  /* Overlay stuff.  XVideo when using Linux. */
+  /* Overlay, used by XVideo under Linux. */
   SDL_Overlay *overlay;
 
   /* GL stuff. */
@@ -73,7 +78,25 @@ typedef struct {
   } GL;
 } SDLstuff_private;
 
-static void reset_video(SDLstuff_private *priv);
+static void _reset_video(SDLstuff_private *priv, const char *func);
+#define reset_video(priv) _reset_video(priv, __func__);
+
+
+static void Keycode_handler(Instance *pi, void *msg)
+{
+  SDLstuff_private *priv = pi->data;
+  Keycode_message *km = msg;
+  
+  if (km->keycode == CTI__KEY_F) {
+    priv->toggle_fullscreen = 1;
+  }
+  
+  else if (km->keycode == CTI__KEY_Q) {
+    exit(0);
+  }
+
+  Keycode_message_cleanup(&km);
+}
 
 
 static int set_label(Instance *pi, const char *value)
@@ -125,7 +148,7 @@ static int set_width(Instance *pi, const char *value)
   if (oldWidth != newWidth) {
     printf("width: %d -> %d\n", oldWidth, newWidth);
     priv->width = newWidth;
-    reset_video(priv);
+    // reset_video(priv);
   }
 
   return 0;
@@ -148,11 +171,21 @@ static int set_height(Instance *pi, const char *value)
 }
 
 
+static int set_fullscreen(Instance *pi, const char *value)
+{
+  /* Set this before video setup. */
+  SDLstuff_private *priv = pi->data;
+  priv->fullscreen = atoi(value);
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "label", set_label, 0L, 0L},
   { "mode", set_mode, 0L, 0L},
   { "width", set_width, 0L, 0L},
   { "height", set_height, 0L, 0L},
+  { "fullscreen", set_fullscreen, 0L, 0L},
 };
 
 
@@ -188,13 +221,17 @@ static void _gl_setup(SDLstuff_private *priv)
   glLoadIdentity();
 }
 
-static void reset_video(SDLstuff_private *priv)
+static void _reset_video(SDLstuff_private *priv, const char *func)
 {
   /* See notes about this   */
   int rc;
   Uint32 sdl_vid_flags = 0;
 
   SDL_putenv("SDL_VIDEO_CENTERED=center"); //Center the game Window.
+
+  if (priv->fullscreen) {
+    sdl_vid_flags |= SDL_FULLSCREEN;
+  }
 
   if (priv->renderMode == RENDER_MODE_GL) {
     rc = SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -206,18 +243,18 @@ static void reset_video(SDLstuff_private *priv)
     }
 
     sdl_vid_flags |= SDL_OPENGL;
-    // sdl_vid_flags |= SDL_FULLSCREEN;
-    priv->surface= SDL_SetVideoMode(priv->width, priv->height, 32, 
+    priv->surface = SDL_SetVideoMode(priv->width, priv->height, 32, 
 				    sdl_vid_flags
 				    );
   }
 
   else if (priv->renderMode == RENDER_MODE_OVERLAY) {
-    sdl_vid_flags |= SDL_HWSURFACE | SDL_HWPALETTE;
-    // sdl_vid_flags |= SDL_FULLSCREEN;
+    sdl_vid_flags |= SDL_HWSURFACE | SDL_HWPALETTE | SDL_ANYFORMAT;
     priv->surface= SDL_SetVideoMode(priv->width, priv->height, 0,
 				    sdl_vid_flags
 				    );
+
+    printf("[%s] reset_video(%d, %d)\n", func, priv->width, priv->height);
   }
 
   else  {
@@ -330,7 +367,7 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
     /* FIXME: IYUV and other formats are also available!  I might need to 
        set up CJpeg on the encoding end to create something easy to display
        on butterfly's XVideo channel.  */
-    priv->overlay = SDL_CreateYUVOverlay(priv->width, priv->height, 
+    priv->overlay = SDL_CreateYUVOverlay(y422p_in->width, y422p_in->height, 
 					 SDL_YV12_OVERLAY, 
 					 // SDL_IYUV_OVERLAY, 
 					 priv->surface);
@@ -355,6 +392,7 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
       fprintf(stderr, "  %d:%p\n", priv->overlay->pitches[i], priv->overlay->pixels[i]);
     }
 
+    fprintf(stderr, "  priv size: %d,%d\n", priv->width, priv->height);
     fprintf(stderr, "  y422p_in: %d,%d,%d\n", y422p_in->y_length, y422p_in->cb_length, y422p_in->cr_length);
     
   }
@@ -442,118 +480,6 @@ static void render_frame_software(SDLstuff_private *priv, BGR3_buffer *bgr3_in)
   SDL_UnlockSurface(priv->surface);
 }
 
-static inline double tv_to_double(struct timeval *tv) {
-  return (tv->tv_sec + tv->tv_usec/1000000.0);
-}
-
-static inline int tv_lt_diff(struct timeval *tv1, struct timeval *tv2, struct timespec *diff)
-{
-  if (tv1->tv_sec > tv2->tv_sec ||
-      (tv1->tv_sec == tv2->tv_sec && tv1->tv_usec > tv2->tv_usec)) {
-    diff->tv_sec = 0;
-    diff->tv_nsec = 0;
-    return 0;
-  }
-
-  diff->tv_sec = tv2->tv_sec - tv1->tv_sec;
-  if (tv2->tv_usec > tv1->tv_usec) {
-    /* Straight subtraction. */
-    diff->tv_nsec = (tv2->tv_usec - tv1->tv_usec)*1000;
-  }
-  else {
-    /* Subtract with borrow. */
-    diff->tv_nsec = (1000000 + tv2->tv_usec - tv1->tv_usec)*1000;
-    diff->tv_sec -= 1;
-  }
-
-  return 1;
-}
-
-static inline int tv_gt_diff(struct timeval *tv1, struct timeval *tv2, struct timespec *diff)
-{
-  if (tv1->tv_sec < tv2->tv_sec ||
-      (tv1->tv_sec == tv2->tv_sec && tv1->tv_usec < tv2->tv_usec)) {
-    diff->tv_sec = 0;
-    diff->tv_nsec = 0;
-    return 0;
-  }
-
-  diff->tv_sec = tv1->tv_sec - tv2->tv_sec;
-  if (tv1->tv_usec > tv2->tv_usec) {
-    /* Straight subtraction. */
-    diff->tv_nsec = (tv1->tv_usec - tv2->tv_usec)*1000;
-  }
-  else {
-    /* Subtract with borrow. */
-    diff->tv_nsec = (1000000 + tv1->tv_usec - tv2->tv_usec)*1000;
-    diff->tv_sec -= 1;
-  }
-
-  return 1;
-}
-
-static inline void tv_ts_add(struct timeval *tv, struct timespec *ts, struct timeval *tv_out)
-{
-  tv_out->tv_sec = tv->tv_sec + ts->tv_sec;
-  tv_out->tv_usec = tv->tv_usec + (ts->tv_nsec/1000);
-  if (tv_out->tv_usec > 1000000) {
-    /* Carry. */
-    tv_out->tv_usec -= 1000000;
-    tv_out->tv_sec += 1;
-  }
-}
-
-static inline void tv_clear(struct timeval *tv)
-{
-  tv->tv_sec = 0;
-  tv->tv_usec = 0;
-}
-
-
-#if 0
-/* FIXME: Use this or delete it. */
-static void handle_playback_timing(SDLstuff_private *priv, struct timeval *tv_current)
-{
-  struct timeval now;
-  struct timespec ts;
-  double d;
-
-  d = fabs(tv_to_double(&priv->tv_last) - tv_to_double(tv_current));
-
-  if (d > 1.0) {
-    /* tv_last is unset, or tv_current has changed substantially. */
-    fprintf(stderr, "d:%.3f too big\n", d);
-    goto out1;
-    return;
-  }
-
-  gettimeofday(&now, 0L);
-
-  if (tv_lt_diff(&now, &priv->tv_sleep_until, &ts)) {
-    fprintf(stderr, "nanosleep %ld.%09ld\n", ts.tv_sec, ts.tv_nsec);
-    if (nanosleep(&ts, 0L) != 0) { perror("nanosleep"); }
-  }
-  else {
-    // fprintf(stderr, "no sleep\n");
-    /* FIXME: If we took too long more than once, should do something... */
-    gettimeofday(&priv->tv_sleep_until, 0L);
-  }
-
-  if (tv_gt_diff(tv_current, &priv->tv_last, &ts)) {
-    /* Normally expect this. */
-    tv_ts_add(&priv->tv_sleep_until, &ts, &priv->tv_sleep_until);
-    // fprintf(stderr, "normal; sleep until { %ld.%06ld } \n",  priv->tv_sleep_until.tv_sec, priv->tv_sleep_until.tv_usec);
-  }
-  else {
-    /* tv_current is unexpectedly behind tv_last.  Clear sleep_until and hope things
-       work out. */
-  }
-
- out1:
-  priv->tv_last = *tv_current;
-}
-#endif
-
 
 static void pre_render_frame(SDLstuff_private *priv, int width, int height)
 {
@@ -561,7 +487,14 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height)
     printf("frame %d ready for display\n", priv->inFrames);
   }
 
+  if (priv->toggle_fullscreen) {
+    priv->fullscreen = (priv->fullscreen + 1) % 2;
+    priv->toggle_fullscreen = 0;
+    reset_video(priv);
+  }
+  
   if (priv->renderMode != RENDER_MODE_GL &&
+      /* priv->renderMode != RENDER_MODE_OVERLAY && */
       (priv->width != width || priv->height != height)) {
     priv->width = width;
     priv->height = height;
@@ -600,9 +533,7 @@ static void Y422P_handler(Instance *pi, void *data)
   SDLstuff_private *priv = pi->data;
   Y422P_buffer *y422p_in = data;
 
-  //handle_playback_timing(priv, &y422p_in->tv);
-    
-  pre_render_frame(priv, y422p_in->width, y422p_in->height);
+  // pre_render_frame(priv, y422p_in->width, y422p_in->height);
 
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
@@ -654,9 +585,6 @@ static void RGB3_handler(Instance *pi, void *data)
     }
   }
 
-
-  //handle_playback_timing(priv, &rgb3->tv);
-
   pre_render_frame(priv, rgb3->width, rgb3->height);
 
   switch (priv->renderMode) {
@@ -696,8 +624,6 @@ static void BGR3_handler(Instance *pi, void *data)
   SDLstuff_private *priv = pi->data;
   BGR3_buffer *bgr3 = data;
 
-  //handle_playback_timing(priv, &bgr3->tv);
-   
   pre_render_frame(priv, bgr3->width, bgr3->height);
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
@@ -734,8 +660,6 @@ static void GRAY_handler(Instance *pi, void *data)
   SDLstuff_private *priv = pi->data;
   Gray_buffer *gray = data;
 
-  //handle_playback_timing(priv, &bgr3->tv);
-   
   pre_render_frame(priv, gray->width, gray->height);
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
@@ -911,10 +835,8 @@ static void SDLstuff_instance_init(Instance *pi)
 {
   SDLstuff_private *priv = Mem_calloc(1, sizeof(*priv));
 
-  //priv->width = 720;
   priv->width = 640;
   priv->height = 480;
-  // priv->height = 360;
   priv->GL.fov = 90;
   priv->vsync = 1;
   //priv->renderMode = RENDER_MODE_GL;
@@ -941,14 +863,3 @@ void SDLstuff_init(void)
 {
   Template_register(&SDLstuff_template);
 }
-
-
-#else
-#include <stdio.h>
-/* ARMEB */
-void SDLstuff_init(void)
-{
-  fprintf(stderr, "SDLstuff not supported in ARCH=armeb build...\n");
-}
-
-#endif

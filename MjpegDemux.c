@@ -17,16 +17,20 @@
 #include "Cfg.h"
 #include "Numbers.h"
 #include "Control.h"
+#include "Keycodes.h"
+#include "FPS.h"
 
 static void Config_handler(Instance *pi, void *data);
 static void Control_handler(Instance *pi, void *data);
 static void Feedback_handler(Instance *pi, void *data);
+static void Keycode_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_CONTROL, INPUT_FEEDBACK };
+enum { INPUT_CONFIG, INPUT_CONTROL, INPUT_FEEDBACK, INPUT_KEYCODE };
 static Input MjpegDemux_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_CONTROL ] = { .type_label = "Control_msg", .handler = Control_handler },
   [ INPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .handler = Feedback_handler },
+  [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
 enum { OUTPUT_JPEG, OUTPUT_WAV, OUTPUT_O511, OUTPUT_RAWDATA };
@@ -79,6 +83,10 @@ typedef struct {
   int use_timestamps;
 
   int retry;
+
+  long a, b;			/* For a/b looping. */
+
+  FPS fps;
 
 } MjpegDemux_private;
 
@@ -182,16 +190,8 @@ static int set_use_timestamps(Instance *pi, const char *value)
 }
 
 
-
-static int do_seek(Instance *pi, const char *value)
+static void reset_current(MjpegDemux_private *priv)
 {
-  MjpegDemux_private *priv = pi->data;
-  long amount = atol(value);
-
-  if (priv->source) {
-    Source_seek(priv->source, amount);  
-  }
-
   /* Reset current stuff. */
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);
@@ -208,6 +208,19 @@ static int do_seek(Instance *pi, const char *value)
   priv->state = PARSING_HEADER;
 
   priv->video.stream_t0 = -1.0;
+}
+
+
+static int do_seek(Instance *pi, const char *value)
+{
+  MjpegDemux_private *priv = pi->data;
+  long amount = atol(value);
+
+  if (priv->source) {
+    Source_seek(priv->source, amount);  
+  }
+
+  reset_current(priv);
   
   return 0;
 }
@@ -232,6 +245,7 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
+
 static void Control_handler(Instance *pi, void *data)
 {
   Control_msg * msg_in;
@@ -254,6 +268,30 @@ static void Control_handler(Instance *pi, void *data)
   }
   Control_msg_discard(msg_in);
 }
+
+
+static void Keycode_handler(Instance *pi, void *msg)
+{
+  MjpegDemux_private *priv = pi->data;
+  Keycode_message *km = msg;
+  
+  if (km->keycode == CTI__KEY_A && priv->source) {
+    priv->a = Source_tell(priv->source);
+    priv->b = 0;		/* reset */
+    printf("a:%ld b:%ld\n", priv->a, priv->b);
+  }
+
+  else if (km->keycode == CTI__KEY_B && priv->source && (priv->a != -1) ) {
+    priv->b = Source_tell(priv->source);
+    if (priv->b < priv->a) {
+      priv->a = priv->b = 0;
+    }
+    printf("a:%ld b:%ld\n", priv->a, priv->b);
+  }
+
+  Keycode_message_cleanup(&km);
+}
+
 
 static void Feedback_handler(Instance *pi, void *data)
 {
@@ -317,6 +355,15 @@ static void MjpegDemux_tick(Instance *pi)
 
   if (priv->needData) {
     ArrayU8 *newChunk;
+
+    /* First do a/b loop seek if needed. */
+    if (priv->b && ( Source_tell(priv->source) > priv->b)) {
+      printf("seek to %ld\n", priv->a);
+      Source_set_offset(priv->source, priv->a);
+      reset_current(priv);
+      return;
+    }
+
     /* Network reads should return short numbers if not much data is
        available, so using a size relatively large comparted to an
        audio buffer or Jpeg frame should not cause real-time playback
@@ -503,6 +550,8 @@ static void MjpegDemux_tick(Instance *pi)
     /* Reconstruct timeval timestamp for Jpeg buffer.  Not actually used here, though. */
     j->tv.tv_sec = priv->current.timestamp;
     j->tv.tv_usec = fmod(priv->current.timestamp, 1.0) * 1000000;
+
+    FPS_show(&priv->fps);
 
     if (pi->outputs[OUTPUT_JPEG].destination) {
       /* Use timestamps if configured to do so, and only if haven't

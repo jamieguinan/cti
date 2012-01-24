@@ -99,6 +99,7 @@ OBJS= \
 	$(OBJDIR)/MjpegStreamBuffer.o \
 	$(OBJDIR)/ImageLoader.o \
 	$(OBJDIR)/Images.o \
+	$(OBJDIR)/FPS.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
@@ -227,11 +228,11 @@ $(OBJDIR)/ctest$(EXEEXT): \
 
 
 $(OBJDIR)/%.o: %.c Makefile
-	@echo CC $@
+	@echo CC $<
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: %.m Makefile
-	@echo CC $@
+	@echo CC $<
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:

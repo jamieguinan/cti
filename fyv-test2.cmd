@@ -43,7 +43,7 @@ system mkfifo fifo.wav
 config y4mout output fifo.y4m
 config wo output fifo.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 25 -F 1  2> /dev/null | tee cap-$(now).ogv |  oggfwd localhost 8000 hackme /frontyard.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 25 -F 1  2> /dev/null | tee cap-$(now).ogv |   oggfwd 66.228.32.219 8000 bluebutton0123 /frontyard.ogv &
 
 #system cat fifo.y4m > /dev/null &
 #system cat fifo.wav > /dev/null &

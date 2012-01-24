@@ -11,6 +11,8 @@ typedef struct {
 extern Source *Source_new(char *name /* , options? */ );
 extern ArrayU8 * Source_read(Source *source, int max_length);
 extern int Source_seek(Source *source, long amount);
+extern int Source_set_offset(Source *source, long amount);
+extern long Source_tell(Source *source);
 extern void Source_close_current(Source *source);
 extern void Source_free(Source **source);
 

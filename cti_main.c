@@ -74,8 +74,8 @@ int cti_main(int argc, char *argv[])
   ALSAMixer_init();
   V4L2Capture_init();
   SonyPTZ_init();
-  Signals_init();
 #ifndef __ARMEB__
+  Signals_init();
   SDLstuff_init();
   CairoContext_init();
   Spawn_init();

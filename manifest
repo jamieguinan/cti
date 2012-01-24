@@ -37,6 +37,8 @@ DO511.h
 Effects01.c
 Effects01.h
 FFmpegEncode.c
+FPS.c
+FPS.h
 FaceTracker.c
 FaceTracker.h
 File.c
@@ -315,6 +317,7 @@ tv1.cmd
 tv2.cmd
 tvstarter.c
 tvstarter.cmd
+ua25-loop.cmd
 ui01.cmd
 uvc_compat.h
 uvcvideo.h

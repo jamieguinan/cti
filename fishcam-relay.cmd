@@ -33,7 +33,7 @@ system mkfifo fishcam.wav
 config y4mout output fishcam.y4m
 config wo output fishcam.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example fishcam.wav fishcam.y4m -A 20 -V 140 -f 15 -F 1  2> /dev/null | tee cap-$(now).ogv | oggfwd localhost 8000 hackme /fishcam.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example fishcam.wav fishcam.y4m -A 20 -V 140 -f 15 -F 1  2> /dev/null | tee cap-$(now).ogv | oggfwd 66.228.32.219 8000 bluebutton0123 /fishcam.ogv &
 
 # | pipebench -b 1024 
 
