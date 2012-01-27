@@ -16,19 +16,19 @@
 #include "SourceSink.h"
 #include "Cfg.h"
 #include "Numbers.h"
-#include "Control.h"
 #include "Keycodes.h"
 #include "FPS.h"
 
+#define _min(a, b)  ((a) < (b) ? (a) : (b))
+#define _max(a, b)  ((a) > (b) ? (a) : (b))
+
 static void Config_handler(Instance *pi, void *data);
-static void Control_handler(Instance *pi, void *data);
 static void Feedback_handler(Instance *pi, void *data);
 static void Keycode_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_CONTROL, INPUT_FEEDBACK, INPUT_KEYCODE };
+enum { INPUT_CONFIG, INPUT_FEEDBACK, INPUT_KEYCODE };
 static Input MjpegDemux_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_CONTROL ] = { .type_label = "Control_msg", .handler = Control_handler },
   [ INPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .handler = Feedback_handler },
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
@@ -73,21 +73,15 @@ typedef struct {
   } video;
 
   int seen_audio;
-
   float rate_multiplier;
-
   int use_feedback;
   int pending_feedback;
   int feedback_threshold;
-
   int use_timestamps;
-
   int retry;
-
   long a, b;			/* For a/b looping. */
-
+  long seek_amount;
   FPS fps;
-
 } MjpegDemux_private;
 
 
@@ -234,7 +228,6 @@ static Config config_table[] = {
   { "use_feedback", set_use_feedback, 0L, 0L },
   { "use_timestamps", set_use_timestamps, 0L, 0L },
   /* The following are more "controls" than "configs", but maybe they are essentially the same anyway. */
-  //{ "rate", set_rate, 0L, 0L},
   { "seek", do_seek, 0L, 0L},
   //{ "position", set_position, 0L, 0L},
 };
@@ -243,30 +236,6 @@ static Config config_table[] = {
 static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
-}
-
-
-static void Control_handler(Instance *pi, void *data)
-{
-  Control_msg * msg_in;
-  msg_in = PopMessage(&pi->inputs[INPUT_CONTROL]);
-      
-  /* FIXME: Handle message... */
-  /* seek_bytes: {beginning, current, end}, amount */
-
-  if (streq(msg_in->label->bytes, "seek+")) {
-    /* seek(Value_get_float(msg_in->value)); */
-  }
-  else if (streq(msg_in->label->bytes, "seek-")) {
-    /* seek(Value_get_float(msg_in->value)); */
-  }
-  else if (streq(msg_in->label->bytes, "seekfactor+")) {
-    /* Value_get_int(msg_in->value); */
-  }
-  else if (streq(msg_in->label->bytes, "seekfactor-")) {
-    /* Value_get_int(msg_in->value); */
-  }
-  Control_msg_discard(msg_in);
 }
 
 
@@ -287,6 +256,26 @@ static void Keycode_handler(Instance *pi, void *msg)
       priv->a = priv->b = 0;
     }
     printf("a:%ld b:%ld\n", priv->a, priv->b);
+  }
+  else if (km->keycode == CTI__KEY_UP) {
+    priv->seek_amount = _min(priv->seek_amount*2, 1000000000); 
+    fprintf(stderr, "seek_amount=%ld\n", priv->seek_amount);
+  }
+  else if (km->keycode == CTI__KEY_DOWN) {
+    priv->seek_amount = _max(priv->seek_amount/2, 1); 
+    fprintf(stderr, "seek_amount=%ld\n", priv->seek_amount);
+  }
+  else if (km->keycode == CTI__KEY_LEFT) {
+    if (priv->source) {
+      Source_seek(priv->source, -priv->seek_amount);
+      reset_current(priv);
+    }
+  }
+  else if (km->keycode == CTI__KEY_RIGHT) {
+    if (priv->source) {
+      Source_seek(priv->source, priv->seek_amount);  
+      reset_current(priv);
+    }
   }
 
   Keycode_message_cleanup(&km);
@@ -651,6 +640,7 @@ static void MjpegDemux_instance_init(Instance *pi)
   priv->video.stream_t0 = -1.0;
   priv->feedback_threshold = 20;
   pi->data = priv;
+  priv->seek_amount = 10000000;
 }
 
 static Template MjpegDemux_template = {

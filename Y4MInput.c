@@ -15,16 +15,13 @@
 #include "SourceSink.h"
 #include "Cfg.h"
 #include "Numbers.h"
-#include "Control.h"
 
 static void Config_handler(Instance *pi, void *data);
-static void Control_handler(Instance *pi, void *data);
 static void Feedback_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_CONTROL, INPUT_FEEDBACK };
+enum { INPUT_CONFIG, INPUT_FEEDBACK };
 static Input Y4MInput_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_CONTROL ] = { .type_label = "Control_msg", .handler = Control_handler },
   [ INPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .handler = Feedback_handler },
 };
 
@@ -165,28 +162,6 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
-static void Control_handler(Instance *pi, void *data)
-{
-  Control_msg * msg_in;
-  msg_in = PopMessage(&pi->inputs[INPUT_CONTROL]);
-      
-  /* FIXME: Handle message... */
-  /* seek_bytes: {beginning, current, end}, amount */
-
-  if (streq(msg_in->label->bytes, "seek+")) {
-    /* seek(Value_get_float(msg_in->value)); */
-  }
-  else if (streq(msg_in->label->bytes, "seek-")) {
-    /* seek(Value_get_float(msg_in->value)); */
-  }
-  else if (streq(msg_in->label->bytes, "seekfactor+")) {
-    /* Value_get_int(msg_in->value); */
-  }
-  else if (streq(msg_in->label->bytes, "seekfactor-")) {
-    /* Value_get_int(msg_in->value); */
-  }
-  Control_msg_discard(msg_in);
-}
 
 static void Feedback_handler(Instance *pi, void *data)
 {

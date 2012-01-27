@@ -16,8 +16,49 @@
 #include "Pointer.h"
 
 
-#define _min(a, b)  ((a) < (b) ? (a) : (b))
-#define _max(a, b)  ((a) > (b) ? (a) : (b))
+static int SDLtoCTI_Keymap[SDLK_LAST] = {
+  [SDLK_UP] = CTI__KEY_UP, 
+  [SDLK_DOWN] = CTI__KEY_DOWN, 
+  [SDLK_LEFT] = CTI__KEY_LEFT, 
+  [SDLK_RIGHT] = CTI__KEY_RIGHT,
+  [SDLK_0] = CTI__KEY_0,
+  [SDLK_1] = CTI__KEY_1,
+  [SDLK_2] = CTI__KEY_2,
+  [SDLK_3] = CTI__KEY_3,
+  [SDLK_4] = CTI__KEY_4,
+  [SDLK_5] = CTI__KEY_5,
+  [SDLK_6] = CTI__KEY_6,
+  [SDLK_7] = CTI__KEY_7,
+  [SDLK_8] = CTI__KEY_8,
+  [SDLK_9] = CTI__KEY_9,
+  [SDLK_a] = CTI__KEY_A,
+  [SDLK_b] = CTI__KEY_B,
+  [SDLK_c] = CTI__KEY_C,
+  [SDLK_d] = CTI__KEY_D,
+  [SDLK_e] = CTI__KEY_E,
+  [SDLK_f] = CTI__KEY_F,
+  [SDLK_g] = CTI__KEY_G,
+  [SDLK_h] = CTI__KEY_H,
+  [SDLK_i] = CTI__KEY_I,
+  [SDLK_j] = CTI__KEY_J,
+  [SDLK_k] = CTI__KEY_K,
+  [SDLK_l] = CTI__KEY_L,
+  [SDLK_m] = CTI__KEY_M,
+  [SDLK_n] = CTI__KEY_N,
+  [SDLK_o] = CTI__KEY_O,
+  [SDLK_p] = CTI__KEY_P,
+  [SDLK_q] = CTI__KEY_Q,
+  [SDLK_r] = CTI__KEY_R,
+  [SDLK_s] = CTI__KEY_S,
+  [SDLK_t] = CTI__KEY_T,
+  [SDLK_u] = CTI__KEY_U,
+  [SDLK_v] = CTI__KEY_V,
+  [SDLK_w] = CTI__KEY_W,
+  [SDLK_x] = CTI__KEY_X,
+  [SDLK_y] = CTI__KEY_Y,
+  [SDLK_z] = CTI__KEY_Z,
+};
+
 
 static void Config_handler(Instance *pi, void *data);
 static void Y422P_handler(Instance *pi, void *data);
@@ -36,11 +77,12 @@ static Input SDLstuff_inputs[] = {
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG, OUTPUT_KEYCODE, OUTPUT_POINTER };
+enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG, OUTPUT_KEYCODE, OUTPUT_KEYCODE_2, OUTPUT_POINTER };
 static Output SDLstuff_outputs[] = {
   [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
   [ OUTPUT_KEYCODE ] = { .type_label = "Keycode_msg", .destination = 0L },
+  [ OUTPUT_KEYCODE_2 ] = { .type_label = "Keycode_msg_2", .destination = 0L },
   [ OUTPUT_POINTER ] = { .type_label = "Pointer_event", .destination = 0L },
 };
 
@@ -61,8 +103,6 @@ typedef struct {
   SDL_Surface *surface;
   int width;
   int height;
-
-  long seek_amount;
 
   char *label;
   int label_set;
@@ -86,16 +126,25 @@ static void Keycode_handler(Instance *pi, void *msg)
 {
   SDLstuff_private *priv = pi->data;
   Keycode_message *km = msg;
+  int handled = 0;
   
   if (km->keycode == CTI__KEY_F) {
     priv->toggle_fullscreen = 1;
+    handled = 1;
   }
   
   else if (km->keycode == CTI__KEY_Q) {
+    handled = 1;
     exit(0);
   }
-
-  Keycode_message_cleanup(&km);
+  
+  if (!handled && pi->outputs[OUTPUT_KEYCODE_2].destination) {
+    /* Pass along... */
+    PostData(km, pi->outputs[OUTPUT_KEYCODE_2].destination);
+  }
+  else {
+    Keycode_message_cleanup(&km);
+  }
 }
 
 
@@ -531,36 +580,47 @@ static void Config_handler(Instance *pi, void *data)
 static void Y422P_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = pi->data;
-  Y422P_buffer *y422p_in = data;
+  Y422P_buffer *y422p = data;
+  BGR3_buffer *bgr3 = NULL;
+  RGB3_buffer *rgb3 = NULL;
 
-  // pre_render_frame(priv, y422p_in->width, y422p_in->height);
+  // pre_render_frame(priv, y422p->width, y422p->height);
 
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
-      RGB3_buffer *rgb;
-      rgb = Y422P_to_RGB3(y422p_in);
-      render_frame_gl(priv, rgb);
-      RGB3_buffer_discard(rgb);
+      rgb3 = Y422P_to_RGB3(y422p);
+      render_frame_gl(priv, rgb3);
+      RGB3_buffer_discard(rgb3);
     }
     break;
   case RENDER_MODE_OVERLAY: 
     {
-      render_frame_overlay(priv, y422p_in);
+      render_frame_overlay(priv, y422p);
     }
     break;
   case RENDER_MODE_SOFTWARE: 
     {
-      BGR3_buffer *bgr;
-      bgr = Y422P_to_BGR3(y422p_in);
-      render_frame_software(priv, bgr);
-      BGR3_buffer_discard(bgr);
+      bgr3 = Y422P_to_BGR3(y422p);
+      render_frame_software(priv, bgr3);
     }
     break;
   }
 
   post_render_frame(pi);
-  Y422P_buffer_discard(y422p_in);
+
+
+  if (rgb3) {
+    RGB3_buffer_discard(rgb3);
+  }
+
+  if (y422p) {
+    Y422P_buffer_discard(y422p);
+  }
+
+  if (bgr3) {
+    BGR3_buffer_discard(bgr3);
+  }
 }
 
 
@@ -568,9 +628,10 @@ static void RGB3_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = pi->data;
   RGB3_buffer *rgb3 = data;
+  Y422P_buffer *y422p = NULL;
+  BGR3_buffer *bgr3 = NULL;
 
-
-  {
+  if (0) {
     static int n = 0;
     n += 1;
     if (n == 10) {
@@ -595,18 +656,14 @@ static void RGB3_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_OVERLAY: 
     {
-      /* FIXME... */
-      Y422P_buffer *y422p = RGB3_toY422P(rgb3);
+      y422p = RGB3_toY422P(rgb3);
       render_frame_overlay(priv, y422p);
-      Y422P_buffer_discard(y422p);      
     }
     break;
   case RENDER_MODE_SOFTWARE: 
     {
-      BGR3_buffer *bgr3;
       rgb3_to_bgr3(&rgb3, &bgr3);
       render_frame_software(priv, bgr3);
-      BGR3_buffer_discard(bgr3);
     }
     break;
   }
@@ -616,6 +673,15 @@ static void RGB3_handler(Instance *pi, void *data)
   if (rgb3) {
     RGB3_buffer_discard(rgb3);
   }
+
+  if (y422p) {
+    Y422P_buffer_discard(y422p);
+  }
+
+  if (bgr3) {
+    BGR3_buffer_discard(bgr3);
+  }
+
 }
 
 
@@ -623,16 +689,16 @@ static void BGR3_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = pi->data;
   BGR3_buffer *bgr3 = data;
+  RGB3_buffer *rgb3 = NULL;
+  Y422P_buffer *y422p = NULL;
 
   pre_render_frame(priv, bgr3->width, bgr3->height);
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
-      RGB3_buffer *rgb3 = 0L;
       /* FIXME: glDrawPixels can handle GL_BGR, so could just pass that along...*/
       bgr3_to_rgb3(&bgr3, &rgb3);
       render_frame_gl(priv, rgb3);
-      RGB3_buffer_discard(rgb3);
     }
     break;
   case RENDER_MODE_OVERLAY: 
@@ -649,6 +715,14 @@ static void BGR3_handler(Instance *pi, void *data)
   }
   post_render_frame(pi);  
 
+  if (rgb3) {
+    RGB3_buffer_discard(rgb3);
+  }
+
+  if (y422p) {
+    Y422P_buffer_discard(y422p);
+  }
+
   if (bgr3) {
     BGR3_buffer_discard(bgr3);
   }
@@ -659,6 +733,9 @@ static void GRAY_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = pi->data;
   Gray_buffer *gray = data;
+  BGR3_buffer *bgr3 = NULL;
+  RGB3_buffer *rgb3 = NULL;
+  Y422P_buffer *y422p = NULL;
 
   pre_render_frame(priv, gray->width, gray->height);
   switch (priv->renderMode) {
@@ -673,7 +750,6 @@ static void GRAY_handler(Instance *pi, void *data)
 	j += 3;
       }
       render_frame_gl(priv, rgb3);
-      RGB3_buffer_discard(rgb3);
     }
     break;
   case RENDER_MODE_OVERLAY: 
@@ -683,7 +759,6 @@ static void GRAY_handler(Instance *pi, void *data)
       memset(y422p->cb, 128, y422p->cb_length);
       memset(y422p->cr, 128, y422p->cr_length);
       render_frame_overlay(priv, y422p);
-      Y422P_buffer_discard(y422p);      
     }
     break;
   case RENDER_MODE_SOFTWARE: 
@@ -697,7 +772,6 @@ static void GRAY_handler(Instance *pi, void *data)
 	j += 3;
       }
       render_frame_software(priv, bgr3);
-      BGR3_buffer_discard(bgr3);
     }
     break;
   }
@@ -705,6 +779,18 @@ static void GRAY_handler(Instance *pi, void *data)
 
   if (gray) {
     Gray_buffer_discard(gray);
+  }
+
+  if (rgb3) {
+    RGB3_buffer_discard(rgb3);
+  }
+
+  if (y422p) {
+    Y422P_buffer_discard(y422p);
+  }
+
+  if (bgr3) {
+    BGR3_buffer_discard(bgr3);
   }
 }
 
@@ -743,49 +829,10 @@ static int my_event_loop(void *data)
       }
     }
     else if (ev.type == SDL_KEYUP) {
-      /* FIXME:  All these key events should really be passing generic CTI__KEY messages to 
-	 [OUTPUT_CONFIG].destination, instead of doing calculations in here. */
-      char numstr[64];
-      switch (ev.key.keysym.sym) {
-      case SDLK_UP: 
-	priv->seek_amount = _min(priv->seek_amount*2, 1000000000); 
-	fprintf(stderr, "seek_amount=%ld\n", priv->seek_amount);
-	break;
-
-      case SDLK_DOWN: 
-	priv->seek_amount = _max(priv->seek_amount/2, 1); 
-	fprintf(stderr, "seek_amount=%ld\n", priv->seek_amount);
-	break;
-
-      case SDLK_LEFT: 
-	if (pi->outputs[OUTPUT_CONFIG].destination) {
-	  sprintf(numstr, "%ld", -(priv->seek_amount));
-	  fprintf(stderr, "seek backward %ld\n", priv->seek_amount);
-	  PostData(Config_buffer_new("seek", numstr), pi->outputs[OUTPUT_CONFIG].destination);
-	}
-	break;
-
-      case SDLK_RIGHT: 
-	if (pi->outputs[OUTPUT_CONFIG].destination) {
-	  sprintf(numstr, "%ld", priv->seek_amount);
-	  fprintf(stderr, "seek forward %ld\n", priv->seek_amount);	  
-	  PostData(Config_buffer_new("seek", numstr), pi->outputs[OUTPUT_CONFIG].destination);
-	}
-	break;
-
-      default: 
-	/* Handle ranges here. */
-	if (pi->outputs[OUTPUT_KEYCODE].destination) {
-	  if (SDLK_a <= ev.key.keysym.sym && ev.key.keysym.sym <= SDLK_z) {
-	    PostData(Keycode_message_new((ev.key.keysym.sym - SDLK_a) + CTI__KEY_A),
-		     pi->outputs[OUTPUT_KEYCODE].destination);
-	  }
-	  else if (SDLK_0 <= ev.key.keysym.sym && ev.key.keysym.sym <= SDLK_9) {
-	    PostData(Keycode_message_new((ev.key.keysym.sym - SDLK_0) + CTI__KEY_0),
-		     pi->outputs[OUTPUT_KEYCODE].destination);
-	  }
-	}
-	break;
+      /* Handle ranges here. */
+      if (pi->outputs[OUTPUT_KEYCODE].destination) {
+	PostData(Keycode_message_new(SDLtoCTI_Keymap[ev.key.keysym.sym]),
+		 pi->outputs[OUTPUT_KEYCODE].destination);
       }
     }
     else if (ev.type == SDL_QUIT) {
@@ -842,9 +889,6 @@ static void SDLstuff_instance_init(Instance *pi)
   //priv->renderMode = RENDER_MODE_GL;
   //priv->renderMode = RENDER_MODE_SOFTWARE;
   priv->renderMode = RENDER_MODE_OVERLAY;
-
-  priv->seek_amount = 10000000;
-
   pi->data = priv;
 }
 
