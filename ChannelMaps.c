@@ -94,14 +94,12 @@ Channel NTSC_Cable_channels[] = {
   {"83", "577250000"},
 };
 
-static int NTSC_Cable_count = table_size(NTSC_Cable_channels);
-
 static struct {
   const char *map_name;
   Channel *channel_map;
-  int *channel_map_size;	/* I have to use a pointer here, because the counts aren't constant at compile time. */
+  int channel_map_size;
 } all_maps[] = {
-  { .map_name = "NTSC_Cable", .channel_map = NTSC_Cable_channels, .channel_map_size = &NTSC_Cable_count },
+  { .map_name = "NTSC_Cable", .channel_map = NTSC_Cable_channels, .channel_map_size = table_size(NTSC_Cable_channels)  },
 };
 
 const char *ChannelMaps_channel_to_frequency(const char *map, const char *channel)
@@ -113,7 +111,7 @@ const char *ChannelMaps_channel_to_frequency(const char *map, const char *channe
 
   for (i=0; i < num_tables; i++) {
     if (streq(map, all_maps[i].map_name)) {
-      int n = *(all_maps[i].channel_map_size);
+      int n = all_maps[i].channel_map_size;
       for (j=0; j < n; j++) {
 	if (streq(channel, all_maps[i].channel_map[j].channel)) {
 	  frequency_HZ = all_maps[i].channel_map[j].frequency_HZ;

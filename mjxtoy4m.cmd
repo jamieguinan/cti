@@ -1,5 +1,5 @@
 # Example usage:
-#  MJX=cap-1300291311.mjx ./cti.sh mjxtoh264.cmd
+#  MJX=cap,mjx ./cti.sh mjxtoy4m.cmd
 
 new MjpegDemux mjd
 new DJpeg dj
@@ -10,11 +10,10 @@ config mjd input $MJX
 
 config y4mout fps_nom 15
 config y4mout fps_denom 1
-config y4mout output | x264 /dev/stdin -o output-%s.h264
+config y4mout output output.y4m
 
 connect mjd Jpeg_buffer jt
 connect jt Jpeg_buffer dj
 connect dj 422P_buffer y4mout
 
 config mjd enable 1
-

@@ -97,6 +97,9 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     priv->exit_on_eof = 0;
     printf("exit_on_eof disabled!\n");
   }
+  else if ((strstr(line->bytes, "dpl") == line->bytes)) {
+    cti_debug_printf_list();
+  }
   else if ((sscanf(line->bytes, "%255s %255s", token1, token2) == 2)) {
     if (streq(token1, "v")) {
       cfg.verbosity  = atoi(token2);
@@ -107,6 +110,10 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
 	}
 	cfg.verbosity = 0;
       }
+    }
+    else if (streq(token1, "dpt")) {
+      int index = atoi(token2);
+      cti_debug_printf_toggle(index);
     }
   }
 

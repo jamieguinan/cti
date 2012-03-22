@@ -532,9 +532,7 @@ static void render_frame_software(SDLstuff_private *priv, BGR3_buffer *bgr3_in)
 
 static void pre_render_frame(SDLstuff_private *priv, int width, int height)
 {
-  if (cfg.verbosity) {
-    printf("frame %d ready for display\n", priv->inFrames);
-  }
+  dpf("frame %d ready for display\n", priv->inFrames);
 
   if (priv->toggle_fullscreen) {
     priv->fullscreen = (priv->fullscreen + 1) % 2;

@@ -233,8 +233,12 @@ Y422P_buffer * Y422P_buffer_new(int width, int height)
   y422p->width = width;
   y422p->height = height;
   y422p->y_length = width*height;
-  y422p->cr_length = width*height/2;
-  y422p->cb_length = width*height/2;
+  y422p->cr_width = width/2;
+  y422p->cr_height = height;
+  y422p->cr_length = y422p->cr_width*y422p->cr_height;
+  y422p->cb_width = width/2;
+  y422p->cb_height = height;
+  y422p->cb_length = y422p->cb_width*y422p->cb_height;
   y422p->y = Mem_calloc(1, y422p->y_length+1); y422p->y[y422p->y_length] = 0x55;
   y422p->cr = Mem_calloc(1, y422p->cr_length+1);  y422p->cr[y422p->cr_length] = 0x55;
   y422p->cb = Mem_calloc(1, y422p->cb_length+1);  y422p->cb[y422p->cb_length] = 0x55;

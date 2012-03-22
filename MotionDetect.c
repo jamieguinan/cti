@@ -65,6 +65,8 @@ static void gray_handler(Instance *pi, void *msg)
   int y, x, sum;
   int mask_check;
 
+  dpf("%s:%s()\n", __FILE__, __func__);
+
   if (priv->accum &&
       (priv->accum->width != gray->width ||
        priv->accum->height != gray->height)) {

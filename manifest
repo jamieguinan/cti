@@ -104,6 +104,8 @@ MpegTSDemux.c
 MpegTSDemux.h
 MpegTSMux.c
 MpegTSMux.h
+NScale.c
+NScale.h
 Null.c
 Null.h
 Numbers.c
@@ -273,6 +275,7 @@ locks.h
 logitech-cairo-01.cmd
 logitech-h264-ts.cmd
 logitech-md.cmd
+logitech-null.cmd
 logitech-oggfwd-01.cmd
 logitech-yuyv.cmd
 logitech.cmd
@@ -284,6 +287,8 @@ mjplay.c
 mjxplay.cmd
 mjxtoh264.cmd
 mjxtomp2.c
+mjxtoy4m.cmd
+mjxtoyuv.cmd
 mpegtsdemux00.cmd
 mpegtsdemux01.cmd
 mpegtsdemux02.cmd
@@ -310,6 +315,7 @@ sdl_main.c
 ss.cmd
 test.cmd
 text.cmd
+timeval_code.c
 topro.cmd
 tv-server.cmd
 tv.cmd

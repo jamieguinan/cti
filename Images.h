@@ -73,10 +73,17 @@ typedef struct {
   int height;
   uint8_t *y;
   int y_length;
+
   uint8_t *cb;
+  int cb_width;
+  int cb_height;
   int cb_length;
+
   uint8_t *cr;
+  int cr_width;
+  int cr_height;
   int cr_length;
+
   struct timeval tv;
   float nominal_period;
 } Y422P_buffer;

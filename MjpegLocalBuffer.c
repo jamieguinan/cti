@@ -91,7 +91,7 @@ static void MotionDetect_handler(Instance *pi, void *data)
 
   check_record_state(priv);
 
-  // fprintf(stderr, "md->sum=%d (%d)\n", md->sum, priv->md_threshold);
+  dpf("md->sum=%d (%d)\n", md->sum, priv->md_threshold);
 
   if (priv->recording) {
     fprintf(stderr, "md recording ON (%d %d)\n", md->sum, priv->md_threshold);

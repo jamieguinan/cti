@@ -80,7 +80,7 @@ typedef struct {
   int use_timestamps;
   int retry;
   long a, b;			/* For a/b looping. */
-  long seek_amount;
+  long seek_amount;		/* For forware/back seeks. */
   FPS fps;
 } MjpegDemux_private;
 

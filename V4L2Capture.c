@@ -1221,10 +1221,9 @@ static void V4L2Capture_tick(Instance *pi)
     priv->sequence = priv->vbuffer.sequence;
   }
 
-  if (cfg.verbosity >= 2) {
-    printf("capture on buffer %d Ok [ priv->format=%s, counter=%d ]\n", priv->wait_on, priv->format,
-	   pi->counter);
-  }
+  dpf("capture on buffer %d Ok [ priv->format=%s, counter=%d ]\n", priv->wait_on, priv->format,
+      pi->counter);
+
   pi->counter += 1;
 
   /* Check for lack of sync.  I suspect the BTTV would set V4L2_IN_ST_NO_H_LOCK, but cx88 does not,
@@ -1235,9 +1234,7 @@ static void V4L2Capture_tick(Instance *pi)
     if (rc == -1) {
       perror("VIDIOC_ENUMINPUT");
     }
-    else if (cfg.verbosity >= 2) {
-      printf("status: 0x%08x\n", input.status);
-    }
+    dpf("status: 0x%08x\n", input.status);
   }
 
   /* Process if needed.  Maybe keep minimal, do processing in other Instances...*/
@@ -1276,6 +1273,13 @@ static void V4L2Capture_tick(Instance *pi)
       Log(LOG_Y422P, "%s posting y422p @ %p", __func__, y422p);
       PostData(y422p, pi->outputs[OUTPUT_422P].destination);
     }
+
+    if (pi->outputs[OUTPUT_GRAY].destination) {
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height);
+      memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);      
+      PostData(g, pi->outputs[OUTPUT_GRAY].destination);
+    }
+
   }
   else if (streq(priv->format, "JPEG") ||
 	   streq(priv->format, "MJPG") ) {
@@ -1343,7 +1347,6 @@ static void V4L2Capture_tick(Instance *pi)
       }
       PostData(y422p, pi->outputs[OUTPUT_422P].destination);
     }
-
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
       int i = 0;

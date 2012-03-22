@@ -59,6 +59,7 @@
 #include "MjxRepair.h"
 #include "GdkCapture.h"
 #include "ImageLoader.h"
+#include "NScale.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -139,6 +140,7 @@ int cti_main(int argc, char *argv[])
   MjxRepair_init();
   GdkCapture_init();
   ImageLoader_init();
+  NScale_init();
 
   return app_code(argc, argv);
 }

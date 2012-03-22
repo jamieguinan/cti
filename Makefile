@@ -100,6 +100,7 @@ OBJS= \
 	$(OBJDIR)/ImageLoader.o \
 	$(OBJDIR)/Images.o \
 	$(OBJDIR)/FPS.o \
+	$(OBJDIR)/NScale.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o

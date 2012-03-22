@@ -45,9 +45,7 @@ static void y422p_handler(Instance *pi, void *data)
     half_width_scale(y422p_in->y, y422p_in->width, y422p_in->height, y422p_out->y);
     half_width_scale(y422p_in->cr, y422p_in->width/2, y422p_in->height, y422p_out->cr);
     half_width_scale(y422p_in->cb, y422p_in->width/2, y422p_in->height, y422p_out->cb);
-    if (cfg.verbosity) {
-      printf("posting %dx%d image to output\n", y422p_out->width, y422p_out->height);
-    }
+    dpf("posting %dx%d image to output\n", y422p_out->width, y422p_out->height);
     y422p_out->tv = y422p_in->tv;
     PostData(y422p_out, pi->outputs[OUTPUT_422P].destination);
   }
