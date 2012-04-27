@@ -4,7 +4,7 @@ new CJpeg cj
 new MjpegMux mjm
 new VFilter vf
 
-config vf bottom_crop 70
+config vf bottom_crop 120
 config gc filename $FILENAME
 config gc idle_quit_threshold 300
 config mjm output /tmp/cap-%Y%m%d-%H%M%S.mjx

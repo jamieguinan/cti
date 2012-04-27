@@ -59,6 +59,7 @@
 #include "MjxRepair.h"
 #include "GdkCapture.h"
 #include "ImageLoader.h"
+#include "Y4MSource.h"
 #include "NScale.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -88,7 +89,7 @@ int cti_main(int argc, char *argv[])
 #endif
 
 #ifdef HAVE_H264
-  H264_init();
+  // H264_init();
 #endif
 
 #ifdef HAVE_OGGOUTPUT
@@ -140,6 +141,7 @@ int cti_main(int argc, char *argv[])
   MjxRepair_init();
   GdkCapture_init();
   ImageLoader_init();
+  Y4MSource_init();
   NScale_init();
 
   return app_code(argc, argv);

@@ -528,11 +528,24 @@ static void Wav_handler(Instance *pi, void *data)
 static void ALSAPlayback_tick(Instance *pi)
 {
   ALSAio_private *priv = pi->data;
-  int wait_flag = (priv->enable ? 0 : 1);
+  // int wait_flag = (priv->enable ? 0 : 1);
+  int wait_flag;
 
+  if (!priv->enable
+      || !priv->rate) {
+    /* Not enabled, or rate not set, wait for an enable message or a
+       Wav buffer.  This avoid spinning below. */
+    wait_flag = 1;
+  }
+  else {
+    /* Enabled and rate set, will generate filler if needed. */
+    wait_flag = 0;
+  }
+  
   Handler_message *hm;
 
   hm = GetData(pi, wait_flag);
+  printf("%s hm=%p\n", __func__, hm);
   if (hm) {
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm);
@@ -576,6 +589,13 @@ static void ALSAPlayback_tick(Instance *pi)
     wav_in->no_feedback = 1;
     Wav_handler(pi, wav_in);
   }
+  else {
+    /* Should never get here. */
+    printf("WTF?\n");
+    sleep(1);
+  }
+   
+
 }
 
 

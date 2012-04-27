@@ -1,3 +1,4 @@
+/* Jpeg compression using IJPEG library. */
 #include <stdio.h>
 #include <string.h>
 #include <sys/time.h>		/* gettimeofday */
@@ -41,6 +42,7 @@ typedef struct {
   int quality;
   int adjusted_quality;
   float time_limit;
+  int dct_method;
 } CJpeg_private;
 
 
@@ -72,8 +74,41 @@ static void get_quality_range(Instance *pi, Range *r)
   r->ints.step = 1;
 }
 
+
+static int set_dct_method(Instance *pi, const char *value)
+{
+  CJpeg_private *priv = pi->data;
+
+  if (streq(value, "islow")) {
+    priv->dct_method = JDCT_ISLOW;
+  }
+  else if (streq(value, "ifast")) {
+    priv->dct_method = JDCT_IFAST;
+  }
+  else if (streq(value, "float")) {
+    priv->dct_method = JDCT_FLOAT;
+  }
+  else {
+    fprintf(stderr, "%s: unknown method %s\n", __func__, value);
+  }
+  return 0;
+}
+
+
+static int set_time_limit(Instance *pi, const char *value)
+{
+  CJpeg_private *priv = pi->data;
+  priv->time_limit = atof(value);
+  
+  return 0;
+}
+
+
+
 static Config config_table[] = {
   { "quality",    set_quality, get_quality, get_quality_range },
+  { "dct_method", set_dct_method, 0L, 0L},
+  { "time_limit", set_time_limit, 0L, 0L},
 };
 
 /// extern int jchuff_verbose;
@@ -157,8 +192,8 @@ static void compress_and_post(Instance *pi,
   }
 
   /* Various options can be set here... */
-  cinfo.dct_method = JDCT_FLOAT;
-  // cinfo.dct_method = JDCT_IFAST;
+  //cinfo.dct_method = JDCT_FLOAT;
+  cinfo.dct_method = priv->dct_method; /* Ah, we have to set this up here! */
 
   jpeg_set_quality (&cinfo, priv->adjusted_quality, TRUE);
 
@@ -296,6 +331,7 @@ static void CJpeg_instance_init(Instance *pi)
   priv->quality = 75;
   priv->adjusted_quality = priv->quality;
   priv->time_limit = 0.030;
+  priv->dct_method = JDCT_FLOAT;
 
   pi->data = priv;
 }
@@ -314,5 +350,4 @@ void CJpeg_init(void)
 {
   Template_register(&CJpeg_template);
 }
-
 

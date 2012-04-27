@@ -72,6 +72,8 @@ typedef struct {
     double playback_t0;
   } video;
 
+  int use_fixed_video_period;
+  float fixed_video_period;
   int seen_audio;
   float rate_multiplier;
   int use_feedback;
@@ -184,6 +186,14 @@ static int set_use_timestamps(Instance *pi, const char *value)
 }
 
 
+static int set_fixed_video_period(Instance *pi, const char *value)
+{
+  MjpegDemux_private *priv = pi->data;
+  priv->use_fixed_video_period = 1;
+  priv->fixed_video_period = atof(value);
+  return 0;
+}
+
 static void reset_current(MjpegDemux_private *priv)
 {
   /* Reset current stuff. */
@@ -225,6 +235,7 @@ static Config config_table[] = {
   { "output", set_output, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
   { "retry", set_retry, 0L, 0L },
+  { "fixed_video_period", set_fixed_video_period, 0L, 0L },
   { "use_feedback", set_use_feedback, 0L, 0L },
   { "use_timestamps", set_use_timestamps, 0L, 0L },
   /* The following are more "controls" than "configs", but maybe they are essentially the same anyway. */
@@ -445,7 +456,7 @@ static void MjpegDemux_tick(Instance *pi)
 	  String_parse_string(line, b, &priv->current.content_type);
 	}
 	else if ((a = String_find(line, 0, "Timestamp:", &b)) != -1) {
-#if 0
+#if 1
 	  int n, dot = 0;
 	  n = String_find(line, 0, ".", &dot);
 	  if (n != -1  && strlen(line->bytes+dot) == 5) {
@@ -546,7 +557,11 @@ static void MjpegDemux_tick(Instance *pi)
       /* Use timestamps if configured to do so, and only if haven't
 	 seen any audio, which is normally used with feedback. */
       // printf("%d %d\n", priv->use_timestamps, !priv->seen_audio);
-      if (priv->use_timestamps && !priv->seen_audio) {
+      if (priv->use_fixed_video_period) {
+	printf("fixed video period..\n");
+	nanosleep( double_to_timespec(priv->fixed_video_period), NULL);	
+      }
+      else if (priv->use_timestamps && !priv->seen_audio) {
 	struct timeval tv_now;
 	double tnow;
 	gettimeofday(&tv_now, 0L);

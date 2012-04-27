@@ -101,6 +101,7 @@ OBJS= \
 	$(OBJDIR)/Images.o \
 	$(OBJDIR)/FPS.o \
 	$(OBJDIR)/NScale.o \
+	$(OBJDIR)/Y4MSource.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
@@ -125,6 +126,10 @@ ifeq ($(ARCH),armeb)
 SDLLIBS=
 else
 
+ifeq ($(ARCH),nano)
+# Nothing to do
+else
+
 ifeq ($(ARCH),i386-Darwin)
 MAIN=SDLMain.o
 OBJS+=$(OBJDIR)/sdl_main.o
@@ -135,10 +140,13 @@ OBJS+=$(OBJDIR)/SDLstuff.o
 CPPFLAGS+=$$(sdl-config --cflags) -I/usr/include/GL
 LDFLAGS+=$$(sdl-config --libs) $$(pkg-config glu --libs)
 endif
+endif
 
 # Signals
 ifneq ($(ARCH),armeb)
+ifneq ($(ARCH),nano)
 OBJS+=$(OBJDIR)/Signals.o
+endif
 endif
 
 # Lirc
@@ -151,9 +159,11 @@ endif
 
 # Cairo
 ifneq ($(ARCH),armeb)
+ifneq ($(ARCH),nano)
 OBJS+=	$(OBJDIR)/CairoContext.o
 CPPFLAGS+=$$(pkg-config cairo --cflags)
 LDFLAGS+=$$(pkg-config cairo --libs)
+endif
 endif
 
 # libdv
@@ -182,10 +192,10 @@ endif
 
 # H264
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc))
-OBJS+=$(OBJDIR)/H264.o
-CPPFLAGS+=$$(pkg-config x264 --cflags)
-LDFLAGS+=$$(pkg-config x264 --libs)
-CPPFLAGS+=-DHAVE_H264
+#OBJS+=$(OBJDIR)/H264.o
+#CPPFLAGS+=$$(pkg-config x264 --cflags)
+#LDFLAGS+=$$(pkg-config x264 --libs)
+#CPPFLAGS+=-DHAVE_H264
 endif
 
 # AAC
@@ -200,7 +210,7 @@ $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \
 	$(OBJDIR)/cti_app.o
 	@echo LINK
-	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
+	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 ifeq ($(ARCH),x86_64-Linux)
 # Sigh, some libs bump their version numbers all the fucking time.  And I like to keep
 # cti binaries around for later use, without always having to rebuild.  So, keep a

@@ -172,6 +172,8 @@ Y4MInput.c
 Y4MInput.h
 Y4MOutput.c
 Y4MOutput.h
+Y4MSource.c
+Y4MSource.h
 a1.cmd
 a2.cmd
 alsa.cmd
@@ -208,6 +210,7 @@ cairo-test-01.cmd
 cairo-test-02.cmd
 cap.c
 cjbench.c
+cjbench.cmd
 clock.cmd
 ctest.c
 cti_app.c
@@ -329,6 +332,7 @@ uvc_compat.h
 uvcvideo.h
 v4l-bad-channel.cmd
 v4ltonull.cmd
+vimicro.cmd
 vtest.cmd
 wii-fwd.cmd
 wrmem.c
