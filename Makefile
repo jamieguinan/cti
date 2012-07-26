@@ -102,6 +102,7 @@ OBJS= \
 	$(OBJDIR)/FPS.o \
 	$(OBJDIR)/NScale.o \
 	$(OBJDIR)/Y4MSource.o \
+	$(OBJDIR)/Splitter.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
@@ -223,6 +224,13 @@ endif
 #	$(STRIP) $@
 # endif
 
+SHARED_OBJS=$(subst .o,.so,$(OBJS))
+
+$(OBJDIR)/ctis$(EXEEXT) : \
+	$(SHARED_OBJS)
+	@echo All shared objectsa re built.
+
+
 $(OBJDIR)/mjplay$(EXEEXT): \
 	$(OBJS) \
 	$(OBJDIR)/mjplay.o
@@ -241,6 +249,10 @@ $(OBJDIR)/ctest$(EXEEXT): \
 $(OBJDIR)/%.o: %.c Makefile
 	@echo CC $<
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.so: %.c Makefile
+	@echo 'CC (dll)' $<
+	@$(CC) $(CPPFLAGS) $(CFLAGS) $(SHARED_FLAGS) -DCTI_SHARED -c $< -o $@
 
 $(OBJDIR)/%.o: %.m Makefile
 	@echo CC $<

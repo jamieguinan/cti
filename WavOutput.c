@@ -60,6 +60,8 @@ static void Wav_handler(Instance *pi, void *msg)
   WavOutput_private *priv = pi->data;
   Wav_buffer *wav = msg;
 
+  dpf("Wav_handler %d/%d/%d\n", wav->params.channels, wav->params.rate, wav->params.bits_per_sample);
+
   if (!priv->sink) {
     return;
   }
@@ -77,6 +79,8 @@ static void Wav_handler(Instance *pi, void *msg)
 static void WavOutput_tick(Instance *pi)
 {
   Handler_message *hm;
+
+  dpf("WavOutput_tick\n", 0);
 
   hm = GetData(pi, 1);
   if (hm) {

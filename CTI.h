@@ -331,6 +331,10 @@ do { \
   } \
  } while(0)
 
-
+#ifdef CTI_SHARED
+#define shared_export(sym) void cti_init(void) { sym(); }
+#else
+#define shared_export(sym)
+#endif
 
 #endif

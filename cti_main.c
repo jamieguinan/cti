@@ -60,6 +60,7 @@
 #include "GdkCapture.h"
 #include "ImageLoader.h"
 #include "Y4MSource.h"
+#include "Splitter.h"
 #include "NScale.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -71,8 +72,7 @@ int cti_main(int argc, char *argv[])
   argv0 = argv[0];
 
 #ifdef __linux__
-  ALSACapture_init();
-  ALSAPlayback_init();
+  ALSAio_init();
   ALSAMixer_init();
   V4L2Capture_init();
   SonyPTZ_init();
@@ -142,6 +142,7 @@ int cti_main(int argc, char *argv[])
   GdkCapture_init();
   ImageLoader_init();
   Y4MSource_init();
+  Splitter_init();
   NScale_init();
 
   return app_code(argc, argv);

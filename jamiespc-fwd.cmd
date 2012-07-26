@@ -1,9 +1,17 @@
 new V4L2Capture vc
-new ALSACapture ac
 new Y4MOutput y4mout
+new ALSACapture ac
+new WavOutput wo
 #new DJpeg dj
 #new JpegTran jt
 #new MotionDetect md
+
+config ac device U0x46d0x81b
+config ac rate 16000
+config ac channels 1
+config ac format signed.16-bit.little.endian
+# Bad performance at 64, 128.  256 seems Ok.
+config ac frames_per_io 256
 
 #new CairoContext cc
 
@@ -37,10 +45,13 @@ new Y4MOutput y4mout
 
 system rm -f jamiespc.y4m
 system mkfifo jamiespc.y4m
+system rm -f jamiespc.wav
+system mkfifo jamiespc.wav
 
 config y4mout output jamiespc.y4m
+config wo output jamiespc.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example jamiespc.y4m -v 4 -f 15 -F 1 | tee cap-jamiespc.ogv | oggfwd 66.228.32.219 8000 bluebutton0123 /jamiespc.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example jamiespc.wav jamiespc.y4m -A 20 -v 4 -f 15 -F 1 | tee cap-jamiespc.ogv | oggfwd 66.228.32.219 8000 bluebutton0123 /jamiespc.ogv &
 
 config vc device 046d
 config vc format YUYV
@@ -57,6 +68,8 @@ config vc autoexpose 3
 #connect md Config_msg cc
 
 connect vc 422P_buffer y4mout
+connect ac Wav_buffer wo
 
 # Enable vc to start the whole thing running.
 config vc enable 1
+config ac enable 1

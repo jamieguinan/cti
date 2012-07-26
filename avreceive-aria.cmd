@@ -1,5 +1,4 @@
 new MjpegDemux mjd
-new DO511 do511
 new DJpeg dj
 new ALSAPlayback ap
 new SDLstuff sdl
@@ -18,6 +17,8 @@ connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer ap
 
 connect sdl Feedback_buffer mjd
+
+config sdl mode OVERLAY
 
 #connect dj RGB3_buffer vs
 #connect vs RGB3_buffer sdl

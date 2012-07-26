@@ -160,6 +160,7 @@ void rgb3_to_bgr3(RGB3_buffer **rgb, BGR3_buffer **bgr);
 extern Y422P_buffer *Y422P_buffer_new(int width, int height);
 extern void Y422P_buffer_discard(Y422P_buffer *y422p);
 extern Y422P_buffer *Y422P_copy(Y422P_buffer *y422p, int x, int y, int width, int height);
+extern Y422P_buffer *Y422P_clone(Y422P_buffer *y422p);
 extern void Y422P_paste(Y422P_buffer *dest, Y422P_buffer *src, int x, int y, int width, int height);
 extern RGB3_buffer *Y422P_to_RGB3(Y422P_buffer *y422p);
 extern BGR3_buffer *Y422P_to_BGR3(Y422P_buffer *y422p);

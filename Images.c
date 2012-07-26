@@ -495,6 +495,12 @@ Y422P_buffer *Y422P_copy(Y422P_buffer *y422p, int xoffset, int yoffset, int widt
 }
 
 
+Y422P_buffer *Y422P_clone(Y422P_buffer *y422p)
+{
+  return Y422P_copy(y422p, 0, 0, y422p->width, y422p->height);
+}
+
+
 void Y422P_paste(Y422P_buffer *dest, Y422P_buffer *src, int xoffset, int yoffset, int width, int height)
 {
   int x, y;

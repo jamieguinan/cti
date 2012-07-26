@@ -139,6 +139,8 @@ SourceSink.c
 SourceSink.h
 Spawn.c
 Spawn.h
+Splitter.c
+Splitter.h
 String.c
 String.h
 TCPOutput.c
@@ -190,6 +192,7 @@ avreceive-124.cmd
 avreceive-aria.cmd
 avreceive-cryptor.cmd
 avreceive.cmd
+avrecord-aria.cmd
 avstream-124-clock.cmd
 avstream-124-y4m.cmd
 avstream-124.cmd
@@ -232,6 +235,7 @@ facetracker01.cmd
 fishcam-playback.cmd
 fishcam-relay.cmd
 ft01.cmd
+fyv-forward.cmd
 fyv-local-plain.cmd
 fyv-local.cmd
 fyv-mjx-save.cmd
@@ -247,6 +251,7 @@ gdksave.cmd
 h264test01.cmd
 h264test02.cmd
 il.cmd
+jamiespc-fwd.cmd
 jmemdst.c
 jmemdst.h
 jmemsrc.c
@@ -332,6 +337,7 @@ uvc_compat.h
 uvcvideo.h
 v4l-bad-channel.cmd
 v4ltonull.cmd
+vimicro-record.cmd
 vimicro.cmd
 vtest.cmd
 wii-fwd.cmd

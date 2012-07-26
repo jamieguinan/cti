@@ -545,7 +545,7 @@ static void ALSAPlayback_tick(Instance *pi)
   Handler_message *hm;
 
   hm = GetData(pi, wait_flag);
-  printf("%s hm=%p\n", __func__, hm);
+  // printf("%s hm=%p\n", __func__, hm);
   if (hm) {
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm);
@@ -713,7 +713,7 @@ static void ALSACapture_tick(Instance *pi)
   if (n == frames) {
     // fprintf(stderr, "read %d frames\n", (int) n);
     if (pi->outputs[OUTPUT_WAV].destination) {
-      //Log(LOG_WAV, "%s allocated wav @ %p", __func__, wav);
+      dpf("%s allocated wav @ %p\n", __func__, wav);
       wav->data = buffer;  buffer = 0L;	/* Assign, do not free below. */
       wav->data_length = n * priv->format_bytes * priv->channels;
       Wav_buffer_finalize(wav);
@@ -761,13 +761,6 @@ static Template ALSAPlayback_template = {
   .instance_init = ALSAPlayback_instance_init,
 };
 
-
-void ALSAPlayback_init(void)
-{
-  Template_register(&ALSAPlayback_template);
-}
-
-
 /* Capture init... */
 static void ALSACapture_instance_init(Instance *pi)
 {
@@ -790,7 +783,12 @@ static Template ALSACapture_template = {
   .instance_init = ALSACapture_instance_init,
 };
 
-void ALSACapture_init(void)
+
+
+void ALSAio_init(void)
 {
   Template_register(&ALSACapture_template);
+  Template_register(&ALSAPlayback_template);
 }
+
+shared_export(ALSAio_init);

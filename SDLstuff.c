@@ -539,7 +539,7 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height)
     priv->toggle_fullscreen = 0;
     reset_video(priv);
   }
-  
+
   if (priv->renderMode != RENDER_MODE_GL &&
       /* priv->renderMode != RENDER_MODE_OVERLAY && */
       (priv->width != width || priv->height != height)) {
@@ -582,7 +582,7 @@ static void Y422P_handler(Instance *pi, void *data)
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
 
-  // pre_render_frame(priv, y422p->width, y422p->height);
+  pre_render_frame(priv, y422p->width, y422p->height);
 
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
