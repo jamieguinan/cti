@@ -29,6 +29,7 @@ void Instance_loop_thread(Instance *pi)
   /* FIXME: Abstract this out one layer... */
   pthread_t thread;
   pthread_create(&thread, NULL, Instance_thread_main, (void*)pi);
+  pthread_detach(&thread);
 }
 
 

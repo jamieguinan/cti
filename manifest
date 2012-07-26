@@ -45,8 +45,6 @@ File.c
 File.h
 FileInput.c
 FileInput.h
-FileOutput.c
-FileOutput.h
 GdkCapture.c
 GdkCapture.h
 H264.c
