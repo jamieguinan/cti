@@ -1,14 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include "CTI.h"
 #include "Cfg.h"
 
 static void Config_handler(Instance *pi, void *data);
+static void RawData_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG };
+enum { INPUT_CONFIG, INPUT_RAWDATA };
 static Input ScriptV00_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler},
+  [ INPUT_RAWDATA ] = { .type_label = "RawData_buffer", .handler = RawData_handler },
 };
 
 // enum {  };
@@ -19,6 +22,11 @@ typedef struct {
   InstanceGroup *g;
   int is_stdin;
   int exit_on_eof;
+  /* Rawdata nodes used for socket input. */
+  RawData_node *raw_first;
+  RawData_node *raw_last;
+  int total_buffered_data;
+  int raw_seq;
 }  ScriptV00_private;
 
 static void expand(char token[256])
@@ -207,6 +215,26 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
+
+static void RawData_handler(Instance *pi, void *data)
+{
+  ScriptV00_private *priv = pi->data;
+  RawData_buffer *raw = data;
+  RawData_node *rn = Mem_calloc(1, sizeof(*rn));
+  rn->buffer = raw;
+
+  if (!priv->raw_first) {
+    priv->raw_first = priv->raw_last = rn;
+  }
+  else {
+    priv->raw_last->next = rn;
+    priv->raw_last = rn;
+  }
+
+  priv->total_buffered_data += priv->raw_last->buffer->data_length;
+  priv->raw_seq += 1;
+  priv->raw_last->seq = priv->raw_seq;
+}
 
 static void ScriptV00_tick(Instance *pi)
 {

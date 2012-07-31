@@ -22,6 +22,7 @@ CairoContext.c
 CairoContext.h
 Cfg.c
 Cfg.h
+ChangeLog.txt
 ChannelMaps.c
 ChannelMaps.h
 Collection.c
@@ -43,8 +44,6 @@ FaceTracker.c
 FaceTracker.h
 File.c
 File.h
-FileInput.c
-FileInput.h
 GdkCapture.c
 GdkCapture.h
 H264.c
@@ -123,8 +122,6 @@ SDLMain.h
 SDLMain.m
 SDLstuff.c
 SDLstuff.h
-ScriptSession.c
-ScriptSession.h
 ScriptV00.c
 ScriptV00.h
 Signals.c
@@ -141,8 +138,6 @@ Splitter.c
 Splitter.h
 String.c
 String.h
-TCPOutput.c
-TCPOutput.h
 TV.c
 TV.h
 Tap.c

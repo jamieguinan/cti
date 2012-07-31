@@ -161,10 +161,6 @@ typedef struct _Instance {
 
 extern void Connect(Instance *from, const char *label, Instance *to);
 extern void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *tolabel);
-//extern void _PostMessage(void *message, Input *destination);
-//#define PostMessage(m, d) do { _PostMessage(m, d); m = 0L; } while (0)
-extern int CheckMessage(Instance *pi, int wait);
-extern void *PopMessage(Input *input);
 
 extern void PostData(void *pmsg, Input *destination);
 #define PostDataAndClear(m, d) do {PostData(m, d); m = 0L; } while (0)
@@ -207,6 +203,8 @@ extern void Template_register(Template *t);
 extern void Template_list(void);
 
 extern Instance * Instantiate(const char *label);
+
+extern void Instantiate_and_run(const char *label);
 
 typedef struct {
   String *label;
@@ -289,6 +287,13 @@ typedef struct {
   uint8_t *data;
   int data_length;
 } RawData_buffer;
+
+/* Raw data node */
+typedef struct _RawData_node {
+  struct _RawData_node *next;
+  RawData_buffer *buffer;
+  int seq;
+} RawData_node;
 
 extern RawData_buffer *RawData_buffer_new(int size);
 extern void RawData_buffer_discard(RawData_buffer *raw);

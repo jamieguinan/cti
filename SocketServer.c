@@ -47,12 +47,6 @@ static Output SocketServer_outputs[] = {
   [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
 };
 
-typedef struct _RawData_node {
-  struct _RawData_node *next;
-  RawData_buffer *buffer;
-  int seq;
-} RawData_node;
-
 typedef struct _Client_connection {
   struct _Client_connection *prev;
   struct _Client_connection *next;

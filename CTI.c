@@ -29,35 +29,7 @@ void Instance_loop_thread(Instance *pi)
   /* FIXME: Abstract this out one layer... */
   pthread_t thread;
   pthread_create(&thread, NULL, Instance_thread_main, (void*)pi);
-  pthread_detach(&thread);
-}
-
-
-//void _PostMessage(void *message, Input *input)
-//
-//  fprintf(stderr, "obsolete %s called!\n", __func__); exit(1);
-//}
-
-int CheckMessage(Instance *pi, int wait)
-{
-  /* For instances that need to periodically check hardware, like V4L2
-     and ALSA, pass wait=0.  For instances that only operate on
-     inputs, pass wait=1, and they will block here. */
-  int n = 0;
-
-  fprintf(stderr, "obsolete %s called from %s!\n", __func__, pi->label); exit(1);
-
-  return n;
-}
-
-void * PopMessage(Input *input)
-{
-  /* Lock queue, remove first message. */
-  void *msg = 0L;
-
-  fprintf(stderr, "obsolete %s called!\n", __func__);
-
-  return msg;
+  pthread_detach(thread);
 }
 
 void PostData(void *data, Input *input)
@@ -211,8 +183,7 @@ void Template_list(void)
   }
 }
 
-
-Instance * Instantiate(const char *label)
+static Instance * _Instantiate_local(const char *label, int run)
 {
   int i;
 
@@ -242,13 +213,32 @@ Instance * Instantiate(const char *label)
 	t->instance_init(pi);
       }
 
-      Instance_loop_thread(pi);
+      if (run) {
+	/* Run instance main loop, blocking the caller. */
+	Instance_thread_main(pi);
+      }
+      else {
+	/* Start a new thread. */
+	Instance_loop_thread(pi);
+      }
       return pi;
     }
   }
 
   fprintf(stderr, "No such template: %s\n", label);
   return 0L;
+}
+
+
+void Instantiate_and_run(const char *label)
+{
+  _Instantiate_local(label, 1);
+}
+
+
+Instance * Instantiate(const char *label)
+{
+  return _Instantiate_local(label, 0);
 }
 
 

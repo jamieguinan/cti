@@ -1,0 +1,35 @@
+2012-Jul-31 14:02:40
+
+ CTI.c: 
+ CTI.h:
+  Remove obsoelte _PostMessage, CheckMessage, PopMessage.
+  Add Instantiate_and_run() function.
+  Move RawData_node from SocketServer.c to CTI.h.
+
+ SocketServer.c:
+  Move RawData_node from SocketServer.c to CTI.h.
+
+ SDLstuff.c:
+ cti_app.c:
+  Refactoring in consideration of OSX SDL support.
+
+ ScriptV00.c:
+  Add RawData handler in preparation for socket support 
+  (via SocketServer).
+
+
+ FileInput.c:
+ FileInput.h:
+  Deleted.
+
+ ScriptSession.c:
+ ScriptSession.h:
+  Deleted.
+
+ TCPOutput.c:
+ TCPOutput.h:
+  Deleted.
+
+ cti_main.c:
+  Remove obsolete includes.
+

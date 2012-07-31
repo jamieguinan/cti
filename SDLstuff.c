@@ -795,11 +795,23 @@ static void GRAY_handler(Instance *pi, void *data)
 
 static int my_event_loop(void *data)
 {
+  /* This needs to run in the context of the main application thread, for
+     certain platforms (OSX in particular). */
   Handler_message *hm;
   SDL_Event ev;
   int rc;
   Instance *pi = data;
-  SDLstuff_private *priv = pi->data;
+
+  SDLstuff_private *priv = Mem_calloc(1, sizeof(*priv));
+
+  priv->width = 640;
+  priv->height = 480;
+  priv->GL.fov = 90;
+  priv->vsync = 1;
+  //priv->renderMode = RENDER_MODE_GL;
+  //priv->renderMode = RENDER_MODE_SOFTWARE;
+  priv->renderMode = RENDER_MODE_OVERLAY;
+  pi->data = priv;
 
   printf("%s started\n", __func__);
 
@@ -845,14 +857,8 @@ static int my_event_loop(void *data)
 
 static void SDLstuff_tick(Instance *pi)
 {
+  /* This is called from the "SDLstuff" instance thread. */
   Handler_message *hm;
-  SDLstuff_private *priv = pi->data;
-
-  if (!priv->initialized) {
-    // Start SDL_event_loop()
-    SDL_CreateThread(my_event_loop, pi);
-    priv->initialized = 1;
-  }
 
   hm = GetData(pi, 1);
 
@@ -875,19 +881,12 @@ static void SDLstuff_tick(Instance *pi)
   }
 }
 
+extern Input app_ui_input;
 
 static void SDLstuff_instance_init(Instance *pi)
 {
-  SDLstuff_private *priv = Mem_calloc(1, sizeof(*priv));
-
-  priv->width = 640;
-  priv->height = 480;
-  priv->GL.fov = 90;
-  priv->vsync = 1;
-  //priv->renderMode = RENDER_MODE_GL;
-  //priv->renderMode = RENDER_MODE_SOFTWARE;
-  priv->renderMode = RENDER_MODE_OVERLAY;
-  pi->data = priv;
+  /* Pass the UI event loop function to the main application thread. */
+  PostData(my_event_loop, &app_ui_input);  
 }
 
 
