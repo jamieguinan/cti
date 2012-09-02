@@ -281,6 +281,17 @@ extern void InstanceGroup_connect2(InstanceGroup *g,
 				   const char *ioLabel2);
 
 
+/* Callback function, with one parameter. */
+typedef struct {
+  void (*func)(void *data);
+  void *data;			/* passed to .func */
+  Lock lock;
+  Event event;
+} Callback;
+
+extern Callback *Callback_new(void);
+extern void Callback_wait(Callback *cb);
+extern void Callback_fill(Callback *cb, int (*func)(void *), void *data);
 
 /* Raw data buffer */
 typedef struct {

@@ -535,6 +535,32 @@ void Value_free(Value *v)
 }
 
 
+Callback *Callback_new(void)
+{
+  Callback *cb = Mem_calloc(1, sizeof(*cb));
+  Lock_init(&cb->lock);
+  return cb;  
+}
+
+
+void Callback_wait(Callback *cb)
+{
+  Lock_acquire(&cb->lock);
+  Lock_release__event_wait__lock_acquire(&cb->lock, &cb->event);
+  Lock_release(&cb->lock);
+}
+
+
+void Callback_fill(Callback *cb, int (*func)(void *), void *data)
+{
+  Lock_acquire(&cb->lock);  
+  cb->func = func;
+  cb->data = data;
+  Event_signal(&cb->event);
+  Lock_release(&cb->lock);  
+}
+
+
 RawData_buffer *RawData_buffer_new(int size)
 {
   RawData_buffer *raw = Mem_malloc(sizeof(*raw));

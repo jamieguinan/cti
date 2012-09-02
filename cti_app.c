@@ -6,32 +6,16 @@
 
 #include "CTI.h"
 
-Input app_ui_input;			/* Global input, for starting UI code. */
-static Instance cti_app_instance;	/* Parent structure for input. */
-
-static void UI_handler(Instance *pi, void *msg)
-{
-}
-
+Callback *ui_callback;
 
 int app_code(int argc, char *argv[])
 {
-  int rc = 0;
   Config_buffer *cb;
 
   // Template_list();
 
-  /* Set up the input. */
-  app_ui_input.type_label = "cti_app_ui_input";
-  app_ui_input.parent = &cti_app_instance;
-  app_ui_input.handler = UI_handler;
-
-  /* Set up the app instance, so that message posting works. */
-  cti_app_instance.label = "cti_app";
-  cti_app_instance.inputs = &app_ui_input;
-  cti_app_instance.num_inputs = 1;
-  Lock_init(&cti_app_instance.inputs_lock);
-  WaitLock_init(&cti_app_instance.notification_lock);
+  /* Set up the callback before starting anything else. */
+  ui_callback = Callback_new();
 
   /* Set up a scripting handler, and set up initial input. */
   Instance *s = Instantiate("ScriptV00");
@@ -49,12 +33,10 @@ int app_code(int argc, char *argv[])
   while (1) {
     /* Certain platforms (like OSX) require that UI code be called from the 
        main application thread.  So the code waits here for a message containing
-       a UI loop function, and calls it. */
-    int (*ui_loop)(void *data);
-    Handler_message *hm = GetData(&cti_app_instance, 1);
-    if (hm && hm->data) {
-      ui_loop = hm->data;
-      ui_loop(&cti_app_instance);
+       a UI function, and calls it. */
+    Callback_wait(ui_callback);
+    if (ui_callback->func) {
+      ui_callback->func(ui_callback->data);
     }
   }
 

@@ -857,7 +857,8 @@ static int my_event_loop(void *data)
 
 static void SDLstuff_tick(Instance *pi)
 {
-  /* This is called from the "SDLstuff" instance thread. */
+  /* This is called from the "SDLstuff" instance thread.  Config
+     messages are passed to the main thread. */
   Handler_message *hm;
 
   hm = GetData(pi, 1);
@@ -881,12 +882,11 @@ static void SDLstuff_tick(Instance *pi)
   }
 }
 
-extern Input app_ui_input;
+extern Callback *ui_callback;	/* cti_app.c */
 
 static void SDLstuff_instance_init(Instance *pi)
 {
-  /* Pass the UI event loop function to the main application thread. */
-  PostData(my_event_loop, &app_ui_input);  
+  Callback_fill(ui_callback, my_event_loop, pi);
 }
 
 
