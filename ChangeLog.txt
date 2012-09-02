@@ -1,3 +1,9 @@
+2012-Sep-02 14:14:57
+
+This snapshot builds, but the ui_loop business is actually broken, I
+just wanted to capture it before I fix it.
+
+
 2012-Jul-31 14:02:40
 
  CTI.c: 
