@@ -283,7 +283,7 @@ extern void InstanceGroup_connect2(InstanceGroup *g,
 
 /* Callback function, with one parameter. */
 typedef struct {
-  void (*func)(void *data);
+  int (*func)(void *data);
   void *data;			/* passed to .func */
   Lock lock;
   Event event;
@@ -329,6 +329,10 @@ extern void cti_debug_printf_register(const char *file, int line, int *enabled, 
 extern void cti_debug_printf(const char *fmt, ...);
 extern void cti_debug_printf_list(void);
 extern void cti_debug_printf_toggle(int index);
+
+extern void CTI_cmdline_add(const char *key, const char *value);
+extern const char *CTI_cmdline_get(const char *key);
+
 
 /* Debug printfs */
 #define dpf(fmt, ...) \

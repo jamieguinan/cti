@@ -15,6 +15,9 @@
 
 #include "libdv/dv.h"
 
+/* From libdv-1.0.0/libdv/parse.c, this is the larger of the 2 frame sizes (PAL). */
+#define MAX_DV_FRAME_SIZE (12 * 150 * 80)
+
 static void Config_handler(Instance *pi, void *msg);
 
 enum { INPUT_CONFIG };
@@ -39,6 +42,7 @@ typedef struct {
   int pending_feedback;
   int feedback_threshold;
   int retry;
+  int frame_counter;
 } LibDV_private;
 
 static int set_input(Instance *pi, const char *value)
@@ -61,6 +65,7 @@ static int set_input(Instance *pi, const char *value)
   
   priv->input = strdup(value);
   priv->source = Source_new(priv->input);
+  priv->frame_counter = 0;
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);
@@ -102,6 +107,11 @@ static int do_seek(Instance *pi, const char *value)
   LibDV_private *priv = pi->data;
   long amount = atol(value);
 
+  /* Seek to lower frame boundary. */
+  if (priv->decoder->frame_size) {
+    amount = (priv->decoder->frame_size * (amount/priv->decoder->frame_size));
+  }
+
   if (priv->source) {
     Source_seek(priv->source, amount);  
   }
@@ -128,6 +138,45 @@ static Config config_table[] = {
 static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
+}
+
+
+static void consume_data(LibDV_private *priv)
+{
+  int rc;
+
+  /* Don't care about [1] and [2] for rgb. */
+  //int pitches[3] = {720*3, 0, 0};
+  //uint8_t *pixels[3];
+
+  /* Note, would probably allocate all 3 for yuv */
+  // pixels[0] = calloc(720*480*3, 1);
+
+  rc = dv_parse_header(priv->decoder, priv->chunk->data);
+  if (rc < 0) { 
+    fprintf(stderr, "error parsing header");
+    return;
+  }
+
+  if (dv_format_wide(priv->decoder)) {
+    /* 16:9 */
+  }
+  else if (dv_format_normal(priv->decoder)) {
+    /* 4:3 */
+  }
+  else {
+    /* Unknonwn? */
+  }
+
+  // fprintf(stderr, "frame size: %zd\n", priv->decoder->frame_size);
+
+  priv->decoder->quality = DV_QUALITY_BEST;
+
+  // dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_rgb, pixels, pitches);
+
+  /* Trim consumed data. */
+  ArrayU8_trim_left(priv->chunk, priv->decoder->frame_size);
+  priv->frame_counter += 1;
 }
 
 static void LibDV_tick(Instance *pi)
@@ -167,6 +216,7 @@ static void LibDV_tick(Instance *pi)
     return;
   }
 
+
   if (priv->needData) {
     ArrayU8 *newChunk;
     /* Network reads should return short numbers if not much data is
@@ -178,7 +228,8 @@ static void LibDV_tick(Instance *pi)
       /* FIXME: EOF on a local file should be restartable.  Maybe
 	 socket sources should be restartable, too. */
       Source_close_current(priv->source);
-      fprintf(stderr, "%s: source finished.\n", __func__);
+      fprintf(stderr, "%s: source finished, %d frames processed, frame size %d.\n",
+	      __func__, priv->frame_counter, priv->decoder->frame_size);
       if (priv->retry) {
 	fprintf(stderr, "%s: retrying.\n", __func__);
 	sleep(1);
@@ -197,9 +248,12 @@ static void LibDV_tick(Instance *pi)
     priv->needData = 0;
   }
 
-
-//out:
-  /* FIXME: trim consumed data from chunk, reset "current" variables. */
+  if (priv->chunk->len >= MAX_DV_FRAME_SIZE) {
+    consume_data(priv);
+  }
+  else {
+    priv->needData = 1;
+  }
 
   pi->counter++;
 }

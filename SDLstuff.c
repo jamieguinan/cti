@@ -882,10 +882,9 @@ static void SDLstuff_tick(Instance *pi)
   }
 }
 
-extern Callback *ui_callback;	/* cti_app.c */
-
 static void SDLstuff_instance_init(Instance *pi)
 {
+  extern Callback *ui_callback;	/* cti_app.c */
   Callback_fill(ui_callback, my_event_loop, pi);
 }
 

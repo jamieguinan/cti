@@ -302,7 +302,7 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
 
       /* Wake caller if they asked for it. */
       if (cb_in->wake) {
-	Event_signal(cb_in->wake);
+	Event_signal(cb_in->wake); // FIXME: Is this necessary?
       }
       break;
     }
@@ -535,6 +535,7 @@ void Value_free(Value *v)
 }
 
 
+/* Callback API  */
 Callback *Callback_new(void)
 {
   Callback *cb = Mem_calloc(1, sizeof(*cb));
@@ -545,6 +546,7 @@ Callback *Callback_new(void)
 
 void Callback_wait(Callback *cb)
 {
+  /* This just waits someone else to lock/unlock the lock. */
   Lock_acquire(&cb->lock);
   Lock_release__event_wait__lock_acquire(&cb->lock, &cb->event);
   Lock_release(&cb->lock);
@@ -556,11 +558,11 @@ void Callback_fill(Callback *cb, int (*func)(void *), void *data)
   Lock_acquire(&cb->lock);  
   cb->func = func;
   cb->data = data;
-  Event_signal(&cb->event);
+  // Event_signal(&cb->event);  // Is this even necessary?
   Lock_release(&cb->lock);  
 }
 
-
+/* Raw data buffer API. */
 RawData_buffer *RawData_buffer_new(int size)
 {
   RawData_buffer *raw = Mem_malloc(sizeof(*raw));
@@ -684,3 +686,35 @@ void cti_debug_printf(const char *fmt, ...)
   }
   va_end(ap);
 }
+
+/* key=value command-line parameter support. */
+typedef struct {
+  const char *key;
+  const char *value;
+} CmdlineParam;
+
+static ISet(CmdlineParam) cmdline_params;
+
+void CTI_cmdline_add(const char *key, const char *value)
+{
+  CmdlineParam *p = Mem_malloc(sizeof(*p));
+  p->key = strdup(key);
+  p->value = strdup(value);
+  ISet_add(cmdline_params, p);
+  // printf("%s: found %s=%s, count=%d\n", __func__, key, value, cmdline_params.count);
+}
+
+const char *CTI_cmdline_get(const char *key)
+{
+  int i;
+  /* NOTE: No locking, it is assumed that all parameters are set
+     before instances start looking for them. */
+  // printf("%s: looking for key %s\n", __func__, key);
+  for (i=0; i < cmdline_params.count; i++) {
+    if (streq(cmdline_params.items[i]->key, key)) {
+      return cmdline_params.items[i]->value;
+    }
+  }
+  return NULL;
+}
+

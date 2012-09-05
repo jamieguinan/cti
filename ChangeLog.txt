@@ -1,3 +1,10 @@
+2012-Sep-05 16:04:23
+
+Minor cleanups in new Callback API.
+Add command-line key=value API, set up in cti_app.c, initially used in ScriptV00.c.
+Start filling in LibDV support.
+
+
 2012-Sep-02 15:06:47
 
 Cleaned things up a bit, the main application loop waits for

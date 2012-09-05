@@ -216,9 +216,9 @@ ifeq ($(ARCH),x86_64-Linux)
 # Sigh, some libs bump their version numbers all the fucking time.  And I like to keep
 # cti binaries around for later use, without always having to rebuild.  So, keep a
 # cache of libraries which frequently change.
-	@echo Copying required libaries that frequently change:
-	@cp -Lvu $$(ldd $@ | grep -E '264|png' | sed -e 's,.*/usr,/usr,g' -e 's, .*$$,,') $(HOME)/lib/
-# Or ../../platform/$(ARCH)/lib/
+#	@echo Copying required libaries that frequently change:
+#	@cp -Lvu $$(ldd $@ | grep -E '264|png' | sed -e 's,.*/usr,/usr,g' -e 's, .*$$,,') $(HOME)/lib/
+# Or ../../platform/$(ARCH)/lib/ ?
 endif
 # if gdb not in cflags
 #	$(STRIP) $@

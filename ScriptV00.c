@@ -34,6 +34,12 @@ static void expand(char token[256])
   if (token[0] == '$') {
     strcpy(token, getenv(token+1));
   }
+  else if (token[0] == '%') {
+    const char *value = CTI_cmdline_get(token+1);
+    if (value) {
+      strcpy(token, value);
+    }
+  }
 }
 
 static void scan_file(ScriptV00_private *priv, const char *filename);

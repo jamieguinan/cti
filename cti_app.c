@@ -11,6 +11,8 @@ Callback *ui_callback;
 int app_code(int argc, char *argv[])
 {
   Config_buffer *cb;
+  int argn = 1;
+  const char *input_arg = NULL;
 
   // Template_list();
 
@@ -20,12 +22,26 @@ int app_code(int argc, char *argv[])
   /* Set up a scripting handler, and set up initial input. */
   Instance *s = Instantiate("ScriptV00");
 
-  if (argc == 2) {
+  while (argn < argc) {
+    char temp_arg[strlen(argv[argn])+1];
+    strcpy(temp_arg, argv[argn]);
+    char *eq = strchr(temp_arg, '=');
+    if (eq) {
+      *eq = 0;
+      CTI_cmdline_add(temp_arg, eq+1);
+    }
+    else {
+      input_arg = argv[argn];
+    }
+    argn += 1;
+  }
+
+  if (input_arg) {
     cb = Config_buffer_new("input", argv[1]);
     PostData(cb,  &s->inputs[0]);
   }
-  else if (argc == 1) {
-    /* "" means use stdin */
+  else {
+    /* Use "" to indicate stdin */
     cb = Config_buffer_new("input", "");
     PostData(cb,  &s->inputs[0]);
   }
