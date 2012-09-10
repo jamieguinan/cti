@@ -12,6 +12,9 @@
 #include "LibDV.h"
 #include "SourceSink.h"
 #include "Cfg.h"
+#include "Images.h"
+#include "Wav.h"
+#include "Keycodes.h"
 
 #include "libdv/dv.h"
 
@@ -19,16 +22,22 @@
 #define MAX_DV_FRAME_SIZE (12 * 150 * 80)
 
 static void Config_handler(Instance *pi, void *msg);
+static void Feedback_handler(Instance *pi, void *data);
+static void Keycode_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG };
+enum { INPUT_CONFIG, INPUT_FEEDBACK, INPUT_KEYCODE };
 static Input LibDV_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .handler = Feedback_handler },
+  [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_422P };
+enum { OUTPUT_422P, OUTPUT_RGB3, OUTPUT_WAV };
 static Output LibDV_outputs[] = {
   /* FIXME: NTSC output might actually be 4:1:1.  Handle in a good way. */
   [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
+  [ OUTPUT_WAV ] = { .type_label = "Wav_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -43,6 +52,7 @@ typedef struct {
   int feedback_threshold;
   int retry;
   int frame_counter;
+  int16_t *audio_buffers[4];
 } LibDV_private;
 
 static int set_input(Instance *pi, const char *value)
@@ -141,22 +151,37 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void consume_data(LibDV_private *priv)
+static void Keycode_handler(Instance *pi, void *msg)
+{
+  Keycode_message *km = msg;
+  Keycode_message_cleanup(&km);
+}
+
+
+static void Feedback_handler(Instance *pi, void *data)
+{
+  LibDV_private *priv = pi->data;
+  Feedback_buffer *fb = data;
+
+  priv->pending_feedback -= 1;
+  printf("feedback - %d\n", priv->pending_feedback);
+  Feedback_buffer_discard(fb);
+}
+
+
+
+static void consume_data(Instance *pi /* would have preferred to use: LibDV_private *priv */)
 {
   int rc;
-
-  /* Don't care about [1] and [2] for rgb. */
-  //int pitches[3] = {720*3, 0, 0};
-  //uint8_t *pixels[3];
-
-  /* Note, would probably allocate all 3 for yuv */
-  // pixels[0] = calloc(720*480*3, 1);
+  LibDV_private *priv = pi->data;
 
   rc = dv_parse_header(priv->decoder, priv->chunk->data);
   if (rc < 0) { 
     fprintf(stderr, "error parsing header");
     return;
   }
+
+  dv_parse_packs(priv->decoder, priv->chunk->data);
 
   if (dv_format_wide(priv->decoder)) {
     /* 16:9 */
@@ -168,11 +193,85 @@ static void consume_data(LibDV_private *priv)
     /* Unknonwn? */
   }
 
+  rc = dv_frame_changed(priv->decoder);
+  // printf("dv_frame_changed returns %d\n", rc);
+
   // fprintf(stderr, "frame size: %zd\n", priv->decoder->frame_size);
 
-  priv->decoder->quality = DV_QUALITY_BEST;
+  /* FIXME: Call dv_get_timestamp_int(), etc., use the information returned. */
 
-  // dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_rgb, pixels, pitches);
+  if (pi->outputs[OUTPUT_WAV].destination) {
+    int i, j;
+    int n = 0;
+    int ns = dv_get_num_samples(priv->decoder);
+    int nc = dv_get_num_channels(priv->decoder);
+    int rs = dv_get_raw_samples(priv->decoder, nc);
+    int c4 = dv_is_4ch(priv->decoder);
+    int fr = dv_get_frequency(priv->decoder);
+
+    rc = dv_decode_full_audio(priv->decoder, priv->chunk->data, priv->audio_buffers);
+    if (rc == 0) {
+      printf("no audio!\n");
+      goto out;
+    }
+
+    Wav_buffer *wav = Wav_buffer_new(fr, nc, 2);
+    wav->data_length = ns*nc*2;
+    wav->data = Mem_malloc(wav->data_length);
+    int16_t *wav16 = (int16_t *)wav->data;
+
+    /* Interleave data into wav buffer. */
+    for (i=0; i < ns; i++) {
+      for (j=0; j < nc; j++) {
+	wav16[n++] = priv->audio_buffers[j][i];
+      }
+    }
+
+    Wav_buffer_finalize(wav);
+
+    if (priv->frame_counter % 30 == 0) {
+      printf("samples:%d channels:%d raw samples:%d 4ch:%d fr%d\n",
+	     ns, nc, rs, c4, fr);
+    }
+
+    PostData(wav, pi->outputs[OUTPUT_WAV].destination);
+
+    if (priv->use_feedback) {
+      priv->pending_feedback += 1;
+    }
+
+  out:;
+  }
+
+  if (pi->outputs[OUTPUT_RGB3].destination) {
+    RGB3_buffer *rgb3 = RGB3_buffer_new(priv->decoder->width, priv->decoder->height);
+    uint8_t *pixels[3] = { rgb3->data, 
+			   0L,
+			   0L };
+    int pitches[3] = { rgb3->width * 3, 0, 0 };
+
+    dv_report_video_error (priv->decoder,
+                           rgb3->data);
+    dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_rgb, pixels, pitches);
+    priv->decoder->prev_frame_decoded = 1;
+    PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
+  }
+
+  if (pi->outputs[OUTPUT_422P].destination) {
+    //uint8_t *pixels[3];
+    //int pitches[3] = {???, ???, ???};
+    // dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_yuv, pixels, pitches);
+    //PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
+  }
+
+  // FIXME: libdv supports 4-byte {B,G,R,0} format, consider supporting in CTI.
+  //if (pi->outputs[OUTPUT_BGR0].destination) {
+    //uint8_t *pixels[3];
+    //pixels[0] = calloc(720*480*3, 1);
+    //int pitches[3] = {720*3, 0, 0};
+  //  dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_bgr0, pixels, pitches);
+  //}
+ 
 
   /* Trim consumed data. */
   ArrayU8_trim_left(priv->chunk, priv->decoder->frame_size);
@@ -184,10 +283,6 @@ static void LibDV_tick(Instance *pi)
   Handler_message *hm;
   LibDV_private *priv = pi->data;
   int sleep_and_return = 0;
-
-  /* FIXME: Could use a wait_flag and set if pending_feedback, but
-     might want something like GetData_timeout(), or GetData(pi, >=2)
-     for millisecond timeout. */
 
   hm = GetData(pi, 0);
 
@@ -207,6 +302,13 @@ static void LibDV_tick(Instance *pi)
     }
   }
 
+  /* NOTE: Checking output thresholds isn't useful in cases where there is another object
+     behind the output that is getting its input queue filled up... */
+  if (pi->outputs[OUTPUT_RGB3].destination &&
+      pi->outputs[OUTPUT_RGB3].destination->parent->pending_messages > 5) {
+    sleep_and_return = 1;
+  }
+
   if (priv->pending_feedback > priv->feedback_threshold) {
     sleep_and_return = 1;
   }
@@ -215,7 +317,6 @@ static void LibDV_tick(Instance *pi)
     nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/100}, NULL);
     return;
   }
-
 
   if (priv->needData) {
     ArrayU8 *newChunk;
@@ -228,7 +329,7 @@ static void LibDV_tick(Instance *pi)
       /* FIXME: EOF on a local file should be restartable.  Maybe
 	 socket sources should be restartable, too. */
       Source_close_current(priv->source);
-      fprintf(stderr, "%s: source finished, %d frames processed, frame size %d.\n",
+      fprintf(stderr, "%s: source finished, %d frames processed, frame size %zd.\n",
 	      __func__, priv->frame_counter, priv->decoder->frame_size);
       if (priv->retry) {
 	fprintf(stderr, "%s: retrying.\n", __func__);
@@ -249,7 +350,7 @@ static void LibDV_tick(Instance *pi)
   }
 
   if (priv->chunk->len >= MAX_DV_FRAME_SIZE) {
-    consume_data(priv);
+    consume_data(pi);
   }
   else {
     priv->needData = 1;
@@ -258,11 +359,32 @@ static void LibDV_tick(Instance *pi)
   pi->counter++;
 }
 
+static int LibDV_initialized = 0;
 static void LibDV_instance_init(Instance *pi)
 {
   LibDV_private *priv = Mem_calloc(1, sizeof(*priv));
+  int i;
+
+  /* Could put a lock around this test, in case > 1 instance. */
+  if (!LibDV_initialized) {
+    dv_init(0, 0);		
+    LibDV_initialized = 1;
+
+  }
+
   priv->decoder = dv_decoder_new(0, 1, 1);
   printf("LibDV decoder @ %p\n", priv->decoder);
+
+  priv->decoder->quality = DV_QUALITY_BEST;
+  priv->decoder->prev_frame_decoded = 0;
+  priv->feedback_threshold = 2;
+
+  for (i=0; i < 4; i++) {
+    priv->audio_buffers[i] = Mem_calloc(1, DV_AUDIO_MAX_SAMPLES*sizeof(int16_t));
+  }
+  
+
+  dv_set_error_log(priv->decoder, fopen("/dev/null", "w"));
   pi->data = priv;
 }
 

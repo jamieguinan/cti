@@ -449,7 +449,8 @@ static void Wav_handler(Instance *pi, void *data)
 	priv->format = formats[i].value;
 	rc = snd_pcm_hw_params_set_format(priv->handle, priv->hwparams, priv->format);
 	if (rc < 0) {
-	  fprintf(stderr, "snd_pcm_hw_params_set_format %s: %s\n", priv->device, snd_strerror(rc));
+	  fprintf(stderr, "%s: snd_pcm_hw_params_set_format %s: %s\n", __func__,
+		  priv->device, snd_strerror(rc));
 	}
 	break;
       }
@@ -498,10 +499,13 @@ static void Wav_handler(Instance *pi, void *data)
   }
 
   int out_frames = wav_in->data_length / (priv->channels * priv->format_bytes);
+  int frames_written = 0;
   while (1) {
-    n = snd_pcm_writei(priv->handle, wav_in->data, out_frames);
+    n = snd_pcm_writei(priv->handle, wav_in->data + (frames_written * (priv->channels * priv->format_bytes)),
+		       out_frames);
     if (n > 0) {
       out_frames -= n;
+      frames_written += n;
     }
     else {
       break;
@@ -560,6 +564,8 @@ static void ALSAPlayback_tick(Instance *pi)
 	printf("dropping %.4fs of audio (%d %d %d)\n", s,
 	       priv->rate, priv->channels, priv->format_bytes
 	       );
+	Wav_buffer_discard(&wav_in);
+	ReleaseMessage(&hm);
       }
       else {
 	/* Should always handle config messages... */
@@ -572,7 +578,7 @@ static void ALSAPlayback_tick(Instance *pi)
     /* Filler... */
     Wav_buffer *wav_in;
     int i;
-    // fprintf(stderr, "filler\n");
+    fprintf(stderr, "filler\n");
     wav_in = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
     wav_in->data_length = 16*priv->channels*priv->format_bytes;
     wav_in->data = Mem_calloc(1, wav_in->data_length);

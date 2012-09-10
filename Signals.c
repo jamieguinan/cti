@@ -32,8 +32,24 @@ void handler1(int signum, siginfo_t *info, void *context)
 
   fprintf(stderr, "asize1=%d\n", asize1);
 
+  while (1) sleep(1);
+
 #ifdef __pentium4__
 #warning Pentium4
+  void **buffer = malloc(256*sizeof(void*));
+  int n = backtrace(buffer, 256);
+  if (n > 0) {
+    int j;
+    char **btsyms = backtrace_symbols(buffer, n);
+    for (j=0; j < n; j++) {
+      puts(btsyms[j]);
+    }
+    // pause();
+  }
+#endif
+
+
+#ifdef __x86_64__
   void **buffer = malloc(256*sizeof(void*));
   int n = backtrace(buffer, 256);
   if (n > 0) {

@@ -558,7 +558,7 @@ void Callback_fill(Callback *cb, int (*func)(void *), void *data)
   Lock_acquire(&cb->lock);  
   cb->func = func;
   cb->data = data;
-  // Event_signal(&cb->event);  // Is this even necessary?
+  Event_signal(&cb->event);  // Is this even necessary?
   Lock_release(&cb->lock);  
 }
 

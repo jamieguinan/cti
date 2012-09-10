@@ -314,7 +314,7 @@ static void MjpegDemux_tick(Instance *pi)
      might want something like GetData_timeout(), or GetData(pi, >=2)
      for millisecond timeout. */
 
-  hm = GetData(pi, 0);
+  hm = GetData(pi, 0);		/* This has to be 0 for mjxplay... */
 
   if (hm) {
     hm->handler(pi, hm->data);
@@ -469,6 +469,12 @@ static void MjpegDemux_tick(Instance *pi)
 	  }
 #endif
 	  String_parse_double(line, b, &priv->current.timestamp);
+	  if (priv->use_timestamps && priv->current.timestamp <= 0.001) {
+	    /* Some of my early recordings were messed up, so disable
+	       timestamp checking. */
+	    priv->use_timestamps = 0;
+	    // priv->use_feedback = 0;
+	  }
 	  // printf("%f [%s]\n", priv->current.timestamp, line->bytes);
 	}
 	else if ((a = String_find(line, 0, "Width:", &b)) != -1) {

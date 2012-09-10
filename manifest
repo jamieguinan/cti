@@ -221,6 +221,7 @@ demux.c
 dvdgen.cmd
 dvdgen_main.c
 dvr-fwd.cmd
+dvtest1.cmd
 example.c
 example.h
 extract.cmd

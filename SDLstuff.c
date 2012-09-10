@@ -876,7 +876,7 @@ static void SDLstuff_tick(Instance *pi)
 
     /* PushEvent will fail until SDL is initialized in the other thread. */
     while (SDL_PushEvent(&ev) == -1) {
-      printf("could not push event, retrying in 100ms...\n");
+      // printf("could not push event, retrying in 100ms...\n");
       SDL_Delay(100);
     }
   }
