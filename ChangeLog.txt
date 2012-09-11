@@ -1,3 +1,8 @@
+2012-Sep-11 12:28:39
+
+Add OUTPUT_FEEDBACK outputs to all encoders.
+
+
 2012-Sep-11 12:18:33
 
 Eliminate several nanosleep calls, by checking instance state and
