@@ -32,10 +32,10 @@ static Input LibDV_inputs[] = {
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_422P, OUTPUT_RGB3, OUTPUT_WAV };
+enum { OUTPUT_420P, OUTPUT_RGB3, OUTPUT_WAV };
 static Output LibDV_outputs[] = {
   /* FIXME: NTSC output might actually be 4:1:1.  Handle in a good way. */
-  [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_WAV ] = { .type_label = "Wav_buffer", .destination = 0L },
 };
@@ -164,7 +164,7 @@ static void Feedback_handler(Instance *pi, void *data)
   Feedback_buffer *fb = data;
 
   priv->pending_feedback -= 1;
-  printf("feedback - %d\n", priv->pending_feedback);
+  // printf("feedback - %d\n", priv->pending_feedback);
   Feedback_buffer_discard(fb);
 }
 
@@ -205,8 +205,9 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
     int n = 0;
     int ns = dv_get_num_samples(priv->decoder);
     int nc = dv_get_num_channels(priv->decoder);
-    int rs = dv_get_raw_samples(priv->decoder, nc);
-    int c4 = dv_is_4ch(priv->decoder);
+    /* What is the point of raw_samples, versus num_samples? */
+    //int rs = dv_get_raw_samples(priv->decoder, nc);
+    //int c4 = dv_is_4ch(priv->decoder);
     int fr = dv_get_frequency(priv->decoder);
 
     rc = dv_decode_full_audio(priv->decoder, priv->chunk->data, priv->audio_buffers);
@@ -218,20 +219,19 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
     Wav_buffer *wav = Wav_buffer_new(fr, nc, 2);
     wav->data_length = ns*nc*2;
     wav->data = Mem_malloc(wav->data_length);
-    int16_t *wav16 = (int16_t *)wav->data;
+    int16_t *di16 = (int16_t *)wav->data;
 
     /* Interleave data into wav buffer. */
     for (i=0; i < ns; i++) {
       for (j=0; j < nc; j++) {
-	wav16[n++] = priv->audio_buffers[j][i];
+	di16[n++] = priv->audio_buffers[j][i];
       }
     }
 
     Wav_buffer_finalize(wav);
 
     if (priv->frame_counter % 30 == 0) {
-      printf("samples:%d channels:%d raw samples:%d 4ch:%d fr%d\n",
-	     ns, nc, rs, c4, fr);
+      // printf("samples:%d channels:%d raw samples:%d 4ch:%d fr:%d\n", ns, nc, rs, c4, fr);
     }
 
     PostData(wav, pi->outputs[OUTPUT_WAV].destination);
@@ -250,18 +250,19 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
 			   0L };
     int pitches[3] = { rgb3->width * 3, 0, 0 };
 
-    dv_report_video_error (priv->decoder,
-                           rgb3->data);
+    //dv_report_video_error (priv->decoder,  // rgb3->data);
     dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_rgb, pixels, pitches);
     priv->decoder->prev_frame_decoded = 1;
     PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
   }
 
-  if (pi->outputs[OUTPUT_422P].destination) {
-    //uint8_t *pixels[3];
-    //int pitches[3] = {???, ???, ???};
-    // dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_yuv, pixels, pitches);
-    //PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
+  if (pi->outputs[OUTPUT_420P].destination) {
+    Y420P_buffer *yuv = Y420P_buffer_new(priv->decoder->width, priv->decoder->height);
+    uint8_t *pixels[3] =  { yuv->y, yuv->cb, yuv->cr };
+    int pitches[3] = { yuv->width, yuv->width/4, yuv->width/4};
+    dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_yuv, pixels, pitches);
+    priv->decoder->prev_frame_decoded = 1;
+    PostData(yuv, pi->outputs[OUTPUT_420P].destination);
   }
 
   // FIXME: libdv supports 4-byte {B,G,R,0} format, consider supporting in CTI.
@@ -321,7 +322,7 @@ static void LibDV_tick(Instance *pi)
   if (priv->needData) {
     ArrayU8 *newChunk;
     /* Network reads should return short numbers if not much data is
-       available, so using a size relatively large comparted to an
+       available, so using a size relatively large compared to an
        audio buffer or Jpeg frame should not cause real-time playback
        to suffer here. */
     newChunk = Source_read(priv->source, 32768);
@@ -384,6 +385,15 @@ static void LibDV_instance_init(Instance *pi)
   }
   
 
+  /* 
+   * I see lots of this,
+   *   ...
+   *   asf 00:20:46.20 2012-07-11 21:37:35 7b 97 02 12 2/48
+   *   asf 00:20:46.20 2012-07-11 21:37:35 7b 97 05 12 2/48
+   *   # audio block/sample failure for 0 blocks, 36 samples of 1068
+   *
+   * so just set the error stream to /dev/null.
+   */
   dv_set_error_log(priv->decoder, fopen("/dev/null", "w"));
   pi->data = priv;
 }

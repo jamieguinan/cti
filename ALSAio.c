@@ -501,7 +501,7 @@ static void Wav_handler(Instance *pi, void *data)
   int out_frames = wav_in->data_length / (priv->channels * priv->format_bytes);
   int frames_written = 0;
   while (1) {
-    n = snd_pcm_writei(priv->handle, wav_in->data + (frames_written * (priv->channels * priv->format_bytes)),
+    n = snd_pcm_writei(priv->handle, (uint8_t*)wav_in->data + (frames_written * (priv->channels * priv->format_bytes)),
 		       out_frames);
     if (n > 0) {
       out_frames -= n;
@@ -585,8 +585,8 @@ static void ALSAPlayback_tick(Instance *pi)
     if (access("/dev/shm/a1", R_OK) == 0) {
       /* Blip. */
       for (i=0; i < wav_in->data_length; i+=2) {
-	wav_in->data[i] = 0;
-	wav_in->data[i+1] = (2048 - i);
+	//wav_in->data[i] = 0;
+	//wav_in->data[i+1] = (2048 - i);
       }
       unlink("/dev/shm/a1");
     }

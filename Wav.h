@@ -21,7 +21,7 @@ typedef struct {
 typedef struct {
   uint8_t header[44];
   int header_length;
-  uint8_t *data;
+  void *data;
   int data_length;
   /* timestamp? */
   /* The "params" are redundant, since they are also in the header,

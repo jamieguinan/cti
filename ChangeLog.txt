@@ -1,3 +1,9 @@
+2012-Sep-11 10:52:20
+
+Make Wav_buffer.data be a void pointer, require casting to operate on data,
+since data isn't always 16-bit.
+
+
 2012-Sep-10 13:41:23
 
 Initial working DV support.

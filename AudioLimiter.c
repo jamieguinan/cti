@@ -64,11 +64,12 @@ static void Wav_handler(Instance *pi, void *msg)
   if (priv->limit) {
     int i;
     int16_t sample;
+    int16_t *pi16 = wav_in->data;
     for (i=0; i < wav_in->data_length; i+= sizeof(int16_t))  {
-      sample = (wav_in->data[i+1] << 8) + wav_in->data[i];
+      sample = (pi16[i+1] << 8) + pi16[i];
       sample = (sample * priv->limit) / 100;
-      wav_in->data[i] = sample & 0xff;
-      wav_in->data[i+1] = (sample >> 8) & 0xff;
+      pi16[i] = sample & 0xff;
+      pi16[i+1] = (sample >> 8) & 0xff;
     }
   }
 
