@@ -1,7 +1,6 @@
 /* 
  * V4L2 capture.  I would like this work for BTTV (RGB, YCrCb) and
- * Logitech (MJPEG, YUV).  Ooo, it also works for Topro!  Well, sorta.
- * When the Topro feels like working.
+ * Logitech (MJPEG, YUV).
  */
 
 #include <stdio.h>
@@ -1237,23 +1236,26 @@ static void V4L2Capture_tick(Instance *pi)
     dpf("status: 0x%08x\n", input.status);
   }
 
-  /* Process if needed.  Maybe keep minimal, do processing in other Instances...*/
-
   /* Post to output. */
   if (!priv->format) {
     /* Format not set! */
   }
   else if (streq(priv->format, "BGR3")) {
-    BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height);
-    memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
-    if (priv->snapshot > 0) {
-      bgr3_snapshot(pi, bgr3);
-    }
     if (pi->outputs[OUTPUT_BGR3].destination) {
+      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height);
+      memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
+      if (priv->snapshot > 0) {
+	bgr3_snapshot(pi, bgr3);
+      }
       PostData(bgr3, pi->outputs[OUTPUT_BGR3].destination);
     }
-    else if (pi->outputs[OUTPUT_RGB3].destination) {
+    if (pi->outputs[OUTPUT_RGB3].destination) {
       RGB3_buffer *rgb3 = 0L;
+      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height);
+      memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
+      if (priv->snapshot > 0) {
+	bgr3_snapshot(pi, bgr3);
+      }
       bgr3_to_rgb3(&bgr3, &rgb3);
       PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
     }

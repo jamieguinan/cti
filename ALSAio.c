@@ -631,7 +631,14 @@ static void analyze_rate(ALSAio_private *priv, Wav_buffer *wav)
 static void ALSACapture_tick(Instance *pi)
 {
   ALSAio_private *priv = pi->data;
-  int wait_flag = (priv->enable ? 0 : 1);
+  int wait_flag;
+
+  if (!priv->enable || !priv->handle) {
+    wait_flag = 1;
+  }
+  else {
+    wait_flag = 0;
+  }
 
   Handler_message *hm;
 
@@ -641,8 +648,8 @@ static void ALSACapture_tick(Instance *pi)
     ReleaseMessage(&hm);
   }
 
-  if (!priv->enable) {
-    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
+  if (!priv->enable || !priv->handle) {
+    /* Not enabled or no handle, don't try to capture anything. */
     return;
   }
  
@@ -675,11 +682,6 @@ static void ALSACapture_tick(Instance *pi)
     printf("%s: state=%d\n", __func__, state);
   }
 
-  if (!priv->handle) {
-    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
-    return;
-  }
-
   snd_pcm_hw_params_get_period_size(priv->hwparams, &frames, &dir);
   int size = frames * priv->format_bytes * priv->channels;
 
@@ -707,6 +709,7 @@ static void ALSACapture_tick(Instance *pi)
   //snd_pcm_hw_params_get_period_time(params, &val, &dir);
   Wav_buffer *wav = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
 
+  /* Read the data, the main point of ALSACapture. */
   n = snd_pcm_readi(priv->handle, buffer, frames);
 
   /* Record time at the end of the audio read. */

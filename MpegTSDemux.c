@@ -375,27 +375,22 @@ static void MpegTSDemux_tick(Instance *pi)
 {
   MpegTSDemux_private *priv = pi->data;
   Handler_message *hm;
-  int sleep_and_return = 0;
+  int wait_flag;
 
-  hm = GetData(pi, 0);
+  if (!priv->enable || !priv->source) {
+    wait_flag = 1;
+  }
+  else {
+    wait_flag = 0;
+  }
+
+  hm = GetData(pi, wait_flag);
   if (hm) {
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm);
   }
 
-  if (!priv->enable) {
-    sleep_and_return = 1;
-  }
-  else { 
-    if (!priv->source) {
-      fprintf(stderr, "MpegTSDemux enabled, but no source set!\n");
-      priv->enable = 0;
-      sleep_and_return = 1;
-    }
-  }
-
-  if (sleep_and_return) {
-    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/100}, NULL);
+  if (!priv->enable || !priv->source) {
     return;
   }
 

@@ -283,39 +283,24 @@ static void LibDV_tick(Instance *pi)
 {
   Handler_message *hm;
   LibDV_private *priv = pi->data;
-  int sleep_and_return = 0;
+  int wait_flag;
 
-  hm = GetData(pi, 0);
+  if (!priv->enable || !priv->source
+      || (priv->pending_feedback >= priv->feedback_threshold) ) {
+    wait_flag = 1;
+  }
+  else {
+    wait_flag = 0;
+  }
+
+  hm = GetData(pi, wait_flag);
 
   if (hm) {
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm);
   }
 
-  if (!priv->enable) {
-    sleep_and_return = 1;
-  }
-  else { 
-    if (!priv->source) {
-      fprintf(stderr, "LibDV enabled, but no source set!\n");
-      priv->enable = 0;
-      sleep_and_return = 1;
-    }
-  }
-
-  /* NOTE: Checking output thresholds isn't useful in cases where there is another object
-     behind the output that is getting its input queue filled up... */
-  if (pi->outputs[OUTPUT_RGB3].destination &&
-      pi->outputs[OUTPUT_RGB3].destination->parent->pending_messages > 5) {
-    sleep_and_return = 1;
-  }
-
-  if (priv->pending_feedback > priv->feedback_threshold) {
-    sleep_and_return = 1;
-  }
-
-  if (sleep_and_return) {
-    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/100}, NULL);
+  if (!priv->enable || !priv->source) {
     return;
   }
 

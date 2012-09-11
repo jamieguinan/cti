@@ -1,3 +1,11 @@
+2012-Sep-11 12:18:33
+
+Eliminate several nanosleep calls, by checking instance state and
+setting GetData() wait flag accordingly.
+
+V4L2Capture.c: Better BGR3 handling.
+
+
 2012-Sep-11 10:52:20
 
 Make Wav_buffer.data be a void pointer, require casting to operate on data,

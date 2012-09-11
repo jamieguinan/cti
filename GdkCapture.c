@@ -66,7 +66,7 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-void  gdk_to_rgb(uint8_t *data, int width, int height, int depth, int bpp, int bpl, RGB3_buffer *rgb)
+void gdk_to_rgb(uint8_t *data, int width, int height, int depth, int bpp, int bpl, RGB3_buffer *rgb)
 {
   int x, y;
   uint8_t *src;
@@ -87,6 +87,7 @@ void  gdk_to_rgb(uint8_t *data, int width, int height, int depth, int bpp, int b
     }
   }
 }
+
 
 static void check_files(Instance *pi)
 {
