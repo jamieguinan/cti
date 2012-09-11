@@ -22,9 +22,10 @@ static Input H264_inputs[] = {
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
 };
 
-enum { OUTPUT_H264 };
+enum { OUTPUT_H264, OUTPUT_FEEDBACK };
 static Output H264_outputs[] = {
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
+  [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L  },
 };
 
 typedef struct {

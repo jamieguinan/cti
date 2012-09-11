@@ -14,9 +14,9 @@ static Input FFmpeg_inputs[] = {
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
 };
 
-//enum { /* OUTPUT_... */ };
+enum { OUTPUT_FEEDBACK };
 static Output FFmpeg_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
+  [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L  },
 };
 
 typedef struct {

@@ -16,9 +16,9 @@ static Input Mp2Enc_inputs[] = {
   [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
 };
 
-//enum { /* OUTPUT_... */ };
+enum { OUTPUT_FEEDBACK };
 static Output Mp2Enc_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
+  [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L  },
 };
 
 typedef struct {
