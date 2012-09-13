@@ -340,3 +340,31 @@ void Source_free(Source **source)
   free(*source);
   *source = 0L;
 }
+
+
+void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData, int *enable)
+{
+  {
+    ArrayU8 *newChunk;
+    /* Network reads should return short numbers if not much data is
+       available, so using a size relatively large compared to an
+       audio buffer or Jpeg frame should not cause real-time playback
+       to suffer here. */
+    newChunk = Source_read(source, 32768);
+    if (!newChunk) {
+      /* FIXME: EOF on a local file should be restartable, or
+	 rewindable.  Maybe socket sources should be restartable,
+	 too. */
+      fprintf(stderr, "%s: source finished\n",
+	      __func__);
+      Source_close_current(source);
+      *enable = 0;
+      return;
+    }
+
+    ArrayU8_append(chunk, newChunk);
+    ArrayU8_cleanup(&newChunk);
+    if (cfg.verbosity) { fprintf(stderr, "needData = 0\n"); }
+    *needData = 0;
+  }
+}

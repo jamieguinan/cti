@@ -1,3 +1,24 @@
+2012-Sep-12 21:34:12
+
+AVIDemux.c:
+  Fill in with a simple implementation that ignores headers.
+
+cti_main.c:
+  Call AVIDemux_init().
+
+Array.c:
+Array.h: 
+  New function ArrayU8_extract_uint32le().
+
+SourceSink.c:
+  New functinon Source_acquire_data().
+
+LibDV.c:
+Y4MInput.c:
+  Use Source_acquire_data().
+
+
+
 2012-Sep-11 12:28:39
 
 Add OUTPUT_FEEDBACK outputs to all encoders.

@@ -60,6 +60,7 @@
 #include "Y4MSource.h"
 #include "Splitter.h"
 #include "NScale.h"
+#include "AVIDemux.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -142,6 +143,7 @@ int cti_main(int argc, char *argv[])
   Y4MSource_init();
   Splitter_init();
   NScale_init();
+  AVIDemux_init();
 
   return app_code(argc, argv);
 }

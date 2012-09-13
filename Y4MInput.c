@@ -200,31 +200,7 @@ static void Y4MInput_tick(Instance *pi)
   }
 
   if (priv->needData) {
-    ArrayU8 *newChunk;
-    /* Network reads should return short buffers if not much data is
-       available. */
-    newChunk = Source_read(priv->source, 32768);
-    if (!newChunk) {
-      /* FIXME: EOF on a local file should be restartable.  Maybe
-	 socket sources should be restartable, too. */
-      Source_close_current(priv->source);
-      fprintf(stderr, "%s: source finished.\n", __func__);
-      if (priv->retry) {
-	fprintf(stderr, "%s: retrying.\n", __func__);
-	sleep(1);
-	Source_free(&priv->source);
-	priv->source = Source_new(priv->input);
-      }
-      else {
-	priv->enable = 0;
-      }
-      return;
-    }
-
-    ArrayU8_append(priv->chunk, newChunk);
-    ArrayU8_cleanup(&newChunk);
-    if (cfg.verbosity) { fprintf(stderr, "needData = 0\n"); }
-    priv->needData = 0;
+    Source_acquire_data(priv->source, priv->chunk, &priv->needData, &priv->enable);
   }
 
   if (priv->state == PARSING_HEADER) {

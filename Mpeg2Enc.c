@@ -120,6 +120,9 @@ static void Y422p_handler(Instance *pi, void *msg)
 
   if (n != 3) {
     fprintf(stderr, "%s: write error\n", __func__);
+    pclose(priv->po);
+    priv->po = NULL;
+    goto out;
   }
 
   if (pi->outputs[OUTPUT_FEEDBACK].destination) {

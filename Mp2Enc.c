@@ -48,6 +48,10 @@ static int set_vout(Instance *pi, const char *value)
   sprintf(path, "cat | tee test.wav | mp2enc -r 48000 -s -o %s", priv->vout->bytes);
   priv->po = popen(path, "w");
 
+  if (!priv->po) {
+    fprintf(stderr, "Mp2Enc:set_vout failed!\n");
+  }
+
   return 0;
 }
 
@@ -76,11 +80,24 @@ static void Wav_handler(Instance *pi, void *msg)
   if (!priv->header_sent) {
     /* Create and write header. */
     n = fwrite(wav_in->header, 44, 1, priv->po);
+    if (n != 1) {
+      perror(priv->vout->bytes);
+      pclose(priv->po);    
+      priv->po = 0L;
+      goto out;
+    }
+
     priv->header_sent = 1;
   }
 
   /* Create and write one block. */
   n = fwrite(wav_in->data, wav_in->data_length, 1, priv->po);
+
+  if (n != 1) {
+    perror(priv->vout->bytes);
+    pclose(priv->po);    
+    priv->po = 0L;
+  }
   
  out:
   Wav_buffer_discard(&wav_in);

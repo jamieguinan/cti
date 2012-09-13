@@ -104,6 +104,7 @@ OBJS= \
 	$(OBJDIR)/Y4MSource.o \
 	$(OBJDIR)/Splitter.o \
 	$(OBJDIR)/cti_main.o \
+	$(OBJDIR)/AVIDemux.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 

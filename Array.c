@@ -103,3 +103,15 @@ int ArrayU8_search(ArrayU8 *a, int offset, const ArrayU8 *target)
   }
   return -1;
 }
+
+
+void ArrayU8_extract_uint32le(ArrayU8 *a, int offset, uint32_t *value)
+{
+  if (a->len < (offset+4)) {
+    fprintf(stderr, "*** %s bounds error\n", __func__);
+  }
+  *value = (uint32_t) ( (a->data[offset+3] << 24) |
+			(a->data[offset+2] << 16) |
+			(a->data[offset+1] << 8) |
+			(a->data[offset+0] << 0) );
+}

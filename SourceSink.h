@@ -25,5 +25,5 @@ extern Sink *Sink_new(char *name);
 extern void Sink_write(Sink *sink, void *data, int length);
 extern void Sink_close_current(Sink *sink);
 extern void Sink_free(Sink **sink);
-
+extern void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData, int *enable);
 #endif
