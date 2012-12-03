@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <sys/types.h>
+#include <sys/stat.h>		/* fstat */
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>		/* close */
@@ -18,13 +19,6 @@ typedef struct {
   int s;			/* socket */
   int state;			/* Relevant for sockets, may want to start with a POST. */
 } Sink_private;
-
-
-typedef struct {
-  FILE *f;			/* file */
-  long file_size;
-  int s;			/* socket */
-} Source_private;
 
 
 Sink *Sink_new(char *name)
@@ -151,9 +145,9 @@ void Sink_free(Sink **sink)
 Source *Source_new(char *name)
 {
   int rc;
-  Source_private *priv = Mem_calloc(1, sizeof(*priv));
+  Source *source = Mem_calloc(1, sizeof(*source));
 
-  priv->s = -1;			/* Default to invalid socket value. */
+  source->s = -1;			/* Default to invalid socket value. */
 
   char *colon = strchr(name, ':');
   if (colon && isdigit(colon[1])) {
@@ -178,51 +172,64 @@ Source *Source_new(char *name)
       perror("getaddrinfo"); goto out;
     }
 
-    priv->s = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+    source->s = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
     /* NOTE: Could be additional entries in linked list above. */
 
-    if (priv->s == -1) {
+    if (source->s == -1) {
       perror("socket"); goto out;
     }
 
-    rc = connect(priv->s, results->ai_addr, results->ai_addrlen);
+    rc = connect(source->s, results->ai_addr, results->ai_addrlen);
     if (rc == -1) {
       perror("connect"); 
       /* Note: alternatively, could keep the socket and retry the open... */
-      close(priv->s);
-      priv->s = -1;
+      close(source->s);
+      source->s = -1;
       goto out;
     }
 
     freeaddrinfo(results);  results = 0L;
   }
   else {
-    priv->f = fopen(name, "rb");
-    if (!priv->f) {
+    /* Regular file. */
+    source->persist = 1;
+    source->f = fopen(name, "rb");
+    if (!source->f) {
       perror(name);
     }
     else {
-      if (fseek(priv->f, 0, SEEK_END) == 0) {
-	priv->file_size = ftell(priv->f);
-	fseek(priv->f, 0, SEEK_SET);
+      if (fseek(source->f, 0, SEEK_END) == 0) {
+	source->file_size = ftell(source->f);
+	fseek(source->f, 0, SEEK_SET);
       }
     }
   }
   
  out:
-  return (Source*)priv;
+  return source;
 }
 
 
 ArrayU8 * Source_read(Source *source, int max_length)
 {
-  Source_private *priv = (Source_private *)source;
-
-  if (priv->f) {
+  if (source->f) {
     uint8_t *tmp = Mem_calloc(1, max_length);
-    int len = fread(tmp, 1, max_length, priv->f);
+    int len = fread(tmp, 1, max_length, source->f);
     if (len == 0) {
-      perror("fread");
+      //perror("fread");
+      if (feof(source->f)) {
+	//printf("EOF on file\n");
+      }
+      if (ferror(source->f)) {
+	//printf("error on file\n");
+      }
+      clearerr(source->f);	/* Clear the EOF so that we can seek backwards. */
+      if (feof(source->f)) {
+	printf("EOF remains on file\n");
+      }
+      if (ferror(source->f)) {
+	printf("error remains on file\n");
+      }
       Mem_free(tmp);
       return 0L;
     }
@@ -235,9 +242,9 @@ ArrayU8 * Source_read(Source *source, int max_length)
     ArrayU8_take_data(result, &tmp, len);
     return result;
   }
-  else if (priv->s != -1) {
+  else if (source->s != -1) {
     uint8_t *tmp = Mem_calloc(1, max_length);
-    int len = recv(priv->s, tmp, max_length, 0);
+    int len = recv(source->s, tmp, max_length, 0);
     if (len == 0) {
       fprintf(stderr, "recv(max_length=%d) -> %d\n", max_length, len);
       Mem_free(tmp);
@@ -262,18 +269,37 @@ ArrayU8 * Source_read(Source *source, int max_length)
 
 int Source_seek(Source *source, long amount)
 {
-  Source_private *priv = (Source_private *)source;
+  /* Seek relative to current position. */
+  if (source->f) {
+    int rc;
+    struct stat st;
+    long pos;
 
-  if (priv->f) {
-    int rc = fseek(priv->f, amount, SEEK_CUR);
-    long pos = ftell(priv->f);
-    if (priv->file_size) {
-      printf("offset %ld: %ld%%\n", pos, (pos*100)/priv->file_size);
-    }
+    fstat(fileno(source->f), &st);
+    pos = ftell(source->f);
     
+    /* Clamp seek to beginning and end of file. */
+    if (pos + amount > st.st_size) {
+      amount = st.st_size - pos;
+    }
+    else if (pos + amount < 0) {
+      amount = - pos;
+    }
+
+    rc = fseek(source->f, amount, SEEK_CUR);
+    if (rc != 0) {
+      fprintf(stderr, "fseek(%ld) error, feof=%d ferror=%d ftell=%ld\n",
+	      amount, feof(source->f), feof(source->f), ftell(source->f));
+      perror("fseek");
+    }
+    pos = ftell(source->f);
+    if (source->file_size) {
+      printf("offset %ld: %ld%%\n", pos, (pos*100)/source->file_size);
+    }
+
     return rc;
   }
-  else if (priv->s != -1) {
+  else if (source->s != -1) {
     fprintf(stderr, "can't seek sockets!\n");
     return -1;
   }
@@ -285,18 +311,16 @@ int Source_seek(Source *source, long amount)
 
 int Source_set_offset(Source *source, long amount)
 {
-  Source_private *priv = (Source_private *)source;
-
-  if (priv->f) {
-    int rc = fseek(priv->f, amount, SEEK_SET);
-    long pos = ftell(priv->f);
-    if (priv->file_size) {
-      printf("offset %ld: %ld%%\n", pos, (pos*100)/priv->file_size);
+  if (source->f) {
+    int rc = fseek(source->f, amount, SEEK_SET);
+    long pos = ftell(source->f);
+    if (source->file_size) {
+      printf("offset %ld: %ld%%\n", pos, (pos*100)/source->file_size);
     }
     
     return rc;
   }
-  else if (priv->s != -1) {
+  else if (source->s != -1) {
     fprintf(stderr, "can't seek sockets!\n");
     return -1;
   }
@@ -308,12 +332,11 @@ int Source_set_offset(Source *source, long amount)
 
 long Source_tell(Source *source)
 {
-  Source_private *priv = (Source_private *)source;
-
-  if (priv->f) {
-    return ftell(priv->f);
+  if (source->f) {
+    return ftell(source->f);
   }
   else {
+    /* Not a regular file. */
     return -1;
   }
 }
@@ -321,15 +344,13 @@ long Source_tell(Source *source)
 
 void Source_close_current(Source *source)
 {
-  Source_private *priv = (Source_private *)source;
-
-  if (priv->f) {
-    fclose(priv->f);
-    priv->f = 0L;
+  if (source->f) {
+    fclose(source->f);
+    source->f = 0L;
   }
-  else if (priv->s != -1) {   
-    close(priv->s);
-    priv->s = -1;
+  else if (source->s != -1) {   
+    close(source->s);
+    source->s = -1;
   }
 }
 
@@ -342,29 +363,39 @@ void Source_free(Source **source)
 }
 
 
-void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData, int *enable)
+void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
 {
   {
     ArrayU8 *newChunk;
-    /* Network reads should return short numbers if not much data is
+    /* Network reads can return short numbers if not much data is
        available, so using a size relatively large compared to an
        audio buffer or Jpeg frame should not cause real-time playback
        to suffer here. */
     newChunk = Source_read(source, 32768);
     if (!newChunk) {
-      /* FIXME: EOF on a local file should be restartable, or
-	 rewindable.  Maybe socket sources should be restartable,
-	 too. */
-      fprintf(stderr, "%s: source finished\n",
-	      __func__);
-      Source_close_current(source);
-      *enable = 0;
+      source->eof = 1;
+      if (!source->eof_flagged) {
+	fprintf(stderr, "%s: EOF on source\n", __func__);
+	source->eof_flagged = 1;
+      }
+      // Source_close_current(source);
       return;
     }
 
+    if (source->eof_flagged) {
+      fprintf(stderr, "%s: EOF reset\n", __func__);      
+    }
+    source->eof = 0;
+    source->eof_flagged = 0;
     ArrayU8_append(chunk, newChunk);
     ArrayU8_cleanup(&newChunk);
     if (cfg.verbosity) { fprintf(stderr, "needData = 0\n"); }
     *needData = 0;
   }
+}
+
+
+void Source_set_persist(Source *source, int value)
+{
+  source->persist = value;  
 }

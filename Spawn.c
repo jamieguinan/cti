@@ -27,6 +27,7 @@ static Output Spawn_outputs[] = {
 typedef struct {
   String *child_cmdline;
   int trigger_key;
+  int need_retsart;
   pid_t child_pid;
 } Spawn_private;
 
@@ -34,6 +35,9 @@ typedef struct {
 static int set_cmdline(Instance *pi, const char *value)
 {
   Spawn_private *priv = pi->data;
+  if (priv->child_cmdline) {
+    String_free(&priv->child_cmdline);
+  }
   priv->child_cmdline = String_new(value);
   return 0;
 }

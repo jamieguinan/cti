@@ -48,9 +48,9 @@ int app_code(int argc, char *argv[])
 
   while (1) {
     /* Certain platforms (like OSX) require that UI code be called from the 
-       main application thread.  So the code waits here for a message containing
-       a UI function, and calls it. */
-    printf("*** waiting for callback to be filled in...\n");
+       main application thread.  So the code waits here for a callback function
+       to be filled in, and calls it. */
+    // printf("*** waiting for callback to be filled in...\n");
     Callback_wait(ui_callback);
     printf("callback_func @ %p\n", ui_callback->func);
     if (ui_callback->func) {

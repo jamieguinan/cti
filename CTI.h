@@ -228,10 +228,10 @@ typedef struct {
   ISet(Instance) instances;
 } InstanceGroup;
 
-/* I admit C++ would do a better job at keeping code size down here.  On the
-   other hand, data sets are typically huge by comparison, compilers might
-   be able to find and coalesce common code, and C++ has much other baggage
-   that I'm happy to avoid. */
+/* I admit C++ would do a better job at keeping code size down here.
+   On the other hand, data sets are typically huge compared to code
+   size, compilers might be able to find and coalesce common code, and
+   C++ has much other baggage that I'm happy to avoid. */
 #define ISet_add(iset, pitem) {  \
   if (iset.items == 0L) { \
     iset.avail = 2; \

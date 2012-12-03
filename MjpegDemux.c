@@ -332,77 +332,21 @@ static void MjpegDemux_tick(Instance *pi)
     }
   }
 
-  /* NOTE: Checking output thresholds isn't useful in cases where there is another object
-     behind the output that is getting its input queue filled up... */
-  if (pi->outputs[OUTPUT_JPEG].destination &&
-      pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages > 5) {
-    sleep_and_return = 1;
-  }
-
-  if (pi->outputs[OUTPUT_O511].destination &&
-      pi->outputs[OUTPUT_O511].destination->parent->pending_messages > 5) {
-    sleep_and_return = 1;
-  }
-  
   if (priv->pending_feedback > priv->feedback_threshold) {
     sleep_and_return = 1;
   }
 
-  if (sleep_and_return) {
-    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/100}, NULL);
-    return;
+  if (!sleep_and_return && priv->needData) {
+    /* Read data, with option to sleep and return on EOF. */
+    Source_acquire_data(priv->source, priv->chunk, &priv->needData);
+    if (priv->source->eof) {
+      sleep_and_return = 1;
+    }
   }
 
-  if (priv->needData) {
-    ArrayU8 *newChunk;
-
-    /* First do a/b loop seek if needed. */
-    if (priv->b && ( Source_tell(priv->source) > priv->b)) {
-      printf("seek to %ld\n", priv->a);
-      Source_set_offset(priv->source, priv->a);
-      reset_current(priv);
-      return;
-    }
-
-    /* Network reads should return short numbers if not much data is
-       available, so using a size relatively large comparted to an
-       audio buffer or Jpeg frame should not cause real-time playback
-       to suffer here. */
-    newChunk = Source_read(priv->source, 32768);
-    if (!newChunk) {
-      /* FIXME: EOF on a local file should be restartable.  Maybe
-	 socket sources should be restartable, too. */
-      Source_close_current(priv->source);
-      fprintf(stderr, "%s: source finished.\n", __func__);
-      if (priv->retry) {
-	fprintf(stderr, "%s: retrying.\n", __func__);
-	sleep(1);
-	fprintf(stderr, "Source_free\n");
-	Source_free(&priv->source);
-	fprintf(stderr, "Source_new\n");
-	priv->source = Source_new(priv->input);
-      }
-      else {
-	priv->enable = 0;
-      }
-
-      /* Reset chunk. */
-      if (priv->chunk) {
-	ArrayU8_cleanup(&priv->chunk);
-      }
-      priv->chunk = ArrayU8_new();
-
-      goto out2;
-    }
-
-    if (priv->output_sink) {
-      Sink_write(priv->output_sink, newChunk->data, newChunk->len);
-    }
-
-    ArrayU8_append(priv->chunk, newChunk);
-    ArrayU8_cleanup(&newChunk);
-    if (cfg.verbosity) { fprintf(stderr, "needData = 0\n"); }
-    priv->needData = 0;
+  if (sleep_and_return) {
+    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/30}, NULL);
+    return;
   }
 
   /*
@@ -634,10 +578,13 @@ static void MjpegDemux_tick(Instance *pi)
     memcpy(raw->data, priv->chunk->data, size);
     PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
   }
+
+  if (priv->output_sink) {
+    Sink_write(priv->output_sink, priv->chunk->data, priv->current.eoh + 4 + priv->current.content_length);
+  }
   
   ArrayU8_trim_left(priv->chunk, priv->current.eoh + 4 + priv->current.content_length);
 
- out2:
   /* Reset "current" variables */
   priv->current.content_length = 0;
   priv->current.timestamp = 0.0;

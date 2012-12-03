@@ -16,6 +16,8 @@ AudioLimiter.h
 Buffers.h
 CJpeg.c
 CJpeg.h
+CSV.c
+CSV.h
 CTI.c
 CTI.h
 CairoContext.c
@@ -35,6 +37,8 @@ DJpeg.c
 DJpeg.h
 DO511.c
 DO511.h
+DTV.c
+DTV.h
 Effects01.c
 Effects01.h
 FFmpegEncode.c
@@ -175,17 +179,18 @@ alsa.cmd
 alsacaptest.c
 alsaloop.cmd
 amixer1.cmd
+aria-play.cmd
+aria-record.cmd
 atest.cmd
 ava.cmd
 avcap-124.cmd
 avcap-wii.cmd
 avcap.c
+avi1.cmd
 avidemux_main.c
 avreceive-124.cmd
-avreceive-aria.cmd
 avreceive-cryptor.cmd
 avreceive.cmd
-avrecord-aria.cmd
 avstream-124-clock.cmd
 avstream-124-y4m.cmd
 avstream-124.cmd
@@ -218,6 +223,7 @@ cx88.cmd
 cx88audiocap.cmd
 cx88play.cmd
 demux.c
+dtv0.cmd
 dvdgen.cmd
 dvdgen_main.c
 dvr-fwd.cmd
@@ -232,6 +238,7 @@ ft01.cmd
 fyv-forward.cmd
 fyv-local-plain.cmd
 fyv-local.cmd
+fyv-localrecord.cmd
 fyv-mjx-save.cmd
 fyv-null.cmd
 fyv-play.cmd
@@ -277,6 +284,7 @@ locks.h
 logitech-cairo-01.cmd
 logitech-h264-ts.cmd
 logitech-md.cmd
+logitech-mirror.cmd
 logitech-null.cmd
 logitech-oggfwd-01.cmd
 logitech-yuyv.cmd
@@ -319,6 +327,7 @@ test.cmd
 text.cmd
 timeval_code.c
 topro.cmd
+tv-forward.cmd
 tv-server.cmd
 tv.cmd
 tv1.cmd

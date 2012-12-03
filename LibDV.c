@@ -305,7 +305,7 @@ static void LibDV_tick(Instance *pi)
   }
 
   if (priv->needData) {
-    Source_acquire_data(priv->source, priv->chunk, &priv->needData, &priv->enable);
+    Source_acquire_data(priv->source, priv->chunk, &priv->needData);
   }
 
   if (priv->chunk->len >= MAX_DV_FRAME_SIZE) {

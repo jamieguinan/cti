@@ -59,6 +59,7 @@ OBJS= \
 	$(OBJDIR)/MjpegDemux.o \
 	$(OBJDIR)/SourceSink.o \
 	$(OBJDIR)/String.o \
+	$(OBJDIR)/CSV.o \
 	$(OBJDIR)/ScriptV00.o \
 	$(OBJDIR)/Wav.o \
 	$(OBJDIR)/Audio.o \
@@ -86,6 +87,7 @@ OBJS= \
 	$(OBJDIR)/Pointer.o \
 	$(OBJDIR)/ResourceMonitor.o \
 	$(OBJDIR)/TV.o \
+	$(OBJDIR)/DTV.o \
 	$(OBJDIR)/ChannelMaps.o \
 	$(OBJDIR)/Spawn.o \
 	$(OBJDIR)/XPlaneControl.o \
@@ -180,7 +182,7 @@ endif
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libquicktime.pc))
 OBJS+=$(OBJDIR)/LibQuickTimeOutput.o
 CPPFLAGS+=$$(pkg-config libquicktime --cflags)
-LDFLAGS+=$$(pkg-config libquicktime --libs)
+LDFLAGS+=$$(pkg-config libquicktime --libs) -lpixman-1
 CPPFLAGS+=-DHAVE_LIBQUICKTIME
 endif
 

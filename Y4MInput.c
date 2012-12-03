@@ -200,7 +200,7 @@ static void Y4MInput_tick(Instance *pi)
   }
 
   if (priv->needData) {
-    Source_acquire_data(priv->source, priv->chunk, &priv->needData, &priv->enable);
+    Source_acquire_data(priv->source, priv->chunk, &priv->needData);
   }
 
   if (priv->state == PARSING_HEADER) {

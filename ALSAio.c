@@ -578,7 +578,7 @@ static void ALSAPlayback_tick(Instance *pi)
     /* Filler... */
     Wav_buffer *wav_in;
     int i;
-    fprintf(stderr, "filler\n");
+    //fprintf(stderr, "filler\n");
     wav_in = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
     wav_in->data_length = 16*priv->channels*priv->format_bytes;
     wav_in->data = Mem_calloc(1, wav_in->data_length);

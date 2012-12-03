@@ -49,6 +49,7 @@
 #include "ResourceMonitor.h"
 #include "Lirc.h"
 #include "TV.h"
+#include "DTV.h"
 #include "LibDV.h"
 #include "Spawn.h"
 #include "FaceTracker.h"
@@ -134,6 +135,7 @@ int cti_main(int argc, char *argv[])
   Tap_init();
   ResourceMonitor_init();
   TV_init();
+  DTV_init();
   FaceTracker_init();
   UI001_init();
   WavOutput_init();

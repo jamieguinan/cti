@@ -1,3 +1,26 @@
+2012-Dec-03 11:31:51
+
+CSV.c:
+CSV.h:
+  New module.
+
+AVIDemux.c:
+  Make this roughly functional.
+
+CTI.h:
+  Comment reformatting.
+
+DTV.c:
+DTV.h:
+  New module.
+
+Makefile:
+  Reference new modules.
+
+SourceSink.c:
+  Various reworks.
+
+
 2012-Sep-12 21:34:12
 
 AVIDemux.c:

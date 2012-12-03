@@ -10,6 +10,9 @@
 #include "Wav.h"
 #include "Images.h"
 
+  /* Quick macro to align file offets to even bytes. */
+#define even(x) ((x) % 2 ? ((x)+1):(x))
+
 enum { CHUNK_UNKNOWN, CHUNK_AUDIO, CHUNK_JPEG, CHUNK_IDX };
 
 static void Config_handler(Instance *pi, void *msg);
@@ -37,6 +40,10 @@ typedef struct {
   int done;
   int enable;			/* Set this to start processing. */
   int synchronized;
+  
+  int video_frame_period_ms;
+  int audio_channels;
+  int audio_hz;
 } AVIDemux_private;
 
 
@@ -117,13 +124,15 @@ static int avi_chunk_ready(ArrayU8 *chunk, const ArrayU8 *marker, int *length)
     return 0;
   }
 
-  uint32_t tmp_length;
-  ArrayU8_extract_uint32le(chunk, 4, &tmp_length);
-  if (chunk->len < (8 + tmp_length)) {
-      return 0;
+  uint32_t avi_chunk_size;
+  uint32_t required_data;
+  ArrayU8_extract_uint32le(chunk, 4, &avi_chunk_size);
+  required_data = even(4 + 4 + avi_chunk_size);
+  if (chunk->len < required_data) {
+    return 0;
   }
 
-  *length = tmp_length;
+  *length = avi_chunk_size;
   return 1;
 }
 
@@ -155,7 +164,7 @@ static void AVIDemux_tick(Instance *pi)
   }
 
   if (priv->needData) {
-    Source_acquire_data(priv->source, priv->chunk, &priv->needData, &priv->enable);
+    Source_acquire_data(priv->source, priv->chunk, &priv->needData);
   }
 
   /*
@@ -169,6 +178,11 @@ static void AVIDemux_tick(Instance *pi)
    814: 0x00002b10 bytes of data...
    3324: 00dc
    */
+  if (Source_tell(priv->source) == 0 && !priv->synchronized) {
+    /* Parse AVI header. */
+    
+  }
+
   if (!priv->synchronized) {
     /* Search for nearest instance of any valid marker. */
     int a_index, j_index, i_index;
@@ -202,34 +216,31 @@ static void AVIDemux_tick(Instance *pi)
       ArrayU8_trim_left(priv->chunk, index);
       priv->synchronized = 1;
     }
-
+    
+    if (!priv->synchronized) {
+      /* Still not synchronized! */
+      priv->needData = 1;
+      return;
+    }
   }
 
-  if (!priv->synchronized) {
-    /* Still not synchronized! */
-    priv->needData = 1;
-    return;
-  }
-
-#define even(x) ((x) % 2 ? ((x)+1):(x))
-
-  int length;
-  if (avi_chunk_ready(priv->chunk, audio_marker, &length)) {
+  int avi_chunk_size;
+  if (avi_chunk_ready(priv->chunk, audio_marker, &avi_chunk_size)) {
     if (pi->outputs[OUTPUT_WAV].destination) {
-      Wav_buffer *wav =  Wav_buffer_from(priv->chunk->data+8, length);
+      Wav_buffer *wav =  Wav_buffer_from(priv->chunk->data+8, avi_chunk_size);
       PostData(wav, pi->outputs[OUTPUT_WAV].destination);
     }
-    ArrayU8_trim_left(priv->chunk, even(8+length));
+    ArrayU8_trim_left(priv->chunk, even(8+avi_chunk_size));
   }
-  else if (avi_chunk_ready(priv->chunk, jpeg_marker, &length)) {
+  else if (avi_chunk_ready(priv->chunk, jpeg_marker, &avi_chunk_size)) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
-      Jpeg_buffer *jpeg = Jpeg_buffer_from(priv->chunk->data+8, length);
+      Jpeg_buffer *jpeg = Jpeg_buffer_from(priv->chunk->data+8, avi_chunk_size);
       PostData(jpeg, pi->outputs[OUTPUT_JPEG].destination);
     }
-    ArrayU8_trim_left(priv->chunk, even(8+length));
+    ArrayU8_trim_left(priv->chunk, even(8+avi_chunk_size));
   }
-  else if (avi_chunk_ready(priv->chunk, idx_marker, &length)) {
-    ArrayU8_trim_left(priv->chunk, even(8+length));
+  else if (avi_chunk_ready(priv->chunk, idx_marker, &avi_chunk_size)) {
+    ArrayU8_trim_left(priv->chunk, even(8+avi_chunk_size));
   }
   else {
     priv->needData = 1;
