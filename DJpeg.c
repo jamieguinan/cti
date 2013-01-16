@@ -228,7 +228,7 @@ static void Jpeg_handler(Instance *pi, void *data)
       (*dest_mgr->finish_output) (&cinfo, dest_mgr);
       (void) jpeg_finish_decompress(&cinfo);
 
-      rgb_out->tv = jpeg_in->tv;
+      rgb_out->c.tv = jpeg_in->c.tv;
 
       if (pi->outputs[OUTPUT_GRAY].destination && priv->use_green_for_gray) {
 	int k;
@@ -285,6 +285,8 @@ static void Jpeg_handler(Instance *pi, void *data)
     (void) jpeg_read_header(&cinfo, TRUE);
 
     y422p_out = Y422P_buffer_new(cinfo.image_width, cinfo.image_height);
+
+    y422p_out->c.interlace_mode = jpeg_in->c.interlace_mode;
 
     save_width = cinfo.image_width;
     save_height = cinfo.image_height;
@@ -386,7 +388,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     if (!error) {
       (void) jpeg_finish_decompress(&cinfo);
 
-      y422p_out->tv = jpeg_in->tv;
+      y422p_out->c.tv = jpeg_in->c.tv;
       
       if (pi->outputs[OUTPUT_GRAY].destination && !gray_handled) {
 	/* Clone Y channel, pass along. */

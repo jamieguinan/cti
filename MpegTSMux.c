@@ -76,7 +76,7 @@ static void H264_handler(Instance *pi, void *msg)
   uint64_t tv90k;
 
   /* Map timestamp to 33-bit 90KHz units. */
-  tv90k = ((h264->tv.tv_sec - priv->tv_sec_offset) * 90000) + (h264->tv.tv_usec * 9 / 100);
+  tv90k = ((h264->c.tv.tv_sec - priv->tv_sec_offset) * 90000) + (h264->c.tv.tv_usec * 9 / 100);
 
   /* Assign to PTS, and same to DTS. */
   pts.set = 1;

@@ -87,7 +87,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   String *header = String_sprintf(part_format,
 				  BOUNDARY,
 				  "image/jpeg",
-				  jpeg_in->tv.tv_sec, jpeg_in->tv.tv_usec,
+				  jpeg_in->c.tv.tv_sec, jpeg_in->c.tv.tv_usec,
 				  "",
 				  jpeg_in->encoded_length);
 

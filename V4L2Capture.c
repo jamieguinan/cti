@@ -1264,7 +1264,7 @@ static void V4L2Capture_tick(Instance *pi)
     if (pi->outputs[OUTPUT_422P].destination) {
       Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height);
       Log(LOG_Y422P, "%s allocated y422p @ %p", __func__, y422p);
-      gettimeofday(&y422p->tv, NULL);
+      gettimeofday(&y422p->c.tv, NULL);
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y422p->cb, 
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 
@@ -1287,8 +1287,8 @@ static void V4L2Capture_tick(Instance *pi)
 	   streq(priv->format, "MJPG") ) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused);
-      gettimeofday(&j->tv, NULL);
-      calc_fps(&j->tv);
+      gettimeofday(&j->c.tv, NULL);
+      calc_fps(&j->c.tv);
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
       j->encoded_length = priv->vbuffer.bytesused;
       if (j->encoded_length < 1000) {
@@ -1306,7 +1306,7 @@ static void V4L2Capture_tick(Instance *pi)
   else if (streq(priv->format, "O511")) {
     if (pi->outputs[OUTPUT_O511].destination) {
       O511_buffer *o = O511_buffer_new(priv->width, priv->height);
-      gettimeofday(&o->tv, NULL);
+      gettimeofday(&o->c.tv, NULL);
       memcpy(o->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
 
       o->encoded_length = priv->vbuffer.bytesused;
@@ -1340,7 +1340,7 @@ static void V4L2Capture_tick(Instance *pi)
       int icb = 0;
       uint8_t *p = priv->buffers[priv->wait_on].data;
       Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height);
-      gettimeofday(&y422p->tv, NULL);
+      gettimeofday(&y422p->c.tv, NULL);
       for (i=0; i < priv->vbuffer.bytesused/4; i++) {
 	y422p->y[iy++] = *p++;
 	y422p->cb[icb++] = *p++;

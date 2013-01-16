@@ -131,7 +131,7 @@ static void rgb3_handler(Instance *pi, void *data)
   VSmoother_private *priv = pi->data;
   RGB3_buffer *rgb3_in = data;
   if (pi->outputs[OUTPUT_RGB3].destination) {
-    smooth(priv, &rgb3_in->tv, pi->pending_messages);
+    smooth(priv, &rgb3_in->c.tv, pi->pending_messages);
     PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
   }
   else {
@@ -144,7 +144,7 @@ static void bgr3_handler(Instance *pi, void *data)
   VSmoother_private *priv = pi->data;
   BGR3_buffer *bgr3_in = data;
   if (pi->outputs[OUTPUT_BGR3].destination) {
-    smooth(priv, &bgr3_in->tv, pi->pending_messages);
+    smooth(priv, &bgr3_in->c.tv, pi->pending_messages);
     PostData(bgr3_in, pi->outputs[OUTPUT_BGR3].destination);
   }
   else {
@@ -157,7 +157,7 @@ static void y422p_handler(Instance *pi, void *data)
   VSmoother_private *priv = pi->data;
   Y422P_buffer *y422p_in = data;
   if (pi->outputs[OUTPUT_422P].destination) {
-    smooth(priv, &y422p_in->tv,pi->pending_messages);
+    smooth(priv, &y422p_in->c.tv,pi->pending_messages);
     PostData(y422p_in, pi->outputs[OUTPUT_422P].destination);
   }
   else {

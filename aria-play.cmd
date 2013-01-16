@@ -22,7 +22,8 @@ config sdl mode OVERLAY
 
 #connect dj RGB3_buffer vs
 #connect vs RGB3_buffer sdl
-connect dj RGB3_buffer sdl
+#connect dj RGB3_buffer sdl
+connect dj 422P_buffer sdl
 connect do511 RGB3_buffer sdl
 
 #config mjd input ./rcv

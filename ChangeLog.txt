@@ -1,3 +1,16 @@
+2013-Jan-16 13:02:52
+
+Images.h:
+  Put common image fields into a substructure.
+
+MjpegDemux.c:
+  's' for snapshot.
+  Test code for interlaced mode.
+
+SDLstuff.c:
+  Two-pass rendering for interlaced fields.
+
+
 2012-Dec-03 11:31:51
 
 CSV.c:

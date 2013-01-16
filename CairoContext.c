@@ -262,27 +262,27 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
       break;
 
     case CC_COMMAND_ROTATE_SUBSECONDS:
-      t = rgb3->tv.tv_sec;
+      t = rgb3->c.tv.tv_sec;
       localtime_r(&t, &lt);
       //printf("t=%ld lt.tm_sec=%d lt.tm_min=%d lt.tm_hour=%d\n", t, lt.tm_sec, lt.tm_min, lt.tm_hour);
-      rval = (2*M_PI) * (rgb3->tv.tv_usec/1000000.0);
+      rval = (2*M_PI) * (rgb3->c.tv.tv_usec/1000000.0);
       cairo_rotate(priv->context, rval);
       break;
     case CC_COMMAND_ROTATE_SECONDS:
-      t = rgb3->tv.tv_sec;
+      t = rgb3->c.tv.tv_sec;
       localtime_r(&t, &lt);
       //printf("t=%ld lt.tm_sec=%d lt.tm_min=%d lt.tm_hour=%d\n", t, lt.tm_sec, lt.tm_min, lt.tm_hour);
-      rval = (2*M_PI / 60) * (lt.tm_sec /* + (rgb3->tv.tv_usec/1000000.0) */);
+      rval = (2*M_PI / 60) * (lt.tm_sec /* + (rgb3->c.tv.tv_usec/1000000.0) */);
       cairo_rotate(priv->context, rval);
       break;
     case CC_COMMAND_ROTATE_MINUTES:
-      t = rgb3->tv.tv_sec;
+      t = rgb3->c.tv.tv_sec;
       localtime_r(&t, &lt);
       rval = (2*M_PI / 60) * (lt.tm_min + (lt.tm_sec/60.0));
       cairo_rotate(priv->context, rval);
       break;
     case CC_COMMAND_ROTATE_HOURS:
-      t = rgb3->tv.tv_sec;
+      t = rgb3->c.tv.tv_sec;
       localtime_r(&t, &lt);
       rval = (2*M_PI / 12) * (lt.tm_hour + (lt.tm_min/60.0) + (lt.tm_sec/3600.0));
       cairo_rotate(priv->context, rval);
@@ -356,7 +356,7 @@ static void y422p_handler(Instance *pi, void *msg)
        code. */
     temp = Y422P_copy(y422p, 0, 0, priv->width, priv->height);
     rgb3 = Y422P_to_RGB3(temp);
-    rgb3->tv = y422p->tv;	/* Preserve timestamp! */
+    rgb3->c.tv = y422p->c.tv;	/* Preserve timestamp! */
     Y422P_buffer_discard(temp);
     apply_commands(priv, rgb3);
     temp = RGB3_toY422P(rgb3);

@@ -23,6 +23,19 @@ typedef enum {
 
 extern ImageType Image_guess_type(uint8_t * data, int len);
 
+enum { 
+  IMAGE_INTERLACE_NONE,
+  IMAGE_INTERLACE_TOP_FIRST,
+  IMAGE_INTERLACE_BOTTOM_FIRST,
+};
+
+/* Common metadata fields. */
+typedef struct {
+  struct timeval tv;
+  float nominal_period;
+  int interlace_mode;
+} Image_common;
+
 
 /* Gray buffer */
 typedef struct {
@@ -30,8 +43,7 @@ typedef struct {
   int height;
   uint8_t *data;
   int data_length;
-  struct timeval tv;
-  float nominal_period;
+  Image_common c;
 } Gray_buffer;
 
 
@@ -41,8 +53,7 @@ typedef struct {
   int height;
   uint32_t *data;
   int data_length;
-  struct timeval tv;
-  float nominal_period;
+  Image_common c;
 } Gray32_buffer;
 
 
@@ -52,8 +63,7 @@ typedef struct {
   int height;
   uint8_t *data;
   int data_length;
-  struct timeval tv;
-  float nominal_period;
+  Image_common c;
 } RGB3_buffer;
 
 /* BGR3 buffer */
@@ -62,8 +72,7 @@ typedef struct {
   int height;
   uint8_t *data;
   int data_length;
-  struct timeval tv;
-  float nominal_period;
+  Image_common c;
 } BGR3_buffer;
 
 
@@ -84,8 +93,7 @@ typedef struct {
   int cr_height;
   int cr_length;
 
-  struct timeval tv;
-  float nominal_period;
+  Image_common c;
 } Y422P_buffer;
 
 /* 420P buffer */
@@ -99,8 +107,8 @@ typedef struct {
   int cb_length;
   uint8_t *cr;
   int cr_length;
-  struct timeval tv;
-  float nominal_period;
+
+  Image_common c;
 } Y420P_buffer;
 
 /* Jpeg buffer */
@@ -110,8 +118,8 @@ typedef struct {
   uint8_t *data;
   int data_length;		/* Provisional. */
   int encoded_length;		/* Actual encoded jpeg size. */
-  struct timeval tv;
-  float nominal_period;
+
+  Image_common c;
 } Jpeg_buffer;
 
 /* O511 buffer */
@@ -121,8 +129,8 @@ typedef struct {
   uint8_t *data;
   int data_length;		/* Provisional. */
   int encoded_length;		/* Actual encoded size. */
-  struct timeval tv;
-  float nominal_period;
+
+  Image_common c;
 } O511_buffer;
 
 /* H264 buffer */
@@ -132,8 +140,8 @@ typedef struct {
   uint8_t *data;
   int data_length;		/* Provisional. */
   int encoded_length;		/* Actual encoded size. */
-  struct timeval tv;
-  float nominal_period;
+
+  Image_common c;
 } H264_buffer;
 
 

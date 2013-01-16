@@ -125,7 +125,7 @@ static void check_files(Instance *pi)
       goto out;
     }
     rgb = RGB3_buffer_new(width, height);
-    gettimeofday(&rgb->tv, 0L);
+    gettimeofday(&rgb->c.tv, 0L);
     size = height*bpl;
     data = malloc(size);
     if (fread(data, size, 1, f) != 1) {

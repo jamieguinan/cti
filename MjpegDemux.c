@@ -84,6 +84,7 @@ typedef struct {
   long a, b;			/* For a/b looping. */
   long seek_amount;		/* For forware/back seeks. */
   FPS fps;
+  int snapshot;
 } MjpegDemux_private;
 
 
@@ -286,6 +287,12 @@ static void Keycode_handler(Instance *pi, void *msg)
     if (priv->source) {
       Source_seek(priv->source, priv->seek_amount);  
       reset_current(priv);
+    }
+  }
+
+  else if (km->keycode == CTI__KEY_S) {
+    if (priv->source) {
+      priv->snapshot = 1;
     }
   }
 
@@ -498,10 +505,23 @@ static void MjpegDemux_tick(Instance *pi)
     Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
 				      priv->current.content_length);
     /* Reconstruct timeval timestamp for Jpeg buffer.  Not actually used here, though. */
-    j->tv.tv_sec = priv->current.timestamp;
-    j->tv.tv_usec = fmod(priv->current.timestamp, 1.0) * 1000000;
+    j->c.tv.tv_sec = priv->current.timestamp;
+    j->c.tv.tv_usec = fmod(priv->current.timestamp, 1.0) * 1000000;
 
     FPS_show(&priv->fps);
+
+    /* FIXME: This is a hack for testing TV streams, even though it should work transparently
+       for progressive sources, with some overhead. */
+    j->c.interlace_mode = IMAGE_INTERLACE_TOP_FIRST;
+    //j->interlace_mode = IMAGE_INTERLACE_NONE;
+
+    if (priv->snapshot) {
+      FILE *f = fopen("snapshot.jpg", "wb");
+      fwrite(j->data, j->encoded_length, 1, f);
+      fclose(f);
+      priv->snapshot = 0;
+      fprintf(stderr, "snapshot saved\n");
+    }
 
     if (pi->outputs[OUTPUT_JPEG].destination) {
       /* Use timestamps if configured to do so, and only if haven't
