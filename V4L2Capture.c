@@ -290,7 +290,7 @@ static int set_format(Instance *pi, const char *value)
   struct v4l2_format format = {};
   struct v4l2_fmtdesc fmtdesc = {};
 
-  /* Enumerate pixel formats until a string match is found. */
+  /* Enumerate available pixel formats until a string match is found. */
   i = 0;
   while (1) {
     char fourcc_str[5];
@@ -325,6 +325,8 @@ static int set_format(Instance *pi, const char *value)
 
   format.fmt.pix.pixelformat = fmtdesc.pixelformat; /* fmtdesc holds value from loop break */
 
+
+  /* Set desired format. */
   rc = ioctl(priv->fd, VIDIOC_S_FMT, &format);
   if (rc == -1) {
     perror("VIDIOC_S_FMT");

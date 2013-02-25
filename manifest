@@ -6,7 +6,6 @@ ALSAio.c
 ALSAio.h
 AVIDemux.c
 AVIDemux.h
-AVIMux.c
 Array.c
 Array.h
 Audio.c
@@ -235,6 +234,7 @@ facetracker01.cmd
 fishcam-playback.cmd
 fishcam-relay.cmd
 ft01.cmd
+fyv-audio-forward.cmd
 fyv-forward.cmd
 fyv-local-plain.cmd
 fyv-local.cmd
@@ -283,6 +283,7 @@ locks.c
 locks.h
 logitech-cairo-01.cmd
 logitech-h264-ts.cmd
+logitech-live-record.cmd
 logitech-md.cmd
 logitech-mirror.cmd
 logitech-null.cmd

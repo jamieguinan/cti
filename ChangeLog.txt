@@ -1,3 +1,27 @@
+2013-Feb-25 15:15:55
+
+CTI.c:
+CTI.h:
+  Generic config mesaage handling with .vset.
+  cti_set_int generic config handler.
+
+SDLstuff.c:
+  Time snapshot debugging code.
+
+V4L2Capture.c:
+  Comment fixes.
+
+VFilter.c:
+  field_split option.
+
+WavOutput.c:
+  Fill in data length when creating output.
+
+fyv-audio-forward.cmd:
+logitech-live-record.cmd:
+  New files.
+
+
 2013-Jan-16 13:02:52
 
 Images.h:

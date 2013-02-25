@@ -67,6 +67,10 @@ static void Wav_handler(Instance *pi, void *msg)
   }
 
   if (!priv->header_written) {
+    int tmp = wav->data_length;
+    wav->data_length = (1024*1024*2000);
+    Wav_buffer_finalize(wav);
+    wav->data_length = tmp;
     Sink_write(priv->sink, wav->header, wav->header_length);
     priv->header_written = 1;
   }

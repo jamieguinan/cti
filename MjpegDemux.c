@@ -512,8 +512,8 @@ static void MjpegDemux_tick(Instance *pi)
 
     /* FIXME: This is a hack for testing TV streams, even though it should work transparently
        for progressive sources, with some overhead. */
-    j->c.interlace_mode = IMAGE_INTERLACE_TOP_FIRST;
-    //j->interlace_mode = IMAGE_INTERLACE_NONE;
+    //j->c.interlace_mode = IMAGE_INTERLACE_TOP_FIRST;
+    j->c.interlace_mode = IMAGE_INTERLACE_NONE;
 
     if (priv->snapshot) {
       FILE *f = fopen("snapshot.jpg", "wb");

@@ -2,6 +2,7 @@
 #define _CTI_H_
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define cti_min(a, b)  ( (a) < (b) ? (a) : (b) )
 #define cti_max(a, b)  ( (a) > (b) ? (a) : (b) )
@@ -119,6 +120,9 @@ typedef struct {
   int (*set)(struct _Instance *pi, const char *value); /* Setter function. */
   void (*get_value)(struct _Instance *pi, Value *value);
   void (*get_range)(struct _Instance *pi, Range *range);
+  /* .vset allows use generic setters. */
+  void (*vset)(void *addr, const char *value);
+  size_t value_offset;		
 } Config;
 
 enum { INSTANCE_STATE_RUNNING,  INSTANCE_STATE_QUIT };
@@ -219,6 +223,7 @@ extern Config_buffer *Config_buffer_vrreq_new(const char *label, const char *val
 extern void Config_buffer_discard(Config_buffer **cb);
 
 extern void Generic_config_handler(Instance *pi, void *data, Config *config_table, int config_table_size);
+extern void cti_set_int(void *addr, const char *value);
 
 extern int SetConfig(Instance *pi, const char *label, const char *value);
 extern void GetConfigValue(Input *pi, const char *label, Value *vreq);

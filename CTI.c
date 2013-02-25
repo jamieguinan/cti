@@ -286,7 +286,13 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
     if (streq(config_table[i].label, cb_in->label->bytes)) {
 
       /* If value is passed in, call the set function. */
-      if (cb_in->value && config_table[i].set) {
+      if (cb_in->value && config_table[i].vset) {
+	/* Generic setter. */
+	config_table[i].vset((uint8_t*)pi->data + config_table[i].value_offset, 
+			     cb_in->value->bytes);
+      }
+      else if (cb_in->value && config_table[i].set) {
+	/* Template-specific setter. */
 	int rc;		/* FIXME: What to do with this? */
 	rc = config_table[i].set(pi, cb_in->value->bytes);
       }
@@ -311,6 +317,11 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
   Config_buffer_discard(&cb_in);
 }
 
+
+void cti_set_int(void *addr, const char *value)
+{
+  *( (int *)addr) = atoi(value);
+}
 
 void GetConfigValue(Input *pi, const char *label, Value *vreq)
 {

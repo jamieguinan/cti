@@ -8,6 +8,7 @@
 #include <SDL.h>
 #include <gl.h>
 // #include <glu.h>
+#include <time.h>		/* clock_gettime */
 
 #include "CTI.h"
 #include "Images.h"
@@ -121,6 +122,32 @@ typedef struct {
 static void _reset_video(SDLstuff_private *priv, const char *func);
 #define reset_video(priv) _reset_video(priv, __func__);
 
+static void tsnapshot()
+{
+  static struct timespec field_times[600];
+  static int tcount = 0;
+  
+  if (tcount == 600) {
+    return;
+  }
+
+  clock_gettime(CLOCK_MONOTONIC_RAW, &field_times[tcount]);
+
+  tcount++;
+
+  if (tcount == 600) {
+    int i;
+    FILE *f = fopen("tcount.csv", "w");
+    for (i=1; i < 600; i++) {
+      double t0 = field_times[i-1].tv_sec + (field_times[i-1].tv_nsec/1000000000.0);
+      double t1 = field_times[i].tv_sec + (field_times[i].tv_nsec/1000000000.0);
+      fprintf(f, "%.9f, %.9f\n", t0, (t1-t0));
+    }
+    fclose(f);
+    printf("field times saved\n");
+  }
+
+}
 
 static void Keycode_handler(Instance *pi, void *msg)
 {
@@ -526,12 +553,13 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
 
     SDL_UnlockSurface(priv->surface);
 
-    if (n) {
-      /* FIXME: ~1/60 field time is only for TV sources. */
-      nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/100}, NULL);
+    n -= 1;
+    if (1) {
+      // nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/80}, NULL);
       iy = next_iy;
-      n -= 1;
     }
+
+    tsnapshot();
   }
 }
 

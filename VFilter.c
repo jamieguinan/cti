@@ -35,7 +35,9 @@ typedef struct {
   int bottom_crop;
   int linear_blend;
   int trim;
+  int field_split;
 } VFilter_private;
+
 
 static int set_left_right_crop(Instance *pi, const char *value)
 {
@@ -104,6 +106,7 @@ static Config config_table[] = {
   { "bottom_crop",    set_bottom_crop, 0L, 0L },
   { "linear_blend",  set_linear_blend, 0L, 0L },
   { "trim",  set_trim, 0L, 0L },
+  { "field_split",  0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, field_split) },
 };
 
 
@@ -149,6 +152,42 @@ static void single_121_linear_blend(uint8_t *data_in, uint8_t *data_out, int wid
 }
 
 
+static void single_field_split(uint8_t *data, int width, int height)
+{
+  /* Take an interlaced image, push all the odd lines to the top, and even lines to the bottom. */
+  int y;
+  uint8_t *psrc;
+  uint8_t *pdest;
+
+  if (height % 2 == 1) {
+    /* Only work on even number of rows. */
+    height -= 1;
+  }
+
+  /* Copy of data plane, on stack. */
+  uint8_t temp[width * height];
+  memcpy(temp, data, sizeof(temp));
+	 
+  /* Copy first field.  Note that first line is already in place. */
+  pdest = data + width;
+  psrc = temp + (width * 2);
+  for (y=2; y < height; y += 2) {
+    memcpy(pdest, psrc, width);
+    pdest += width;
+    psrc += (width * 2);
+  }
+
+  /* Copy second field */
+  pdest = data + (width * (height/2));
+  psrc = temp + width;
+  for (y=1; y < height; y += 2) {
+    memcpy(pdest, psrc, width);
+    pdest += width;
+    psrc += (width * 2);
+  }
+}
+
+
 static void single_trim(VFilter_private * priv, uint8_t *data_in, uint8_t *data_out, int width, int height)
 {
   int i;
@@ -157,6 +196,7 @@ static void single_trim(VFilter_private * priv, uint8_t *data_in, uint8_t *data_
     data_out[i] = data_in[i] & mask;
   }
 }
+
 
 
 static void Y422p_handler(Instance *pi, void *msg)
@@ -199,6 +239,13 @@ static void Y422p_handler(Instance *pi, void *msg)
   
   if (!y422p_out) {
     y422p_out = y422p_in;
+  }
+
+  if (priv->field_split) {
+    y422p_out->c.interlace_mode = IMAGE_FIELDSPLIT_TOP_FIRST;
+    single_field_split(y422p_out->y, y422p_out->width, y422p_out->height);
+    single_field_split(y422p_out->cb, y422p_out->width/2, y422p_out->height);
+    single_field_split(y422p_out->cr, y422p_out->width/2, y422p_out->height);
   }
   
   if (pi->outputs[OUTPUT_422P].destination) {
