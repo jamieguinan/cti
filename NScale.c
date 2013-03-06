@@ -31,24 +31,9 @@ typedef struct {
 } NScale_private;
 
 
-static int set_Nx(Instance *pi, const char *value)
-{
-  NScale_private *priv = pi->data;
-  priv->Nx = atoi(value);
-  return 0;
-}
-
-static int set_Ny(Instance *pi, const char *value)
-{
-  NScale_private *priv = pi->data;
-  priv->Ny = atoi(value);
-  return 0;
-}
-
-
 static Config config_table[] = {
-  { "Nx",  set_Nx, 0L, 0L },
-  { "Ny",  set_Ny, 0L, 0L },
+  { "Nx",  0L, 0L, 0L, cti_set_int, offsetof(NScale_private, Nx) },
+  { "Ny",  0L, 0L, 0L, cti_set_int, offsetof(NScale_private, Ny) },
 };
 
 static void N_scale(NScale_private *priv, uint8_t *indata, int in_width, int in_height, 

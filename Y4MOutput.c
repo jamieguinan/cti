@@ -56,26 +56,10 @@ static int set_output(Instance *pi, const char *value)
 }
 
 
-static int set_fps_nom(Instance *pi, const char *value)
-{
-  Y4MOutput_private *priv = pi->data;
-  priv->fps_nom = atoi(value);
-  return 0;
-}
-
-
-static int set_fps_denom(Instance *pi, const char *value)
-{
-  Y4MOutput_private *priv = pi->data;
-  priv->fps_denom = atoi(value);
-  return 0;
-}
-
-
 static Config config_table[] = {
-  { "output", set_output , 0L, 0L },
-  { "fps_nom", set_fps_nom , 0L, 0L },
-  { "fps_denom", set_fps_denom , 0L, 0L },
+  { "output", set_output, 0L, 0L },
+  { "fps_nom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_nom) },
+  { "fps_denom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_denom) },
 };
 
 

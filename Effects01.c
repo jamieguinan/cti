@@ -24,29 +24,10 @@ typedef struct {
   int rotate;
 } Effects01_private;
 
-static int set_invert(Instance *pi, const char *value)
-{
-  Effects01_private *priv = pi->data;
-  if (atoi(value)) {
-    priv->invert = 1;
-  }
-  else {
-    priv->invert = 0;
-  }
-  return 0;
-}
-
-static int set_rotate(Instance *pi, const char *value)
-{
-  Effects01_private *priv = pi->data;
-  priv->rotate = atoi(value);
-  return 0;
-}
-
 
 static Config config_table[] = {
-  { "invert",   set_invert, 0L, 0L },
-  { "rotate",   set_rotate, 0L, 0L },
+  { "invert",   0L, 0L, 0L, cti_set_int, offsetof(Effects01_private, invert) },
+  { "rotate",   0L, 0L, 0L, cti_set_int, offsetof(Effects01_private, rotate) },
 };
 
 static void Config_handler(Instance *pi, void *data)

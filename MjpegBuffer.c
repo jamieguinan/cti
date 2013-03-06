@@ -71,27 +71,11 @@ static int set_basename(Instance *pi, const char *value)
 }
 
 
-static int set_backbuffer(Instance *pi, const char *value)
-{
-  MjpegBuffer_private *priv = pi->data;
-  priv->backbuffer = atoi(value);
-  return 0;
-}
-
-
-static int set_forwardbuffer(Instance *pi, const char *value)
-{
-  MjpegBuffer_private *priv = pi->data;
-  priv->forwardbuffer = atoi(value);
-  return 0;
-}
-
-
 static Config config_table[] = {
   { "trigger",     do_trigger, 0L, 0L },
   { "basename",    set_basename, 0L, 0L },
-  { "backbuffer",  set_backbuffer, 0L, 0L },
-  { "forwardbuffer",  set_forwardbuffer, 0L, 0L },
+  { "backbuffer",  0L, 0L, 0L, cti_set_int, offsetof(MjpegBuffer_private, back_buffer) },
+  { "forwardbuffer",  0L, 0L, 0L, cti_set_int, offsetof(MjpegBuffer_private, forward_buffer) },
 };
 
 

@@ -45,24 +45,9 @@ typedef struct {
 } MjpegLocalBuffer_private;
 
 
-static int set_forwardbuffer(Instance *pi, const char *value)
-{
-  MjpegLocalBuffer_private *priv = pi->data;
-  priv->forwardbuffer = atoi(value);
-  return 0;
-}
-
-static int set_md_threshold(Instance *pi, const char *value)
-{
-  MjpegLocalBuffer_private *priv = pi->data;
-  priv->md_threshold = atoi(value);
-  return 0;
-}
-
-
 static Config config_table[] = {
-  { "forwardbuffer",  set_forwardbuffer, 0L, 0L },
-  { "md_threshold",  set_md_threshold, 0L, 0L },
+  { "forwardbuffer",  0L, 0L, 0L, cti_set_int, offsetof(MjpegLocalBuffer_private, forwardbuffer) },
+  { "md_threshold",  0L, 0L, 0L, cti_set_int, offsetof(MjpegLocalBuffer_private, md_threshold) },
 };
 
 

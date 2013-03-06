@@ -145,14 +145,6 @@ static int set_output(Instance *pi, const char *value)
 }
 
 
-static int set_retry(Instance *pi, const char *value)
-{
-  MjpegDemux_private *priv = pi->data;
-  priv->retry = atoi(value);
-  return 0;
-}
-
-
 static int set_enable(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = pi->data;
@@ -166,23 +158,6 @@ static int set_enable(Instance *pi, const char *value)
   
   printf("MjpegDemux enable set to %d\n", priv->enable);
 
-  return 0;
-}
-
-static int set_use_feedback(Instance *pi, const char *value)
-{
-  MjpegDemux_private *priv = pi->data;
-  priv->use_feedback = atoi(value);
-  printf("MjpegDemux use_feedback set to %d\n", priv->use_feedback);
-  return 0;
-}
-
-
-static int set_use_timestamps(Instance *pi, const char *value)
-{
-  MjpegDemux_private *priv = pi->data;
-  priv->use_timestamps = atoi(value);
-  printf("MjpegDemux use_timestamps set to %d\n", priv->use_timestamps);
   return 0;
 }
 
@@ -235,10 +210,10 @@ static Config config_table[] = {
   { "input", set_input, 0L, 0L },
   { "output", set_output, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
-  { "retry", set_retry, 0L, 0L },
+  { "retry", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, retry) },
   { "fixed_video_period", set_fixed_video_period, 0L, 0L },
-  { "use_feedback", set_use_feedback, 0L, 0L },
-  { "use_timestamps", set_use_timestamps, 0L, 0L },
+  { "use_feedback", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, use_feedback) },
+  { "use_timestamps", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, use_timestamps) },
   /* The following are more "controls" than "configs", but maybe they are essentially the same anyway. */
   { "seek", do_seek, 0L, 0L},
   //{ "position", set_position, 0L, 0L},

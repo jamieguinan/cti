@@ -205,7 +205,7 @@ static void Y422p_handler(Instance *pi, void *msg)
   Y422P_buffer *y422p_in = msg;
   Y422P_buffer *y422p_out = 0L;
   Y422P_buffer *y422p_src = 0L;
-  
+
   if (priv->left_right_crop) {
     y422p_src = y422p_out ? y422p_out : y422p_in;
     if (priv->left_right_crop > y422p_src->width) {
@@ -236,10 +236,19 @@ static void Y422p_handler(Instance *pi, void *msg)
     single_trim(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     Y422P_buffer_discard(y422p_src);
   }
+
+  if (priv->bottom_crop) {
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height - priv->bottom_crop);
+    memcpy(y422p_out->y, y422p_src->y, y422p_out->width*y422p_out->height);
+    memcpy(y422p_out->cb, y422p_src->cb, y422p_out->width*y422p_out->height/2);
+    memcpy(y422p_out->cr, y422p_src->cr, y422p_out->width*y422p_out->height/2);
+    Y422P_buffer_discard(y422p_src);
+  }
   
   if (!y422p_out) {
-    y422p_out = y422p_in;
-  }
+    y422p_out = y422p_in; 
+ }
 
   if (priv->field_split) {
     y422p_out->c.interlace_mode = IMAGE_FIELDSPLIT_TOP_FIRST;

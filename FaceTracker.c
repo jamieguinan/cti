@@ -72,23 +72,10 @@ typedef struct {
 
 } FaceTracker_private;
 
-static int set_iir_decay(Instance *pi, const char *value)
-{
-  FaceTracker_private *priv = pi->data;
-  priv->iir_decay = atof(value);
-  return 0;
-}
-
-static int set_chop(Instance *pi, const char *value)
-{
-  FaceTracker_private *priv = pi->data;
-  priv->chop = atoi(value);
-  return 0;
-}
 
 static Config config_table[] = {
-  { "iir_decay",    set_iir_decay, 0L, 0L },
-  { "chop",    set_chop, 0L, 0L },
+  { "iir_decay", 0L, 0L, 0L, cti_set_int, offsetof(FaceTracker_private, iir_decay) },
+  { "chop", 0L, 0L, 0L, cti_set_int, offsetof(FaceTracker_private, chop) },
 };
 
 

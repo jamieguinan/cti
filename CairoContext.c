@@ -81,29 +81,6 @@ typedef struct {
 } CairoContext_private;
 
 
-static int set_width(Instance *pi, const char *value)
-{
-  CairoContext_private *priv = pi->data;
-  priv->width = atoi(value);
-  return 0;
-}
-
-
-static int set_height(Instance *pi, const char *value)
-{
-  CairoContext_private *priv = pi->data;
-  priv->height = atoi(value);
-  return 0;
-}
-
-static int set_timeout(Instance *pi, const char *value)
-{
-  CairoContext_private *priv = pi->data;
-  priv->timeout = atol(value);
-  return 0;
-}
-
-
 static int set_show_text(Instance *pi, const char *value)
 {
   CairoContext_private *priv = pi->data;
@@ -375,11 +352,11 @@ static void y422p_handler(Instance *pi, void *msg)
 
 
 static Config config_table[] = {
-  { "width",     set_width, 0L, 0L },
-  { "height",    set_height, 0L, 0L },
+  { "width",     0L, 0L, 0L, cti_set_int, offsetof(CairoContext_private, width) },
+  { "height",    0L, 0L, 0L, cti_set_int, offsetof(CairoContext_private, height) },
+  { "timeout",   0L, 0L, 0L, cti_set_int, offsetof(CairoContext_private, timeout) },
   { "command",   add_command, 0L, 0L },
   { "text",      set_show_text, 0L, 0L },
-  { "timeout",   set_timeout, 0L, 0L },
 };
 
 static void Config_handler(Instance *pi, void *data)

@@ -78,14 +78,6 @@ static void jerr_error_handler(j_common_ptr cinfo)
 }
 
 
-static int set_max_messages(Instance *pi, const char *value)
-{
-  DJpeg_private *priv = pi->data;
-  priv->max_messages = atoi(value);
-  return 0;
-}
-
-
 static int set_dct_method(Instance *pi, const char *value)
 {
   DJpeg_private *priv = pi->data;
@@ -113,18 +105,10 @@ static int do_quit(Instance *pi, const char *value)
 }
 
 
-static int set_every(Instance *pi, const char *value)
-{
-  DJpeg_private *priv = pi->data;
-  priv->every = atoi(value);
-  return 0;
-}
-
-
 static Config config_table[] = {
-  { "max_messages", set_max_messages, 0L, 0L},
+  { "max_messages", 0L, 0L, 0L, cti_set_int, offsetof(DJpeg_private, max_messages) },
+  { "every", 0L, 0L, 0L, cti_set_int, offsetof(DJpeg_private, every) },
   { "dct_method", set_dct_method, 0L, 0L},
-  { "every", set_every, 0L, 0L },
   { "quit",    do_quit, 0L, 0L },
 };
 
