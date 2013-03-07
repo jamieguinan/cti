@@ -66,9 +66,7 @@ void PostData(void *data, Input *input)
 
   input->parent->pending_messages += 1;
 
-  if (cfg.verbosity & 0x01000000) {
-    fprintf(stderr, "%s: %d queued messages\n", input->parent->label, input->parent->pending_messages);
-  }
+  dpf("%s: %d queued messages\n", input->parent->label, input->parent->pending_messages);
 
   Lock_release(&input->parent->inputs_lock);
 }

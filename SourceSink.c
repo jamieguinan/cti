@@ -1,6 +1,7 @@
 #include "SourceSink.h"
 #include "Mem.h"
 #include "Cfg.h"
+#include "CTI.h"		/* dpf */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -148,6 +149,8 @@ Source *Source_new(char *name)
   Source *source = Mem_calloc(1, sizeof(*source));
 
   source->s = -1;			/* Default to invalid socket value. */
+
+  source->t0 = time(NULL);
 
   char *colon = strchr(name, ':');
   if (colon && isdigit(colon[1])) {
@@ -381,6 +384,10 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
       // Source_close_current(source);
       return;
     }
+
+    source->bytes_read += newChunk->len;
+    dpf("source reading %d bytes/sec\n", source->bytes_read / (time(NULL) - (source->t0)));
+
 
     if (source->eof_flagged) {
       fprintf(stderr, "%s: EOF reset\n", __func__);      

@@ -57,6 +57,8 @@ typedef struct _Client_connection {
   int raw_seq;			/* sequence number in node-being-transmitted */
   RawData_node *raw_node;	/* node-being-transmitted */
   int raw_offset;
+  uint64_t bytes_sent;
+  time_t t0;
 } Client_connection;
 
 typedef enum {
@@ -302,6 +304,7 @@ static void SocketServer_tick(Instance *pi)
     /* Add client connection. */
     cc = Mem_calloc(1, sizeof(*cc));
     cc->addrlen = sizeof(cc->addr);
+    cc->t0 = time(NULL);
     cc->fd = accept(priv->listen_socket, (struct sockaddr *)&cc->addr, &cc->addrlen);
     if (cc->fd == -1) {
       /* This is unlikely but possible.  If it happens, just clean up
@@ -362,6 +365,9 @@ static void SocketServer_tick(Instance *pi)
     if (n == 0) {
       fprintf(stderr, "send(%d) wrote %d bytes\n", to_send, n);
     }
+
+    cc->bytes_sent += n;
+    dpf("soccketserver: %d bytes/sec\n", cc->bytes_sent / (time(NULL) - cc->t0));
     
   oops:
     cc->raw_offset += n;

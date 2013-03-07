@@ -12,6 +12,8 @@ typedef struct {
   int eof;
   int eof_flagged;
   int persist;			/* return on EOF */
+  uint64_t bytes_read;
+  time_t t0;
 } Source;
 
 extern Source *Source_new(char *name /* , options? */ );

@@ -60,9 +60,11 @@ static void save_error_jpeg(uint8_t *data, int data_length)
   }
 }
 
+
 static void jerr_warning_noop(j_common_ptr cinfo, int msg_level)
 {
 }
+
 
 static void jerr_error_handler(j_common_ptr cinfo)
 {

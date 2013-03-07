@@ -120,7 +120,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       if (is_stdin) {
 	/* Wait until newline then reset. */
 	if (fgets(token1, 255, stdin) == NULL) {
-	  /* Handle EOF. */
+	  /* FIXME: Handle EOF. */
 	}
 	cfg.verbosity = 0;
       }
@@ -128,9 +128,16 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     else if (streq(token1, "dpt")) {
       int index = atoi(token2);
       cti_debug_printf_toggle(index);
+      if (is_stdin) {
+	/* Wait until newline then reset. */
+	if (fgets(token1, 255, stdin) == NULL) {
+	  /* FIXME: Handle EOF. */
+	}
+      }
+      cti_debug_printf_toggle(index);
     }
   }
-
+  
 }
 
 
