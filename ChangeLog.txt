@@ -1,7 +1,26 @@
+2013-Mar-07 13:37:28
+
+CTI.c:
+  Change queued messages conditional printf to a dpf().
+
+Djpeg.c:
+  Whitespace cleanups.
+
+ScriptV00.c:
+  Make dpt wait for newline.
+
+SocketServer.c:
+SocketServer.h:
+  dpt() for bytes sent per second.
+
+SourceSink.c:
+SourceSink.h:
+  dpt() for bytes read per second.
+
+
 2013-Mar-06 12:50:11
 
 Change a bunch of modules to use generic cti_set_int instead of private functions.
-
 
 
 2013-Feb-25 15:15:55
