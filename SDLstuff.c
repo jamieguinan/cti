@@ -104,6 +104,7 @@ typedef struct {
   SDL_Surface *surface;
   int width;
   int height;
+  int hard_dimensions;
 
   char *label;
   int label_set;
@@ -237,6 +238,8 @@ static int set_height(Instance *pi, const char *value)
   int oldHeight = priv->height;
   int newHeight = atoi(value);
 
+  priv->hard_dimensions = 1;
+
   if (oldHeight != newHeight) {
     printf("height: %d -> %d\n", oldHeight, newHeight);
     priv->height = newHeight;
@@ -303,7 +306,7 @@ static void _reset_video(SDLstuff_private *priv, const char *func)
   int rc;
   Uint32 sdl_vid_flags = 0;
 
-  SDL_putenv("SDL_VIDEO_CENTERED=center"); //Center the game Window.
+  SDL_putenv("SDL_VIDEO_CENTERED=center");
 
   if (priv->fullscreen) {
     sdl_vid_flags |= SDL_FULLSCREEN;
@@ -473,11 +476,9 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
     
   }
 
-  SDL_Rect rect = { 0, 0, priv->width, priv->height };
-
-  int iy, next_iy;		/* Start line, to allow rendering interlace fields. */
-  int dy;			/* Line increment. */
-  int n;			/* Number of passes, to allow for rendering 2 fields. */
+  int iy, next_iy; /* Start line, to allow rendering interlace fields. */
+  int dy;	   /* Line increment. */
+  int n;      /* Number of passes, to allow for rendering 2 fields. */
 
   switch (y422p_in->c.interlace_mode) {
   case IMAGE_INTERLACE_NONE:
@@ -505,9 +506,9 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
     SDL_LockYUVOverlay(priv->overlay);
 
     /* Copy Y */
-    int img_pitch = priv->surface->w;
+    int img_pitch = priv->overlay->w;
     if (0 && priv->overlay->pitches[0] == img_pitch) {
-      memcpy(priv->overlay->pixels[0], y422p_in->y, rect.w*rect.h);
+      memcpy(priv->overlay->pixels[0], y422p_in->y, y422p_in->width*y422p_in->height);
     }
     else {
       /* Pitch may be different if width is not evenly divisible by 4.
@@ -516,7 +517,8 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
       int y;
       unsigned char *src = y422p_in->y + (iy * img_pitch);
       unsigned char *dst = priv->overlay->pixels[0] + (iy * priv->overlay->pitches[0]);
-      for (y=iy; y < priv->surface->h; y += dy) {
+      // printf("Copy Y: iy=%d h=%d dy=%d src=%p dst=%p\n", iy, priv->overlay->h, dy, src, dst);
+      for (y=iy; y < priv->overlay->h; y += dy) {
 	memcpy(dst, src, img_pitch);
 	src += img_pitch * dy;
 	dst += (priv->overlay->pitches[0] * dy);
@@ -526,6 +528,7 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
     /* Copy Cr and Cb, while basically doing 422 to 420. */
     if (1){
       int x, y, src_index, dst_index, src_width;
+      // printf("Copy Cr, Cb\n");
       src_width = y422p_in->width/2;
       src_index = src_width * iy * 2;
       for (y=iy; y < (y422p_in->height/2); y+=dy) {
@@ -549,6 +552,7 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
   
     SDL_UnlockYUVOverlay(priv->overlay);
 
+    SDL_Rect rect = { 0, 0, priv->width, priv->height };
     SDL_DisplayYUVOverlay(priv->overlay, &rect);
 
     SDL_UnlockSurface(priv->surface);
@@ -608,19 +612,17 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height)
     reset_video(priv);
   }
 
-  if (priv->renderMode != RENDER_MODE_GL &&
-      /* priv->renderMode != RENDER_MODE_OVERLAY && */
-      (priv->width != width || priv->height != height)) {
+  if ( ( priv->renderMode == RENDER_MODE_SOFTWARE ||
+	 priv->hard_dimensions == 0)
+       && (priv->width != width || priv->height != height)) {
     priv->width = width;
     priv->height = height;
     reset_video(priv);
   }
 
-  if (!priv->label_set) {
-    if (priv->label) {
-      SDL_WM_SetCaption(priv->label, NULL); //Sets the Window Title
-      priv->label_set = 1;
-    }
+  if (priv->label && !priv->label_set) {
+    SDL_WM_SetCaption(priv->label, NULL); //Sets the Window Title
+    priv->label_set = 1;
   }
 }
 
