@@ -225,7 +225,7 @@ static int set_width(Instance *pi, const char *value)
   if (oldWidth != newWidth) {
     printf("width: %d -> %d\n", oldWidth, newWidth);
     priv->width = newWidth;
-    // reset_video(priv);
+    reset_video(priv);
   }
 
   return 0;

@@ -93,9 +93,11 @@ static void Y420P_handler(Instance *pi, void *msg)
     priv->pts += 1;
 
     rc = x264_encoder_encode(priv->encoder, &nal, &pi_nal, &pic_in, &pic_out );
-    printf("rc/frame_size=%d pi_nal=%d nal=%p i_payload=%d\n", rc, pi_nal, nal,
-	   nal ? (nal->i_payload) : 0
-	   );
+
+    dpf("rc/frame_size=%d pi_nal=%d nal=%p p_payload=%p i_payload=%d\n", rc, pi_nal, nal,
+	nal ? (nal->p_payload) : NULL,
+	nal ? (nal->i_payload) : 0
+	);
 
     if (rc > 0 && pi->outputs[OUTPUT_H264].destination) {
       int frame_size = rc;
@@ -103,6 +105,8 @@ static void Y420P_handler(Instance *pi, void *msg)
       PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
   }
+
+  Y420P_buffer_discard(y420);
 }
 
 static void Y422P_handler(Instance *pi, void *msg)
@@ -111,6 +115,7 @@ static void Y422P_handler(Instance *pi, void *msg)
   Y422P_buffer *y422 = msg;
   Y420P_buffer *y420 = Y422P_to_Y420P(y422);
   Y420P_handler(pi, y420);
+  Y422P_buffer_discard(y422);
 }
 
 
@@ -123,8 +128,6 @@ static void Config_handler(Instance *pi, void *data)
 static void H264_tick(Instance *pi)
 {
   Handler_message *hm;
-
-  puts(__func__);
 
   hm = GetData(pi, 1);
   if (hm) {

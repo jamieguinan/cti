@@ -590,6 +590,12 @@ static void MjpegDemux_tick(Instance *pi)
   }
   priv->state = PARSING_HEADER;
   pi->counter += 1;
+
+  /* ab loop */
+  if (priv->b && (Source_tell(priv->source) > priv->b)) {
+    Source_set_offset(priv->source, priv->a);
+  }
+
 }
 
 

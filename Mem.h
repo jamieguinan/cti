@@ -4,6 +4,10 @@
 #include <stdint.h>
 
 typedef struct {
+  int refcount;
+} MemObject;
+
+typedef struct {
   uint8_t *data;
   int length;
 } Ptr;

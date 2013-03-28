@@ -21,6 +21,8 @@ connect sdl:Keycode_msg sdl:Keycode_msg
 connect sdl:Keycode_msg_2 mjd:Keycode_msg
 
 config sdl mode OVERLAY
+config sdl width 1440
+config sdl height 960
 
 #connect dj RGB3_buffer vs
 #connect vs RGB3_buffer sdl
@@ -33,7 +35,7 @@ config mjd input 192.168.2.22:6667
 #config mjd input 127.0.0.1:5000:L
 
 config ap device plughw:2
-config ap rate 8000
+config ap rate 48000
 config ap channels 2
 config ap format signed.16-bit.little.endian
 config ap frames_per_io 128

@@ -89,7 +89,7 @@ int cti_main(int argc, char *argv[])
 #endif
 
 #ifdef HAVE_H264
-  // H264_init();
+  H264_init();
 #endif
 
 #ifdef HAVE_OGGOUTPUT

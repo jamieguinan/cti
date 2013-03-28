@@ -1,3 +1,31 @@
+2013-Mar-28 15:47:37
+
+H264.c:
+  Use dpf instead of printf.
+  Fix memory leaks.
+
+Images.h:
+  Add MemObjects to all types.
+
+Makefile:
+  Enable H264 module.
+  Typo fix.
+
+Mem.h:
+  New MemObject type, preparing for refcounting.
+
+MjpegDemux.c:
+  a/b looping.
+
+SDLstuff.c:
+  reset_video after width change.
+
+cti_main.c:
+  Call H264_init().
+
+Rename manifest -> .svmanifest.
+
+
 2013-Mar-14 10:42:02
 
 SDLstuff.c:

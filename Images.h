@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <sys/time.h>
-
+#include "Mem.h"
 
 /* http://en.wikipedia.org/wiki/Layers_%28digital_image_editing%29 */
 typedef struct {
@@ -41,6 +41,7 @@ typedef struct {
 
 /* Gray buffer */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint8_t *data;
@@ -51,6 +52,7 @@ typedef struct {
 
 /* Gray 32-bit buffer */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint32_t *data;
@@ -61,6 +63,7 @@ typedef struct {
 
 /* RGB3 buffer. */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint8_t *data;
@@ -70,6 +73,7 @@ typedef struct {
 
 /* BGR3 buffer */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint8_t *data;
@@ -80,6 +84,7 @@ typedef struct {
 
 /* 422P buffer */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint8_t *y;
@@ -100,6 +105,7 @@ typedef struct {
 
 /* 420P buffer */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint8_t *data;
@@ -115,6 +121,7 @@ typedef struct {
 
 /* Jpeg buffer */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint8_t *data;
@@ -126,6 +133,7 @@ typedef struct {
 
 /* O511 buffer */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint8_t *data;
@@ -137,6 +145,7 @@ typedef struct {
 
 /* H264 buffer */
 typedef struct {
+  MemObject mo;
   int width;
   int height;
   uint8_t *data;

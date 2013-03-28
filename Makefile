@@ -196,10 +196,10 @@ endif
 
 # H264
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc))
-#OBJS+=$(OBJDIR)/H264.o
-#CPPFLAGS+=$$(pkg-config x264 --cflags)
-#LDFLAGS+=$$(pkg-config x264 --libs)
-#CPPFLAGS+=-DHAVE_H264
+OBJS+=$(OBJDIR)/H264.o
+CPPFLAGS+=$$(pkg-config x264 --cflags)
+LDFLAGS+=$$(pkg-config x264 --libs)
+CPPFLAGS+=-DHAVE_H264
 endif
 
 # AAC
@@ -231,7 +231,7 @@ SHARED_OBJS=$(subst .o,.so,$(OBJS))
 
 $(OBJDIR)/ctis$(EXEEXT) : \
 	$(SHARED_OBJS)
-	@echo All shared objectsa re built.
+	@echo All shared objects are built.
 
 
 $(OBJDIR)/mjplay$(EXEEXT): \
