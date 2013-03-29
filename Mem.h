@@ -24,6 +24,10 @@ extern void _Mem_memcpy(Ptr dest, int dest_offset, uint8_t *src, int length, con
 #define Mem_free(p) _Mem_free(p, __func__)
 #define Mem_memcpy(d, o, s, l) _Mem_memcpy(d, o, s, l, __func__)
 
+extern int _Mem_unref(MemObject *mo, const char *func);
+
+#define Mem_unref(mo) _Mem_unref(mo, __func__)
+
 extern void backtrace_and_exit(void);
 
 #endif

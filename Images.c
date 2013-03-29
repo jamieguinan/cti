@@ -246,6 +246,7 @@ Y422P_buffer * Y422P_buffer_new(int width, int height)
   return y422p;
 }
 
+
 void Y422P_buffer_discard(Y422P_buffer *y422p)
 {
   if (y422p->cb[y422p->cb_length] != 0x55) { fprintf(stderr, "cb buffer spilled!\n"); }
@@ -257,6 +258,16 @@ void Y422P_buffer_discard(Y422P_buffer *y422p)
   memset(y422p, 0, sizeof(*y422p));
   Mem_free(y422p);
 }
+
+
+void Y422P_buffer_unref(Y422P_buffer **y422p)
+{
+  if (Mem_unref(&(*y422p)->mo) == 0) {
+    Y422P_buffer_discard(*y422p);
+  }
+  *y422p = NULL;
+}
+
 
 static void Y422P_to_xGx(Y422P_buffer *y422p, RGB3_buffer *rgb, BGR3_buffer *bgr)
 {

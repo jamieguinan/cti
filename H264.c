@@ -9,6 +9,7 @@
 #include "H264.h"
 #include "Images.h"
 #include "x264.h"
+#include "SourceSink.h"
 
 static void Config_handler(Instance *pi, void *msg);
 static void Y420P_handler(Instance *pi, void *msg);
@@ -31,10 +32,39 @@ static Output H264_outputs[] = {
 typedef struct {
   int pts;
   x264_t *encoder;
+  char *output;			/* Side channel. */
+  Sink *output_sink;
 } H264_private;
+
+
+static int set_output(Instance *pi, const char *value)
+{
+  H264_private *priv = pi->data;
+  if (priv->output) {
+    free(priv->output);
+  }
+  if (priv->output_sink) {
+    Sink_free(&priv->output_sink);
+  }
+
+  if (value[0] == '$') {
+    value = getenv(value+1);
+    if (!value) {
+      fprintf(stderr, "env var %s is not set\n", value+1);
+      return 1;
+    }
+  }
+  
+  priv->output = strdup(value);
+  priv->output_sink = Sink_new(priv->output);
+
+  return 0;
+}
+
 
 static Config config_table[] = {
   // { "...",    set_..., get_..., get_..._range },
+  { "output",    set_output, 0L, 0L }
 };
 
 
@@ -104,6 +134,11 @@ static void Y420P_handler(Instance *pi, void *msg)
       H264_buffer *hout = H264_buffer_from(nal[0].p_payload, frame_size, y420->width, y420->height);
       PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
+
+    if (rc > 0 && priv->output) {
+      Sink_write(priv->output_sink, nal[0].p_payload, rc);
+    }
+
   }
 
   Y420P_buffer_discard(y420);

@@ -167,3 +167,15 @@ void _Mem_memcpy(Ptr dest, int dest_offset, uint8_t *src, int length, const char
   }
   memcpy(dest.data + dest_offset, src, length);
 }
+
+
+int _Mem_unref(MemObject *mo, const char *func)
+{
+  int rc;
+  pthread_mutex_lock(&mem_lock);
+  mo->refcount -= 1;
+  rc = mo->refcount;
+  pthread_mutex_unlock(&mem_lock);
+  return rc;
+#warning This will probably crash...
+}
