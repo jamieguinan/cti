@@ -36,6 +36,7 @@ typedef struct {
   struct timeval tv;
   float nominal_period;
   int interlace_mode;
+  int eof;			/* EOF marker. */
 } Image_common;
 
 

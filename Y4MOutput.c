@@ -76,6 +76,11 @@ static void Y422P_handler(Instance *pi, void *data)
   Y420P_buffer *y420p = 0L;
   char header[256];
 
+  if (y422p_in->c.eof) {
+    Sink_close_current(priv->sink);
+    priv->sink = NULL;
+  }
+
   if (!priv->sink) {
     goto out;
   }

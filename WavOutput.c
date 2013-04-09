@@ -62,6 +62,11 @@ static void Wav_handler(Instance *pi, void *msg)
 
   dpf("Wav_handler %d/%d/%d\n", wav->params.channels, wav->params.rate, wav->params.bits_per_sample);
 
+  if (wav->eof) {
+    Sink_close_current(priv->sink);
+    priv->sink = NULL;
+  }
+
   if (!priv->sink) {
     return;
   }

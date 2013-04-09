@@ -30,6 +30,7 @@ typedef struct {
   struct timeval tv;
   int seq;
   int no_feedback;
+  int eof;			/* EOF marker. */
 } Wav_buffer;
 
 extern Wav_buffer *Wav_buffer_new(int rate, int channels, int format_bytes);

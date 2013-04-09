@@ -85,6 +85,14 @@ typedef struct {
   long seek_amount;		/* For forware/back seeks. */
   FPS fps;
   int snapshot;
+
+  int eof_notify;		/* Whether to notify outputs of EOF condition. */
+  int eof_notified;		/* Set after notification. */
+  struct {
+    /* Save a copy of first frames for EOF notification. */
+    Jpeg_buffer *jpeg;
+    Wav_buffer *wav;
+  } buffer;
 } MjpegDemux_private;
 
 
@@ -285,6 +293,26 @@ static void Feedback_handler(Instance *pi, void *data)
   Feedback_buffer_discard(fb);
 }
 
+static void notify_outputs_eof(Instance *pi)
+{
+  MjpegDemux_private *priv = pi->data;
+  /* Send buffered messages with EOF flag set. */
+  if (pi->outputs[OUTPUT_JPEG].destination && priv->buffer.jpeg) {
+    priv->buffer.jpeg->c.eof = 1;
+    PostData(priv->buffer.jpeg, pi->outputs[OUTPUT_JPEG].destination);
+    priv->buffer.jpeg = NULL;
+  }
+  if (pi->outputs[OUTPUT_WAV].destination && priv->buffer.wav) {
+    priv->buffer.wav->eof = 1;
+    PostData(priv->buffer.wav, pi->outputs[OUTPUT_WAV].destination);
+    priv->buffer.wav = NULL;
+  }
+  if (pi->outputs[OUTPUT_O511].destination) {
+  }
+  if (pi->outputs[OUTPUT_RAWDATA].destination) {
+  }
+}  
+
 
 static void MjpegDemux_tick(Instance *pi)
 {
@@ -322,6 +350,10 @@ static void MjpegDemux_tick(Instance *pi)
     /* Read data, with option to sleep and return on EOF. */
     Source_acquire_data(priv->source, priv->chunk, &priv->needData);
     if (priv->source->eof) {
+      if (!priv->eof_notified) {
+	notify_outputs_eof(pi);
+	priv->eof_notified = 1;
+      }
       sleep_and_return = 1;
     }
   }
@@ -459,11 +491,21 @@ static void MjpegDemux_tick(Instance *pi)
       goto out;
     }
 
+    if (priv->eof_notify && !priv->buffer.wav) {
+      /* Save a copy of the first frame. */
+      priv->buffer.wav = Wav_buffer_from(priv->chunk->data + priv->current.eoh + 4, priv->current.content_length);
+    }
+
     if (!priv->seen_audio) {
       priv->seen_audio = 1;
     }
 
     if (pi->outputs[OUTPUT_WAV].destination) {
+      while (pi->outputs[OUTPUT_WAV].destination->parent->pending_messages > 250) {
+	/* Throttle output.  25ms sleep. */
+	// printf("MjpegDemux throttle on OUTPUT_WAV\n");
+	nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
+      }
       PostData(w, pi->outputs[OUTPUT_WAV].destination);
       if (priv->use_feedback & (1<<0)) {
       	priv->pending_feedback += 1;
@@ -479,6 +521,13 @@ static void MjpegDemux_tick(Instance *pi)
   else if (streq(priv->current.content_type->bytes, "image/jpeg")) {
     Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
 				      priv->current.content_length);
+
+    if (priv->eof_notify && !priv->buffer.jpeg) {
+      /* Save a copy of the first frame. */
+      priv->buffer.jpeg = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
+					   priv->current.content_length);
+    }
+
     /* Reconstruct timeval timestamp for Jpeg buffer.  Not actually used here, though. */
     j->c.tv.tv_sec = priv->current.timestamp;
     j->c.tv.tv_usec = fmod(priv->current.timestamp, 1.0) * 1000000;
@@ -502,6 +551,13 @@ static void MjpegDemux_tick(Instance *pi)
       /* Use timestamps if configured to do so, and only if haven't
 	 seen any audio, which is normally used with feedback. */
       // printf("%d %d\n", priv->use_timestamps, !priv->seen_audio);
+
+      while (pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages > 250) {
+	/* Throttle output.  25ms sleep. */
+	nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
+	//printf("MjpegDemux throttle on OUTPUT_JPEG\n");
+      }
+
       if (priv->use_fixed_video_period) {
 	printf("fixed video period..\n");
 	nanosleep( double_to_timespec(priv->fixed_video_period), NULL);	

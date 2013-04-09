@@ -62,6 +62,7 @@
 #include "Splitter.h"
 #include "NScale.h"
 #include "AVIDemux.h"
+#include "RawSource.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -146,6 +147,7 @@ int cti_main(int argc, char *argv[])
   Splitter_init();
   NScale_init();
   AVIDemux_init();
+  RawSource_init();
 
   return app_code(argc, argv);
 }

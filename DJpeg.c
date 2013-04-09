@@ -176,6 +176,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     (void) jpeg_read_header(&cinfo, TRUE);
 
     rgb_out = RGB3_buffer_new(cinfo.image_width, cinfo.image_height);
+    rgb_out->c = jpeg_in->c;	/* common data */
 
     /* Note: Adjust default decompression parameters here.  */
 
@@ -214,12 +215,11 @@ static void Jpeg_handler(Instance *pi, void *data)
       (*dest_mgr->finish_output) (&cinfo, dest_mgr);
       (void) jpeg_finish_decompress(&cinfo);
 
-      rgb_out->c.tv = jpeg_in->c.tv;
-
       if (pi->outputs[OUTPUT_GRAY].destination && priv->use_green_for_gray) {
 	int k;
 	// printf("green_for_gray\n");
 	Gray_buffer *gray_out = Gray_buffer_new(cinfo.image_width, cinfo.image_height);
+	gray_out->c = jpeg_in->c;	/* common data */
 	for (k=0; k < gray_out->data_length; k++) {
 	  gray_out->data[k] = rgb_out->data[k*3+1];
 	}
@@ -249,6 +249,11 @@ static void Jpeg_handler(Instance *pi, void *data)
     Y422P_buffer * y422p_out = 0L;
     int error = 0;
     jmp_buf jb;
+
+    while (pi->outputs[OUTPUT_422P].destination->parent->pending_messages > 25) {
+      /* Throttle output.  25ms sleep. */
+      nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
+    }
  
     cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
 				          this may cause the program to call exit()! */
@@ -271,8 +276,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     (void) jpeg_read_header(&cinfo, TRUE);
 
     y422p_out = Y422P_buffer_new(cinfo.image_width, cinfo.image_height);
-
-    y422p_out->c.interlace_mode = jpeg_in->c.interlace_mode;
+    y422p_out->c = jpeg_in->c;	/* common data */
 
     save_width = cinfo.image_width;
     save_height = cinfo.image_height;
@@ -374,11 +378,10 @@ static void Jpeg_handler(Instance *pi, void *data)
     if (!error) {
       (void) jpeg_finish_decompress(&cinfo);
 
-      y422p_out->c.tv = jpeg_in->c.tv;
-      
       if (pi->outputs[OUTPUT_GRAY].destination && !gray_handled) {
 	/* Clone Y channel, pass along. */
 	Gray_buffer *gray_out = Gray_buffer_new(cinfo.image_width, cinfo.image_height);
+	gray_out->c = jpeg_in->c;	/* common data */
 	memcpy(gray_out->data, y422p_out->y, y422p_out->y_length);
 	PostData(gray_out, pi->outputs[OUTPUT_GRAY].destination);
       }

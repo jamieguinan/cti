@@ -33,7 +33,8 @@ config mjd input 192.168.2.22:6667
 #config mjd input 127.0.0.1:5000:L
 
 config ap device plughw:2
-config ap rate 8000
+#config ap rate 8000
+config ap rate 48000
 config ap channels 2
 config ap format signed.16-bit.little.endian
 config ap frames_per_io 128

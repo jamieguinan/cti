@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <unistd.h>		/* close */
+#include <poll.h>		/* poll */
 
 typedef struct {
   FILE *f;			/* file */
@@ -267,6 +268,25 @@ ArrayU8 * Source_read(Source *source, int max_length)
     return result;
   }
   return 0L;
+}
+
+
+int Source_poll_read(Source *source, int timeout)
+{
+  struct pollfd fds[1];
+  fds[0].events = POLLIN;
+  
+  if (source->f) {
+    fds[0].fd = fileno(source->f);
+  }
+  else if (source->s != -1) {
+    fds[0].fd = source->s;
+  }
+  else {
+    return 0;
+  }
+  
+  return poll(fds, 1, timeout);
 }
 
 

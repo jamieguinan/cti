@@ -1,3 +1,26 @@
+2013-Apr-09 17:03:35
+
+DJpeg.c:
+  Copy common data.
+  Throttle outputs.
+Images.h:
+Wav.h:
+  EOF marker.
+cti_main.c:
+Makefile:
+  RawSource template.
+MjpegDemux.c:
+  Buffer first frames, send with EOF flag when source EOF.
+  Throttle outputs.
+SourceSink.c:
+SourceSink.h:
+  New function Source_poll_read().
+WavOutput.c:
+  Close output on EOF.
+Y4MOutput.c:
+  Close output on EOF.
+
+
 2013-Mar-29 11:18:10
 
 H264.c:

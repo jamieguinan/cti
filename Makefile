@@ -107,6 +107,7 @@ OBJS= \
 	$(OBJDIR)/Splitter.o \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/AVIDemux.o \
+	$(OBJDIR)/RawSource.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
