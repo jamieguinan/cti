@@ -115,12 +115,12 @@ static void analysis_001(FaceTracker_private *priv, Gray_buffer *gray)
 
   /* Allocate sum buffer if necessary. */
   if (!priv->sum) {
-    priv->sum = Gray32_buffer_new(gray->width, gray->height);
+    priv->sum = Gray32_buffer_new(gray->width, gray->height, &gray->c);
   }
 
   /* Save a copy of the frame. */
   if (priv->fir[priv->fir_index] == 0) {
-    priv->fir[priv->fir_index] = Gray_buffer_new(gray->width, gray->height);
+    priv->fir[priv->fir_index] = Gray_buffer_new(gray->width, gray->height, &gray->c);
   }
   memcpy(priv->fir[priv->fir_index]->data, gray->data, gray->data_length);
 
@@ -182,12 +182,12 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
 
   /* Allocate sum buffer if necessary. */
   if (!priv->sum) {
-    priv->sum = Gray32_buffer_new(gray->width, gray->height);
+    priv->sum = Gray32_buffer_new(gray->width, gray->height, &gray->c);
   }
 
   /* Do calculations only if have 2 buffers to work with. */
   if (priv->iir_last == 0) {
-    priv->iir_last = Gray_buffer_new(gray->width, gray->height);
+    priv->iir_last = Gray_buffer_new(gray->width, gray->height, &gray->c);
     goto postcalc;
   }
 

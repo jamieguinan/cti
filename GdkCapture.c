@@ -124,7 +124,7 @@ static void check_files(Instance *pi)
       fprintf(stderr, "%s: invalid header\n", __func__);
       goto out;
     }
-    rgb = RGB3_buffer_new(width, height);
+    rgb = RGB3_buffer_new(width, height, 0L);
     gettimeofday(&rgb->c.tv, 0L);
     size = height*bpl;
     data = malloc(size);

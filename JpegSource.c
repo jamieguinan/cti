@@ -32,7 +32,7 @@ static int set_file(Instance *pi, const char *value)
   JpegSource_private *priv = pi->data;
   ArrayU8 *fdata = File_load_data(value);
   if (fdata) {
-    priv->jpeg = Jpeg_buffer_from(fdata->data, fdata->len);
+    priv->jpeg = Jpeg_buffer_from(fdata->data, fdata->len, 0L);
   }
   else {
     fprintf(stderr, "failed to load %s\n", value);
@@ -61,7 +61,7 @@ static int do_run(Instance *pi, const char *value)
   }
 
   for (i=0; i < count; i++) {
-    Jpeg_buffer *tmp = Jpeg_buffer_from(priv->jpeg->data, priv->jpeg->encoded_length);
+    Jpeg_buffer *tmp = Jpeg_buffer_from(priv->jpeg->data, priv->jpeg->encoded_length, 0L);
     if (cfg.verbosity) {
       printf("%d/%d (%d)\n", i, count,
 	     pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages);

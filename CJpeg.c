@@ -132,7 +132,7 @@ static void compress_and_post(Instance *pi,
   jpeg_create_compress(&cinfo);
 
   /*  Leave enough space for 100% of original size, plus some header. */
-  jpeg_out = Jpeg_buffer_new(width*height*3+16384); 
+  jpeg_out = Jpeg_buffer_new(width*height*3+16384, 0L); 
   jpeg_out->width = width;
   jpeg_out->height = height;
 

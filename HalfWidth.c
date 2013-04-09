@@ -41,7 +41,7 @@ static void y422p_handler(Instance *pi, void *data)
 {
   Y422P_buffer *y422p_in = data;
   if (pi->outputs[OUTPUT_422P].destination) {
-    Y422P_buffer *y422p_out = Y422P_buffer_new(y422p_in->width/2, y422p_in->height);
+    Y422P_buffer *y422p_out = Y422P_buffer_new(y422p_in->width/2, y422p_in->height, &y422p_in->c);
     half_width_scale(y422p_in->y, y422p_in->width, y422p_in->height, y422p_out->y);
     half_width_scale(y422p_in->cr, y422p_in->width/2, y422p_in->height, y422p_out->cr);
     half_width_scale(y422p_in->cb, y422p_in->width/2, y422p_in->height, y422p_out->cb);

@@ -234,7 +234,7 @@ static void AVIDemux_tick(Instance *pi)
   }
   else if (avi_chunk_ready(priv->chunk, jpeg_marker, &avi_chunk_size)) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
-      Jpeg_buffer *jpeg = Jpeg_buffer_from(priv->chunk->data+8, avi_chunk_size);
+      Jpeg_buffer *jpeg = Jpeg_buffer_from(priv->chunk->data+8, avi_chunk_size, 0L);
       PostData(jpeg, pi->outputs[OUTPUT_JPEG].destination);
     }
     ArrayU8_trim_left(priv->chunk, even(8+avi_chunk_size));

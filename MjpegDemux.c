@@ -225,6 +225,7 @@ static Config config_table[] = {
   /* The following are more "controls" than "configs", but maybe they are essentially the same anyway. */
   { "seek", do_seek, 0L, 0L},
   //{ "position", set_position, 0L, 0L},
+  { "eof_notify", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, eof_notify) },
 };
 
 
@@ -520,12 +521,12 @@ static void MjpegDemux_tick(Instance *pi)
   
   else if (streq(priv->current.content_type->bytes, "image/jpeg")) {
     Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
-				      priv->current.content_length);
+				      priv->current.content_length, 0L);
 
     if (priv->eof_notify && !priv->buffer.jpeg) {
       /* Save a copy of the first frame. */
       priv->buffer.jpeg = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
-					   priv->current.content_length);
+					   priv->current.content_length, 0L);
     }
 
     /* Reconstruct timeval timestamp for Jpeg buffer.  Not actually used here, though. */
@@ -604,9 +605,10 @@ static void MjpegDemux_tick(Instance *pi)
     else if (pi->outputs[OUTPUT_O511].destination) {
       O511_buffer *ob = 0L;
       ob = O511_buffer_from(priv->chunk->data + priv->current.eoh + 4,
-					 priv->current.content_length,
-					 priv->current.width,
-					 priv->current.height);
+			    priv->current.content_length,
+			    priv->current.width,
+			    priv->current.height,
+			    0L);
       PostData(ob, pi->outputs[OUTPUT_O511].destination);
       if (priv->use_feedback & (1<<2)) {
 	priv->pending_feedback += 1;

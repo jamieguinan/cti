@@ -77,7 +77,8 @@ static void y422p_handler(Instance *pi, void *data)
 
     /* else... */
 
-    Y422P_buffer *y422p_out = Y422P_buffer_new(y422p_in->width/priv->Nx, y422p_in->height/priv->Ny);
+    Y422P_buffer *y422p_out = Y422P_buffer_new(y422p_in->width/priv->Nx, y422p_in->height/priv->Ny,
+					       &y422p_in->c);
     N_scale(priv, y422p_in->y, y422p_in->width, y422p_in->height, 
 	    y422p_out->y, y422p_out->width, y422p_out->height);
     N_scale(priv, y422p_in->cr, y422p_in->cr_width, y422p_in->cr_height, 

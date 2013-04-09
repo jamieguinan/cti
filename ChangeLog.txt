@@ -1,3 +1,8 @@
+2013-Apr-09 17:43:00
+
+Create images using Image_common structure from source image, if present.
+
+
 2013-Apr-09 17:03:35
 
 DJpeg.c:

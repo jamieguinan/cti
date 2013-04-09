@@ -75,7 +75,7 @@ static void gray_handler(Instance *pi, void *msg)
   }
 		    
   if (!priv->accum) {
-    priv->accum = Gray_buffer_new(gray->width, gray->height);
+    priv->accum = Gray_buffer_new(gray->width, gray->height, 0L);
     memcpy(priv->accum->data, gray->data, gray->data_length);
   }
 

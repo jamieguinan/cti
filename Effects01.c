@@ -91,13 +91,13 @@ static void RGB3_handler(Instance *pi, void *data)
       invert_plane(rgb3_in->data, rgb3_in->data_length);
     }
     if (priv->rotate == 90) {
-      RGB3_buffer *rgb3_new = RGB3_buffer_new(rgb3_in->height, rgb3_in->width);
+      RGB3_buffer *rgb3_new = RGB3_buffer_new(rgb3_in->height, rgb3_in->width, &rgb3_in->c);
       rotate_rgb_90(rgb3_in->data, rgb3_new->data, rgb3_in->width, rgb3_in->height);
       RGB3_buffer_discard(rgb3_in);
       rgb3_in = rgb3_new;
     }
     if (priv->rotate == 270) {
-      RGB3_buffer *rgb3_new = RGB3_buffer_new(rgb3_in->height, rgb3_in->width);
+      RGB3_buffer *rgb3_new = RGB3_buffer_new(rgb3_in->height, rgb3_in->width, &rgb3_in->c);
       rotate_rgb_270(rgb3_in->data, rgb3_new->data, rgb3_in->width, rgb3_in->height);
       RGB3_buffer_discard(rgb3_in);
       rgb3_in = rgb3_new;

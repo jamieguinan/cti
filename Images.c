@@ -7,9 +7,12 @@
 
 #define _min(a, b)  ((a) < (b) ? (a) : (b))
 
-Gray_buffer *Gray_buffer_new(int width, int height)
+Gray_buffer *Gray_buffer_new(int width, int height, Image_common *c)
 {
   Gray_buffer *gray = Mem_malloc(sizeof(Gray_buffer));
+  if (c) {
+    gray->c = *c;
+  }
   gray->width = width;
   gray->height = height;
   gray->data_length = width * height;
@@ -18,7 +21,7 @@ Gray_buffer *Gray_buffer_new(int width, int height)
 }
 
 
-Gray_buffer *PGM_buffer_from(uint8_t *data, int len)
+Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c)
 {
   ArrayU8 *a = ArrayU8_temp_const(data,len); /* FIXME:  Maybe just pass in an ArrayU8? */
   int i = 0, j = 0;
@@ -64,7 +67,7 @@ Gray_buffer *PGM_buffer_from(uint8_t *data, int len)
 
   fprintf(stderr, "PGM: %dx%d %d expected %d found\n", x, y, x*y, len - j);
   if (x*y == len-j) {
-    Gray_buffer *gray = Gray_buffer_new(x, y);
+    Gray_buffer *gray = Gray_buffer_new(x, y, c);
     memcpy(gray->data, a->data+j, len-j);
     return gray;
   }
@@ -81,9 +84,12 @@ void Gray_buffer_discard(Gray_buffer *gray)
 }
 
 
-Gray32_buffer *Gray32_buffer_new(int width, int height)
+Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c)
 {
   Gray32_buffer *gray32 = Mem_malloc(sizeof(Gray32_buffer));
+  if (c) {
+    gray32->c = *c;
+  }
   gray32->width = width;
   gray32->height = height;
   gray32->data_length = width * height;
@@ -99,9 +105,12 @@ void Gray32_buffer_discard(Gray32_buffer *gray32)
 }
 
 
-RGB3_buffer *RGB3_buffer_new(int width, int height)
+RGB3_buffer *RGB3_buffer_new(int width, int height, Image_common *c)
 {
   RGB3_buffer *rgb = Mem_malloc(sizeof(*rgb));
+  if (c) {
+    rgb->c = *c;
+  }
   rgb->width = width;
   rgb->height = height;
   rgb->data_length = width * height * 3;
@@ -180,21 +189,24 @@ void RGB3_buffer_discard(RGB3_buffer *rgb)
 }
 
 
-BGR3_buffer *BGR3_buffer_new(int width, int height)
+BGR3_buffer *BGR3_buffer_new(int width, int height, Image_common *c)
 {
-  BGR3_buffer *rgb = Mem_malloc(sizeof(BGR3_buffer));
-  rgb->width = width;
-  rgb->height = height;
-  rgb->data_length = width * height * 3;
-  rgb->data = Mem_calloc(1, rgb->data_length); 	/* Caller must fill in data! */
-  return rgb;
+  BGR3_buffer *bgr = Mem_malloc(sizeof(BGR3_buffer));
+  if (c) {
+    bgr->c = *c;
+  }
+  bgr->width = width;
+  bgr->height = height;
+  bgr->data_length = width * height * 3;
+  bgr->data = Mem_calloc(1, bgr->data_length); 	/* Caller must fill in data! */
+  return bgr;
 }
 
-void BGR3_buffer_discard(BGR3_buffer *rgb)
+void BGR3_buffer_discard(BGR3_buffer *bgr)
 {
-  Mem_free(rgb->data);
-  memset(rgb, 0, sizeof(*rgb));
-  Mem_free(rgb);
+  Mem_free(bgr->data);
+  memset(bgr, 0, sizeof(*bgr));
+  Mem_free(bgr);
 }
 
 
@@ -227,9 +239,12 @@ void rgb3_to_bgr3(RGB3_buffer **rgb, BGR3_buffer **bgr)
 
 
 
-Y422P_buffer * Y422P_buffer_new(int width, int height)
+Y422P_buffer * Y422P_buffer_new(int width, int height, Image_common *c)
 {
   Y422P_buffer * y422p = Mem_malloc(sizeof(*y422p));
+  if (c) {
+    y422p->c = *c;
+  }
   y422p->width = width;
   y422p->height = height;
   y422p->y_length = width*height;
@@ -331,7 +346,7 @@ static void Y422P_to_xGx(Y422P_buffer *y422p, RGB3_buffer *rgb, BGR3_buffer *bgr
 
 RGB3_buffer *Y422P_to_RGB3(Y422P_buffer *y422p)
 {
-  RGB3_buffer *rgb = RGB3_buffer_new(y422p->width, y422p->height);
+  RGB3_buffer *rgb = RGB3_buffer_new(y422p->width, y422p->height, &y422p->c);
   Y422P_to_xGx(y422p, rgb, 0L);
   return rgb;
 }
@@ -339,7 +354,7 @@ RGB3_buffer *Y422P_to_RGB3(Y422P_buffer *y422p)
 
 BGR3_buffer *Y422P_to_BGR3(Y422P_buffer *y422p)
 {
-  BGR3_buffer *bgr = BGR3_buffer_new(y422p->width, y422p->height);
+  BGR3_buffer *bgr = BGR3_buffer_new(y422p->width, y422p->height, &y422p->c);
   Y422P_to_xGx(y422p, 0L, bgr);
   return bgr;
 }
@@ -352,7 +367,7 @@ Y422P_buffer *RGB3_toY422P(RGB3_buffer *rgb)
   //V'= (R-Y)*0.713
 
   int x, y;
-  Y422P_buffer *y422p = Y422P_buffer_new(rgb->width, rgb->height);
+  Y422P_buffer *y422p = Y422P_buffer_new(rgb->width, rgb->height, &rgb->c);
 
   uint8_t *p = rgb->data;
   uint8_t *pY = y422p->y;
@@ -393,7 +408,7 @@ Y422P_buffer *BGR3_toY422P(BGR3_buffer *bgr)
   //V'= (R-Y)*0.713
 
   int x, y;
-  Y422P_buffer *y422p = Y422P_buffer_new(bgr->width, bgr->height);
+  Y422P_buffer *y422p = Y422P_buffer_new(bgr->width, bgr->height, &bgr->c);
 
   uint8_t *p = bgr->data;
   uint8_t *pY = y422p->y;
@@ -427,9 +442,12 @@ Y422P_buffer *BGR3_toY422P(BGR3_buffer *bgr)
 }
 
 
-Y420P_buffer * Y420P_buffer_new(int width, int height)
+Y420P_buffer * Y420P_buffer_new(int width, int height, Image_common *c)
 {
   Y420P_buffer * y420p = Mem_malloc(sizeof(*y420p));
+  if (c) {
+    y420p->c = *c;
+  }
   y420p->width = width;
   y420p->height = height;
   y420p->y_length = width*height;
@@ -455,7 +473,7 @@ void Y420P_buffer_discard(Y420P_buffer *y420p)
 
 Y420P_buffer *Y422P_to_Y420P(Y422P_buffer *y422p)
 {
-  Y420P_buffer * y420p = Y420P_buffer_new(y422p->width, y422p->height);
+  Y420P_buffer * y420p = Y420P_buffer_new(y422p->width, y422p->height, &y422p->c);
   int x, y;
   int n = 0;
 
@@ -483,7 +501,7 @@ Y422P_buffer *Y422P_copy(Y422P_buffer *y422p, int xoffset, int yoffset, int widt
     return 0L;
   }
 
-  newbuf = Y422P_buffer_new(width, height);
+  newbuf = Y422P_buffer_new(width, height, &y422p->c);
 
   for (y = 0; y < height; y+=1) {
     uint8_t *ysrc = y422p->y + ((y + yoffset) * y422p->width) + xoffset;
@@ -543,7 +561,7 @@ void Y422P_paste(Y422P_buffer *dest, Y422P_buffer *src, int xoffset, int yoffset
 
 RGB3_buffer *Y420P_to_RGB3(Y420P_buffer *y420p)
 {
-  RGB3_buffer *rgb = RGB3_buffer_new(y420p->width, y420p->height);
+  RGB3_buffer *rgb = RGB3_buffer_new(y420p->width, y420p->height, &y420p->c);
 
   int x, y;
   int r, g, b;
@@ -592,9 +610,12 @@ RGB3_buffer *Y420P_to_RGB3(Y420P_buffer *y420p)
 }
 
 
-Jpeg_buffer *Jpeg_buffer_new(int size)
+Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c)
 {
   Jpeg_buffer *jpeg = Mem_malloc(sizeof(Jpeg_buffer));
+  if (c) {
+    jpeg->c = *c;
+  }
   jpeg->width = -1;
   jpeg->height = -1;
   jpeg->data_length = size;
@@ -610,9 +631,12 @@ void Jpeg_buffer_discard(Jpeg_buffer *jpeg)
 }
 
 
-O511_buffer *O511_buffer_new(int width, int height)
+O511_buffer *O511_buffer_new(int width, int height, Image_common *c)
 {
   O511_buffer *o511 = Mem_malloc(sizeof(O511_buffer));
+  if (c) {
+    o511->c = *c;
+  }
   o511->width = width;
   o511->height = height;
   o511->data_length = (width*height*3)/2;
@@ -621,9 +645,12 @@ O511_buffer *O511_buffer_new(int width, int height)
   return o511;
 }
 
-O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int height)
+O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c)
 {
   O511_buffer *o511 = Mem_malloc(sizeof(O511_buffer));
+  if (c) {
+    o511->c = *c;
+  }
   o511->width = width;
   o511->height = height;
   o511->data_length = data_length;
@@ -642,9 +669,12 @@ void O511_buffer_discard(O511_buffer *o511)
 }
 
 
-H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int height)
+H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c)
 {
   H264_buffer *h264 = Mem_malloc(sizeof(H264_buffer));
+  if (c) {
+    h264->c = *c;
+  }
   h264->width = width;
   h264->height = height;
   h264->data_length = data_length;

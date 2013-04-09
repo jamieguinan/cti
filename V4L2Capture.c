@@ -1244,7 +1244,7 @@ static void V4L2Capture_tick(Instance *pi)
   }
   else if (streq(priv->format, "BGR3")) {
     if (pi->outputs[OUTPUT_BGR3].destination) {
-      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height);
+      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, 0L);
       memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
       if (priv->snapshot > 0) {
 	bgr3_snapshot(pi, bgr3);
@@ -1253,7 +1253,7 @@ static void V4L2Capture_tick(Instance *pi)
     }
     if (pi->outputs[OUTPUT_RGB3].destination) {
       RGB3_buffer *rgb3 = 0L;
-      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height);
+      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, 0L);
       memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
       if (priv->snapshot > 0) {
 	bgr3_snapshot(pi, bgr3);
@@ -1264,7 +1264,7 @@ static void V4L2Capture_tick(Instance *pi)
   }
   else if (streq(priv->format, "422P")) {
     if (pi->outputs[OUTPUT_422P].destination) {
-      Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height);
+      Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height, 0L);
       Log(LOG_Y422P, "%s allocated y422p @ %p", __func__, y422p);
       gettimeofday(&y422p->c.tv, NULL);
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
@@ -1279,7 +1279,7 @@ static void V4L2Capture_tick(Instance *pi)
     }
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
-      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height);
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
       memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);      
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
@@ -1288,7 +1288,7 @@ static void V4L2Capture_tick(Instance *pi)
   else if (streq(priv->format, "JPEG") ||
 	   streq(priv->format, "MJPG") ) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
-      Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused);
+      Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
       gettimeofday(&j->c.tv, NULL);
       calc_fps(&j->c.tv);
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
@@ -1307,7 +1307,7 @@ static void V4L2Capture_tick(Instance *pi)
   }
   else if (streq(priv->format, "O511")) {
     if (pi->outputs[OUTPUT_O511].destination) {
-      O511_buffer *o = O511_buffer_new(priv->width, priv->height);
+      O511_buffer *o = O511_buffer_new(priv->width, priv->height, 0L);
       gettimeofday(&o->c.tv, NULL);
       memcpy(o->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
 
@@ -1341,7 +1341,7 @@ static void V4L2Capture_tick(Instance *pi)
       int icr = 0;
       int icb = 0;
       uint8_t *p = priv->buffers[priv->wait_on].data;
-      Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height);
+      Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height, 0L);
       gettimeofday(&y422p->c.tv, NULL);
       for (i=0; i < priv->vbuffer.bytesused/4; i++) {
 	y422p->y[iy++] = *p++;
@@ -1354,7 +1354,7 @@ static void V4L2Capture_tick(Instance *pi)
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
       int i = 0;
-      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height);
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
       /* Every 2nd pixel will be a gray value. */
       for (i=0; i < priv->vbuffer.bytesused/2; i++) {
 	g->data[i] = priv->buffers[priv->wait_on].data[i*2];

@@ -213,7 +213,8 @@ static void Y422p_handler(Instance *pi, void *msg)
 	      priv->left_right_crop, y422p_src->width);
     }
     else {
-      y422p_out = Y422P_buffer_new(y422p_src->width - (priv->left_right_crop * 2), y422p_src->height);
+      y422p_out = Y422P_buffer_new(y422p_src->width - (priv->left_right_crop * 2), y422p_src->height, 
+				   &y422p_src->c);
       memcpy(y422p_out->y, y422p_src->y+priv->left_right_crop, y422p_out->width);
       memcpy(y422p_out->cb, y422p_src->cb+(priv->left_right_crop/2), y422p_out->width/2);
       memcpy(y422p_out->cr, y422p_src->cr+(priv->left_right_crop/2), y422p_out->width/2);
@@ -223,7 +224,7 @@ static void Y422p_handler(Instance *pi, void *msg)
   
   if (priv->linear_blend) {
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height);
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     single_121_linear_blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     single_121_linear_blend(y422p_src->cb, y422p_out->cb, y422p_src->width/2, y422p_src->height);
     single_121_linear_blend(y422p_src->cr, y422p_out->cr, y422p_src->width/2, y422p_src->height);
@@ -232,14 +233,14 @@ static void Y422p_handler(Instance *pi, void *msg)
 
   if (priv->trim) {
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height);
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     single_trim(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     Y422P_buffer_discard(y422p_src);
   }
 
   if (priv->bottom_crop) {
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height - priv->bottom_crop);
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height - priv->bottom_crop, &y422p_src->c);
     memcpy(y422p_out->y, y422p_src->y, y422p_out->width*y422p_out->height);
     memcpy(y422p_out->cb, y422p_src->cb, y422p_out->width*y422p_out->height/2);
     memcpy(y422p_out->cr, y422p_src->cr, y422p_out->width*y422p_out->height/2);
@@ -277,7 +278,7 @@ static void RGB3_handler(Instance *pi, void *msg)
   }
 
   if (priv->bottom_crop) {
-    RGB3_buffer *tmp = RGB3_buffer_new(rgb3->width, rgb3->height - priv->bottom_crop);
+    RGB3_buffer *tmp = RGB3_buffer_new(rgb3->width, rgb3->height - priv->bottom_crop, &rgb3->c);
     memcpy(tmp->data, rgb3->data, tmp->width * 3 * tmp->height);
     RGB3_buffer_discard(rgb3);
     rgb3 = tmp;

@@ -175,8 +175,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
     (void) jpeg_read_header(&cinfo, TRUE);
 
-    rgb_out = RGB3_buffer_new(cinfo.image_width, cinfo.image_height);
-    rgb_out->c = jpeg_in->c;	/* common data */
+    rgb_out = RGB3_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
 
     /* Note: Adjust default decompression parameters here.  */
 
@@ -218,8 +217,7 @@ static void Jpeg_handler(Instance *pi, void *data)
       if (pi->outputs[OUTPUT_GRAY].destination && priv->use_green_for_gray) {
 	int k;
 	// printf("green_for_gray\n");
-	Gray_buffer *gray_out = Gray_buffer_new(cinfo.image_width, cinfo.image_height);
-	gray_out->c = jpeg_in->c;	/* common data */
+	Gray_buffer *gray_out = Gray_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
 	for (k=0; k < gray_out->data_length; k++) {
 	  gray_out->data[k] = rgb_out->data[k*3+1];
 	}
@@ -275,8 +273,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
     (void) jpeg_read_header(&cinfo, TRUE);
 
-    y422p_out = Y422P_buffer_new(cinfo.image_width, cinfo.image_height);
-    y422p_out->c = jpeg_in->c;	/* common data */
+    y422p_out = Y422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
 
     save_width = cinfo.image_width;
     save_height = cinfo.image_height;
@@ -380,8 +377,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
       if (pi->outputs[OUTPUT_GRAY].destination && !gray_handled) {
 	/* Clone Y channel, pass along. */
-	Gray_buffer *gray_out = Gray_buffer_new(cinfo.image_width, cinfo.image_height);
-	gray_out->c = jpeg_in->c;	/* common data */
+	Gray_buffer *gray_out = Gray_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
 	memcpy(gray_out->data, y422p_out->y, y422p_out->y_length);
 	PostData(gray_out, pi->outputs[OUTPUT_GRAY].destination);
       }
@@ -465,7 +461,7 @@ void DJpeg_init(void)
    Images.c because this has the jpeglib.h header, and if I'm building
    on a system without the jpeg library, I still want Images.c to
    build. */
-Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length)
+Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
 {
   Jpeg_buffer *jpeg = 0L;
   struct jpeg_decompress_struct cinfo;
@@ -494,7 +490,7 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length)
   // printf("jpeg: width=%d height=%d\n", cinfo.image_width, cinfo.image_height);
 
   /* If no error, allocate and return jpeg, otherwise it will return NULL. */
-  jpeg = Jpeg_buffer_new(data_length);
+  jpeg = Jpeg_buffer_new(data_length, c);
   jpeg->width = cinfo.image_width;
   jpeg->height = cinfo.image_height;
   jpeg->data_length = data_length;

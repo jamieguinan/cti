@@ -131,7 +131,7 @@ static void Y420P_handler(Instance *pi, void *msg)
 
     if (rc > 0 && pi->outputs[OUTPUT_H264].destination) {
       int frame_size = rc;
-      H264_buffer *hout = H264_buffer_from(nal[0].p_payload, frame_size, y420->width, y420->height);
+      H264_buffer *hout = H264_buffer_from(nal[0].p_payload, frame_size, y420->width, y420->height, &y420->c);
       PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
 

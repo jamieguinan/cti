@@ -103,7 +103,7 @@ static void O511_handler(Instance *pi, void *data)
 
   gettimeofday(&t1, 0L);
 
-  y420p_out = Y420P_buffer_new(o511_in->width, o511_in->height);
+  y420p_out = Y420P_buffer_new(o511_in->width, o511_in->height, 0L);
   y420p_out->c.tv = o511_in->c.tv;
     
   temp = malloc( (o511_in->width * o511_in->height * 3)/ 2);
@@ -126,7 +126,7 @@ static void O511_handler(Instance *pi, void *data)
   }
 
   if (pi->outputs[OUTPUT_GRAY].destination) {
-    Gray_buffer *gray_out = Gray_buffer_new(y420p_out->width, y420p_out->height);
+    Gray_buffer *gray_out = Gray_buffer_new(y420p_out->width, y420p_out->height, 0L);
     memcpy(gray_out->data, y420p_out->y, y420p_out->width * y420p_out->height);
     gray_out->c.tv = o511_in->c.tv;
     PostData(gray_out, pi->outputs[OUTPUT_GRAY].destination);

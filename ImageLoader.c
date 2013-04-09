@@ -40,7 +40,7 @@ static int set_file(Instance *pi, const char *value)
 
   switch (t) {
   case IMAGE_TYPE_PGM:
-    gray = PGM_buffer_from(fdata->data, fdata->len);
+    gray = PGM_buffer_from(fdata->data, fdata->len, 0L);
     if (gray) {
       if (pi->outputs[OUTPUT_GRAY].destination) {
 	PostData(gray, pi->outputs[OUTPUT_GRAY].destination);
