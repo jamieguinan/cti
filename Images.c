@@ -9,7 +9,7 @@
 
 Gray_buffer *Gray_buffer_new(int width, int height, Image_common *c)
 {
-  Gray_buffer *gray = Mem_malloc(sizeof(Gray_buffer));
+  Gray_buffer *gray = Mem_calloc(1, sizeof(Gray_buffer));
   if (c) {
     gray->c = *c;
   }
@@ -86,7 +86,7 @@ void Gray_buffer_discard(Gray_buffer *gray)
 
 Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c)
 {
-  Gray32_buffer *gray32 = Mem_malloc(sizeof(Gray32_buffer));
+  Gray32_buffer *gray32 = Mem_calloc(1, sizeof(Gray32_buffer));
   if (c) {
     gray32->c = *c;
   }
@@ -107,7 +107,7 @@ void Gray32_buffer_discard(Gray32_buffer *gray32)
 
 RGB3_buffer *RGB3_buffer_new(int width, int height, Image_common *c)
 {
-  RGB3_buffer *rgb = Mem_malloc(sizeof(*rgb));
+  RGB3_buffer *rgb = Mem_calloc(1, sizeof(*rgb));
   if (c) {
     rgb->c = *c;
   }
@@ -191,7 +191,7 @@ void RGB3_buffer_discard(RGB3_buffer *rgb)
 
 BGR3_buffer *BGR3_buffer_new(int width, int height, Image_common *c)
 {
-  BGR3_buffer *bgr = Mem_malloc(sizeof(BGR3_buffer));
+  BGR3_buffer *bgr = Mem_calloc(1, sizeof(BGR3_buffer));
   if (c) {
     bgr->c = *c;
   }
@@ -241,7 +241,7 @@ void rgb3_to_bgr3(RGB3_buffer **rgb, BGR3_buffer **bgr)
 
 Y422P_buffer * Y422P_buffer_new(int width, int height, Image_common *c)
 {
-  Y422P_buffer * y422p = Mem_malloc(sizeof(*y422p));
+  Y422P_buffer * y422p = Mem_calloc(1, sizeof(*y422p));
   if (c) {
     y422p->c = *c;
   }
@@ -444,7 +444,7 @@ Y422P_buffer *BGR3_toY422P(BGR3_buffer *bgr)
 
 Y420P_buffer * Y420P_buffer_new(int width, int height, Image_common *c)
 {
-  Y420P_buffer * y420p = Mem_malloc(sizeof(*y420p));
+  Y420P_buffer * y420p = Mem_calloc(1, sizeof(*y420p));
   if (c) {
     y420p->c = *c;
   }
@@ -612,7 +612,7 @@ RGB3_buffer *Y420P_to_RGB3(Y420P_buffer *y420p)
 
 Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c)
 {
-  Jpeg_buffer *jpeg = Mem_malloc(sizeof(Jpeg_buffer));
+  Jpeg_buffer *jpeg = Mem_calloc(1, sizeof(Jpeg_buffer));
   if (c) {
     jpeg->c = *c;
   }
@@ -633,7 +633,7 @@ void Jpeg_buffer_discard(Jpeg_buffer *jpeg)
 
 O511_buffer *O511_buffer_new(int width, int height, Image_common *c)
 {
-  O511_buffer *o511 = Mem_malloc(sizeof(O511_buffer));
+  O511_buffer *o511 = Mem_calloc(1, sizeof(O511_buffer));
   if (c) {
     o511->c = *c;
   }
@@ -647,7 +647,7 @@ O511_buffer *O511_buffer_new(int width, int height, Image_common *c)
 
 O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c)
 {
-  O511_buffer *o511 = Mem_malloc(sizeof(O511_buffer));
+  O511_buffer *o511 = Mem_calloc(1, sizeof(O511_buffer));
   if (c) {
     o511->c = *c;
   }
@@ -671,7 +671,7 @@ void O511_buffer_discard(O511_buffer *o511)
 
 H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c)
 {
-  H264_buffer *h264 = Mem_malloc(sizeof(H264_buffer));
+  H264_buffer *h264 = Mem_calloc(1, sizeof(H264_buffer));
   if (c) {
     h264->c = *c;
   }

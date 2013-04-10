@@ -136,6 +136,19 @@ void Sink_write(Sink *sink, void *data, int length)
 
 void Sink_close_current(Sink *sink)
 {
+  Sink_private *priv = (Sink_private *)sink;
+  if (priv->f) {
+    fclose(priv->f);
+    priv->f = NULL;
+  }
+  else if (priv->p) {
+    pclose(priv->p);
+    priv->p = NULL;
+  }
+  else if (priv->s != -1) {   
+    close(priv->s);
+    priv->s = -1;
+  }  
 }
 
 

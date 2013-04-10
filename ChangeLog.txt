@@ -1,3 +1,10 @@
+2013-Apr-10 01:47:36
+
+Use calloc() for image objects.
+
+Implement Sink_close_current().
+
+
 2013-Apr-09 17:43:00
 
 Create images using Image_common structure from source image, if present.
