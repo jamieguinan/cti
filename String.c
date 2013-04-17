@@ -67,11 +67,10 @@ void String_cat3(String *s, const char *s1, const char *s2, const char *s3)
 }
 
 
-String *String_new(const char *init)
+void String_set(String *s, const char *init)
 {
-  String *s = Mem_calloc(1, sizeof(*s));
   if (!init) {
-    fprintf(stderr, "String_new needs an initial string, even if \"\"...\n");
+    fprintf(stderr, "String_set needs an initial string, even if \"\"...\n");
     exit(1);
   }
 
@@ -80,16 +79,32 @@ String *String_new(const char *init)
   while (s->available <= init_len) {
     s->available *= 2;
   }
+
+  if (s->bytes) { free(s->bytes); }
   s->bytes = Mem_malloc(s->available);
   strcpy(s->bytes, init);
   s->len = init_len;
+}
+
+
+String *String_new(const char *init)
+{
+  String *s = Mem_calloc(1, sizeof(*s));
+  String_set(s, init);
   return s;
+}
+
+
+void String_clear(String *s)
+{
+  Mem_free(s->bytes);
+  s->bytes = 0L;
 }
 
 
 void String_free(String **s)
 {
-  Mem_free((*s)->bytes);
+  String_clear(*s);
   Mem_free(*s);
   *s = 0L;
 }
@@ -134,6 +149,22 @@ void List_append(List *l, void *thing)
   l->things_count += 1;
 }
 
+/* I wasn't sure how to portably pass fmt and "..." along between these 2 sprintf variants,
+   so I just kept them separate. */
+void String_set_sprintf(String *s, const char *fmt, ...)
+{
+  char *p = NULL;
+  va_list ap;
+  int rc;
+  va_start(ap, fmt);
+  rc = vasprintf(&p, fmt, ap);	/* Allocates on stack. */
+  if (-1 == rc) {
+    perror("vasprintf");
+  }
+  va_end(ap);
+  String_set(s, p);
+}
+
 
 String * String_sprintf(const char *fmt, ...)
 {
@@ -142,13 +173,12 @@ String * String_sprintf(const char *fmt, ...)
   va_list ap;
   int rc;
   va_start(ap, fmt);
-  rc = vasprintf(&p, fmt, ap);
+  rc = vasprintf(&p, fmt, ap);	/* Allocates on stack. */
   if (-1 == rc) {
     perror("vasprintf");
   }
   va_end(ap);
   s = String_new(p);
-  free(p);
   return s;
 }
 

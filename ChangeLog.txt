@@ -1,3 +1,13 @@
+2013-Apr-17 18:42:40
+
+String.c:
+String.h:
+  Fill in unimplemented code.
+
+V4L2Capture.c:
+  Use String instead of "char *" for private data structures.
+
+
 2013-Apr-17 16:48:41
 
 MjpegDemux.c:

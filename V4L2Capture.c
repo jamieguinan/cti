@@ -1,6 +1,10 @@
 /* 
- * V4L2 capture.  I would like this work for BTTV (RGB, YCrCb) and
- * Logitech (MJPEG, YUV).
+ * V4L2 capture.  This has been tested with:
+ *   BTTV (RGB, YCrCb), PCI
+ *   Logitech (MJPEG, YUV), c310, USB
+ *   pcHDTV, PCI
+ *   ov511, USB
+ *   vimicro, USB
  */
 
 #include <stdio.h>
@@ -55,20 +59,20 @@ static Output V4L2Capture_outputs[] = {
 
 typedef struct  {
   /* Many of these variables might end up being strings, and interpreted in set_* functions. */
-  char *drivermatch;            /* Optional, I use this for matching gspca sub-devices. */
-  char *devpath;
+  String drivermatch;            /* Optional, I use this for matching gspca sub-devices. */
+  String devpath;
   int fd;
   int enable;			/* Set this to start capturing. */
 
-  char *format;
+  String format;
 
   /* Mostly relevant for TV/RGB */
-  char *input;
+  String input;
   int input_index;
-  char *std;
-  char *brightness;
-  char *saturation;
-  char *contrast;
+  String std;
+  String brightness;
+  String saturation;
+  String contrast;
 
   struct v4l2_frequency freq;
   /* int channel; */  /* There might be more to this, like tuner, etc... */
@@ -76,8 +80,8 @@ typedef struct  {
   int height;
 
   /* Mostly relevant for JPEG */
-  char *autoexpose;
-  char *exposure;
+  String autoexpose;
+  String exposure;
   // int auto_expose;
   // int exposure_value;
   int focus;
@@ -117,10 +121,7 @@ static int set_device(Instance *pi, const char *value)
   struct v4l2_tuner tuner = {};
   int i;
 
-  if (priv->devpath) {
-    free(priv->devpath);
-    priv->devpath = NULL;
-  }
+  String_clear(&priv->devpath);
 
   if (priv->fd != -1) {
     close(priv->fd);
@@ -133,23 +134,23 @@ static int set_device(Instance *pi, const char *value)
   for (i=0; i < available_v4l_devices.descriptions.count; i++) {
     if (strstr(available_v4l_devices.descriptions.items[i]->bytes, value)) {
       puts("found it!");
-      priv->devpath = strdup(available_v4l_devices.strings.items[i]->bytes);
+      String_set(&priv->devpath, available_v4l_devices.strings.items[i]->bytes);
       break;
     }
   }
 
   Range_free(&available_v4l_devices);
   
-  if (!priv->devpath) {
+  if (!s(priv->devpath)) {
     /* Not found, try value. */
-    priv->devpath = strdup(value);
+    String_set(&priv->devpath, value);
   }
 
-  priv->fd = open(priv->devpath, O_RDWR);
+  priv->fd = open(s(priv->devpath), O_RDWR);
 
   if (priv->fd == -1) {
     /* FIXME: Set error status, do not call perror. */
-    perror(priv->devpath);
+    perror(s(priv->devpath));
     goto out;
   }
 
@@ -163,8 +164,8 @@ static int set_device(Instance *pi, const char *value)
     goto out;
   }
 
-  if (priv->drivermatch && !streq((const char*)v4l2_caps.driver, priv->drivermatch)) {
-    fprintf(stderr, "driver mismatch %s != %s\n", v4l2_caps.driver, priv->drivermatch);
+  if (s(priv->drivermatch) && !streq((const char*)v4l2_caps.driver, s(priv->drivermatch))) {
+    fprintf(stderr, "driver mismatch %s != %s\n", v4l2_caps.driver, s(priv->drivermatch));
     close(priv->fd);
     priv->fd = -1;
     goto out;
@@ -271,10 +272,7 @@ static int set_input(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  if (priv->input) {
-    free(priv->input);
-  }
-  priv->input = strdup(value);
+  String_set(&priv->input, value);
 
  out:
   return rc;
@@ -334,10 +332,7 @@ static int set_format(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  if (priv->format) {
-    free(priv->format);
-  }
-  priv->format = strdup(value);
+  String_set(&priv->format, value);
 
  out:
   return rc;
@@ -459,10 +454,7 @@ static int set_std(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  if (priv->std) {
-    free(priv->std);
-  }
-  priv->std = strdup(value);
+  String_set(&priv->std, value);
 
  out:
   return rc;
@@ -556,11 +548,8 @@ static int set_brightness(Instance *pi, const char *value)
   V4L2Capture_private *priv = pi->data;
   rc = generic_v4l2_set(priv, V4L2_CID_BRIGHTNESS, atoi(value));
   if (rc == 0) {
-    if (priv->brightness) {
-      free(priv->brightness);
-    }
-    priv->brightness = strdup(value);
-    printf("brightness set to %s\n", priv->brightness);
+    String_set(&priv->brightness, value);
+    printf("brightness set to %s\n", s(priv->brightness));
   }
   return rc;
 }
@@ -571,11 +560,8 @@ static int set_contrast(Instance *pi, const char *value)
   V4L2Capture_private *priv = pi->data;
   rc = generic_v4l2_set(priv, V4L2_CID_CONTRAST, atoi(value));
   if (rc == 0) {
-    if (priv->contrast) {
-      free(priv->contrast);
-    }
-    priv->contrast = strdup(value);
-    printf("contrast set to %s\n", priv->contrast);
+    String_set(&priv->contrast, value);
+    printf("contrast set to %s\n", s(priv->contrast));
   }
   return rc;
 }
@@ -591,11 +577,8 @@ static int set_autoexpose(Instance *pi, const char *value)
 
   rc = generic_v4l2_set(priv, V4L2_CID_EXPOSURE_AUTO, atoi(value));
   if (rc == 0) {
-    if (priv->autoexpose) {
-      free(priv->autoexpose);
-    }
-    priv->autoexpose = strdup(value);
-    printf("autoexpose set to %s\n", priv->autoexpose);
+    String_set(&priv->autoexpose, value);
+    printf("autoexpose set to %s\n", s(priv->autoexpose));
   }
   return rc;
 }
@@ -610,11 +593,8 @@ static int set_exposure(Instance *pi, const char *value)
 #endif
   rc = generic_v4l2_set(priv, V4L2_CID_EXPOSURE_ABSOLUTE, atoi(value));
   if (rc == 0) {
-    if (priv->exposure) {
-      free(priv->exposure);
-    }
-    priv->exposure = strdup(value);
-    printf("exposure set to %s\n", priv->exposure);
+    String_set(&priv->exposure, value);
+    printf("exposure set to %s\n", s(priv->exposure));
   }
   return rc;
 }
@@ -625,11 +605,8 @@ static int set_saturation(Instance *pi, const char *value)
   V4L2Capture_private *priv = pi->data;
   rc = generic_v4l2_set(priv, V4L2_CID_SATURATION, atoi(value));
   if (rc == 0) {
-    if (priv->saturation) {
-      free(priv->saturation);
-    }
-    priv->saturation = strdup(value);
-    printf("saturation set to %s\n", priv->saturation);
+    String_set(&priv->saturation, value);
+    printf("saturation set to %s\n", s(priv->saturation));
   }
   return rc;
 }
@@ -810,10 +787,7 @@ static int set_snapshot(Instance *pi, const char *value)
 static int set_drivermatch(Instance *pi, const char *value)
 {
   V4L2Capture_private *priv = pi->data;
-  if (priv->drivermatch) {
-    free(priv->drivermatch);
-  }
-  priv->drivermatch = strdup(value);
+  String_set(&priv->drivermatch, value);
   return 0;
 }
 
@@ -1222,7 +1196,7 @@ static void V4L2Capture_tick(Instance *pi)
     priv->sequence = priv->vbuffer.sequence;
   }
 
-  dpf("capture on buffer %d Ok [ priv->format=%s, counter=%d ]\n", priv->wait_on, priv->format,
+  dpf("capture on buffer %d Ok [ priv->format=%s, counter=%d ]\n", priv->wait_on, s(priv->format),
       pi->counter);
 
   pi->counter += 1;
@@ -1239,10 +1213,10 @@ static void V4L2Capture_tick(Instance *pi)
   }
 
   /* Post to output. */
-  if (!priv->format) {
+  if (!s(priv->format)) {
     /* Format not set! */
   }
-  else if (streq(priv->format, "BGR3")) {
+  else if (streq(s(priv->format), "BGR3")) {
     if (pi->outputs[OUTPUT_BGR3].destination) {
       BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, 0L);
       memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
@@ -1262,7 +1236,7 @@ static void V4L2Capture_tick(Instance *pi)
       PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
     }
   }
-  else if (streq(priv->format, "422P")) {
+  else if (streq(s(priv->format), "422P")) {
     if (pi->outputs[OUTPUT_422P].destination) {
       Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height, 0L);
       Log(LOG_Y422P, "%s allocated y422p @ %p", __func__, y422p);
@@ -1285,8 +1259,8 @@ static void V4L2Capture_tick(Instance *pi)
     }
 
   }
-  else if (streq(priv->format, "JPEG") ||
-	   streq(priv->format, "MJPG") ) {
+  else if (streq(s(priv->format), "JPEG") ||
+	   streq(s(priv->format), "MJPG") ) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
       gettimeofday(&j->c.tv, NULL);
@@ -1305,7 +1279,7 @@ static void V4L2Capture_tick(Instance *pi)
       }
     }
   }
-  else if (streq(priv->format, "O511")) {
+  else if (streq(s(priv->format), "O511")) {
     if (pi->outputs[OUTPUT_O511].destination) {
       O511_buffer *o = O511_buffer_new(priv->width, priv->height, 0L);
       gettimeofday(&o->c.tv, NULL);
@@ -1321,7 +1295,7 @@ static void V4L2Capture_tick(Instance *pi)
       }
     }
   }
-  else if (streq(priv->format, "YUYV")) {
+  else if (streq(s(priv->format), "YUYV")) {
     if (30 == pi->counter) {
       printf("YUYV frame number 30\n");
       FILE *f = fopen("yuyv.out", "wb");
@@ -1363,7 +1337,7 @@ static void V4L2Capture_tick(Instance *pi)
     }
   }
   else {
-    fprintf(stderr, "%s: format %s not handled!\n", __func__, priv->format);
+    fprintf(stderr, "%s: format %s not handled!\n", __func__, s(priv->format));
   }
 
   /* Update queue indexes. */
