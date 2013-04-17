@@ -482,6 +482,7 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
 
   switch (y422p_in->c.interlace_mode) {
   case IMAGE_INTERLACE_NONE:
+  default:
     iy = 0;
     next_iy = 0;
     dy = 1;
@@ -885,8 +886,9 @@ static int my_event_loop(void *data)
 
   printf("%s started\n", __func__);
 
-  /* NOTE: The thread that calls SDL_WaitEvent() must be the same thread that
-     sets up the video.  Both happen in this function. */
+  /* NOTE: For compatibility with certain platforms, the thread that
+     calls SDL_WaitEvent() must be the same thread that sets up the
+     video.  Both happen in this function. */
 
   _sdl_init(priv);
 

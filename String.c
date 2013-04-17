@@ -10,6 +10,21 @@ int String_cmp(String *s1, String *s2)
   return strcmp(s1->bytes, s2->bytes);
 }
 
+int String_begins_with(String *s, const char *s1)
+{
+  int i=0;
+  while (*s1) {
+    if (s->bytes[i] == 0) {
+      return 0;
+    }
+    else if (s->bytes[i] != *s1) {
+      return 0;
+    }
+    s1++;
+  }
+  return 1;
+}
+
 void String_cat1(String *s, const char *s1)
 {
   int len = s->len + strlen(s1);

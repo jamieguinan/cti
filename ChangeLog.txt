@@ -1,3 +1,32 @@
+2013-Apr-17 16:48:41
+
+MjpegDemux.c:
+  Always do timestamp check.
+  Use String_begins_with().
+  Dump some extra text when did not get all headers.
+
+SDLstuff.c:
+  Set default case for interlace handling.
+  Fix comments about threading.
+
+String.c:
+String.h:
+  String_begins_with()
+
+VFilter.c
+  top_crop
+
+RawSource.c:
+RawSource.h:
+  New module, still in progress.
+
+*.cmd:
+  Renames, changes, new files.
+
+
+aria-play.cmd
+
+
 2013-Apr-10 01:47:36
 
 Use calloc() for image objects.

@@ -1,5 +1,10 @@
 /*
- * A/V demuxer.
+ * Demuxer for MJPEG streams, basically jpeg files prefixed by HTTP headers.
+ *    http://en.wikipedia.org/wiki/Motion_JPEG
+ * Handles few other content types in addition to image/jpeg.
+ * For external examples, search "inurl:axis-cgi/mjpg/video.cgi", although
+ * this module requires complete Jpeg files and fails on streams that
+ * elide common header data.
  */
 #include <string.h>		/* memcpy */
 #include <stdio.h>		/* fprintf */
@@ -373,6 +378,7 @@ static void MjpegDemux_tick(Instance *pi)
    * Timestamp:1267318275.259539
    * Content-Length: 8192
    *
+   *
    * --0123456789NEXT
    * Content-Type: image/jpeg
    * Timestamp:1267318275.296939
@@ -415,7 +421,6 @@ static void MjpegDemux_tick(Instance *pi)
 	  String_parse_string(line, b, &priv->current.content_type);
 	}
 	else if ((a = String_find(line, 0, "Timestamp:", &b)) != -1) {
-#if 1
 	  int n, dot = 0;
 	  n = String_find(line, 0, ".", &dot);
 	  if (n != -1  && strlen(line->bytes+dot) == 5) {
@@ -426,7 +431,6 @@ static void MjpegDemux_tick(Instance *pi)
 	    line->bytes[dot] = '0';
 	    printf("%s\n", line->bytes);
 	  }
-#endif
 	  String_parse_double(line, b, &priv->current.timestamp);
 	  if (priv->use_timestamps && priv->current.timestamp <= 0.001) {
 	    /* Some of my early recordings were messed up, so disable
@@ -445,7 +449,7 @@ static void MjpegDemux_tick(Instance *pi)
 	else if ((a = String_find(line, 0, "Content-Length:", &b)) != -1) {
 	  String_parse_int(line, b, &priv->current.content_length);
 	}
-	else if (line->bytes[0] == '-' && line->bytes[1] == '-') {
+	else if (String_begins_with(line, "--")) {
 	  if (!priv->boundary) {
 	    priv->boundary = String_dup(line);
 	  }
@@ -465,6 +469,9 @@ static void MjpegDemux_tick(Instance *pi)
     }
     else {
       fprintf(stderr, "Gah!  Did not get all the headers needed.  What to do?\n");
+      fprintf(stderr, "  priv->current.content_type=%p\n", priv->current.content_type);
+      fprintf(stderr, "  priv->current.content_length=%d\n", priv->current.content_length);
+      fprintf(stderr, "  source offset=%ld\n", Source_tell(priv->source));
       goto out;
     }
   }

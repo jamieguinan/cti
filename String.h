@@ -12,6 +12,7 @@ extern void String_free(String **s);
 
 extern void String_trim_right(String *s);
 extern int String_cmp(String *s1, String *s2);
+extern int String_begins_with(String *s, const char *s1);
 extern void String_cat1(String *s, const char *s1);
 extern void String_cat2(String *s, const char *s1, const char *s2);
 extern void String_cat3(String *s, const char *s1, const char *s2, const char *s3);

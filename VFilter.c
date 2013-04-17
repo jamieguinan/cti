@@ -32,6 +32,7 @@ static Output VFilter_outputs[] = {
 
 typedef struct {
   int left_right_crop;
+  int top_crop;
   int bottom_crop;
   int linear_blend;
   int trim;
@@ -103,6 +104,7 @@ static int set_trim(Instance *pi, const char *value)
 
 static Config config_table[] = {
   { "left_right_crop",  set_left_right_crop, 0L, 0L },
+  { "top_crop",    0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, top_crop) },
   { "bottom_crop",    set_bottom_crop, 0L, 0L },
   { "linear_blend",  set_linear_blend, 0L, 0L },
   { "trim",  set_trim, 0L, 0L },
@@ -235,6 +237,15 @@ static void Y422p_handler(Instance *pi, void *msg)
     y422p_src = y422p_out ? y422p_out : y422p_in;
     y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     single_trim(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
+    Y422P_buffer_discard(y422p_src);
+  }
+
+  if (priv->top_crop) {
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height - priv->top_crop, &y422p_src->c);
+    memcpy(y422p_out->y, y422p_src->y+(y422p_src->width * priv->top_crop), y422p_out->width*y422p_out->height);
+    memcpy(y422p_out->cb, y422p_src->cb+(y422p_src->width * priv->top_crop)/2, y422p_out->width*y422p_out->height/2);
+    memcpy(y422p_out->cr, y422p_src->cr+(y422p_src->width * priv->top_crop)/2, y422p_out->width*y422p_out->height/2);
     Y422P_buffer_discard(y422p_src);
   }
 
