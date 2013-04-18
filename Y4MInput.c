@@ -33,7 +33,7 @@ static Output Y4MInput_outputs[] = {
 enum { PARSING_HEADER, PARSING_FRAME };
 
 typedef struct {
-  char *input;
+  String input;
   Source *source;
   ArrayU8 *chunk;
   String *boundary;
@@ -69,9 +69,6 @@ typedef struct {
 static int set_input(Instance *pi, const char *value)
 {
   Y4MInput_private *priv = pi->data;
-  if (priv->input) {
-    free(priv->input);
-  }
   if (priv->source) {
     Source_free(&priv->source);
   }
@@ -83,9 +80,9 @@ static int set_input(Instance *pi, const char *value)
       return 1;
     }
   }
-  
-  priv->input = strdup(value);
-  priv->source = Source_new(priv->input);
+
+  String_set(&priv->input, value);
+  priv->source = Source_new(s(priv->input));
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);

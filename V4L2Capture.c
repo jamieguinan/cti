@@ -76,6 +76,7 @@ typedef struct  {
 
   struct v4l2_frequency freq;
   /* int channel; */  /* There might be more to this, like tuner, etc... */
+  /* Capture dimensions. */
   int width;
   int height;
 
@@ -1132,6 +1133,22 @@ static void bgr3_snapshot(Instance *pi, BGR3_buffer *bgr3)
 }
 
 
+static void y422p_snapshot(Instance *pi, Y422P_buffer *y422p)
+{
+  V4L2Capture_private *priv = pi->data;
+  FILE *f;
+  char filename[64];
+  sprintf(filename, "snap%04d.y422p", pi->counter);
+  fprintf(stderr, "%s\n", filename);
+  f = fopen(filename, "wb");
+  if (f) {
+    if (fwrite(priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused, 1, f) != 1) { perror("fwrite"); }
+    fclose(f);
+  }
+  priv->snapshot -= 1;	  
+}
+
+
 static void V4L2Capture_tick(Instance *pi)
 {
   V4L2Capture_private *priv = pi->data;
@@ -1296,15 +1313,6 @@ static void V4L2Capture_tick(Instance *pi)
     }
   }
   else if (streq(s(priv->format), "YUYV")) {
-    if (30 == pi->counter) {
-      printf("YUYV frame number 30\n");
-      FILE *f = fopen("yuyv.out", "wb");
-      if (fwrite(priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused, 1, f) != 1) {
-	perror("fwrite");
-      }
-      fclose(f);
-    }
-
     if (priv->vbuffer.bytesused != priv->width*priv->height*2) {
       fprintf(stderr, "%s: YUYV buffer is not the expected size!\n", __func__);
     }
@@ -1322,6 +1330,9 @@ static void V4L2Capture_tick(Instance *pi)
 	y422p->cb[icb++] = *p++;
 	y422p->y[iy++] = *p++;
 	y422p->cr[icr++] = *p++;
+      }
+      if (priv->snapshot > 0) {
+	y422p_snapshot(pi, y422p);
       }
       PostData(y422p, pi->outputs[OUTPUT_422P].destination);
     }

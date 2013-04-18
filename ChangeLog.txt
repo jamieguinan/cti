@@ -1,3 +1,13 @@
+2013-Apr-18 14:11:15
+
+Various:
+  "char *" -> String
+  Comment fixes.
+
+V4L2Capture.c:
+  y422p_snapshot()
+
+
 2013-Apr-17 18:42:40
 
 String.c:

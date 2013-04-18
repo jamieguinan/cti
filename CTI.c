@@ -634,11 +634,11 @@ void cti_debug_printf_register(const char *file, int line, int *enabled, const c
 
   if (!printfRecords.available) {
     printfRecords.available = 32;
-    printfRecords.records = calloc(printfRecords.available, sizeof(*printfRecords.records));
+    printfRecords.records = Mem_calloc(printfRecords.available, sizeof(*printfRecords.records));
   }
   else if (printfRecords.available == (printfRecords.count+1)) {
     printfRecords.available *= 2;
-    printfRecords.records = realloc(printfRecords.records, 
+    printfRecords.records = Mem_realloc(printfRecords.records, 
 				    printfRecords.available*sizeof(*printfRecords.records));
   }
   

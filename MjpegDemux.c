@@ -50,7 +50,7 @@ static Output MjpegDemux_outputs[] = {
 enum { PARSING_HEADER, PARSING_DATA };
 
 typedef struct {
-  char *input;
+  String input;
   Source *source;
   ArrayU8 *chunk;
   String *boundary;
@@ -60,7 +60,7 @@ typedef struct {
 
   int enable;			/* Set this to start processing. */
 
-  char *output;			/* Side channel. */
+  String output;			/* Side channel. */
   Sink *output_sink;
 
   struct {
@@ -104,9 +104,7 @@ typedef struct {
 static int set_input(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = pi->data;
-  if (priv->input) {
-    free(priv->input);
-  }
+
   if (priv->source) {
     Source_free(&priv->source);
   }
@@ -118,9 +116,9 @@ static int set_input(Instance *pi, const char *value)
       return 1;
     }
   }
-  
-  priv->input = strdup(value);
-  priv->source = Source_new(priv->input);
+
+  String_set(&priv->input, value);
+  priv->source = Source_new(s(priv->input));
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);
@@ -136,9 +134,6 @@ static int set_input(Instance *pi, const char *value)
 static int set_output(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = pi->data;
-  if (priv->output) {
-    free(priv->output);
-  }
   if (priv->output_sink) {
     Sink_free(&priv->output_sink);
   }
@@ -150,9 +145,9 @@ static int set_output(Instance *pi, const char *value)
       return 1;
     }
   }
-  
-  priv->output = strdup(value);
-  priv->output_sink = Sink_new(priv->output);
+
+  String_set(&priv->output, value);
+  priv->output_sink = Sink_new(s(priv->output));
 
   return 0;
 }

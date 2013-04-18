@@ -67,7 +67,7 @@ static struct {
 
 typedef struct {
   snd_pcm_t *handle;
-  char *device;			/* "hw:0", etc. */
+  String device;			/* "hw:0", etc. */
   int useplug;
   snd_pcm_hw_params_t *hwparams;
   snd_pcm_stream_t mode;
@@ -111,10 +111,7 @@ static int set_device(Instance *pi, const char *value)
   int rc = 0;
   int i;
 
-  if (priv->device) {
-    free(priv->device);
-  }
-  priv->device = strdup(value);
+  String_set(&priv->device, value);
 
   if (priv->handle) {
     snd_pcm_close(priv->handle);
@@ -126,25 +123,25 @@ static int set_device(Instance *pi, const char *value)
   for (i=0; i < available_alsa_devices.descriptions.count; i++) {
     if (strstr(available_alsa_devices.descriptions.items[i]->bytes, value)) {
       puts("found it!");
-      priv->device = strdup(available_alsa_devices.strings.items[i]->bytes);
+      String_set(&priv->device, available_alsa_devices.strings.items[i]->bytes);
       break;
     }
   }
 
   Range_free(&available_alsa_devices);
 
-  if (!priv->device) {
+  if (!s(priv->device)) {
     /* Not found, try value as supplied. */
-    priv->device = strdup(value);
+    String_set(&priv->device, value);
   }
   
-  rc = snd_pcm_open(&priv->handle, priv->device, priv->mode, 0);
+  rc = snd_pcm_open(&priv->handle, s(priv->device), priv->mode, 0);
   if (rc < 0) {
-    fprintf(stderr, "snd_pcm_open %s: %s\n", priv->device, snd_strerror(rc));
+    fprintf(stderr, "snd_pcm_open %s: %s\n", s(priv->device), snd_strerror(rc));
     goto out;
   }
   
-  fprintf(stderr, "ALSA device %s opened, handle=%p\n", priv->device, priv->handle);
+  fprintf(stderr, "ALSA device %s opened, handle=%p\n", s(priv->device), priv->handle);
 
   /* Allocate hardware parameter structure, and call "any", and use
      the resulting hwparams in subsequent calls.  I had tried calling
@@ -157,7 +154,7 @@ static int set_device(Instance *pi, const char *value)
   rc = snd_pcm_hw_params_set_access(priv->handle, priv->hwparams,
 				    SND_PCM_ACCESS_RW_INTERLEAVED);
   if (rc != 0) {
-    fprintf(stderr, "snd_pcm_hw_params_set_access %s: %s\n", priv->device, snd_strerror(rc));
+    fprintf(stderr, "snd_pcm_hw_params_set_access %s: %s\n", s(priv->device), snd_strerror(rc));
   }
 
  out:
@@ -333,7 +330,7 @@ static int set_format(Instance *pi, const char *value)
     if (streq(formats[i].label, tmp)) {
       rc = snd_pcm_hw_params_set_format(priv->handle, priv->hwparams, formats[i].value);
       if (rc < 0) {
-	fprintf(stderr, "snd_pcm_hw_params_set_format %s: %s\n", priv->device, snd_strerror(rc));
+	fprintf(stderr, "snd_pcm_hw_params_set_format %s: %s\n", s(priv->device), snd_strerror(rc));
       }
       else {
 	fprintf(stderr, "format set to %s\n", value);
@@ -450,7 +447,7 @@ static void Wav_handler(Instance *pi, void *data)
 	rc = snd_pcm_hw_params_set_format(priv->handle, priv->hwparams, priv->format);
 	if (rc < 0) {
 	  fprintf(stderr, "%s: snd_pcm_hw_params_set_format %s: %s\n", __func__,
-		  priv->device, snd_strerror(rc));
+		  s(priv->device), snd_strerror(rc));
 	}
 	break;
       }
@@ -482,12 +479,12 @@ static void Wav_handler(Instance *pi, void *data)
 
     rc = snd_pcm_hw_params_set_periods(priv->handle, priv->hwparams, periods, 0);
     if (rc < 0) {
-      fprintf(stderr, "snd_pcm_hw_params_set_periods %s: %s\n", priv->device, snd_strerror(rc));      
+      fprintf(stderr, "snd_pcm_hw_params_set_periods %s: %s\n", s(priv->device), snd_strerror(rc));      
     }
       
     rc = snd_pcm_hw_params(priv->handle, priv->hwparams);
     if (rc < 0) {
-      fprintf(stderr, "snd_pcm_hw_params %s: %s\n", priv->device, snd_strerror(rc));      
+      fprintf(stderr, "snd_pcm_hw_params %s: %s\n", s(priv->device), snd_strerror(rc));      
     }
 
     state = snd_pcm_state(priv->handle);
@@ -513,7 +510,7 @@ static void Wav_handler(Instance *pi, void *data)
   }
 
   if (n < 0) {
-    fprintf(stderr, "snd_pcm_writei %s: %s\n", priv->device, snd_strerror((int)n));
+    fprintf(stderr, "snd_pcm_writei %s: %s\n", s(priv->device), snd_strerror((int)n));
     fprintf(stderr, "attempting snd_pcm_prepare() to correct...\n");
     snd_pcm_prepare(priv->handle);
   }
@@ -671,7 +668,7 @@ static void ALSACapture_tick(Instance *pi)
 
     rc = snd_pcm_hw_params(priv->handle, priv->hwparams);
     if (rc < 0) {
-      fprintf(stderr, "snd_pcm_hw_params %s: %s\n", priv->device, snd_strerror(rc));      
+      fprintf(stderr, "snd_pcm_hw_params %s: %s\n", s(priv->device), snd_strerror(rc));      
     }
 
     state = snd_pcm_state(priv->handle);
@@ -741,7 +738,7 @@ static void ALSACapture_tick(Instance *pi)
     }
   }
   else {
-    fprintf(stderr, "snd_pcm_readi %s: %s\n", priv->device, snd_strerror((int)n));
+    fprintf(stderr, "snd_pcm_readi %s: %s\n", s(priv->device), snd_strerror((int)n));
     fprintf(stderr, "attempting snd_pcm_prepare() to correct...\n");
     snd_pcm_prepare(priv->handle);
   }

@@ -25,7 +25,7 @@ static Output RawSource_outputs[] = {
 };
 
 typedef struct {
-  char *input;
+  String input;
   Source *source;
   int read_timeout;
 } RawSource_private;
@@ -34,15 +34,11 @@ typedef struct {
 static int set_input(Instance *pi, const char *value)
 {
   RawSource_private *priv = pi->data;
-  if (priv->input) {
-    free(priv->input);
-  }
   if (priv->source) {
     Source_free(&priv->source);
   }
-  
-  priv->input = strdup(value);
-  priv->source = Source_new(priv->input);
+  String_set(&priv->input, value);
+  priv->source = Source_new(s(priv->input));
 
   if (priv->source && pi->outputs[OUTPUT_CONFIG].destination) {
     /* New source activated, send reset message. */
@@ -72,7 +68,7 @@ static void RawSource_move_data(Instance *pi)
   if (priv->read_timeout && Source_poll_read(priv->source, priv->read_timeout) == 0) {
     /* No read activity, assume stalled. */
     Source_close_current(priv->source);
-    set_input(pi, priv->input);
+    set_input(pi, s(priv->input));
   }
   
   if (!priv->source) {
@@ -84,7 +80,7 @@ static void RawSource_move_data(Instance *pi)
 
   if (priv->source->eof) {
     Source_close_current(priv->source);
-    set_input(pi, priv->input);
+    set_input(pi, s(priv->input));
   }
   
   if (priv->source && pi->outputs[OUTPUT_RAWDATA].destination) {
@@ -102,12 +98,12 @@ static void RawSource_tick(Instance *pi)
   RawSource_private *priv = pi->data;
   int wait_flag;
 
-  if (!priv->source && priv->input) {
+  if (!priv->source && s(priv->input)) {
     /* Retry. */
-    set_input(pi, priv->input);      
+    set_input(pi, s(priv->input));      
   }
 
-  if (!priv->input) {
+if (!s(priv->input)) {
     wait_flag = 1;
   }
   else {

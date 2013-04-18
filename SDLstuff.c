@@ -106,7 +106,7 @@ typedef struct {
   int height;
   int hard_dimensions;
 
-  char *label;
+  String label;
   int label_set;
 
   /* Overlay, used by XVideo under Linux. */
@@ -179,14 +179,9 @@ static void Keycode_handler(Instance *pi, void *msg)
 static int set_label(Instance *pi, const char *value)
 {
   SDLstuff_private *priv = pi->data;
-  
-  if (priv->label) {
-    free(priv->label);
-  }
 
-  priv->label = strdup(value);
-  printf("*** label set to %s\n", priv->label);
-
+  String_set(&priv->label, value);
+  printf("*** label set to %s\n", s(priv->label));
   priv->label_set = 0;
   return 0;
 }
@@ -621,8 +616,8 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height)
     reset_video(priv);
   }
 
-  if (priv->label && !priv->label_set) {
-    SDL_WM_SetCaption(priv->label, NULL); //Sets the Window Title
+  if (s(priv->label) && !priv->label_set) {
+    SDL_WM_SetCaption(s(priv->label), NULL); //Sets the Window Title
     priv->label_set = 1;
   }
 }

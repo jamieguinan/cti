@@ -39,7 +39,7 @@ static Output MjpegMux_outputs[] = {
 };
 
 typedef struct {
-  char *output;		/* File or host:port, used to intialize sink. */
+  String output;		/* File or host:port, used to intialize sink. */
   Sink *sink;
   int seq;
   int every;
@@ -49,17 +49,14 @@ typedef struct {
 static int set_output(Instance *pi, const char *value)
 {
   MjpegMux_private *priv = pi->data;
-  if (priv->output) {
-    free(priv->output);
-  }
   if (priv->sink) {
     Sink_free(&priv->sink);
   }
 
   fprintf(stderr, "set_output(%s)\n", value);
 
-  priv->output = strdup(value);
-  priv->sink = Sink_new(priv->output);
+  String_set(&priv->output, value);
+  priv->sink = Sink_new(s(priv->output));
   priv->every = 1;
 
   return 0;
@@ -69,10 +66,11 @@ static int set_output(Instance *pi, const char *value)
 static int do_restart(Instance *pi, const char *value)
 {
   MjpegMux_private *priv = pi->data;
-  if (priv->output) {
-    /* Assuming output had a %s in it, just restart it. */
-    char output[strlen(priv->output)+1];
-    strcpy(output, priv->output);
+  if (s(priv->output)) {
+    /* Use a copy of the string, because priv->output.bytes will get 
+       deleted in String_set()  */
+    char output[strlen(s(priv->output))+1];
+    strcpy(output, s(priv->output));
     set_output(pi, output);
   }
 

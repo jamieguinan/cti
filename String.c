@@ -80,7 +80,7 @@ void String_set(String *s, const char *init)
     s->available *= 2;
   }
 
-  if (s->bytes) { free(s->bytes); }
+  if (s->bytes) { Mem_free(s->bytes); }
   s->bytes = Mem_malloc(s->available);
   strcpy(s->bytes, init);
   s->len = init_len;

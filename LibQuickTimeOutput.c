@@ -6,6 +6,7 @@
 #include "CTI.h"
 #include "Images.h"
 #include "Wav.h"
+#include "Mem.h"
 #include "LibQuickTimeOutput.h"
 #include <lqt.h>
 
@@ -135,7 +136,7 @@ static void push_ycc(LibQuickTimeOutput_private *priv, Y422P_buffer *ycc)
   }
 
   int bytes = ycc->y_length + ycc->cr_length + ycc->cb_length;
-  uint8_t *video_buffer = malloc(bytes);
+  uint8_t *video_buffer = Mem_malloc(bytes);
   memcpy(video_buffer, ycc->y, ycc->y_length);
   memset(video_buffer+ycc->y_length, 0, ycc->cr_length);
   memset(video_buffer+ycc->y_length+ycc->cr_length, 0, ycc->cb_length);
@@ -148,7 +149,7 @@ static void push_ycc(LibQuickTimeOutput_private *priv, Y422P_buffer *ycc)
 			     priv->ycc_track
 			     );
 
-  free(video_buffer);
+  Mem_free(video_buffer);
 }
 #endif
 
@@ -188,7 +189,7 @@ static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
   }
   
 
-  uint8_t *video_buffer = malloc(rgb->data_length);
+  uint8_t *video_buffer = Mem_malloc(rgb->data_length);
   memcpy(video_buffer, rgb->data, rgb->data_length);
 
   rc = quicktime_write_frame(priv->qt,
@@ -197,7 +198,7 @@ static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
 			     priv->rgb_track
 			     );
 
-  free(video_buffer);
+  Mem_free(video_buffer);
 }
 
 

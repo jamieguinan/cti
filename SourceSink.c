@@ -394,7 +394,7 @@ void Source_close_current(Source *source)
 void Source_free(Source **source)
 {
   Source_close_current(*source);
-  free(*source);
+  Mem_free(*source);
   *source = 0L;
 }
 

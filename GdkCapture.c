@@ -1,8 +1,10 @@
 /*
- * This module polls for GDK image data stored in a file with a fixed
- * name, reads the file, converts to RGB3 and posts to output, then
- * deletes the file.  This works with an external program that generates
- * GDK image data.
+ * This module polls for the existence of a specific named file,
+ * containing GDK image data, reads the file, converts to RGB3 and
+ * posts to output, then deletes the file.  It is meant to work with
+ * an external program that generates GDK image data and writes the
+ * file if/when it disappears.  It all actually works well enough for
+ * 30fps video, using /dev/shm or any ramdisk filesystem.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -13,6 +15,7 @@
 #include "CTI.h"
 #include "GdkCapture.h"
 #include "Images.h"
+#include "Mem.h"
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -127,7 +130,7 @@ static void check_files(Instance *pi)
     rgb = RGB3_buffer_new(width, height, 0L);
     gettimeofday(&rgb->c.tv, 0L);
     size = height*bpl;
-    data = malloc(size);
+    data = Mem_malloc(size);
     if (fread(data, size, 1, f) != 1) {
       fprintf(stderr, "failed reading %d bytes\n", size);
       goto out;
@@ -149,7 +152,7 @@ static void check_files(Instance *pi)
       }
     }
     gdk_to_rgb(data, width, height, depth, bpp, bpl, rgb);
-    free(data);
+    Mem_free(data);
     PostData(rgb, pi->outputs[OUTPUT_RGB3].destination);
   out:
     fclose(f);

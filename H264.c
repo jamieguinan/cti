@@ -32,7 +32,7 @@ static Output H264_outputs[] = {
 typedef struct {
   int pts;
   x264_t *encoder;
-  char *output;			/* Side channel. */
+  String output;			/* Side channel. */
   Sink *output_sink;
 } H264_private;
 
@@ -40,9 +40,6 @@ typedef struct {
 static int set_output(Instance *pi, const char *value)
 {
   H264_private *priv = pi->data;
-  if (priv->output) {
-    free(priv->output);
-  }
   if (priv->output_sink) {
     Sink_free(&priv->output_sink);
   }
@@ -55,8 +52,8 @@ static int set_output(Instance *pi, const char *value)
     }
   }
   
-  priv->output = strdup(value);
-  priv->output_sink = Sink_new(priv->output);
+  String_set(&priv->output, value);
+  priv->output_sink = Sink_new(s(priv->output));
 
   return 0;
 }
@@ -135,7 +132,7 @@ static void Y420P_handler(Instance *pi, void *msg)
       PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
 
-    if (rc > 0 && priv->output) {
+    if (rc > 0 && s(priv->output)) {
       Sink_write(priv->output_sink, nal[0].p_payload, rc);
     }
 
