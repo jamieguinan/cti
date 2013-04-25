@@ -137,6 +137,7 @@ static void RawSource_instance_init(Instance *pi)
 
 static Template RawSource_template = {
   .label = "RawSource",
+  .priv_size = sizeof(RawSource_private),
   .inputs = RawSource_inputs,
   .num_inputs = table_size(RawSource_inputs),
   .outputs = RawSource_outputs,

@@ -137,8 +137,9 @@ typedef struct _Instance {
   const char *label;		/* Copied from corresponding Template */
   /* NO instance label!  Containers should hold label:instance mapping, do not put it here. */
 
-  void *data;			/* Instance-specific data, usally accessed as "priv". */
-  size_t priv_size;		/* New-style, where priv structure includes Instance member. */
+  /* priv structure should includes Instance as first member, priv_size is size of
+     the enclosing structure. */
+  size_t priv_size;		
 
   void (*tick)(struct _Instance *pi); /* One "unit" of processing. */
 

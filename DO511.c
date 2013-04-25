@@ -165,6 +165,7 @@ static void DO511_instance_init(Instance *pi)
 
 static Template DO511_template = {
   .label = "DO511",
+  .priv_size = sizeof(DO511_private),
   .inputs = DO511_inputs,
   .num_inputs = table_size(DO511_inputs),
   .outputs = DO511_outputs,

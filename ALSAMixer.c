@@ -258,6 +258,7 @@ static void ALSAMixer_instance_init(Instance *pi)
 
 static Template ALSAMixer_template = {
   .label = "ALSAMixer",
+  .priv_size = sizeof(ALSAMixer_private),
   .inputs = ALSAMixer_inputs,
   .num_inputs = table_size(ALSAMixer_inputs),
   .outputs = ALSAMixer_outputs,

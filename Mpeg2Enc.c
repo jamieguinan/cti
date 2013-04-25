@@ -159,6 +159,7 @@ static void Mpeg2Enc_instance_init(Instance *pi)
 
 static Template Mpeg2Enc_template = {
   .label = "Mpeg2Enc",
+  .priv_size = sizeof(Mpeg2Enc_private),
   .inputs = Mpeg2Enc_inputs,
   .num_inputs = table_size(Mpeg2Enc_inputs),
   .outputs = Mpeg2Enc_outputs,

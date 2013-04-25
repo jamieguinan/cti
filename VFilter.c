@@ -204,7 +204,7 @@ static void single_trim(VFilter_private * priv, uint8_t *data_in, uint8_t *data_
 
 static void Y422p_handler(Instance *pi, void *msg)
 {
-  VFilter_private * priv = pi->data;
+  VFilter_private *priv = (VFilter_private *)pi;
   Y422P_buffer *y422p_in = msg;
   Y422P_buffer *y422p_out = 0L;
   Y422P_buffer *y422p_src = 0L;
@@ -282,7 +282,7 @@ static void Y422p_handler(Instance *pi, void *msg)
 
 static void RGB3_handler(Instance *pi, void *msg)
 {
-  VFilter_private * priv = pi->data;
+  VFilter_private *priv = (VFilter_private *)pi;
   RGB3_buffer *rgb3 = msg;  
 
   if (priv->trim) {
@@ -328,6 +328,7 @@ static void VFilter_instance_init(Instance *pi)
 
 static Template VFilter_template = {
   .label = "VFilter",
+  .priv_size = sizeof(VFilter_private),
   .inputs = VFilter_inputs,
   .num_inputs = table_size(VFilter_inputs),
   .outputs = VFilter_outputs,

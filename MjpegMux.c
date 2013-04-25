@@ -239,6 +239,7 @@ static void MjpegMux_instance_init(Instance *pi)
 
 static Template MjpegMux_template = {
   .label = "MjpegMux",
+  .priv_size = sizeof(MjpegMux_private),
   .inputs = MjpegMux_inputs,
   .num_inputs = table_size(MjpegMux_inputs),
   .outputs = MjpegMux_outputs,

@@ -317,6 +317,7 @@ static void Y4MInput_instance_init(Instance *pi)
 
 static Template Y4MInput_template = {
   .label = "Y4MInput",
+  .priv_size = sizeof(Y4MInput_private),
   .inputs = Y4MInput_inputs,
   .num_inputs = table_size(Y4MInput_inputs),
   .outputs = Y4MInput_outputs,

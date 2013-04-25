@@ -106,6 +106,7 @@ static void WavOutput_instance_init(Instance *pi)
 
 static Template WavOutput_template = {
   .label = "WavOutput",
+  .priv_size = sizeof(WavOutput_private),
   .inputs = WavOutput_inputs,
   .num_inputs = table_size(WavOutput_inputs),
   .outputs = WavOutput_outputs,

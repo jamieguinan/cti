@@ -98,6 +98,7 @@ static void Splitter_instance_init(Instance *pi)
 
 static Template Splitter_template = {
   .label = "Splitter",
+  .priv_size = sizeof(Splitter_private),
   .inputs = Splitter_inputs,
   .num_inputs = table_size(Splitter_inputs),
   .outputs = Splitter_outputs,

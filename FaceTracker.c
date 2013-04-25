@@ -405,6 +405,7 @@ static void FaceTracker_instance_init(Instance *pi)
 
 static Template FaceTracker_template = {
   .label = "FaceTracker",
+  .priv_size = sizeof(FaceTracker_private),
   .inputs = FaceTracker_inputs,
   .num_inputs = table_size(FaceTracker_inputs),
   .outputs = FaceTracker_outputs,

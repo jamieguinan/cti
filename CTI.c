@@ -295,17 +295,8 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
       /* If value is passed in, call the set function. */
       if (cb_in->value && config_table[i].vset) {
 	/* Generic setter. */
-	if (pi->priv_size) {
-	  /* New-style, pi actually points too the priv structure, so value_offset
-	     should work fine. */
-	  config_table[i].vset((uint8_t*)pi + config_table[i].value_offset, 
-			       cb_in->value->bytes);
-	}
-	else {
-	  /* Old-style, dereference. */
-	  config_table[i].vset((uint8_t*)pi->data + config_table[i].value_offset, 
-			       cb_in->value->bytes);
-	}
+	config_table[i].vset((uint8_t*)pi + config_table[i].value_offset, 
+			     cb_in->value->bytes);
       }
       else if (cb_in->value && config_table[i].set) {
 	/* Template-specific setter. */

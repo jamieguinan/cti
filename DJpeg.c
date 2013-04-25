@@ -443,6 +443,7 @@ static void DJpeg_instance_init(Instance *pi)
 static Template DJpeg_template = {
   .label = "DJpeg",
   .priv_size = sizeof(DJpeg_private),
+  .priv_size = sizeof(DJpeg_private),
   .inputs = DJpeg_inputs,
   .num_inputs = table_size(DJpeg_inputs),
   .outputs = DJpeg_outputs,

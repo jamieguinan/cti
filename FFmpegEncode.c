@@ -9,13 +9,13 @@ static void Config_handler(Instance *pi, void *msg);
 static void Jpeg_handler(Instance *pi, void *msg);
 
 enum { INPUT_CONFIG, INPUT_JPEG };
-static Input FFmpeg_inputs[] = {
+static Input FFmpegEncode_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
 };
 
 enum { OUTPUT_FEEDBACK };
-static Output FFmpeg_outputs[] = {
+static Output FFmpegEncode_outputs[] = {
   [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L  },
 };
 
@@ -36,14 +36,14 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Jpeg_handler(Instance *pi, void *msg)
 {
-  FFmpegEncode_private *priv = pi->data;
+  FFmpegEncode_private *priv = (FFmpegEncode_private *)pi;
 
   if (!priv->p) {
     priv->p = popen("ffmpeg -i /dev/stdin -y out.h264", "wb");
   }
 }
 
-static void FFmpeg_tick(Instance *pi)
+static void FFmpegEncode_tick(Instance *pi)
 {
   Handler_message *hm;
 
@@ -56,22 +56,22 @@ static void FFmpeg_tick(Instance *pi)
   pi->counter++;
 }
 
-static void FFmpeg_instance_init(Instance *pi)
+static void FFmpegEncode_instance_init(Instance *pi)
 {
 }
 
 
-static Template FFmpeg_template = {
-  .label = "FFmpeg",
-  .inputs = FFmpeg_inputs,
-  .num_inputs = table_size(FFmpeg_inputs),
-  .outputs = FFmpeg_outputs,
-  .num_outputs = table_size(FFmpeg_outputs),
-  .tick = FFmpeg_tick,
-  .instance_init = FFmpeg_instance_init,
+static Template FFmpegEncode_template = {
+  .label = "FFmpegEncode",
+  .inputs = FFmpegEncode_inputs,
+  .num_inputs = table_size(FFmpegEncode_inputs),
+  .outputs = FFmpegEncode_outputs,
+  .num_outputs = table_size(FFmpegEncode_outputs),
+  .tick = FFmpegEncode_tick,
+  .instance_init = FFmpegEncode_instance_init,
 };
 
-void FFmpeg_init(void)
+void FFmpegEncode_init(void)
 {
-  Template_register(&FFmpeg_template);
+  Template_register(&FFmpegEncode_template);
 }

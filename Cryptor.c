@@ -91,6 +91,7 @@ static void Cryptor_instance_init(Instance *pi)
 
 static Template Cryptor_template = {
   .label = "Cryptor",
+  .priv_size = sizeof(Cryptor_private),
   .inputs = Cryptor_inputs,
   .num_inputs = table_size(Cryptor_inputs),
   .outputs = Cryptor_outputs,

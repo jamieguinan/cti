@@ -377,6 +377,7 @@ static void LibQuickTimeOutput_instance_init(Instance *pi)
 
 static Template LibQuickTimeOutput_template = {
   .label = "LibQuickTimeOutput",
+  .priv_size = sizeof(LibQuickTimeOutput_private),
   .inputs = LibQuickTimeOutput_inputs,
   .num_inputs = table_size(LibQuickTimeOutput_inputs),
   .outputs = LibQuickTimeOutput_outputs,

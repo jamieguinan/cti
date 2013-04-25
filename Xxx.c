@@ -443,6 +443,7 @@ static void Xxx_instance_init(Instance *pi)
 static Template Xxx_template = {
   .label = "Xxx",
   .priv_size = sizeof(Xxx_private),
+  .priv_size = sizeof(Xxx_private),
   .inputs = Xxx_inputs,
   .num_inputs = table_size(Xxx_inputs),
   .outputs = Xxx_outputs,

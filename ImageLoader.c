@@ -108,6 +108,7 @@ static void ImageLoader_instance_init(Instance *pi)
 
 static Template ImageLoader_template = {
   .label = "ImageLoader",
+  .priv_size = sizeof(ImageLoader_private),
   .inputs = ImageLoader_inputs,
   .num_inputs = table_size(ImageLoader_inputs),
   .outputs = ImageLoader_outputs,

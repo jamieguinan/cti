@@ -227,6 +227,7 @@ static void UI001_instance_init(Instance *pi)
 
 static Template UI001_template = {
   .label = "UI001",
+  .priv_size = sizeof(UI001_private),
   .inputs = UI001_inputs,
   .num_inputs = table_size(UI001_inputs),
   .outputs = UI001_outputs,

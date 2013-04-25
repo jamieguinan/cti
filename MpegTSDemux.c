@@ -446,6 +446,7 @@ static void MpegTSDemux_instance_init(Instance *pi)
 
 static Template MpegTSDemux_template = {
   .label = "MpegTSDemux",
+  .priv_size = sizeof(MpegTSDemux_private),
   .inputs = MpegTSDemux_inputs,
   .num_inputs = table_size(MpegTSDemux_inputs),
   .outputs = MpegTSDemux_outputs,

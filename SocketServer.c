@@ -420,6 +420,7 @@ static void SocketServer_instance_init(Instance *pi)
 
 static Template SocketServer_template = {
   .label = "SocketServer",
+  .priv_size = sizeof(SocketServer_private),
   .inputs = SocketServer_inputs,
   .num_inputs = table_size(SocketServer_inputs),
   .outputs = SocketServer_outputs,

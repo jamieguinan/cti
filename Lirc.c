@@ -215,6 +215,7 @@ static void Lirc_instance_init(Instance *pi)
 
 static Template Lirc_template = {
   .label = "Lirc",
+  .priv_size = sizeof(Lirc_private),
   .inputs = Lirc_inputs,
   .num_inputs = table_size(Lirc_inputs),
   .outputs = Lirc_outputs,

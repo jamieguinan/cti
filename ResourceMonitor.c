@@ -39,14 +39,14 @@ typedef struct {
 
 static int set_period_ms(Instance *pi, const char *value)
 {
-  ResourceMonitor_private *priv =  pi->data;
+  ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
   priv->period_ms = atoi(value);
   return 0;
 }
 
 static int set_rss_limit(Instance *pi, const char *value)
 {
-  ResourceMonitor_private *priv =  pi->data;
+  ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
   priv->rss_limit = atoi(value);
   return 0;
 }
@@ -64,7 +64,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void ResourceMonitor_tick(Instance *pi)
 {
-  ResourceMonitor_private *priv =  pi->data;
+  ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
   Handler_message *hm;
   int rc;
   struct rusage usage;
@@ -142,6 +142,7 @@ static void ResourceMonitor_instance_init(Instance *pi)
 
 static Template ResourceMonitor_template = {
   .label = "ResourceMonitor",
+  .priv_size = sizeof(ResourceMonitor_private),
   .inputs = ResourceMonitor_inputs,
   .num_inputs = table_size(ResourceMonitor_inputs),
   .outputs = ResourceMonitor_outputs,

@@ -188,6 +188,7 @@ static void VSmoother_instance_init(Instance *pi)
 
 static Template VSmoother_template = {
   .label = "VSmoother",
+  .priv_size = sizeof(VSmoother_private),
   .inputs = VSmoother_inputs,
   .num_inputs = table_size(VSmoother_inputs),
   .outputs = VSmoother_outputs,

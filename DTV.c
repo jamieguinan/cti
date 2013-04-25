@@ -210,6 +210,7 @@ static void DTV_instance_init(Instance *pi)
 
 static Template DTV_template = {
   .label = "DTV",
+  .priv_size = sizeof(DTV_private),
   .inputs = DTV_inputs,
   .num_inputs = table_size(DTV_inputs),
   .outputs = DTV_outputs,

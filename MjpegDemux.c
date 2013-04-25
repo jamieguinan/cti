@@ -675,6 +675,7 @@ static void MjpegDemux_instance_init(Instance *pi)
 
 static Template MjpegDemux_template = {
   .label = "MjpegDemux",
+  .priv_size = sizeof(MjpegDemux_private),
   .inputs = MjpegDemux_inputs,
   .num_inputs = table_size(MjpegDemux_inputs),
   .outputs = MjpegDemux_outputs,

@@ -1,3 +1,10 @@
+2013-Apr-25 15:33:15
+
+Add .priv_size member to all template declarations.
+
+Get rid of .data pointer in Instance structure!
+
+
 2013-Apr-25 13:57:33
 
 Convert all modules to include Instance struct, instead of filling in pi->data.

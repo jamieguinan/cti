@@ -1374,6 +1374,7 @@ static void V4L2Capture_instance_init(Instance *pi)
 
 static Template V4L2Capture_template = {
   .label = "V4L2Capture",
+  .priv_size = sizeof(V4L2Capture_private),
   .inputs = V4L2Capture_inputs,
   .num_inputs = table_size(V4L2Capture_inputs),
   .outputs = V4L2Capture_outputs,

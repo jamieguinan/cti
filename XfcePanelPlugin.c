@@ -56,6 +56,7 @@ static void XfcePanelPlugin_instance_init(Instance *pi)
 
 static Template XfcePanelPlugin_template = {
   .label = "XfcePanelPlugin",
+  .priv_size = sizeof(XfcePanelPlugin_private),
   .inputs = XfcePanelPlugin_inputs,
   .num_inputs = table_size(XfcePanelPlugin_inputs),
   .outputs = XfcePanelPlugin_outputs,

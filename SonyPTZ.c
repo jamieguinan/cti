@@ -68,6 +68,7 @@ static void SonyPTZ_instance_init(Instance *pi)
 
 static Template SonyPTZ_template = {
   .label = "SonyPTZ",
+  .priv_size = sizeof(SonyPTZ_private),
   .inputs = SonyPTZ_inputs,
   .num_inputs = table_size(SonyPTZ_inputs),
   .outputs = SonyPTZ_outputs,

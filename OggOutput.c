@@ -1980,6 +1980,7 @@ static void OggOutput_instance_init(Instance *pi)
 
 static Template OggOutput_template = {
   .label = "OggOutput",
+  .priv_size = sizeof(OggOutput_private),
   .inputs = OggOutput_inputs,
   .num_inputs = table_size(OggOutput_inputs),
   .outputs = OggOutput_outputs,

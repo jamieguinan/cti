@@ -160,6 +160,7 @@ static void MotionDetect_instance_init(Instance *pi)
 
 static Template MotionDetect_template = {
   .label = "MotionDetect",
+  .priv_size = sizeof(MotionDetect_private),
   .inputs = MotionDetect_inputs,
   .num_inputs = table_size(MotionDetect_inputs),
   .outputs = MotionDetect_outputs,

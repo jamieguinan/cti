@@ -314,6 +314,7 @@ static void MpegTSMux_instance_init(Instance *pi)
 
 static Template MpegTSMux_template = {
   .label = "MpegTSMux",
+  .priv_size = sizeof(MpegTSMux_private),
   .inputs = MpegTSMux_inputs,
   .num_inputs = table_size(MpegTSMux_inputs),
   .outputs = MpegTSMux_outputs,

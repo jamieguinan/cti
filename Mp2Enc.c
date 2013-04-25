@@ -126,6 +126,7 @@ static void Mp2Enc_instance_init(Instance *pi)
 
 static Template Mp2Enc_template = {
   .label = "Mp2Enc",
+  .priv_size = sizeof(Mp2Enc_private),
   .inputs = Mp2Enc_inputs,
   .num_inputs = table_size(Mp2Enc_inputs),
   .outputs = Mp2Enc_outputs,

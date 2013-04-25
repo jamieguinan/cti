@@ -81,6 +81,7 @@ static void HalfWidth_instance_init(Instance *pi)
 
 static Template HalfWidth_template = {
   .label = "HalfWidth",
+  .priv_size = sizeof(HalfWidth_private),
   .inputs = HalfWidth_inputs,
   .num_inputs = table_size(HalfWidth_inputs),
   .outputs = HalfWidth_outputs,

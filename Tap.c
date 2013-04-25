@@ -86,6 +86,7 @@ static void Tap_instance_init(Instance *pi)
 
 static Template Tap_template = {
   .label = "Tap",
+  .priv_size = sizeof(Tap_private),
   .inputs = Tap_inputs,
   .num_inputs = table_size(Tap_inputs),
   .outputs = Tap_outputs,

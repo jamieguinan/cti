@@ -275,6 +275,7 @@ static void ScriptV00_instance_init(Instance *pi)
 /* Not sure if actually need/want this... */
 static Template ScriptV00_template = {
   .label = "ScriptV00",
+  .priv_size = sizeof(ScriptV00_private),
   .inputs = ScriptV00_inputs,
   .num_inputs = table_size(ScriptV00_inputs),
   .outputs = ScriptV00_outputs,

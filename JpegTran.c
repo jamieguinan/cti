@@ -284,6 +284,7 @@ static void JpegTran_instance_init(Instance *pi)
 
 static Template JpegTran_template = {
   .label = "JpegTran",
+  .priv_size = sizeof(JpegTran_private),
   .inputs = JpegTran_inputs,
   .num_inputs = table_size(JpegTran_inputs),
   .outputs = JpegTran_outputs,

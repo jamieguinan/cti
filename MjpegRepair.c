@@ -55,6 +55,7 @@ static void MjpegRepair_instance_init(Instance *pi)
 
 static Template MjpegRepair_template = {
   .label = "MjpegRepair",
+  .priv_size = sizeof(MjpegRepair_private),
   .inputs = MjpegRepair_inputs,
   .num_inputs = table_size(MjpegRepair_inputs),
   .outputs = MjpegRepair_outputs,

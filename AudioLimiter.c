@@ -100,6 +100,7 @@ static void AudioLimiter_instance_init(Instance *pi)
 
 static Template AudioLimiter_template = {
   .label = "AudioLimiter",
+  .priv_size = sizeof(AudioLimiter_private),
   .inputs = AudioLimiter_inputs,
   .num_inputs = table_size(AudioLimiter_inputs),
   .outputs = AudioLimiter_outputs,

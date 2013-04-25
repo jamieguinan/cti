@@ -259,6 +259,7 @@ static void AVIDemux_instance_init(Instance *pi)
 
 static Template AVIDemux_template = {
   .label = "AVIDemux",
+  .priv_size = sizeof(AVIDemux_private),
   .inputs = AVIDemux_inputs,
   .num_inputs = table_size(AVIDemux_inputs),
   .outputs = AVIDemux_outputs,

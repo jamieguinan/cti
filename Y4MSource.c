@@ -114,6 +114,7 @@ static void Y4MSource_instance_init(Instance *pi)
 
 static Template Y4MSource_template = {
   .label = "Y4MSource",
+  .priv_size = sizeof(Y4MSource_private),
   .inputs = Y4MSource_inputs,
   .num_inputs = table_size(Y4MSource_inputs),
   .outputs = Y4MSource_outputs,

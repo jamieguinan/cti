@@ -357,6 +357,7 @@ static void LibDV_instance_init(Instance *pi)
 
 static Template LibDV_template = {
   .label = "LibDV",
+  .priv_size = sizeof(LibDV_private),
   .inputs = LibDV_inputs,
   .num_inputs = table_size(LibDV_inputs),
   .outputs = LibDV_outputs,

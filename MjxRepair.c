@@ -148,6 +148,7 @@ static void MjxRepair_instance_init(Instance *pi)
 
 static Template MjxRepair_template = {
   .label = "MjxRepair",
+  .priv_size = sizeof(MjxRepair_private),
   .inputs = MjxRepair_inputs,
   .num_inputs = table_size(MjxRepair_inputs),
   .outputs = MjxRepair_outputs,

@@ -124,6 +124,7 @@ static void NScale_instance_init(Instance *pi)
 
 static Template NScale_template = {
   .label = "NScale",
+  .priv_size = sizeof(NScale_private),
   .inputs = NScale_inputs,
   .num_inputs = table_size(NScale_inputs),
   .outputs = NScale_outputs,

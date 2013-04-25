@@ -122,6 +122,7 @@ static void Spawn_instance_init(Instance *pi)
 
 static Template Spawn_template = {
   .label = "Spawn",
+  .priv_size = sizeof(Spawn_private),
   .inputs = Spawn_inputs,
   .num_inputs = table_size(Spawn_inputs),
   .outputs = Spawn_outputs,

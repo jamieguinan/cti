@@ -133,6 +133,7 @@ static void Effects01_instance_init(Instance *pi)
 
 static Template Effects01_template = {
   .label = "Effects01",
+  .priv_size = sizeof(Effects01_private),
   .inputs = Effects01_inputs,
   .num_inputs = table_size(Effects01_inputs),
   .outputs = Effects01_outputs,

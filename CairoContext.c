@@ -389,6 +389,7 @@ static void CairoContext_instance_init(Instance *pi)
 
 static Template CairoContext_template = {
   .label = "CairoContext",
+  .priv_size = sizeof(CairoContext_private),
   .inputs = CairoContext_inputs,
   .num_inputs = table_size(CairoContext_inputs),
   .outputs = CairoContext_outputs,

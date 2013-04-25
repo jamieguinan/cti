@@ -993,6 +993,7 @@ static void SDLstuff_instance_init(Instance *pi)
 
 static Template SDLstuff_template = {
   .label = "SDLstuff",
+  .priv_size = sizeof(SDLstuff_private),
   .inputs = SDLstuff_inputs,
   .num_inputs = table_size(SDLstuff_inputs),
   .outputs = SDLstuff_outputs,

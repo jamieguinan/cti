@@ -258,6 +258,7 @@ static void TV_instance_init(Instance *pi)
 
 static Template TV_template = {
   .label = "TV",
+  .priv_size = sizeof(TV_private),
   .inputs = TV_inputs,
   .num_inputs = table_size(TV_inputs),
   .outputs = TV_outputs,

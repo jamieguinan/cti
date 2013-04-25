@@ -186,6 +186,7 @@ static void GdkCapture_instance_init(Instance *pi)
 
 static Template GdkCapture_template = {
   .label = "GdkCapture",
+  .priv_size = sizeof(GdkCapture_private),
   .inputs = GdkCapture_inputs,
   .num_inputs = table_size(GdkCapture_inputs),
   .outputs = GdkCapture_outputs,

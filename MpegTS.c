@@ -77,6 +77,7 @@ static void MpegTS_instance_init(Instance *pi)
 
 static Template MpegTS_template = {
   .label = "MpegTS",
+  .priv_size = sizeof(MpegTS_private),
   .inputs = MpegTS_inputs,
   .num_inputs = table_size(MpegTS_inputs),
   .outputs = MpegTS_outputs,

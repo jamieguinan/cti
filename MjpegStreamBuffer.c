@@ -154,6 +154,7 @@ static void MjpegStreamBuffer_instance_init(Instance *pi)
 
 static Template MjpegStreamBuffer_template = {
   .label = "MjpegStreamBuffer",
+  .priv_size = sizeof(MjpegStreamBuffer_private),
   .inputs = MjpegStreamBuffer_inputs,
   .num_inputs = table_size(MjpegStreamBuffer_inputs),
   .outputs = MjpegStreamBuffer_outputs,

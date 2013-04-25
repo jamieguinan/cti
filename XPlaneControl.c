@@ -84,6 +84,7 @@ static void XPlaneControl_instance_init(Instance *pi)
 
 static Template XPlaneControl_template = {
   .label = "XPlaneControl",
+  .priv_size = sizeof(XPlaneControl_private),
   .inputs = XPlaneControl_inputs,
   .num_inputs = table_size(XPlaneControl_inputs),
   .outputs = XPlaneControl_outputs,

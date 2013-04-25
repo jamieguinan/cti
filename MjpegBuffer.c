@@ -140,6 +140,7 @@ static void MjpegBuffer_instance_init(Instance *pi)
 
 static Template MjpegBuffer_template = {
   .label = "MjpegBuffer",
+  .priv_size = sizeof(MjpegBuffer_private),
   .inputs = MjpegBuffer_inputs,
   .num_inputs = table_size(MjpegBuffer_inputs),
   .outputs = MjpegBuffer_outputs,

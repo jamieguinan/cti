@@ -101,6 +101,7 @@ static void Null_instance_init(Instance *pi)
 
 static Template Null_template = {
   .label = "Null",
+  .priv_size = sizeof(Null_private),
   .inputs = Null_inputs,
   .num_inputs = table_size(Null_inputs),
   .outputs = Null_outputs,

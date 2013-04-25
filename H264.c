@@ -178,6 +178,7 @@ static void H264_instance_init(Instance *pi)
 
 static Template H264_template = {
   .label = "H264",
+  .priv_size = sizeof(H264_private),
   .inputs = H264_inputs,
   .num_inputs = table_size(H264_inputs),
   .outputs = H264_outputs,

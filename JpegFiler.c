@@ -78,6 +78,7 @@ static void JpegFiler_instance_init(Instance *pi)
 
 static Template JpegFiler_template = {
   .label = "JpegFiler",
+  .priv_size = sizeof(JpegFiler_private),
   .inputs = JpegFiler_inputs,
   .num_inputs = table_size(JpegFiler_inputs),
   .outputs = JpegFiler_outputs,

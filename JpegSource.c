@@ -116,6 +116,7 @@ static void JpegSource_instance_init(Instance *pi)
 
 static Template JpegSource_template = {
   .label = "JpegSource",
+  .priv_size = sizeof(JpegSource_private),
   .inputs = JpegSource_inputs,
   .num_inputs = table_size(JpegSource_inputs),
   .outputs = JpegSource_outputs,
