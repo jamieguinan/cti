@@ -19,6 +19,7 @@ static Output MjpegRepair_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   // int ...;
 } MjpegRepair_private;
 
@@ -47,8 +48,8 @@ static void MjpegRepair_tick(Instance *pi)
 
 static void MjpegRepair_instance_init(Instance *pi)
 {
-  MjpegRepair_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  MjpegRepair_private *priv = (MjpegRepair_private *)pi;
+  
 }
 
 

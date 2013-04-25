@@ -19,6 +19,7 @@ static Output ScriptV00_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   InstanceGroup *g;
   int is_stdin;
   int exit_on_eof;
@@ -184,7 +185,7 @@ static int set_input(Instance *pi, const char *value)
   /* Note that this does NOT return until the input reaches EOF. */
   FILE *f;
   const char *prompt = 0L;
-  ScriptV00_private *priv = pi->data;
+  ScriptV00_private *priv = (ScriptV00_private *)pi;
 
   if (strlen(value) != 0) {
     char *e;
@@ -231,7 +232,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void RawData_handler(Instance *pi, void *data)
 {
-  ScriptV00_private *priv = pi->data;
+  ScriptV00_private *priv = (ScriptV00_private *)pi;
   RawData_buffer *raw = data;
   RawData_node *rn = Mem_calloc(1, sizeof(*rn));
   rn->buffer = raw;
@@ -264,8 +265,8 @@ static void ScriptV00_tick(Instance *pi)
 
 static void ScriptV00_instance_init(Instance *pi)
 {
-  ScriptV00_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  ScriptV00_private *priv = (ScriptV00_private *)pi;
+  
   priv->g = InstanceGroup_new();
   priv->exit_on_eof = 1;
 }

@@ -27,6 +27,7 @@ static Output Y4MOutput_outputs[] = {
 enum { Y4MOUTPUT_STATE_INIT, Y4MOUTPUT_STATE_HEADER_SENT, Y4MOUTPUT_STATE_SENDING_DATA };
 
 typedef struct {
+  Instance i;
   String output;		/* File or host:port, used to intialize sink. */
   Sink *sink;
   int state;
@@ -40,7 +41,7 @@ typedef struct {
 
 static int set_output(Instance *pi, const char *value)
 {
-  Y4MOutput_private *priv = pi->data;
+  Y4MOutput_private *priv = (Y4MOutput_private *)pi;
 
   if (priv->sink) {
     Sink_free(&priv->sink);
@@ -68,7 +69,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Y422P_handler(Instance *pi, void *data)
 {
-  Y4MOutput_private *priv = pi->data;
+  Y4MOutput_private *priv = (Y4MOutput_private *)pi;
   Y422P_buffer *y422p_in = data;
   Y420P_buffer *y420p = 0L;
   char header[256];
@@ -167,8 +168,7 @@ static void Y4MOutput_tick(Instance *pi)
 
 static void Y4MOutput_instance_init(Instance *pi)
 {
-  Y4MOutput_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Y4MOutput_private *priv = (Y4MOutput_private *)pi;
 }
 
 

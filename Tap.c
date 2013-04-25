@@ -24,6 +24,7 @@ static Output Tap_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
 } Tap_private;
 
 static Config config_table[] = {
@@ -79,8 +80,7 @@ static void Tap_tick(Instance *pi)
 
 static void Tap_instance_init(Instance *pi)
 {
-  Tap_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Tap_private *priv = (Tap_private *)pi;
 }
 
 

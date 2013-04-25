@@ -23,6 +23,7 @@ static Output WavOutput_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String output;		/* File or host:port, used to intialize sink. */
   Sink *sink;
   int header_written;
@@ -30,7 +31,7 @@ typedef struct {
 
 static int set_output(Instance *pi, const char *value)
 {
-  WavOutput_private *priv = pi->data;
+  WavOutput_private *priv = (WavOutput_private *)pi;
 
   if (priv->sink) {
     Sink_free(&priv->sink);
@@ -54,7 +55,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *msg)
 {
-  WavOutput_private *priv = pi->data;
+  WavOutput_private *priv = (WavOutput_private *)pi;
   Wav_buffer *wav = msg;
 
   dpf("Wav_handler %d/%d/%d\n", wav->params.channels, wav->params.rate, wav->params.bits_per_sample);
@@ -99,8 +100,7 @@ static void WavOutput_tick(Instance *pi)
 
 static void WavOutput_instance_init(Instance *pi)
 {
-  WavOutput_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // WavOutput_private *priv = (WavOutput_private *)pi;
 }
 
 

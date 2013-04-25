@@ -21,13 +21,14 @@ static Output AudioLimiter_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   int limit;
 } AudioLimiter_private;
 
 
 static int set_limit(Instance *pi, const char *value)
 {
-  AudioLimiter_private *priv = pi->data;
+  AudioLimiter_private *priv = (AudioLimiter_private *)pi;
   priv->limit = atoi(value);
   if ((priv->limit > 100) || (priv->limit < 0)) {
     fprintf(stderr, "limit must be in 0..100 range, setting to 0\n");
@@ -54,7 +55,7 @@ static void Config_handler(Instance *pi, void *data)
 static void Wav_handler(Instance *pi, void *msg)
 {
   Wav_buffer *wav_in = msg;
-  AudioLimiter_private *priv = pi->data;
+  AudioLimiter_private *priv = (AudioLimiter_private *)pi;
 
   if (!pi->outputs[OUTPUT_WAV].destination) {
       Wav_buffer_discard(&wav_in);
@@ -93,8 +94,7 @@ static void AudioLimiter_tick(Instance *pi)
 
 static void AudioLimiter_instance_init(Instance *pi)
 {
-  AudioLimiter_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // AudioLimiter_private *priv = (AudioLimiter_private *)pi;
 }
 
 

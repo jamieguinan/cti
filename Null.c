@@ -79,6 +79,7 @@ static Output Null_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
 } Null_private;
 
 
@@ -96,8 +97,6 @@ static void Null_tick(Instance *pi)
 
 static void Null_instance_init(Instance *pi)
 {
-  Null_private *priv = Mem_calloc(1, sizeof(Null_private));
-  pi->data = priv;
 }
 
 static Template Null_template = {

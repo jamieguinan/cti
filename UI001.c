@@ -23,6 +23,7 @@ static Output UI001_outputs[] = {
 
 enum { UI_BUTTON };
 typedef struct {
+  Instance i;
   int type;
   int x, y;
   unsigned int width, height;
@@ -33,6 +34,7 @@ typedef struct {
 } UIWidget;
 
 typedef struct {
+  Instance i;
   ISet(UIWidget) widgets;
   int down_flag, down_x, down_y;
 } UI001_private;
@@ -82,7 +84,7 @@ static void set_kv(UIWidget *w, const char *key, const char *value, const char *
 
 static int add_button(Instance *pi, const char *init)
 {
-  UI001_private *priv = pi->data;
+  UI001_private *priv = (UI001_private *)pi;
   UIWidget *w = Mem_calloc(1, sizeof(*w));
   const char *key = NULL;
   const char *value = NULL;
@@ -126,7 +128,7 @@ static int add_button(Instance *pi, const char *init)
 
 static void pointer_handler(Instance *pi, void *msg)
 {
-  UI001_private *priv = pi->data;
+  UI001_private *priv = (UI001_private *)pi;
   Pointer_event *p = msg;
   int i;
 
@@ -159,7 +161,7 @@ static void pointer_handler(Instance *pi, void *msg)
 
 static int sync_widgets(Instance *pi, const char *init)
 {
-  UI001_private *priv = pi->data;
+  UI001_private *priv = (UI001_private *)pi;
   int i;
 
   if (!pi->outputs[OUTPUT_CAIRO_CONFIG].destination) {
@@ -219,8 +221,7 @@ static void UI001_tick(Instance *pi)
 
 static void UI001_instance_init(Instance *pi)
 {
-  UI001_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // UI001_private *priv = (UI001_private *)pi;
 }
 
 

@@ -22,6 +22,7 @@ static Output HalfWidth_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
 } HalfWidth_private;
 
 static Config config_table[] = {
@@ -74,8 +75,7 @@ static void HalfWidth_tick(Instance *pi)
 
 static void HalfWidth_instance_init(Instance *pi)
 {
-  HalfWidth_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // HalfWidth_private *priv = (HalfWidth_private *)pi;
 }
 
 

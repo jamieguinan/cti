@@ -23,6 +23,7 @@ static Output DO511_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
 } DO511_private;
 
 //static Config config_table[] = {
@@ -159,8 +160,6 @@ static void DO511_tick(Instance *pi)
 
 static void DO511_instance_init(Instance *pi)
 {
-  DO511_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 

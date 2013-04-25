@@ -53,6 +53,7 @@ static Stream * Stream_new(pid)
 static int packetCounter = 0;
 
 typedef struct {
+  Instance i;
   String input;
   Source *source;
   ArrayU8 *chunk;
@@ -76,7 +77,7 @@ typedef struct {
 
 static int set_input(Instance *pi, const char *value)
 {
-  MpegTSDemux_private *priv = pi->data;
+  MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
   if (priv->source) {
     Source_free(&priv->source);
   }
@@ -105,7 +106,7 @@ static int set_input(Instance *pi, const char *value)
 
 static int set_enable(Instance *pi, const char *value)
 {
-  MpegTSDemux_private *priv = pi->data;
+  MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
 
   priv->enable = atoi(value);
 
@@ -122,7 +123,7 @@ static int set_enable(Instance *pi, const char *value)
 
 static int set_filter_pid(Instance *pi, const char *value)
 {
-  MpegTSDemux_private *priv = pi->data;
+  MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
 
   priv->filter_pid = atoi(value);
 
@@ -370,7 +371,7 @@ static void parse_chunk(MpegTSDemux_private *priv)
 
 static void MpegTSDemux_tick(Instance *pi)
 {
-  MpegTSDemux_private *priv = pi->data;
+  MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
   Handler_message *hm;
   int wait_flag;
 
@@ -437,9 +438,9 @@ static void MpegTSDemux_tick(Instance *pi)
 
 static void MpegTSDemux_instance_init(Instance *pi)
 {
-  MpegTSDemux_private *priv = Mem_calloc(1, sizeof(*priv));
+  MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
   priv->filter_pid = -1;
-  pi->data = priv;
+  
 }
 
 

@@ -1876,6 +1876,7 @@ static int oggoutput_main(int argc,char *argv[]){
 
 
 typedef struct {
+  Instance i;
   uint8_t wav_header[44];
   uint64_t wav_index;
 
@@ -1974,8 +1975,6 @@ static void OggOutput_tick(Instance *pi)
 
 static void OggOutput_instance_init(Instance *pi)
 {
-  OggOutput_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 

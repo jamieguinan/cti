@@ -24,6 +24,7 @@ static Output Lirc_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   int initialized;
   int fd;
   struct lirc_config *lircconfig;
@@ -110,7 +111,7 @@ static void handle_code(Instance *pi, const char *code)
 static void Lirc_tick(Instance *pi)
 {
   Handler_message *hm;
-  Lirc_private *priv = pi->data;
+  Lirc_private *priv = (Lirc_private *)pi;
   int rc;
   int do_sleep = 1;
   int verbose = 1;
@@ -208,8 +209,7 @@ static void Lirc_tick(Instance *pi)
 
 static void Lirc_instance_init(Instance *pi)
 {
-  Lirc_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Lirc_private *priv = (Lirc_private *)pi;
 }
 
 

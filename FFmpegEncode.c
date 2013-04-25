@@ -20,8 +20,9 @@ static Output FFmpeg_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   FILE *p;
-} FFmpeg_private;
+} FFmpegEncode_private;
 
 static Config config_table[] = {
   // { "...",    set_..., get_..., get_..._range },
@@ -35,7 +36,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Jpeg_handler(Instance *pi, void *msg)
 {
-  FFmpeg_private *priv = pi->data;
+  FFmpegEncode_private *priv = pi->data;
 
   if (!priv->p) {
     priv->p = popen("ffmpeg -i /dev/stdin -y out.h264", "wb");
@@ -57,8 +58,6 @@ static void FFmpeg_tick(Instance *pi)
 
 static void FFmpeg_instance_init(Instance *pi)
 {
-  FFmpeg_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 

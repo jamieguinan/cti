@@ -25,6 +25,7 @@ static Output ALSAMixer_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   int card_index;
   char card[64];
   snd_mixer_t *handle;
@@ -35,7 +36,7 @@ typedef struct {
 
 static int set_card(Instance *pi, const char *value)
 {
-  ALSAMixer_private *priv = pi->data;
+  ALSAMixer_private *priv = (ALSAMixer_private *)pi;
   int rc;
 
   priv->card_index = snd_card_get_index(value);
@@ -69,7 +70,7 @@ static int set_card(Instance *pi, const char *value)
 
 static int set_volume(Instance *pi, const char *value)
 {
-  ALSAMixer_private *priv = pi->data;
+  ALSAMixer_private *priv = (ALSAMixer_private *)pi;
   snd_mixer_selem_id_t *sid;
   snd_mixer_elem_t *elem;
   long vmin, vmax, vol;
@@ -131,7 +132,7 @@ static int set_volume(Instance *pi, const char *value)
 static void get_volume(Instance *pi, Value *value)
 {
   printf("%s: %s\n", __FILE__, __func__);
-  ALSAMixer_private *priv = pi->data;
+  ALSAMixer_private *priv = (ALSAMixer_private *)pi;
   snd_mixer_selem_id_t *sid;
   snd_mixer_elem_t *elem;
   long vol;
@@ -173,7 +174,7 @@ static void get_volume(Instance *pi, Value *value)
 static void get_volume_range(Instance *pi, Range *range)
 {
   printf("%s: %s\n", __FILE__, __func__);
-  ALSAMixer_private *priv = pi->data;
+  ALSAMixer_private *priv = (ALSAMixer_private *)pi;
   snd_mixer_selem_id_t *sid;
   snd_mixer_elem_t *elem;
   long vmin, vmax;
@@ -216,7 +217,7 @@ static void get_volume_range(Instance *pi, Range *range)
 
 static int set_control_name(Instance *pi, const char *value)
 {
-  ALSAMixer_private *priv = pi->data;
+  ALSAMixer_private *priv = (ALSAMixer_private *)pi;
   priv->control_name = String_new(value);
   return 0;
 }
@@ -249,8 +250,8 @@ static void ALSAMixer_tick(Instance *pi)
 
 static void ALSAMixer_instance_init(Instance *pi)
 {
-  ALSAMixer_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  ALSAMixer_private *priv = (ALSAMixer_private *)pi;
+  
   strcpy(priv->card, "default");
 }
 

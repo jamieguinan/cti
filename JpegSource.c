@@ -23,13 +23,14 @@ static Output JpegSource_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   Jpeg_buffer *jpeg;
 } JpegSource_private;
 
 
 static int set_file(Instance *pi, const char *value)
 {
-  JpegSource_private *priv = pi->data;
+  JpegSource_private *priv = (JpegSource_private *)pi;
   ArrayU8 *fdata = File_load_data(value);
   if (fdata) {
     priv->jpeg = Jpeg_buffer_from(fdata->data, fdata->len, 0L);
@@ -46,7 +47,7 @@ static int set_file(Instance *pi, const char *value)
 static int do_run(Instance *pi, const char *value)
 {
   /* Clones and posts the jpeg buffer N times.  N=atoi(value). */
-  JpegSource_private *priv = pi->data;
+  JpegSource_private *priv = (JpegSource_private *)pi;
   int count = atoi(value);
   int i;
 
@@ -109,8 +110,7 @@ static void JpegSource_tick(Instance *pi)
 
 static void JpegSource_instance_init(Instance *pi)
 {
-  JpegSource_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // JpegSource_private *priv = (JpegSource_private *)pi;
 }
 
 

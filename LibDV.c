@@ -41,6 +41,7 @@ static Output LibDV_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   dv_decoder_t *decoder;
   String input;
   Source *source;
@@ -57,7 +58,7 @@ typedef struct {
 
 static int set_input(Instance *pi, const char *value)
 {
-  LibDV_private *priv = pi->data;
+  LibDV_private *priv = (LibDV_private *)pi;
   if (priv->source) {
     Source_free(&priv->source);
   }
@@ -87,7 +88,7 @@ static int set_input(Instance *pi, const char *value)
 
 static int set_enable(Instance *pi, const char *value)
 {
-  LibDV_private *priv = pi->data;
+  LibDV_private *priv = (LibDV_private *)pi;
 
   priv->enable = atoi(value);
 
@@ -103,7 +104,7 @@ static int set_enable(Instance *pi, const char *value)
 
 static int set_use_feedback(Instance *pi, const char *value)
 {
-  LibDV_private *priv = pi->data;
+  LibDV_private *priv = (LibDV_private *)pi;
   priv->use_feedback = atoi(value);
   printf("LibDV use_feedback set to %d\n", priv->use_feedback);
   return 0;
@@ -111,7 +112,7 @@ static int set_use_feedback(Instance *pi, const char *value)
 
 static int do_seek(Instance *pi, const char *value)
 {
-  LibDV_private *priv = pi->data;
+  LibDV_private *priv = (LibDV_private *)pi;
   long amount = atol(value);
 
   /* Seek to lower frame boundary. */
@@ -157,7 +158,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 
 static void Feedback_handler(Instance *pi, void *data)
 {
-  LibDV_private *priv = pi->data;
+  LibDV_private *priv = (LibDV_private *)pi;
   Feedback_buffer *fb = data;
 
   priv->pending_feedback -= 1;
@@ -170,7 +171,7 @@ static void Feedback_handler(Instance *pi, void *data)
 static void consume_data(Instance *pi /* would have preferred to use: LibDV_private *priv */)
 {
   int rc;
-  LibDV_private *priv = pi->data;
+  LibDV_private *priv = (LibDV_private *)pi;
 
   rc = dv_parse_header(priv->decoder, priv->chunk->data);
   if (rc < 0) { 
@@ -279,7 +280,7 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
 static void LibDV_tick(Instance *pi)
 {
   Handler_message *hm;
-  LibDV_private *priv = pi->data;
+  LibDV_private *priv = (LibDV_private *)pi;
   int wait_flag;
 
   if (!priv->enable || !priv->source
@@ -318,7 +319,7 @@ static void LibDV_tick(Instance *pi)
 static int LibDV_initialized = 0;
 static void LibDV_instance_init(Instance *pi)
 {
-  LibDV_private *priv = Mem_calloc(1, sizeof(*priv));
+  LibDV_private *priv = (LibDV_private *)pi;
   int i;
 
   /* Could put a lock around this test, in case > 1 instance. */
@@ -350,7 +351,7 @@ static void LibDV_instance_init(Instance *pi)
    * so just set the error stream to /dev/null.
    */
   dv_set_error_log(priv->decoder, fopen("/dev/null", "w"));
-  pi->data = priv;
+  
 }
 
 

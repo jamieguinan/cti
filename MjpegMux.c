@@ -39,6 +39,7 @@ static Output MjpegMux_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String output;		/* File or host:port, used to intialize sink. */
   Sink *sink;
   int seq;
@@ -48,7 +49,7 @@ typedef struct {
 
 static int set_output(Instance *pi, const char *value)
 {
-  MjpegMux_private *priv = pi->data;
+  MjpegMux_private *priv = (MjpegMux_private *)pi;
   if (priv->sink) {
     Sink_free(&priv->sink);
   }
@@ -65,7 +66,7 @@ static int set_output(Instance *pi, const char *value)
 
 static int do_restart(Instance *pi, const char *value)
 {
-  MjpegMux_private *priv = pi->data;
+  MjpegMux_private *priv = (MjpegMux_private *)pi;
   if (s(priv->output)) {
     /* Use a copy of the string, because priv->output.bytes will get 
        deleted in String_set()  */
@@ -80,7 +81,7 @@ static int do_restart(Instance *pi, const char *value)
 
 static int set_every(Instance *pi, const char *value)
 {
-  MjpegMux_private *priv = pi->data;
+  MjpegMux_private *priv = (MjpegMux_private *)pi;
   priv->every = atoi(value);
   return 0;
 }
@@ -108,7 +109,7 @@ static const char part_format[] =
 
 static void Jpeg_handler(Instance *pi, void *data)
 {
-  MjpegMux_private *priv = pi->data;  
+  MjpegMux_private *priv = (MjpegMux_private *)pi;  
   Jpeg_buffer *jpeg_in = data;
 
   priv->seq += 1;
@@ -148,7 +149,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
 static void O511_handler(Instance *pi, void *data)
 {
-  MjpegMux_private *priv = pi->data;  
+  MjpegMux_private *priv = (MjpegMux_private *)pi;  
   O511_buffer *o511_in = data;
   /* Format header. */
   String *dimensions = String_sprintf("Width:%d\r\nHeight:%d\r\n", o511_in->width, o511_in->height);
@@ -180,7 +181,7 @@ static void O511_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *data)
 {
-  MjpegMux_private *priv = pi->data;  
+  MjpegMux_private *priv = (MjpegMux_private *)pi;  
   Wav_buffer *wav_in = data;
   Log(LOG_WAV, "%s popped wav_in @ %p", __func__, wav_in);
 
@@ -234,8 +235,6 @@ static void MjpegMux_tick(Instance *pi)
 
 static void MjpegMux_instance_init(Instance *pi)
 {
-  MjpegMux_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 static Template MjpegMux_template = {

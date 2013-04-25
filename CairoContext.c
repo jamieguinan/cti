@@ -70,6 +70,7 @@ static struct {
 };
 
 typedef struct {
+  Instance i;
   cairo_surface_t *surface;
   cairo_t *context;
   int width;
@@ -83,7 +84,7 @@ typedef struct {
 
 static int set_show_text(Instance *pi, const char *value)
 {
-  CairoContext_private *priv = pi->data;
+  CairoContext_private *priv = (CairoContext_private *)pi;
 
   String_set(&priv->text, value);
 
@@ -99,7 +100,7 @@ static int set_show_text(Instance *pi, const char *value)
 
 static int add_command(Instance *pi, const char *value)
 {
-  CairoContext_private *priv = pi->data;
+  CairoContext_private *priv = (CairoContext_private *)pi;
   CairoCommand cmd = {};
   char label[256] = {};
   int i;
@@ -285,7 +286,7 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
 
 static void rgb3_handler(Instance *pi, void *msg)
 {
-  CairoContext_private *priv = pi->data;
+  CairoContext_private *priv = (CairoContext_private *)pi;
   RGB3_buffer * rgb3 = msg;
   int do_apply = 1;
 
@@ -311,7 +312,7 @@ static void rgb3_handler(Instance *pi, void *msg)
 
 static void y422p_handler(Instance *pi, void *msg)
 {
-  CairoContext_private *priv = pi->data;
+  CairoContext_private *priv = (CairoContext_private *)pi;
   Y422P_buffer * y422p = msg;
   int do_apply = 1;
 
@@ -383,8 +384,6 @@ static void CairoContext_tick(Instance *pi)
 
 static void CairoContext_instance_init(Instance *pi)
 {
-  CairoContext_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 

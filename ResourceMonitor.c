@@ -30,6 +30,7 @@ enum {
 };
 
 typedef struct {
+  Instance i;
   int mode;
   unsigned int period_ms;
   long rss_limit;
@@ -132,8 +133,8 @@ static void ResourceMonitor_tick(Instance *pi)
 
 static void ResourceMonitor_instance_init(Instance *pi)
 {
-  ResourceMonitor_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
+  
   priv->mode = RESOURCE_MONITOR_MODE_PROCSELFSTAT;
   priv->procselfstat_field = 22;
 }

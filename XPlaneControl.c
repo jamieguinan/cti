@@ -39,6 +39,7 @@ static Output XPlaneControl_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   // int ...;
 } XPlaneControl_private;
 
@@ -55,7 +56,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void position_handler(Instance *pi, void *msg)
 {
-  XPlaneControl_private *priv = pi->data;  
+  // XPlaneControl_private *priv = (XPlaneControl_private *)pi;  
   Position_message *pos = msg;
 
   Position_message_discard(pos);
@@ -77,8 +78,7 @@ static void XPlaneControl_tick(Instance *pi)
 
 static void XPlaneControl_instance_init(Instance *pi)
 {
-  XPlaneControl_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // XPlaneControl_private *priv = (XPlaneControl_private *)pi;
 }
 
 

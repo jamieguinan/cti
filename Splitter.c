@@ -24,6 +24,7 @@ static Output Splitter_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   // int ...;
 } Splitter_private;
 
@@ -91,8 +92,7 @@ static void Splitter_tick(Instance *pi)
 
 static void Splitter_instance_init(Instance *pi)
 {
-  Splitter_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Splitter_private *priv = (Splitter_private *)pi;
 }
 
 

@@ -30,6 +30,7 @@ static Output GdkCapture_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String *filename;
   int seq;
   uint32_t last_checksum;
@@ -40,7 +41,7 @@ typedef struct {
 
 static int set_filename(Instance *pi, const char *value)
 {
-  GdkCapture_private *priv = pi->data;
+  GdkCapture_private *priv = (GdkCapture_private *)pi;
   if (priv->filename) {
     String_free(&priv->filename);
   }
@@ -51,7 +52,7 @@ static int set_filename(Instance *pi, const char *value)
 
 static int set_idle_quit_threshold(Instance *pi, const char *value)
 {
-  GdkCapture_private *priv = pi->data;
+  GdkCapture_private *priv = (GdkCapture_private *)pi;
   priv->idle_quit_threshold = atoi(value);
   return 0;
 }
@@ -94,7 +95,7 @@ void gdk_to_rgb(uint8_t *data, int width, int height, int depth, int bpp, int bp
 
 static void check_files(Instance *pi)
 {
-  GdkCapture_private *priv = pi->data;
+  GdkCapture_private *priv = (GdkCapture_private *)pi;
   
   /* Poll for file, because I don't have a good IPC mechanism yet. */
   if (priv->filename == 0L || 
@@ -179,8 +180,7 @@ static void GdkCapture_tick(Instance *pi)
 
 static void GdkCapture_instance_init(Instance *pi)
 {
-  GdkCapture_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // GdkCapture_private *priv = (GdkCapture_private *)pi;
 }
 
 

@@ -38,6 +38,7 @@ static Output MjpegLocalBuffer_outputs[] = {
 #define STORE_SIZE 1024
 
 typedef struct {
+  Instance i;
   int forwardbuffer; /* Seconds to keep recording after last trigger */
   struct timeval record_until;
   int recording;
@@ -71,7 +72,7 @@ static void check_record_state(MjpegLocalBuffer_private *priv)
 
 static void MotionDetect_handler(Instance *pi, void *data)
 {
-  MjpegLocalBuffer_private *priv = pi->data;
+  MjpegLocalBuffer_private *priv = (MjpegLocalBuffer_private *)pi;
   MotionDetect_result *md = data;
 
   check_record_state(priv);
@@ -97,7 +98,7 @@ static void MotionDetect_handler(Instance *pi, void *data)
 
 static void Jpeg_handler(Instance *pi, void *data)
 {
-  MjpegLocalBuffer_private *priv = pi->data;
+  MjpegLocalBuffer_private *priv = (MjpegLocalBuffer_private *)pi;
   Jpeg_buffer *jpeg = data;
 
   check_record_state(priv);
@@ -114,7 +115,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *data)
 {
-  MjpegLocalBuffer_private *priv = pi->data;
+  MjpegLocalBuffer_private *priv = (MjpegLocalBuffer_private *)pi;
   Wav_buffer *wav = data;
 
   check_record_state(priv);
@@ -145,8 +146,8 @@ static void MjpegLocalBuffer_tick(Instance *pi)
 
 static void MjpegLocalBuffer_instance_init(Instance *pi)
 {
-  MjpegLocalBuffer_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  MjpegLocalBuffer_private *priv = (MjpegLocalBuffer_private *)pi;
+  
   priv->md_threshold = 1000000;
   priv->forwardbuffer = 5;
 }

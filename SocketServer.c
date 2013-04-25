@@ -69,6 +69,7 @@ typedef enum {
 } ClientStates;
 
 typedef struct {
+  Instance i;
   int max_total_buffered_data;	/* Start dropping after this is exceeded. */
   int total_buffered_data;
   char v4addr[4];
@@ -84,7 +85,7 @@ typedef struct {
 
 static int set_max_total_buffered_data(Instance *pi, const char *value)
 {
-  SocketServer_private *priv = pi->data;
+  SocketServer_private *priv = (SocketServer_private *)pi;
   priv->max_total_buffered_data = atoi(value);
   return 0;
 }
@@ -99,14 +100,14 @@ static int set_v4addr(Instance *pi, const char *value)
 
 static int set_v4port(Instance *pi, const char *value)
 {
-  SocketServer_private *priv = pi->data;
+  SocketServer_private *priv = (SocketServer_private *)pi;
   priv->v4port = atoi(value);
   return 0;
 }
 
 static int set_enable(Instance *pi, const char *value)
 {
-  SocketServer_private *priv = pi->data;
+  SocketServer_private *priv = (SocketServer_private *)pi;
   int rc;
 
   priv->listen_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -171,7 +172,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void RawData_handler(Instance *pi, void *data)
 {
-  SocketServer_private *priv = pi->data;
+  SocketServer_private *priv = (SocketServer_private *)pi;
   RawData_buffer *raw = data;
   RawData_node *rn = Mem_calloc(1, sizeof(*rn));
   rn->buffer = raw;
@@ -192,7 +193,7 @@ static void RawData_handler(Instance *pi, void *data)
 
 static void SocketServer_tick(Instance *pi)
 {
-  SocketServer_private *priv = pi->data;
+  SocketServer_private *priv = (SocketServer_private *)pi;
   Handler_message *hm;
   Client_connection *cc;
   int wait_flag = 1;
@@ -409,11 +410,11 @@ static void SocketServer_tick(Instance *pi)
 
 static void SocketServer_instance_init(Instance *pi)
 {
-  SocketServer_private *priv = Mem_calloc(1, sizeof(*priv));
+  SocketServer_private *priv = (SocketServer_private *)pi;
 
   priv->max_total_buffered_data = 2*1024*1024;
 
-  pi->data = priv;
+  
 }
 
 

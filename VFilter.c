@@ -31,6 +31,7 @@ static Output VFilter_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   int left_right_crop;
   int top_crop;
   int bottom_crop;
@@ -42,7 +43,7 @@ typedef struct {
 
 static int set_left_right_crop(Instance *pi, const char *value)
 {
-  VFilter_private *priv = pi->data;
+  VFilter_private *priv = (VFilter_private *)pi;
   
   int tmp =  atoi(value);
   if (tmp < 0) {
@@ -57,7 +58,7 @@ static int set_left_right_crop(Instance *pi, const char *value)
 
 static int set_bottom_crop(Instance *pi, const char *value)
 {
-  VFilter_private *priv = pi->data;
+  VFilter_private *priv = (VFilter_private *)pi;
   
   int tmp =  atoi(value);
   if (tmp < 0) {
@@ -72,7 +73,7 @@ static int set_bottom_crop(Instance *pi, const char *value)
 
 static int set_linear_blend(Instance *pi, const char *value)
 {
-  VFilter_private *priv = pi->data;
+  VFilter_private *priv = (VFilter_private *)pi;
 
   int tmp =  atoi(value);
   if (tmp < 0) {
@@ -88,7 +89,7 @@ static int set_linear_blend(Instance *pi, const char *value)
 
 static int set_trim(Instance *pi, const char *value)
 {
-  VFilter_private *priv = pi->data;
+  VFilter_private *priv = (VFilter_private *)pi;
 
   int tmp =  atoi(value);
   if (tmp < 0) {
@@ -321,8 +322,7 @@ static void VFilter_tick(Instance *pi)
 
 static void VFilter_instance_init(Instance *pi)
 {
-  VFilter_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // VFilter_private *priv = (VFilter_private *)pi;
 }
 
 

@@ -30,6 +30,7 @@ static Output H264_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   int pts;
   x264_t *encoder;
   String output;			/* Side channel. */
@@ -39,7 +40,7 @@ typedef struct {
 
 static int set_output(Instance *pi, const char *value)
 {
-  H264_private *priv = pi->data;
+  H264_private *priv = (H264_private *)pi;
   if (priv->output_sink) {
     Sink_free(&priv->output_sink);
   }
@@ -68,7 +69,7 @@ static Config config_table[] = {
 static void Y420P_handler(Instance *pi, void *msg)
 {
   int rc;
-  H264_private *priv = pi->data;
+  H264_private *priv = (H264_private *)pi;
   Y420P_buffer *y420 = msg;
 
   if (!priv->encoder) {
@@ -172,8 +173,6 @@ static void H264_tick(Instance *pi)
 
 static void H264_instance_init(Instance *pi)
 {
-  H264_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 

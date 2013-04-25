@@ -33,6 +33,7 @@ static Output MjxRepair_outputs[] = {
 
 #define BUFFER_SIZE 15
 typedef struct {
+  Instance i;
   String output;		/* File or host:port, used to intialize sink. */
   Sink *sink;
 
@@ -46,7 +47,7 @@ typedef struct {
 
 static int set_output(Instance *pi, const char *value)
 {
-  MjxRepair_private *priv = pi->data;
+  MjxRepair_private *priv = (MjxRepair_private *)pi;
   if (priv->sink) {
     Sink_free(&priv->sink);
   }
@@ -78,7 +79,7 @@ static const char part_format[] =
 
 static void Jpeg_handler(Instance *pi, void *data)
 {
-  MjxRepair_private *priv = pi->data;  
+  MjxRepair_private *priv = (MjxRepair_private *)pi;  
   Jpeg_buffer *jpeg_in = data;
 
   String *header = String_sprintf(part_format,
@@ -103,7 +104,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *data)
 {
-  MjxRepair_private *priv = pi->data;  
+  MjxRepair_private *priv = (MjxRepair_private *)pi;  
   Wav_buffer *wav_in = data;
   Log(LOG_WAV, "%s popped wav_in @ %p", __func__, wav_in);
 
@@ -142,8 +143,6 @@ static void MjxRepair_tick(Instance *pi)
 
 static void MjxRepair_instance_init(Instance *pi)
 {
-  MjxRepair_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 

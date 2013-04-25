@@ -22,6 +22,7 @@ static Output ImageLoader_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
 } ImageLoader_private;
 
 
@@ -101,8 +102,7 @@ static void ImageLoader_tick(Instance *pi)
 
 static void ImageLoader_instance_init(Instance *pi)
 {
-  ImageLoader_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // ImageLoader_private *priv = (ImageLoader_private *)pi;
 }
 
 

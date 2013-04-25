@@ -33,6 +33,7 @@ enum {
 };
 
 typedef struct {
+  Instance i;
   int prev_channel;
   int current_channel;
   int new_channel;
@@ -46,7 +47,7 @@ typedef struct {
 
 static int set_skip_channel(Instance *pi, const char *value)
 {
-  TV_private *priv = pi->data;  
+  TV_private *priv = (TV_private *)pi;  
   int channel = atoi(value);
   if (0 < channel && channel < 1000) {
     priv->skip_channels[channel/32] |= (1 << channel % 32);
@@ -83,7 +84,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void change_channel(Instance *pi)
 {
-  TV_private *priv = pi->data;
+  TV_private *priv = (TV_private *)pi;
   String *channel_str = String_sprintf("%d",  priv->current_channel);
   const char *freq_str = ChannelMaps_channel_to_frequency(priv->map, channel_str->bytes);
 
@@ -106,7 +107,7 @@ static void change_channel(Instance *pi)
 
 static void Keycode_handler(Instance *pi, void *msg)
 {
-  TV_private *priv = pi->data;
+  TV_private *priv = (TV_private *)pi;
   Keycode_message *km = msg;
   int d = 0;
   int mute = 0;
@@ -248,8 +249,8 @@ static void TV_tick(Instance *pi)
 
 static void TV_instance_init(Instance *pi)
 {
-  TV_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  TV_private *priv = (TV_private *)pi;
+  
   priv->current_channel = 12;
   priv->map = "NTSC_Cable";
 }

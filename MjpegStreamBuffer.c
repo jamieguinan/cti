@@ -35,6 +35,7 @@ static Output MjpegStreamBuffer_outputs[] = {
 #define STORE_SIZE 1024
 
 typedef struct {
+  Instance i;
   String *basename;
   int backbuffer;		/* Seconds of buffered data to flush when recording turned on */
   int forwardbuffer;		/* Seconds to keep recording after last trigger */
@@ -52,7 +53,7 @@ typedef struct {
 
 static int do_trigger(Instance *pi, const char *value_unused)
 {
-  MjpegStreamBuffer_private *priv = pi->data;
+  MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
   gettimeofday(&priv->record_until, NULL);
   priv->record_until.tv_sec += priv->forwardbuffer;
   return 0;
@@ -61,7 +62,7 @@ static int do_trigger(Instance *pi, const char *value_unused)
 
 static int set_basename(Instance *pi, const char *value)
 {
-  MjpegStreamBuffer_private *priv = pi->data;
+  MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
   if (priv->basename) {
     String_free(&priv->basename);
   }
@@ -72,7 +73,7 @@ static int set_basename(Instance *pi, const char *value)
 
 static int set_backbuffer(Instance *pi, const char *value)
 {
-  MjpegStreamBuffer_private *priv = pi->data;
+  MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
   priv->backbuffer = atoi(value);
   return 0;
 }
@@ -80,7 +81,7 @@ static int set_backbuffer(Instance *pi, const char *value)
 
 static int set_forwardbuffer(Instance *pi, const char *value)
 {
-  MjpegStreamBuffer_private *priv = pi->data;
+  MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
   priv->forwardbuffer = atoi(value);
   return 0;
 }
@@ -102,7 +103,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void RawData_handler(Instance *pi, void *data)
 { 
-  MjpegStreamBuffer_private *priv = pi->data;
+  MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
   RawData_buffer *raw = data;
 
   if (priv->put == priv->get) {
@@ -147,8 +148,7 @@ static void MjpegStreamBuffer_tick(Instance *pi)
 
 static void MjpegStreamBuffer_instance_init(Instance *pi)
 {
-  MjpegStreamBuffer_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
 }
 
 

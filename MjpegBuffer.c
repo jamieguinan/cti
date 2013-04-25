@@ -36,6 +36,7 @@ static Output MjpegBuffer_outputs[] = {
 #define STORE_SIZE 1024
 
 typedef struct {
+  Instance i;
   String *basename;
   int backbuffer;		/* Seconds of buffered data to flush when recording turned on */
   int forwardbuffer;		/* Seconds to keep recording after last trigger */
@@ -53,7 +54,7 @@ typedef struct {
 
 static int do_trigger(Instance *pi, const char *value_unused)
 {
-  MjpegBuffer_private *priv = pi->data;
+  MjpegBuffer_private *priv = (MjpegBuffer_private *)pi;
   gettimeofday(&priv->record_until, NULL);
   priv->record_until.tv_sec += priv->forwardbuffer;
   return 0;
@@ -62,7 +63,7 @@ static int do_trigger(Instance *pi, const char *value_unused)
 
 static int set_basename(Instance *pi, const char *value)
 {
-  MjpegBuffer_private *priv = pi->data;
+  MjpegBuffer_private *priv = (MjpegBuffer_private *)pi;
   if (priv->basename) {
     String_free(&priv->basename);
   }
@@ -87,7 +88,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void RawData_handler(Instance *pi, void *data)
 { 
-  MjpegBuffer_private *priv = pi->data;
+  MjpegBuffer_private *priv = (MjpegBuffer_private *)pi;
   RawData_buffer *raw = data;
 
   if (priv->put == priv->get) {
@@ -132,8 +133,8 @@ static void MjpegBuffer_tick(Instance *pi)
 
 static void MjpegBuffer_instance_init(Instance *pi)
 {
-  MjpegBuffer_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  MjpegBuffer_private *priv = (MjpegBuffer_private *)pi;
+  
 }
 
 

@@ -33,6 +33,7 @@ static Output VSmoother_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   double period;
   double sum;
   unsigned int factor;
@@ -128,7 +129,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void rgb3_handler(Instance *pi, void *data)
 {
-  VSmoother_private *priv = pi->data;
+  VSmoother_private *priv = (VSmoother_private *)pi;
   RGB3_buffer *rgb3_in = data;
   if (pi->outputs[OUTPUT_RGB3].destination) {
     smooth(priv, &rgb3_in->c.tv, pi->pending_messages);
@@ -141,7 +142,7 @@ static void rgb3_handler(Instance *pi, void *data)
 
 static void bgr3_handler(Instance *pi, void *data)
 {
-  VSmoother_private *priv = pi->data;
+  VSmoother_private *priv = (VSmoother_private *)pi;
   BGR3_buffer *bgr3_in = data;
   if (pi->outputs[OUTPUT_BGR3].destination) {
     smooth(priv, &bgr3_in->c.tv, pi->pending_messages);
@@ -154,7 +155,7 @@ static void bgr3_handler(Instance *pi, void *data)
 
 static void y422p_handler(Instance *pi, void *data)
 {
-  VSmoother_private *priv = pi->data;
+  VSmoother_private *priv = (VSmoother_private *)pi;
   Y422P_buffer *y422p_in = data;
   if (pi->outputs[OUTPUT_422P].destination) {
     smooth(priv, &y422p_in->c.tv,pi->pending_messages);
@@ -182,8 +183,7 @@ static void VSmoother_tick(Instance *pi)
 
 static void VSmoother_instance_init(Instance *pi)
 {
-  VSmoother_private *priv = Mem_calloc(1, sizeof(VSmoother_private));
-  pi->data = priv;
+  //VSmoother_private *priv = (VSmoother_private *)pi;
 }
 
 static Template VSmoother_template = {

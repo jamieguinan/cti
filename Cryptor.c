@@ -20,12 +20,13 @@ static Output Cryptor_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   Cryptor_context ctx;
 } Cryptor_private;
 
 static int set_cipher(Instance *pi, const char *value)
 {
-  Cryptor_private *priv = pi->data;
+  Cryptor_private *priv = (Cryptor_private *)pi;
 
   Cryptor_context_init(&priv->ctx, String_new(value));
 
@@ -84,8 +85,7 @@ static void Cryptor_tick(Instance *pi)
 
 static void Cryptor_instance_init(Instance *pi)
 {
-  Cryptor_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Cryptor_private *priv = (Cryptor_private *)pi;
 }
 
 

@@ -24,6 +24,7 @@ static Output MpegTS_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String output;		/* File or host:port, used to intialize sink. */
   Sink *sink;
 } MpegTS_private;
@@ -31,7 +32,7 @@ typedef struct {
 
 static int set_output(Instance *pi, const char *value)
 {
-  MpegTS_private *priv = pi->data;
+  MpegTS_private *priv = (MpegTS_private *)pi;
 
   if (priv->sink) {
     Sink_free(&priv->sink);
@@ -69,8 +70,8 @@ static void MpegTS_tick(Instance *pi)
 
 static void MpegTS_instance_init(Instance *pi)
 {
-  MpegTS_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  MpegTS_private *priv = (MpegTS_private *)pi;
+  
 }
 
 

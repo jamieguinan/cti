@@ -21,6 +21,7 @@ static Output Mpeg2Enc_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String *vout;
   FILE *po;			/* File or pipe output... */
   int header_sent;
@@ -29,7 +30,7 @@ typedef struct {
 
 static int set_vout(Instance *pi, const char *value)
 {
-  Mpeg2Enc_private *priv = pi->data;
+  Mpeg2Enc_private *priv = (Mpeg2Enc_private *)pi;
 
   if (priv->vout) {
     String_free(&priv->vout);
@@ -58,7 +59,7 @@ static int set_vout(Instance *pi, const char *value)
 
 static int set_mode(Instance *pi, const char *value)
 {
-  // Mpeg2Enc_private *priv = pi->data;
+  // Mpeg2Enc_private *priv = (Mpeg2Enc_private *)pi;
   /* Set either mpeg2enc or ffmpeg mode. */
   return 0;
 }
@@ -78,7 +79,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Y422p_handler(Instance *pi, void *msg)
 {
-  Mpeg2Enc_private *priv = pi->data;
+  Mpeg2Enc_private *priv = (Mpeg2Enc_private *)pi;
   Y422P_buffer *y422p_in = msg;
   int n = 0;
 
@@ -152,8 +153,7 @@ static void Mpeg2Enc_tick(Instance *pi)
 
 static void Mpeg2Enc_instance_init(Instance *pi)
 {
-  Mpeg2Enc_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Mpeg2Enc_private *priv = (Mpeg2Enc_private *)pi;
 }
 
 

@@ -30,6 +30,7 @@ static Output DTV_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   int power_state;
   int num_channels;
   int current_channel_index;
@@ -50,7 +51,7 @@ static void Config_handler(Instance *pi, void *data)
 static void kill_subproc(Instance *pi)
 {
   /* Kill subprocess, if one is running. */
-  DTV_private *priv = pi->data;
+  DTV_private *priv = (DTV_private *)pi;
 
   if (priv->child_pid != -1) {
     int status;
@@ -64,7 +65,7 @@ static void kill_subproc(Instance *pi)
 
 static void change_channel(Instance *pi)
 {
-  DTV_private *priv = pi->data;
+  DTV_private *priv = (DTV_private *)pi;
   String *channel_str = CSV_get(priv->channels_csv, priv->current_channel_index, 0);
   String *dvb_channel_str = String_sprintf("dvb://%s", channel_str->bytes);
 
@@ -85,7 +86,7 @@ static void change_channel(Instance *pi)
 
 static void Keycode_handler(Instance *pi, void *msg)
 {
-  DTV_private *priv = pi->data;
+  DTV_private *priv = (DTV_private *)pi;
   Keycode_message *km = msg;
   int d = 0;
   int mute = 0;
@@ -191,8 +192,8 @@ static void DTV_tick(Instance *pi)
 
 static void DTV_instance_init(Instance *pi)
 {
-  DTV_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  DTV_private *priv = (DTV_private *)pi;
+  
   priv->channels_csv = CSV_load(String_sprintf("%s/projects/av/channels.csv.000", getenv("HOME")));
   printf("%d rows %d columns\n", priv->channels_csv->_rows, priv->channels_csv->_columns);
   priv->current_channel_index = 0;

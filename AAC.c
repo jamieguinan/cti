@@ -24,6 +24,7 @@ static Output AAC_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   faacEncHandle fh;
   uint8_t output_buffer[1024];
   Audio_buffer *first_audio;	/* Keep this around for comparison with later blocks. */
@@ -42,7 +43,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Audio_handler(Instance *pi, void *msg)
 {
-  AAC_private *priv = pi->data;
+  AAC_private *priv = (AAC_private *)pi;
   Audio_buffer *audio = msg;
   unsigned long inputSamples = 2048;
   unsigned long maxOutputBytes = sizeof(priv->output_buffer);
@@ -122,8 +123,6 @@ static void AAC_tick(Instance *pi)
 
 static void AAC_instance_init(Instance *pi)
 {
-  AAC_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 

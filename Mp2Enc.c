@@ -22,6 +22,7 @@ static Output Mp2Enc_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String *vout;
   FILE *po;			/* File or pipe output... */
   int header_sent;
@@ -30,7 +31,7 @@ typedef struct {
 
 static int set_vout(Instance *pi, const char *value)
 {
-  Mp2Enc_private *priv = pi->data;
+  Mp2Enc_private *priv = (Mp2Enc_private *)pi;
 
   if (priv->vout) {
     String_free(&priv->vout);
@@ -68,7 +69,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *msg)
 {
-  Mp2Enc_private *priv = pi->data;
+  Mp2Enc_private *priv = (Mp2Enc_private *)pi;
   Wav_buffer *wav_in = msg;
   int n;
 
@@ -119,8 +120,7 @@ static void Mp2Enc_tick(Instance *pi)
 
 static void Mp2Enc_instance_init(Instance *pi)
 {
-  Mp2Enc_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Mp2Enc_private *priv = (Mp2Enc_private *)pi;
 }
 
 

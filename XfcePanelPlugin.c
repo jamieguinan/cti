@@ -20,6 +20,7 @@ static Output XfcePanelPlugin_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   // int ...;
 } XfcePanelPlugin_private;
 
@@ -48,8 +49,8 @@ static void XfcePanelPlugin_tick(Instance *pi)
 
 static void XfcePanelPlugin_instance_init(Instance *pi)
 {
-  XfcePanelPlugin_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  XfcePanelPlugin_private *priv = (XfcePanelPlugin_private *)pi;
+  
 }
 
 

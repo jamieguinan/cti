@@ -93,6 +93,7 @@ static Output SDLstuff_outputs[] = {
 enum { RENDER_MODE_GL, RENDER_MODE_OVERLAY, RENDER_MODE_SOFTWARE };
 
 typedef struct {
+  Instance i;
   int initialized;
   int renderMode;
   int videoOk;
@@ -159,7 +160,7 @@ static void tsnapshot()
 
 static void Keycode_handler(Instance *pi, void *msg)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   Keycode_message *km = msg;
   int handled = 0;
 
@@ -204,7 +205,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 
 static int set_label(Instance *pi, const char *value)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
 
   String_set(&priv->label, value);
   printf("*** label set to %s\n", s(priv->label));
@@ -214,7 +215,7 @@ static int set_label(Instance *pi, const char *value)
 
 static int set_mode(Instance *pi, const char *value)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   int oldMode = priv->renderMode;
 
   printf("%s: setting mode to %s\n", __FILE__, value);
@@ -239,7 +240,7 @@ static int set_mode(Instance *pi, const char *value)
 
 static int set_width(Instance *pi, const char *value)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   int oldWidth = priv->width;
   int newWidth = atoi(value);
 
@@ -255,7 +256,7 @@ static int set_width(Instance *pi, const char *value)
 
 static int set_height(Instance *pi, const char *value)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   int oldHeight = priv->height;
   int newHeight = atoi(value);
 
@@ -274,7 +275,7 @@ static int set_height(Instance *pi, const char *value)
 static int set_fullscreen(Instance *pi, const char *value)
 {
   /* Set this before video setup. */
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   priv->fullscreen = atoi(value);
   return 0;
 }
@@ -657,7 +658,7 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height)
 
 static void post_render_frame(Instance *pi)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   if (pi->outputs[OUTPUT_FEEDBACK].destination) {
     Feedback_buffer *fb = Feedback_buffer_new();
     /* FIXME:  Maybe could get propagate sequence and pass it back here... */
@@ -676,7 +677,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Y422P_handler(Instance *pi, void *data)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   Y422P_buffer *y422p = data;
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
@@ -723,7 +724,7 @@ static void Y422P_handler(Instance *pi, void *data)
 
 static void RGB3_handler(Instance *pi, void *data)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   RGB3_buffer *rgb3 = data;
   Y422P_buffer *y422p = NULL;
   BGR3_buffer *bgr3 = NULL;
@@ -784,7 +785,7 @@ static void RGB3_handler(Instance *pi, void *data)
 
 static void BGR3_handler(Instance *pi, void *data)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   BGR3_buffer *bgr3 = data;
   RGB3_buffer *rgb3 = NULL;
   Y422P_buffer *y422p = NULL;
@@ -828,7 +829,7 @@ static void BGR3_handler(Instance *pi, void *data)
 
 static void GRAY_handler(Instance *pi, void *data)
 {
-  SDLstuff_private *priv = pi->data;
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
   Gray_buffer *gray = data;
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
@@ -901,7 +902,7 @@ static int my_event_loop(void *data)
   int rc;
   Instance *pi = data;
 
-  SDLstuff_private *priv = Mem_calloc(1, sizeof(*priv));
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
 
   priv->width = 640;
   priv->height = 480;
@@ -910,7 +911,7 @@ static int my_event_loop(void *data)
   //priv->renderMode = RENDER_MODE_GL;
   //priv->renderMode = RENDER_MODE_SOFTWARE;
   priv->renderMode = RENDER_MODE_OVERLAY;
-  pi->data = priv;
+  
 
   printf("%s started\n", __func__);
 

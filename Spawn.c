@@ -25,6 +25,7 @@ static Output Spawn_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String *child_cmdline;
   int trigger_key;
   int need_retsart;
@@ -34,7 +35,7 @@ typedef struct {
 
 static int set_cmdline(Instance *pi, const char *value)
 {
-  Spawn_private *priv = pi->data;
+  Spawn_private *priv = (Spawn_private *)pi;
   if (priv->child_cmdline) {
     String_free(&priv->child_cmdline);
   }
@@ -45,7 +46,7 @@ static int set_cmdline(Instance *pi, const char *value)
 
 static int set_trigger_key(Instance *pi, const char *value)
 {
-  Spawn_private *priv = pi->data;
+  Spawn_private *priv = (Spawn_private *)pi;
   priv->trigger_key = Keycode_from_string(value);
   return 0;
 }
@@ -59,7 +60,7 @@ static Config config_table[] = {
 
 static void Keycode_handler(Instance *pi, void *msg)
 {
-  Spawn_private *priv = pi->data;
+  Spawn_private *priv = (Spawn_private *)pi;
   Keycode_message *km = msg;
 
   if (km->keycode == priv->trigger_key && priv->child_pid == -1) {
@@ -88,7 +89,7 @@ static void Config_handler(Instance *pi, void *data)
 static void Spawn_tick(Instance *pi)
 {
   Handler_message *hm;
-  Spawn_private *priv = pi->data;
+  Spawn_private *priv = (Spawn_private *)pi;
   
   hm = GetData(pi, 0);
   if (hm) {
@@ -112,8 +113,8 @@ static void Spawn_tick(Instance *pi)
 
 static void Spawn_instance_init(Instance *pi)
 {
-  Spawn_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  Spawn_private *priv = (Spawn_private *)pi;
+  
   priv->trigger_key = -1;
   priv->child_pid = -1;
 }

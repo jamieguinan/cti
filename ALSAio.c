@@ -66,6 +66,7 @@ static struct {
 };
 
 typedef struct {
+  Instance i;
   snd_pcm_t *handle;
   String device;			/* "hw:0", etc. */
   int useplug;
@@ -97,7 +98,7 @@ static void get_device_range(Instance *pi, Range *range);
 
 static int set_useplug(Instance *pi, const char *value)
 {
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
   priv->useplug = atoi(value);
   printf("ALSA useplug set to %d\n", priv->useplug);
 
@@ -107,7 +108,7 @@ static int set_useplug(Instance *pi, const char *value)
 
 static int set_device(Instance *pi, const char *value)
 {
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
   int rc = 0;
   int i;
 
@@ -166,7 +167,7 @@ static void get_device_range(Instance *pi, Range *range)
 {
   DIR *d;
   struct dirent *de;
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
 
   range->type = RANGE_STRINGS;
 
@@ -210,7 +211,7 @@ static int set_rate(Instance *pi, const char *value)
 {
   int rc;
   unsigned int rate = atoi(value);
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
     fprintf(stderr, "device is not open!\n");
@@ -240,7 +241,7 @@ static void get_rate_range(Instance *pi, Range *range)
   /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
     fprintf(stderr, "device is not open!\n");
@@ -261,7 +262,7 @@ static int set_channels(Instance *pi, const char *value)
 {
   int rc;
   int channels = atoi(value);
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
     fprintf(stderr, "device is not open!\n");
@@ -289,7 +290,7 @@ static void get_channels_range(Instance *pi, Range *range)
   /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
     fprintf(stderr, "device is not open!\n");
@@ -310,7 +311,7 @@ static int set_format(Instance *pi, const char *value)
 {
   int i;
   int rc = -1;
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
   char tmp[strlen(value)+1];
   int j;
 
@@ -350,7 +351,7 @@ static void get_format_range(Instance *pi, Range *range)
   /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
     fprintf(stderr, "device is not open!\n");
@@ -368,7 +369,7 @@ static void get_format_range(Instance *pi, Range *range)
 
 static int set_frames_per_io(Instance *pi, const char *value)
 {
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
   if (!priv->handle) {
     fprintf(stderr, "device is not open!\n");
     priv->enable = 0;
@@ -385,7 +386,7 @@ static int set_frames_per_io(Instance *pi, const char *value)
 
 static int set_enable(Instance *pi, const char *value)
 {
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
   if (!priv->handle) {
     fprintf(stderr, "device is not open!\n");
     priv->enable = 0;
@@ -417,7 +418,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *data)
 {
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
   Wav_buffer *wav_in = data;
   int state;
   int dir = 0;
@@ -528,7 +529,7 @@ static void Wav_handler(Instance *pi, void *data)
 
 static void ALSAPlayback_tick(Instance *pi)
 {
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
   // int wait_flag = (priv->enable ? 0 : 1);
   int wait_flag;
 
@@ -627,7 +628,7 @@ static void analyze_rate(ALSAio_private *priv, Wav_buffer *wav)
 
 static void ALSACapture_tick(Instance *pi)
 {
-  ALSAio_private *priv = pi->data;
+  ALSAio_private *priv = (ALSAio_private *)pi;
   int wait_flag;
 
   if (!priv->enable || !priv->handle) {
@@ -751,10 +752,10 @@ static void ALSACapture_tick(Instance *pi)
 /* Playback init... */
 static void ALSAPlayback_instance_init(Instance *pi)
 {
-  ALSAio_private *priv = Mem_calloc(1, sizeof(*priv));
+  ALSAio_private *priv = (ALSAio_private *)pi;
   priv->frames_per_io = 64;
   priv->mode = SND_PCM_STREAM_PLAYBACK;
-  pi->data = priv;
+  
 }
 
 static Template ALSAPlayback_template = {
@@ -770,13 +771,13 @@ static Template ALSAPlayback_template = {
 /* Capture init... */
 static void ALSACapture_instance_init(Instance *pi)
 {
-  ALSAio_private *priv = Mem_calloc(1, sizeof(*priv));
+  ALSAio_private *priv = (ALSAio_private *)pi;
   priv->frames_per_io = 64;
   priv->mode = SND_PCM_STREAM_CAPTURE;
   priv->total_encoded_delta = 48000*2*2*1;
   priv->total_encoded_next = priv->total_encoded_delta;
   priv->total_wait_for_it = 1000;
-  pi->data = priv;
+  
 }
 
 static Template ALSACapture_template = {

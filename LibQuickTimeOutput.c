@@ -29,6 +29,7 @@ static Output LibQuickTimeOutput_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String *output_name;
   quicktime_t *qt;
   int ycc_track;
@@ -44,7 +45,7 @@ typedef struct {
 
 static int set_output(Instance *pi, const char *value)
 {
-  LibQuickTimeOutput_private *priv = pi->data;
+  LibQuickTimeOutput_private *priv = (LibQuickTimeOutput_private *)pi;
 
   if (priv->output_name) {
     String_free(&priv->output_name);
@@ -69,7 +70,7 @@ static int set_output(Instance *pi, const char *value)
 
 static int close_output(Instance *pi, const char *value)
 {
-  LibQuickTimeOutput_private *priv = pi->data;
+  LibQuickTimeOutput_private *priv = (LibQuickTimeOutput_private *)pi;
 
   if (priv->qt) {
     quicktime_dump(priv->qt);
@@ -85,7 +86,7 @@ static int close_output(Instance *pi, const char *value)
 
 static int set_avi(Instance *pi, const char *value)
 {
-  LibQuickTimeOutput_private *priv = pi->data;
+  LibQuickTimeOutput_private *priv = (LibQuickTimeOutput_private *)pi;
 
   priv->avi = atoi(value);
 
@@ -214,7 +215,7 @@ static int frame_limit = 30;
 
 static void BGR3_handler(Instance *pi, void *data)
 {
-  LibQuickTimeOutput_private *priv = pi->data;
+  LibQuickTimeOutput_private *priv = (LibQuickTimeOutput_private *)pi;
   BGR3_buffer *bgr = data;
 
 #if 0
@@ -264,7 +265,7 @@ static void BGR3_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *data)
 {
-  LibQuickTimeOutput_private *priv = pi->data;
+  LibQuickTimeOutput_private *priv = (LibQuickTimeOutput_private *)pi;
   Wav_buffer *wav = data;
 
  if (!priv->qt) {
@@ -326,8 +327,8 @@ static void LibQuickTimeOutput_tick(Instance *pi)
 
 static void LibQuickTimeOutput_instance_init(Instance *pi)
 {
-  LibQuickTimeOutput_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  LibQuickTimeOutput_private *priv = (LibQuickTimeOutput_private *)pi;
+  
 
   int i;
   lqt_codec_info_t** encoders;

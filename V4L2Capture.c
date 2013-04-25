@@ -116,7 +116,7 @@ static void get_device_range(Instance *pi, Range *range);
 
 static int set_device(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   int rc = -1;
   struct v4l2_capability v4l2_caps = {};
   struct v4l2_tuner tuner = {};
@@ -201,7 +201,7 @@ static void get_device_range(Instance *pi, Range *range)
 
   DIR *d;
   struct dirent *de;
-  // V4L2Capture_private *priv = pi->data;
+  // V4L2Capture_private *priv = (V4L2Capture_private *)pi;
 
   range->type = RANGE_STRINGS;
 
@@ -240,7 +240,7 @@ static void get_device_range(Instance *pi, Range *range)
 
 static int set_input(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   int rc;
   int i;
   struct v4l2_input input = {};
@@ -283,7 +283,7 @@ static int set_input(Instance *pi, const char *value)
 
 static int set_format(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   int rc;
   int i;
   struct v4l2_format format = {};
@@ -342,7 +342,7 @@ static int set_format(Instance *pi, const char *value)
 static void get_format_range(Instance *pi, Range *range)
 {
 #if 0
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   int rc;
   int i;
   struct v4l2_fmtdesc fmtdesc = {};
@@ -380,7 +380,7 @@ static void get_format_range(Instance *pi, Range *range)
 static void get_input_range(Instance *pi, Range *range)
 {
 #if 0
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   int rc;
   int i;
   struct v4l2_input input = {};
@@ -425,7 +425,7 @@ static void get_input_range(Instance *pi, Range *range)
 
 static int set_std(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   int rc = 0;
   int i;
   struct v4l2_standard standard = {};
@@ -526,19 +526,19 @@ static void generic_v4l2_get_range(V4L2Capture_private *priv, uint32_t cid, cons
 
 static void get_brightness_range(Instance *pi, Range *range)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   generic_v4l2_get_range(priv, V4L2_CID_BRIGHTNESS, "brightness", range);
 }
 
 static void get_contrast_range(Instance *pi, Range *range)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   generic_v4l2_get_range(priv, V4L2_CID_CONTRAST, "contrast", range);
 }
 
 static void get_saturation_range(Instance *pi, Range *range)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   generic_v4l2_get_range(priv, V4L2_CID_SATURATION, "saturation", range);
 }
 
@@ -546,7 +546,7 @@ static void get_saturation_range(Instance *pi, Range *range)
 static int set_brightness(Instance *pi, const char *value)
 {
   int rc;
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_BRIGHTNESS, atoi(value));
   if (rc == 0) {
     String_set(&priv->brightness, value);
@@ -558,7 +558,7 @@ static int set_brightness(Instance *pi, const char *value)
 static int set_contrast(Instance *pi, const char *value)
 {
   int rc;
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_CONTRAST, atoi(value));
   if (rc == 0) {
     String_set(&priv->contrast, value);
@@ -570,7 +570,7 @@ static int set_contrast(Instance *pi, const char *value)
 static int set_autoexpose(Instance *pi, const char *value)
 {
   int rc;
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
 
 #ifndef V4L2_CID_EXPOSURE_AUTO
 #define V4L2_CID_EXPOSURE_AUTO 10094849
@@ -588,7 +588,7 @@ static int set_autoexpose(Instance *pi, const char *value)
 static int set_exposure(Instance *pi, const char *value)
 {
   int rc;
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
 #ifndef V4L2_CID_EXPOSURE_ABSOLUTE
 #define V4L2_CID_EXPOSURE_ABSOLUTE 10094850
 #endif
@@ -603,7 +603,7 @@ static int set_exposure(Instance *pi, const char *value)
 static int set_saturation(Instance *pi, const char *value)
 {
   int rc;
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_SATURATION, atoi(value));
   if (rc == 0) {
     String_set(&priv->saturation, value);
@@ -614,7 +614,7 @@ static int set_saturation(Instance *pi, const char *value)
 
 static int set_mute(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   return generic_v4l2_set(priv, V4L2_CID_AUDIO_MUTE, atoi(value));
 }
 
@@ -649,7 +649,7 @@ static void float_to_fraction(float f, int *num, int *den)
 
 static int set_fps(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   struct v4l2_streamparm setfps = { .type = V4L2_BUF_TYPE_VIDEO_CAPTURE };
   int rc;
   int n = 0, d = 0;
@@ -679,7 +679,7 @@ static int set_fps(Instance *pi, const char *value)
 
 static int set_size(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   struct v4l2_format format = {};
   int n, w, h;
   int rc;
@@ -726,7 +726,7 @@ static int set_size(Instance *pi, const char *value)
 static int set_frequency(Instance *pi, const char *value)
 {
   /* value should be frequency in Hz. */
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   int rc = -1;
   struct v4l2_frequency freq = {};
 
@@ -762,7 +762,7 @@ static int set_frequency(Instance *pi, const char *value)
 
 static int set_enable(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   if (priv->fd == -1) {
     fprintf(stderr, "device is not open!\n");
     priv->enable = 0;
@@ -778,7 +778,7 @@ static int set_enable(Instance *pi, const char *value)
 
 static int set_snapshot(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   priv->snapshot = atoi(value);
   return 0;
   
@@ -787,7 +787,7 @@ static int set_snapshot(Instance *pi, const char *value)
 
 static int set_drivermatch(Instance *pi, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   String_set(&priv->drivermatch, value);
   return 0;
 }
@@ -912,7 +912,7 @@ static int find_control(V4L2Capture_private *priv, const char *label, struct v4l
 /* V4L2 has controls where each has an associated string label.  Search and set... */
 static int generic_set(Instance *pi, const char *label, const char *value)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   struct v4l2_queryctrl qctrl = {};
   int i;
   char label_copy[strlen(label+1)];
@@ -1023,7 +1023,7 @@ static int V4L2_queue_setup(V4L2Capture_private *priv)
 static void Config_handler(Instance *pi, void *data)
 {
   int i;
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   Config_buffer *cb_in = data;
 
   /* First walk the config table. */
@@ -1047,7 +1047,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Keycode_handler(Instance *pi, void *msg)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   Keycode_message *km = msg;
   
   if (km->keycode == CTI__KEY_S) {
@@ -1090,7 +1090,7 @@ static void calc_fps(struct timeval *tv)
 static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
 {
   /* NOTE: These typically don't include the default huffman tables. */
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   FILE *f;
   char filename[64];
   sprintf(filename, "snap%04d.jpg", pi->counter);
@@ -1106,7 +1106,7 @@ static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
 
 static void bgr3_snapshot(Instance *pi, BGR3_buffer *bgr3)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   FILE *f;
   char filename[64];
   sprintf(filename, "snap%04d.ppm", pi->counter);
@@ -1135,7 +1135,7 @@ static void bgr3_snapshot(Instance *pi, BGR3_buffer *bgr3)
 
 static void y422p_snapshot(Instance *pi, Y422P_buffer *y422p)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   FILE *f;
   char filename[64];
   sprintf(filename, "snap%04d.y422p", pi->counter);
@@ -1153,7 +1153,7 @@ static void y422p_snapshot(Instance *pi, Y422P_buffer *y422p)
 
 static void V4L2Capture_tick(Instance *pi)
 {
-  V4L2Capture_private *priv = pi->data;
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   int rc;
   int wait_flag = (priv->enable ? 0 : 1);
   Handler_message *hm;
@@ -1364,12 +1364,12 @@ static void V4L2Capture_tick(Instance *pi)
 
 static void V4L2Capture_instance_init(Instance *pi)
 {
-  V4L2Capture_private *priv = Mem_calloc(1, sizeof(*priv));
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   priv->fd = -1;
   priv->check_sequence = 1;
   priv->vbuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   priv->vbuffer.memory = V4L2_MEMORY_MMAP;  /* Change this later if device doesn't support mmap */
-  pi->data = priv;
+  
 }
 
 static Template V4L2Capture_template = {

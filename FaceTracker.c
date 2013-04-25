@@ -32,6 +32,7 @@ static Output FaceTracker_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   float x;
   float y;
 } coord2d;
@@ -54,6 +55,7 @@ enum {
 #define FIR_COUNT 8
 
 typedef struct {
+  Instance i;
   coord2d lefteye, righteye, leftnostril, rightnostril, nose, mouth, leftear, rightear;
   float confidence;
   coord2d p1, p2, p3;
@@ -339,7 +341,7 @@ static void analysis_01(FaceTracker_private *priv, Y422P_buffer *y422p)
 
 static void gray_handler(Instance *pi, void *msg)
 {
-  FaceTracker_private *priv = pi->data;
+  FaceTracker_private *priv = (FaceTracker_private *)pi;
   Gray_buffer *gray = msg;
 
   /* Position message will contain 3D coordinate offset and 3D rotation offset. */
@@ -366,7 +368,7 @@ static void gray_handler(Instance *pi, void *msg)
 
 static void y422p_handler(Instance *pi, void *msg)
 {
-  FaceTracker_private *priv = pi->data;
+  FaceTracker_private *priv = (FaceTracker_private *)pi;
   Y422P_buffer *y422p = msg;
 
   /* Position message will contain 3D coordinate offset and 3D rotation offset. */
@@ -397,8 +399,7 @@ static void FaceTracker_tick(Instance *pi)
 
 static void FaceTracker_instance_init(Instance *pi)
 {
-  FaceTracker_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // FaceTracker_private *priv = (FaceTracker_private *)pi;
 }
 
 

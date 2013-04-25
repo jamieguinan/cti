@@ -22,6 +22,7 @@ static Output JpegFiler_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   // int ...;
 } JpegFiler_private;
 
@@ -73,8 +74,6 @@ static void JpegFiler_tick(Instance *pi)
 
 static void JpegFiler_instance_init(Instance *pi)
 {
-  JpegFiler_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
 }
 
 static Template JpegFiler_template = {

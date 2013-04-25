@@ -50,7 +50,7 @@ static struct {
 
 static int set_transform(Instance *pi, const char *value)
 {
-  JpegTran_private *priv = pi->data;
+  JpegTran_private *priv = (JpegTran_private *)pi;
   int i;
 
   for (i=0; i < table_size(transform_map); i++) {
@@ -67,7 +67,7 @@ static int set_transform(Instance *pi, const char *value)
 
 static int set_crop(Instance *pi, const char *value)
 {
-  JpegTran_private *priv = pi->data;
+  JpegTran_private *priv = (JpegTran_private *)pi;
   int rc;
 
   rc = jtransform_parse_crop_spec(&priv->info, value);
@@ -227,7 +227,7 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
 
 static void jpeg_handler(Instance *pi, void *msg)
 {
-  JpegTran_private *priv = pi->data;
+  JpegTran_private *priv = (JpegTran_private *)pi;
   Jpeg_buffer *jpeg_in = msg;
 
   //fprintf(stderr, "%s: got Jpeg_buffer %p dest %p\n", __func__, jpeg_in,
@@ -269,7 +269,7 @@ static void JpegTran_tick(Instance *pi)
 
 static void JpegTran_instance_init(Instance *pi)
 {
-  JpegTran_private *priv = Mem_calloc(1, sizeof(*priv));
+  JpegTran_private *priv = (JpegTran_private *)pi;
 
 
   /* From jpegtran.c:parse_switches() */
@@ -279,7 +279,7 @@ static void JpegTran_instance_init(Instance *pi)
   priv->info.force_grayscale = FALSE;
   priv->info.crop = FALSE;
 
-  pi->data = priv;
+  
 }
 
 static Template JpegTran_template = {

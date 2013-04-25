@@ -36,6 +36,7 @@ typedef struct _ts_packet {
 
 
 typedef struct {
+  Instance i;
   // TS file format string.
   String *chunk_fmt;
   // TS sequence duration in seconds.
@@ -68,7 +69,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void H264_handler(Instance *pi, void *msg)
 {
-  MpegTSMux_private *priv = pi->data;
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
   MpegTimeStamp pts = {};
   MpegTimeStamp dts = {};
@@ -255,7 +256,7 @@ static void H264_handler(Instance *pi, void *msg)
 
 static void AAC_handler(Instance *pi, void *msg)
 {
-  // MpegTSMux_private *priv = pi->data;
+  // MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   AAC_buffer *aac = msg;
 
   /* Assemble TS packets, save in a list so they can be smoothly
@@ -267,7 +268,7 @@ static void AAC_handler(Instance *pi, void *msg)
 
 static void flush(Instance *pi)
 {
-  MpegTSMux_private *priv = pi->data;
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
 
   if (!priv->chunk_file) {
     priv->chunk_file = fopen("muxout.ts", "wb");
@@ -302,8 +303,8 @@ static void MpegTSMux_tick(Instance *pi)
 
 static void MpegTSMux_instance_init(Instance *pi)
 {
-  MpegTSMux_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+  
   /* FIXME: This is arbitrary, based on an early 2011 epoch date.  The
      real problem is I don't know to handle PTS wraps.  Should fix
      that sometime... */

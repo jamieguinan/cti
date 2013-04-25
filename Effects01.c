@@ -20,6 +20,7 @@ static Output Effects01_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   uint8_t invert;
   int rotate;
 } Effects01_private;
@@ -83,7 +84,7 @@ static void rotate_rgb_270(uint8_t *src, uint8_t *dst, int src_width, int src_he
 
 static void RGB3_handler(Instance *pi, void *data)
 {
-  Effects01_private *priv = pi->data;
+  Effects01_private *priv = (Effects01_private *)pi;
   RGB3_buffer *rgb3_in = data;
   if (pi->outputs[OUTPUT_RGB3].destination) {
     /* Operate in-place, pass along to output... */
@@ -126,8 +127,7 @@ static void Effects01_tick(Instance *pi)
 
 static void Effects01_instance_init(Instance *pi)
 {
-  Effects01_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Effects01_private *priv = (Effects01_private *)pi;
 }
 
 

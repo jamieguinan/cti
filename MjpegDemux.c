@@ -50,6 +50,7 @@ static Output MjpegDemux_outputs[] = {
 enum { PARSING_HEADER, PARSING_DATA };
 
 typedef struct {
+  Instance i;
   String input;
   Source *source;
   ArrayU8 *chunk;
@@ -103,7 +104,7 @@ typedef struct {
 
 static int set_input(Instance *pi, const char *value)
 {
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
 
   if (priv->source) {
     Source_free(&priv->source);
@@ -133,7 +134,7 @@ static int set_input(Instance *pi, const char *value)
 
 static int set_output(Instance *pi, const char *value)
 {
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   if (priv->output_sink) {
     Sink_free(&priv->output_sink);
   }
@@ -155,7 +156,7 @@ static int set_output(Instance *pi, const char *value)
 
 static int set_enable(Instance *pi, const char *value)
 {
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
 
   priv->enable = atoi(value);
 
@@ -172,7 +173,7 @@ static int set_enable(Instance *pi, const char *value)
 
 static int set_fixed_video_period(Instance *pi, const char *value)
 {
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   priv->use_fixed_video_period = 1;
   priv->fixed_video_period = atof(value);
   return 0;
@@ -201,7 +202,7 @@ static void reset_current(MjpegDemux_private *priv)
 
 static int do_seek(Instance *pi, const char *value)
 {
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   long amount = atol(value);
 
   if (priv->source) {
@@ -237,7 +238,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Keycode_handler(Instance *pi, void *msg)
 {
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   Keycode_message *km = msg;
   
   if (km->keycode == CTI__KEY_A && priv->source) {
@@ -286,7 +287,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 
 static void Feedback_handler(Instance *pi, void *data)
 {
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   Feedback_buffer *fb = data;
 
   priv->pending_feedback -= 1;
@@ -296,7 +297,7 @@ static void Feedback_handler(Instance *pi, void *data)
 
 static void notify_outputs_eof(Instance *pi)
 {
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   /* Send buffered messages with EOF flag set. */
   if (pi->outputs[OUTPUT_JPEG].destination && priv->buffer.jpeg) {
     priv->buffer.jpeg->c.eof = 1;
@@ -318,7 +319,7 @@ static void notify_outputs_eof(Instance *pi)
 static void MjpegDemux_tick(Instance *pi)
 {
   Handler_message *hm;
-  MjpegDemux_private *priv = pi->data;
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   int sleep_and_return = 0;
 
   /* FIXME: Could use a wait_flag and set if pending_feedback, but
@@ -661,14 +662,14 @@ static void MjpegDemux_tick(Instance *pi)
 
 static void MjpegDemux_instance_init(Instance *pi)
 {
-  MjpegDemux_private *priv = Mem_calloc(1, sizeof(*priv));
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   priv->rate_multiplier = 1.0;
   priv->max_chunk_size = 1024*1024*4;
   priv->retry = 0;
   priv->use_feedback = 0;
   priv->video.stream_t0 = -1.0;
   priv->feedback_threshold = 20;
-  pi->data = priv;
+  
   priv->seek_amount = 10000000;
 }
 

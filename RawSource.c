@@ -25,6 +25,7 @@ static Output RawSource_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String input;
   Source *source;
   int read_timeout;
@@ -33,7 +34,7 @@ typedef struct {
 
 static int set_input(Instance *pi, const char *value)
 {
-  RawSource_private *priv = pi->data;
+  RawSource_private *priv = (RawSource_private *)pi;
   if (priv->source) {
     Source_free(&priv->source);
   }
@@ -61,7 +62,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void RawSource_move_data(Instance *pi)
 {
-  RawSource_private *priv = pi->data;
+  RawSource_private *priv = (RawSource_private *)pi;
   ArrayU8 *chunk;
   int needData = 1;
 
@@ -95,7 +96,7 @@ static void RawSource_move_data(Instance *pi)
 static void RawSource_tick(Instance *pi)
 {
   Handler_message *hm;
-  RawSource_private *priv = pi->data;
+  RawSource_private *priv = (RawSource_private *)pi;
   int wait_flag;
 
   if (!priv->source && s(priv->input)) {
@@ -130,8 +131,7 @@ if (!s(priv->input)) {
 
 static void RawSource_instance_init(Instance *pi)
 {
-  RawSource_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // RawSource_private *priv = (RawSource_private *)pi;
 }
 
 

@@ -25,6 +25,7 @@ static Output Y4MSource_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   Y422P_buffer *y4m;
 } Y4MSource_private;
 
@@ -32,7 +33,7 @@ typedef struct {
 static int do_run(Instance *pi, const char *value)
 {
   /* Clones and posts the y4m buffer N times.  N=atoi(value). */
-  Y4MSource_private *priv = pi->data;
+  Y4MSource_private *priv = (Y4MSource_private *)pi;
   int count = atoi(value);
   int i;
 
@@ -86,7 +87,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void y422p_handler(Instance *pi, void *data)
 {
-  Y4MSource_private *priv = pi->data;
+  Y4MSource_private *priv = (Y4MSource_private *)pi;
   priv->y4m = data;
   printf("%s: y4m=%p\n", __func__, priv->y4m);
 }
@@ -107,8 +108,7 @@ static void Y4MSource_tick(Instance *pi)
 
 static void Y4MSource_instance_init(Instance *pi)
 {
-  Y4MSource_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // Y4MSource_private *priv = (Y4MSource_private *)pi;
 }
 
 

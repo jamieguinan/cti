@@ -26,6 +26,7 @@ static Output NScale_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   int Nx;
   int Ny;
 } NScale_private;
@@ -64,7 +65,7 @@ static void N_scale(NScale_private *priv, uint8_t *indata, int in_width, int in_
 
 static void y422p_handler(Instance *pi, void *data)
 {
-  NScale_private *priv = pi->data;
+  NScale_private *priv = (NScale_private *)pi;
   Y422P_buffer *y422p_in = data;
 
   if (pi->outputs[OUTPUT_422P].destination) {
@@ -114,8 +115,8 @@ static void NScale_tick(Instance *pi)
 
 static void NScale_instance_init(Instance *pi)
 {
-  NScale_private *priv = Mem_calloc(1, sizeof(*priv));  
-  pi->data = priv;
+  NScale_private *priv = (NScale_private *)pi;
+  
   priv->Nx = 1;
   priv->Ny = 1;
 }

@@ -33,6 +33,7 @@ static Output AVIDemux_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   String input;
   Source *source;
   ArrayU8 *chunk;
@@ -54,7 +55,7 @@ static ArrayU8 * idx_marker = ArrayU8_temp_const("idx1", 4);
 
 static int set_input(Instance *pi, const char *value)
 {
-  AVIDemux_private *priv = pi->data;
+  AVIDemux_private *priv = (AVIDemux_private *)pi;
   if (priv->source) {
     Source_free(&priv->source);
   }
@@ -75,7 +76,7 @@ static int set_input(Instance *pi, const char *value)
 
 static int set_enable(Instance *pi, const char *value)
 {
-  AVIDemux_private *priv = pi->data;
+  AVIDemux_private *priv = (AVIDemux_private *)pi;
 
   priv->enable = atoi(value);
 
@@ -137,7 +138,7 @@ static int avi_chunk_ready(ArrayU8 *chunk, const ArrayU8 *marker, int *length)
 static void AVIDemux_tick(Instance *pi)
 {
   Handler_message *hm;
-  AVIDemux_private *priv = pi->data;
+  AVIDemux_private *priv = (AVIDemux_private *)pi;
   int wait_flag;
 
   if (!priv->enable || !priv->source
@@ -252,8 +253,7 @@ static void AVIDemux_tick(Instance *pi)
 
 static void AVIDemux_instance_init(Instance *pi)
 {
-  AVIDemux_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // AVIDemux_private *priv = (AVIDemux_private *)pi;
 }
 
 

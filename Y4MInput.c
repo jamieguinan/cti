@@ -33,6 +33,7 @@ static Output Y4MInput_outputs[] = {
 enum { PARSING_HEADER, PARSING_FRAME };
 
 typedef struct {
+  Instance i;
   String input;
   Source *source;
   ArrayU8 *chunk;
@@ -68,7 +69,7 @@ typedef struct {
 
 static int set_input(Instance *pi, const char *value)
 {
-  Y4MInput_private *priv = pi->data;
+  Y4MInput_private *priv = (Y4MInput_private *)pi;
   if (priv->source) {
     Source_free(&priv->source);
   }
@@ -97,7 +98,7 @@ static int set_input(Instance *pi, const char *value)
 
 static int set_enable(Instance *pi, const char *value)
 {
-  Y4MInput_private *priv = pi->data;
+  Y4MInput_private *priv = (Y4MInput_private *)pi;
 
   priv->enable = atoi(value);
 
@@ -113,7 +114,7 @@ static int set_enable(Instance *pi, const char *value)
 
 static int set_use_feedback(Instance *pi, const char *value)
 {
-  Y4MInput_private *priv = pi->data;
+  Y4MInput_private *priv = (Y4MInput_private *)pi;
   priv->use_feedback = atoi(value);
   printf("Y4MInput use_feedback set to %d\n", priv->use_feedback);
   return 0;
@@ -121,7 +122,7 @@ static int set_use_feedback(Instance *pi, const char *value)
 
 static int do_seek(Instance *pi, const char *value)
 {
-  Y4MInput_private *priv = pi->data;
+  Y4MInput_private *priv = (Y4MInput_private *)pi;
   long amount = atol(value);
 
   if (priv->source) {
@@ -162,7 +163,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Feedback_handler(Instance *pi, void *data)
 {
-  Y4MInput_private *priv = pi->data;
+  Y4MInput_private *priv = (Y4MInput_private *)pi;
   Feedback_buffer *fb = data;
 
   priv->pending_feedback -= 1;
@@ -173,7 +174,7 @@ static void Feedback_handler(Instance *pi, void *data)
 
 static void Y4MInput_tick(Instance *pi)
 {
-  Y4MInput_private *priv = pi->data;
+  Y4MInput_private *priv = (Y4MInput_private *)pi;
   Handler_message *hm;
   int wait_flag;
 
@@ -305,13 +306,13 @@ static void Y4MInput_tick(Instance *pi)
 
 static void Y4MInput_instance_init(Instance *pi)
 {
-  Y4MInput_private *priv = Mem_calloc(1, sizeof(*priv));
+  Y4MInput_private *priv = (Y4MInput_private *)pi;
   priv->rate_multiplier = 1.0;
   priv->max_chunk_size = 1024*1024*8; /* 8MB */
   priv->retry = 0;
   priv->use_feedback = 0;
   priv->feedback_threshold = 20;
-  pi->data = priv;
+  
 }
 
 static Template Y4MInput_template = {

@@ -20,6 +20,7 @@ static Output SonyPTZ_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   VISCAInterface_t interface;
   char *device;
 } SonyPTZ_private;
@@ -27,7 +28,7 @@ typedef struct {
 
 static int set_device(Instance *pi, const char *value)
 {
-  SonyPTZ_private *priv = pi->data;
+  SonyPTZ_private *priv = (SonyPTZ_private *)pi;
   unsigned int rc;
 
   priv->device = strdup(value);
@@ -61,8 +62,7 @@ static void SonyPTZ_tick(Instance *pi)
 
 static void SonyPTZ_instance_init(Instance *pi)
 {
-  SonyPTZ_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  // SonyPTZ_private *priv = (SonyPTZ_private *)pi;
 }
 
 
