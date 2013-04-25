@@ -19,6 +19,7 @@ static Output Example_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
   // int ...;
 } Example_private;
 
@@ -47,13 +48,13 @@ static void Example_tick(Instance *pi)
 
 static void Example_instance_init(Instance *pi)
 {
-  Example_private *priv = Mem_calloc(1, sizeof(*priv));
-  pi->data = priv;
+  Example_private *priv = (Example_private *)pi;
 }
 
 
 static Template Example_template = {
   .label = "Example",
+  .priv_size = sizeof(Example_private),  
   .inputs = Example_inputs,
   .num_inputs = table_size(Example_inputs),
   .outputs = Example_outputs,

@@ -15,9 +15,10 @@ static Input ImageLoader_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-enum { OUTPUT_GRAY };
+enum { OUTPUT_GRAY, OUTPUT_422P };
 static Output ImageLoader_outputs[] = {
   [ OUTPUT_GRAY ] = { .type_label = "GRAY_buffer", .destination = 0L },
+  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -29,6 +30,7 @@ static int set_file(Instance *pi, const char *value)
   ArrayU8 *fdata = File_load_data(value);
   ImageType t;
   Gray_buffer *gray = 0L;
+  Y422P_buffer *y422p = 0L;
 
   if (!fdata) {
     fprintf(stderr, "failed to load %s\n", value);
@@ -37,6 +39,12 @@ static int set_file(Instance *pi, const char *value)
 
   /* Identify file. */
   t = Image_guess_type(fdata->data, fdata->len);
+
+  if (t == IMAGE_TYPE_UNKNOWN) {
+    if (strstr(value, ".y422p")) {
+      t = IMAGE_TYPE_Y422P;
+    }
+  }
 
   switch (t) {
   case IMAGE_TYPE_PGM:
@@ -50,6 +58,14 @@ static int set_file(Instance *pi, const char *value)
   case IMAGE_TYPE_PPM:
     break;
   case IMAGE_TYPE_JPEG:
+    break;
+  case IMAGE_TYPE_Y422P:
+    y422p = Y422P_buffer_from(fdata->data, fdata->len, 0L);
+    if (y422p) {
+      if (pi->outputs[OUTPUT_422P].destination) {
+	PostData(y422p, pi->outputs[OUTPUT_422P].destination);
+      }
+    }
     break;
   case IMAGE_TYPE_UNKNOWN:
     break;

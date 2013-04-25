@@ -1142,7 +1142,9 @@ static void y422p_snapshot(Instance *pi, Y422P_buffer *y422p)
   fprintf(stderr, "%s\n", filename);
   f = fopen(filename, "wb");
   if (f) {
-    if (fwrite(priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused, 1, f) != 1) { perror("fwrite"); }
+    if (fwrite(y422p->y, y422p->y_length, 1, f) != 1) { perror("fwrite"); }
+    if (fwrite(y422p->cr, y422p->cr_length, 1, f) != 1) { perror("fwrite"); }
+    if (fwrite(y422p->cb, y422p->cb_length, 1, f) != 1) { perror("fwrite"); }
     fclose(f);
   }
   priv->snapshot -= 1;	  

@@ -1,3 +1,31 @@
+2013-Apr-25 04:09:13
+
+CTI.c:
+CTI.h:
+  Handle new-style templates, where priv structure includes Instance member. 
+
+DJpeg.c:
+CJpeg.c:
+  Use new-style templates.
+
+Rename example.[ch] to Example.[ch].
+
+ImageLoader.c:
+  Support loading .y422p files, as captured by V4L2Capture.
+
+Images.c:
+  Y422P_buffer_from(), using heuristics for dimensions.
+
+Keycodes.h:
+  PLUS, MINUS, EQUALS.
+
+SDLstuff.c:
+  Resize using +/- keys.
+
+V4L2Capture.c:
+  Fix .y422p write, use the converted data.
+
+
 2013-Apr-18 14:11:15
 
 Various:

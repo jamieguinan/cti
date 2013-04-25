@@ -38,6 +38,8 @@ static Output CJpeg_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
+
   /* Jpeg encode context... */
   int quality;
   int adjusted_quality;
@@ -48,7 +50,7 @@ typedef struct {
 
 static int set_quality(Instance *pi, const char *value)
 {
-  CJpeg_private *priv = pi->data;
+  CJpeg_private *priv = (CJpeg_private *)pi;
   int quality = atoi(value);
 
   if (50 <= quality && quality <= 100) {
@@ -63,7 +65,7 @@ static int set_quality(Instance *pi, const char *value)
 
 static void get_quality(Instance *pi, Value *v)
 {
-  CJpeg_private *priv = pi->data;
+  CJpeg_private *priv = (CJpeg_private *)pi;
   v->u.int_value = priv->quality;
 }
 
@@ -77,7 +79,7 @@ static void get_quality_range(Instance *pi, Range *r)
 
 static int set_dct_method(Instance *pi, const char *value)
 {
-  CJpeg_private *priv = pi->data;
+  CJpeg_private *priv = (CJpeg_private *)pi;
 
   if (streq(value, "islow")) {
     priv->dct_method = JDCT_ISLOW;
@@ -97,7 +99,7 @@ static int set_dct_method(Instance *pi, const char *value)
 
 static int set_time_limit(Instance *pi, const char *value)
 {
-  CJpeg_private *priv = pi->data;
+  CJpeg_private *priv = (CJpeg_private *)pi;
   priv->time_limit = atof(value);
   
   return 0;
@@ -118,7 +120,7 @@ static void compress_and_post(Instance *pi,
 			      uint8_t *c1, uint8_t *c2, uint8_t *c3)
 {
   /* Compress input buffer.  See "libjpeg.txt" in IJPEG source, and "cjpeg.c". */
-  CJpeg_private *priv = pi->data;
+  CJpeg_private *priv = (CJpeg_private *)pi;
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
   Jpeg_buffer *jpeg_out = 0L;
@@ -327,17 +329,16 @@ static void CJpeg_tick(Instance *pi)
 
 static void CJpeg_instance_init(Instance *pi)
 {
-  CJpeg_private *priv = Mem_calloc(1, sizeof(CJpeg_private));
+  CJpeg_private *priv = (CJpeg_private *)pi;
   priv->quality = 75;
   priv->adjusted_quality = priv->quality;
   priv->time_limit = 0.030;
   priv->dct_method = JDCT_FLOAT;
-
-  pi->data = priv;
 }
 
 static Template CJpeg_template = {
   .label = "CJpeg",
+  .priv_size = sizeof(CJpeg_private),
   .inputs = CJpeg_inputs,
   .num_inputs = table_size(CJpeg_inputs),
   .outputs = CJpeg_outputs,

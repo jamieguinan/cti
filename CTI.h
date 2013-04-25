@@ -138,6 +138,8 @@ typedef struct _Instance {
   /* NO instance label!  Containers should hold label:instance mapping, do not put it here. */
 
   void *data;			/* Instance-specific data, usally accessed as "priv". */
+  size_t priv_size;		/* New-style, where priv structure includes Instance member. */
+
   void (*tick)(struct _Instance *pi); /* One "unit" of processing. */
 
   Input *inputs;
@@ -181,6 +183,8 @@ extern void Instance_wait(Instance *pi); /* Wait for notification, then go and c
    have ".type_label" set, then sets up the other fields. */
 typedef struct _Template {
   const char *label;
+
+  size_t priv_size;
 
   Input *inputs;
   int num_inputs;

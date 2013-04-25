@@ -3,9 +3,9 @@ new DJpeg dj
 new ALSAPlayback ap
 new SDLstuff sdl
 new JpegTran jt
-new VSmoother vs
+#new VSmoother vs
+new VFilter vf
 
-connect mjd O511_buffer do511
 # Insert a JpegTran to clean up extraneous bytes.  Needed if feeding to
 # libavcodec (ffmpeg, mplayer, etc.)
 #connect mjd Jpeg_buffer jt
@@ -25,11 +25,16 @@ config sdl mode OVERLAY
 config sdl width 852
 config sdl height 480
 
+config sdl label XBox
+
 #connect dj RGB3_buffer vs
 #connect vs RGB3_buffer sdl
 #connect dj RGB3_buffer sdl
-connect dj 422P_buffer sdl
-connect do511 RGB3_buffer sdl
+
+connect dj RGB3_buffer vf
+connect vf RGB3_buffer sdl
+
+#connect dj 422P_buffer sdl
 
 #config mjd input ./rcv
 config mjd input 192.168.2.22:6667

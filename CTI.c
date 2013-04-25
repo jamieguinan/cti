@@ -188,9 +188,18 @@ static Instance * _Instantiate_local(const char *label, int run)
   for (i=0; i < templates.count; i++) {
     if (strcmp(templates.items[i]->label, label) == 0) {
       Template *t = templates.items[i];
-      Instance *pi = Mem_calloc(1, sizeof(*pi));
+      Instance *pi;
+      if (t->priv_size) {
+	/* New-style, where priv structure includes Instance member. */
+	pi = Mem_calloc(1, t->priv_size);
+      }
+      else {
+	pi = Mem_calloc(1, sizeof(*pi));
+      }
+
       pi->label = t->label;
       pi->tick = t->tick;
+      pi->priv_size = t->priv_size;
 
       /* Inputs and Ouputs are declared statically in each module
 	 file.  Here we make a copy and initialize instance-specific
@@ -286,8 +295,17 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
       /* If value is passed in, call the set function. */
       if (cb_in->value && config_table[i].vset) {
 	/* Generic setter. */
-	config_table[i].vset((uint8_t*)pi->data + config_table[i].value_offset, 
-			     cb_in->value->bytes);
+	if (pi->priv_size) {
+	  /* New-style, pi actually points too the priv structure, so value_offset
+	     should work fine. */
+	  config_table[i].vset((uint8_t*)pi + config_table[i].value_offset, 
+			       cb_in->value->bytes);
+	}
+	else {
+	  /* Old-style, dereference. */
+	  config_table[i].vset((uint8_t*)pi->data + config_table[i].value_offset, 
+			       cb_in->value->bytes);
+	}
       }
       else if (cb_in->value && config_table[i].set) {
 	/* Template-specific setter. */

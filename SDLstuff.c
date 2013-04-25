@@ -58,6 +58,9 @@ static int SDLtoCTI_Keymap[SDLK_LAST] = {
   [SDLK_x] = CTI__KEY_X,
   [SDLK_y] = CTI__KEY_Y,
   [SDLK_z] = CTI__KEY_Z,
+  [SDLK_PLUS] = CTI__KEY_PLUS,
+  [SDLK_MINUS] = CTI__KEY_MINUS,
+  [SDLK_EQUALS] = CTI__KEY_EQUALS,
 };
 
 
@@ -105,6 +108,10 @@ typedef struct {
   int width;
   int height;
   int hard_dimensions;
+
+  /* For resize */
+  int new_width;
+  int new_height;
 
   String label;
   int label_set;
@@ -155,9 +162,28 @@ static void Keycode_handler(Instance *pi, void *msg)
   SDLstuff_private *priv = pi->data;
   Keycode_message *km = msg;
   int handled = 0;
+
+  //   puts(__func__);
   
   if (km->keycode == CTI__KEY_F) {
     priv->toggle_fullscreen = 1;
+    handled = 1;
+  }
+  else if (km->keycode == CTI__KEY_PLUS || km->keycode == CTI__KEY_EQUALS) {
+    if (priv->renderMode == RENDER_MODE_OVERLAY
+	&& priv->width < 1440) {
+      priv->new_width = priv->width * 4 / 3;
+      priv->new_height = priv->height * 4 / 3;
+    }
+    handled = 1;
+  }
+
+  else if (km->keycode == CTI__KEY_MINUS) {
+    if (priv->renderMode == RENDER_MODE_OVERLAY
+	&& priv->width > 320) {
+      priv->new_width = priv->width * 3 / 4;
+      priv->new_height = priv->height * 3 / 4;
+    }
     handled = 1;
   }
   
@@ -607,6 +633,13 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height)
     priv->toggle_fullscreen = 0;
     reset_video(priv);
   }
+  else if (priv->new_width &&
+	   priv->new_width != priv->width) {
+    /* Resize. */
+    width = priv->width = priv->new_width;
+    height = priv->height = priv->new_height;
+    reset_video(priv);
+  }
 
   if ( ( priv->renderMode == RENDER_MODE_SOFTWARE ||
 	 priv->hard_dimensions == 0)
@@ -912,6 +945,7 @@ static int my_event_loop(void *data)
 		 pi->outputs[OUTPUT_KEYCODE].destination);
       }
     }
+
     else if (ev.type == SDL_QUIT) {
       exit(0);
     }

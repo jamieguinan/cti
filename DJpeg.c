@@ -35,6 +35,8 @@ static Output DJpeg_outputs[] = {
 };
 
 typedef struct {
+  Instance i;
+
   /* Jpeg decode context... */
   int use_green_for_gray;
   int sampling_warned;
@@ -82,7 +84,7 @@ static void jerr_error_handler(j_common_ptr cinfo)
 
 static int set_dct_method(Instance *pi, const char *value)
 {
-  DJpeg_private *priv = pi->data;
+  DJpeg_private *priv = (DJpeg_private *)pi;
 
   if (streq(value, "islow")) {
     priv->dct_method = JDCT_ISLOW;
@@ -123,7 +125,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Jpeg_handler(Instance *pi, void *data)
 {
-  DJpeg_private *priv = pi->data;
+  DJpeg_private *priv = (DJpeg_private *)pi;
   struct timeval t1, t2;
   int save_width = 0;
   int save_height = 0;
@@ -433,14 +435,14 @@ static void DJpeg_tick(Instance *pi)
 
 static void DJpeg_instance_init(Instance *pi)
 {
-  DJpeg_private *priv = Mem_calloc(1, sizeof(*priv));
+  DJpeg_private *priv = (DJpeg_private *)pi;
   priv->use_green_for_gray = 1;
   priv->dct_method = JDCT_DEFAULT;
-  pi->data = priv;
 }
 
 static Template DJpeg_template = {
   .label = "DJpeg",
+  .priv_size = sizeof(DJpeg_private),
   .inputs = DJpeg_inputs,
   .num_inputs = table_size(DJpeg_inputs),
   .outputs = DJpeg_outputs,

@@ -19,6 +19,7 @@ typedef enum {
   IMAGE_TYPE_JPEG,
   IMAGE_TYPE_PGM,
   IMAGE_TYPE_PPM,
+  IMAGE_TYPE_Y422P,		/* raw dumps from V4L2Capture module */
 } ImageType;
 
 extern ImageType Image_guess_type(uint8_t * data, int len);
@@ -178,6 +179,7 @@ void rgb3_to_bgr3(RGB3_buffer **rgb, BGR3_buffer **bgr);
 
 
 extern Y422P_buffer *Y422P_buffer_new(int width, int height, Image_common *c);
+extern Y422P_buffer *Y422P_buffer_from(uint8_t *data, int len, Image_common *c);
 extern void Y422P_buffer_discard(Y422P_buffer *y422p);
 extern Y422P_buffer *Y422P_copy(Y422P_buffer *y422p, int x, int y, int width, int height);
 extern Y422P_buffer *Y422P_clone(Y422P_buffer *y422p);

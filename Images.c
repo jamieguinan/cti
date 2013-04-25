@@ -238,7 +238,6 @@ void rgb3_to_bgr3(RGB3_buffer **rgb, BGR3_buffer **bgr)
 }
 
 
-
 Y422P_buffer * Y422P_buffer_new(int width, int height, Image_common *c)
 {
   Y422P_buffer * y422p = Mem_calloc(1, sizeof(*y422p));
@@ -258,6 +257,43 @@ Y422P_buffer * Y422P_buffer_new(int width, int height, Image_common *c)
   y422p->cr = Mem_calloc(1, y422p->cr_length+1);  y422p->cr[y422p->cr_length] = 0x55;
   y422p->cb = Mem_calloc(1, y422p->cb_length+1);  y422p->cb[y422p->cb_length] = 0x55;
   
+  return y422p;
+}
+
+static struct {
+  int len;
+  int width;
+  int height;
+} 
+y422p_known_sizes[] = {
+  { .len = 691200, .width = 720, .height = 480 },
+  { .len = 614400, .width = 640, .height = 480 },
+  { .len = 518400, .width = 720, .height = 360 },
+  { .len = 460800, .width = 640, .height = 360 },
+};
+
+Y422P_buffer *Y422P_buffer_from(uint8_t *data, int len, Image_common *c)
+{
+  int i;
+  Y422P_buffer * y422p = 0L;
+  int width = 0, height;
+
+  for (i=0; i < table_size(y422p_known_sizes); i++) {
+    if (y422p_known_sizes[i].len == len) {
+      width = y422p_known_sizes[i].width;
+      height = y422p_known_sizes[i].height;
+      printf("%d bytes: %dx%d\n", len, width, height);
+      break;
+    }
+  }
+
+  if (width) {
+    y422p = Y422P_buffer_new(width, height, 0L);
+    memcpy(y422p->y,  data+(width*height*0), width*height);
+    memcpy(y422p->cb, data+(width*height*2/2), width*height/2);
+    memcpy(y422p->cr, data+(width*height*3/2), width*height/2);
+  }
+
   return y422p;
 }
 
