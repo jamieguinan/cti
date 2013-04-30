@@ -160,6 +160,7 @@ typedef struct {
 
 extern Gray_buffer *Gray_buffer_new(int width, int height, Image_common *c);
 extern Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c);
+extern Gray_buffer *Gray_buffer_from(uint8_t *data, int width, int height, Image_common *c);
 extern void Gray_buffer_discard(Gray_buffer *gray);
 
 extern Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c);

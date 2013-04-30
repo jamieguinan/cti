@@ -54,6 +54,7 @@ OBJS= \
 	$(OBJDIR)/Images.o \
 	$(OBJDIR)/JpegFiler.o \
 	$(OBJDIR)/JpegTran.o \
+	$(OBJDIR)/PGMFiler.o \
 	$(OBJDIR)/MotionDetect.o \
 	$(OBJDIR)/MjpegMux.o \
 	$(OBJDIR)/MjpegDemux.o \

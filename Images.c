@@ -32,6 +32,7 @@ Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c)
   ArrayU8 *newline = ArrayU8_temp_const("\n", strlen("\n"));
 
   if (ArrayU8_search(a, 0, PGMsignature) == -1) {
+    fprintf(stderr, "PGM signature not found file\n");
     return 0L;
   }
 
@@ -73,6 +74,14 @@ Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c)
   }
   
   return 0L;
+}
+
+
+Gray_buffer *Gray_buffer_from(uint8_t *data, int width, int height, Image_common *c)
+{
+  Gray_buffer *gray = Gray_buffer_new(width, height, c);
+  memcpy(gray->data, data, width*height);
+  return gray;
 }
 
 
@@ -290,8 +299,8 @@ Y422P_buffer *Y422P_buffer_from(uint8_t *data, int len, Image_common *c)
   if (width) {
     y422p = Y422P_buffer_new(width, height, 0L);
     memcpy(y422p->y,  data+(width*height*0), width*height);
-    memcpy(y422p->cb, data+(width*height*2/2), width*height/2);
-    memcpy(y422p->cr, data+(width*height*3/2), width*height/2);
+    memcpy(y422p->cr, data+(width*height*2/2), width*height/2);
+    memcpy(y422p->cb, data+(width*height*3/2), width*height/2);
   }
 
   return y422p;

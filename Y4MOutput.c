@@ -173,7 +173,6 @@ static void Y4MOutput_instance_init(Instance *pi)
 
 
 static Template Y4MOutput_template = {
-  .priv_size = sizeof(Y4MOutput_private),
   .label = "Y4MOutput",
   .priv_size = sizeof(Y4MOutput_private),
   .inputs = Y4MOutput_inputs,

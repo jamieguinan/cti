@@ -145,7 +145,7 @@ static void Lirc_tick(Instance *pi)
     char *code;
     rc = lirc_nextcode(&code);
     if (code) {
-      // printf("code %s\n", code);
+      printf("code %s\n", code);
       do_sleep = 0;
 
       if (0) {

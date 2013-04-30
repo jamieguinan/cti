@@ -760,6 +760,7 @@ static void ALSAPlayback_instance_init(Instance *pi)
 
 static Template ALSAPlayback_template = {
   .label = "ALSAPlayback",
+  .priv_size = sizeof(ALSAio_private),
   .inputs = ALSAPlayback_inputs,
   .num_inputs = table_size(ALSAPlayback_inputs),
   .outputs = ALSAPlayback_outputs,
@@ -782,6 +783,7 @@ static void ALSACapture_instance_init(Instance *pi)
 
 static Template ALSACapture_template = {
   .label = "ALSACapture",
+  .priv_size = sizeof(ALSAio_private),
   .inputs = ALSACapture_inputs,
   .num_inputs = table_size(ALSACapture_inputs),
   .outputs = ALSACapture_outputs,

@@ -6,9 +6,11 @@
 new ImageLoader il
 new CJpeg cj
 new JpegFiler jf
+new PGMFiler pf
 
 connect il 422P_buffer cj
 connect cj Jpeg_buffer jf
+connect il GRAY_buffer pf
 
 config cj quality 95
 config il file %input

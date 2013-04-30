@@ -63,6 +63,10 @@ static int set_file(Instance *pi, const char *value)
   case IMAGE_TYPE_Y422P:
     y422p = Y422P_buffer_from(fdata->data, fdata->len, 0L);
     if (y422p) {
+      if (pi->outputs[OUTPUT_GRAY].destination) {
+	gray = Gray_buffer_from(y422p->y, y422p->width, y422p->height, 0L);
+	PostData(gray, pi->outputs[OUTPUT_GRAY].destination);
+      }
       if (pi->outputs[OUTPUT_422P].destination) {
 	PostData(y422p, pi->outputs[OUTPUT_422P].destination);
       }

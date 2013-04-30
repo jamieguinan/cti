@@ -1,3 +1,16 @@
+2013-Apr-30 13:01:37
+
+Fix .priv_size on a few templates.
+
+DJpeg.c:
+  Add a dpf for size.
+
+VFilter.c:
+  New y3blend filter.
+
+New PGMFiler module.
+
+
 2013-Apr-25 15:33:15
 
 Add .priv_size member to all template declarations.

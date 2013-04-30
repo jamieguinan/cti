@@ -339,7 +339,6 @@ static void CJpeg_instance_init(Instance *pi)
 static Template CJpeg_template = {
   .label = "CJpeg",
   .priv_size = sizeof(CJpeg_private),
-  .priv_size = sizeof(CJpeg_private),
   .inputs = CJpeg_inputs,
   .num_inputs = table_size(CJpeg_inputs),
   .outputs = CJpeg_outputs,

@@ -58,6 +58,8 @@ static Output V4L2Capture_outputs[] = {
 };
 
 typedef struct  {
+  Instance i;
+
   /* Many of these variables might end up being strings, and interpreted in set_* functions. */
   String drivermatch;            /* Optional, I use this for matching gspca sub-devices. */
   String devpath;
@@ -1138,7 +1140,7 @@ static void y422p_snapshot(Instance *pi, Y422P_buffer *y422p)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   FILE *f;
   char filename[64];
-  sprintf(filename, "snap%04d.y422p", pi->counter);
+  sprintf(filename, "/dev/shm/snap%04d.y422p", pi->counter);
   fprintf(stderr, "%s\n", filename);
   f = fopen(filename, "wb");
   if (f) {

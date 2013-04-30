@@ -14,6 +14,7 @@
 #include "HalfWidth.h"
 #include "JpegFiler.h"
 #include "JpegTran.h"
+#include "PGMFiler.h"
 #include "MotionDetect.h"
 #include "V4L2Capture.h"
 #include "MjpegMux.h"
@@ -114,6 +115,7 @@ int cti_main(int argc, char *argv[])
   JpegFiler_init();
   JpegTran_init();
   JpegSource_init();
+  PGMFiler_init();
   MjpegMux_init();
   MjpegDemux_init();
   MjpegLocalBuffer_init();

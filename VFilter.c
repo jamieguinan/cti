@@ -36,6 +36,7 @@ typedef struct {
   int top_crop;
   int bottom_crop;
   int linear_blend;
+  int y3blend;
   int trim;
   int field_split;
 } VFilter_private;
@@ -108,6 +109,7 @@ static Config config_table[] = {
   { "top_crop",    0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, top_crop) },
   { "bottom_crop",    set_bottom_crop, 0L, 0L },
   { "linear_blend",  set_linear_blend, 0L, 0L },
+  { "y3blend",  0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, y3blend) },
   { "trim",  set_trim, 0L, 0L },
   { "field_split",  0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, field_split) },
 };
@@ -151,6 +153,28 @@ static void single_121_linear_blend(uint8_t *data_in, uint8_t *data_out, int wid
     dest++;
     pPrev++;
     p++;
+  }
+}
+
+
+static void single_y3blend(uint8_t *data_in, uint8_t *data_out, int width, int height)
+{
+  /* I made this to smooth out the luma channel for videos captures
+     from the KWorld em28xx usb device */
+  int y, x;
+  uint8_t *p;
+  uint8_t *dest = data_out;
+
+  p = data_in;
+  for (y=0; y < height; y++) {
+    *dest++ = *p++;
+    for (x=1; x < width-1; x++) {
+      uint16_t x = (*(p-1) + *p + *(p+1))/3; /* Average 3 adjacent values. */
+      if (x > 255) { x = 255; }	/* Clamp. */
+      *dest++ = x;
+      p++;
+    }
+    *dest++ = *p++;
   }
 }
 
@@ -231,6 +255,15 @@ static void Y422p_handler(Instance *pi, void *msg)
     single_121_linear_blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     single_121_linear_blend(y422p_src->cb, y422p_out->cb, y422p_src->width/2, y422p_src->height);
     single_121_linear_blend(y422p_src->cr, y422p_out->cr, y422p_src->width/2, y422p_src->height);
+    Y422P_buffer_discard(y422p_src);
+  }
+
+  if (priv->y3blend) {
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    single_y3blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
+    memcpy(y422p_out->cb, y422p_src->cb, y422p_src->width*y422p_src->height/2);
+    memcpy(y422p_out->cr, y422p_src->cr, y422p_src->width*y422p_src->height/2);
     Y422P_buffer_discard(y422p_src);
   }
 

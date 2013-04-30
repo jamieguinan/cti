@@ -1,7 +1,7 @@
 /*
  * Demuxer for MJPEG streams, basically jpeg files prefixed by HTTP headers.
  *    http://en.wikipedia.org/wiki/Motion_JPEG
- * Handles few other content types in addition to image/jpeg.
+ * Handles a few other content types in addition to image/jpeg.
  * For external examples, search "inurl:axis-cgi/mjpg/video.cgi", although
  * this module requires complete Jpeg files and fails on streams that
  * elide common header data.

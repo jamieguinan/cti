@@ -416,9 +416,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   gettimeofday(&t2, 0L);
   float tdiff =  (t2.tv_sec + t2.tv_usec/1000000.0) - (t1.tv_sec + t1.tv_usec/1000000.0);
 
-  if (0) { 
-    printf("%.5f (%dx%d)\n", tdiff, save_width, save_height);
-  }
+  dpf("djpeg %.5f (%dx%d)\n", tdiff, save_width, save_height);
 }
 
 static void DJpeg_tick(Instance *pi)
@@ -443,7 +441,6 @@ static void DJpeg_instance_init(Instance *pi)
 static Template DJpeg_template = {
   .label = "DJpeg",
   .priv_size = sizeof(DJpeg_private),
-  .priv_size = sizeof(DJpeg_private),
   .inputs = DJpeg_inputs,
   .num_inputs = table_size(DJpeg_inputs),
   .outputs = DJpeg_outputs,
@@ -461,9 +458,9 @@ void DJpeg_init(void)
 
 /* Create a Jpeg buffer from raw jpeg data.  This can return NULL if
    invalid jpeg data!  I put this function in this file rather than
-   Images.c because this has the jpeglib.h header, and if I'm building
-   on a system without the jpeg library, I still want Images.c to
-   build. */
+   Images.c because this module includes jpeglib.h, and if I'm
+   building on a system without the jpeg library, I still want
+   Images.c to build, without requiring a bunch of #ifdefs */
 Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
 {
   Jpeg_buffer *jpeg = 0L;

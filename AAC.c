@@ -129,7 +129,6 @@ static void AAC_instance_init(Instance *pi)
 static Template AAC_template = {
   .label = "AAC",
   .priv_size = sizeof(AAC_private),
-  .priv_size = sizeof(AAC_private),
   .inputs = AAC_inputs,
   .num_inputs = table_size(AAC_inputs),
   .outputs = AAC_outputs,
