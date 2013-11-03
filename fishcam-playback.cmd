@@ -11,7 +11,7 @@ config dj dct_method ifast
 # Demuxer setup.
 config mjd use_feedback 0
 config mjd retry 1
-config mjd input 192.168.2.123:6667
+config mjd input 192.168.2.75:6667
 
 connect mjd Jpeg_buffer dj
 connect dj RGB3_buffer sdl

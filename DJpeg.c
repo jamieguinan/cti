@@ -250,8 +250,10 @@ static void Jpeg_handler(Instance *pi, void *data)
     int error = 0;
     jmp_buf jb;
 
-    while (pi->outputs[OUTPUT_422P].destination->parent->pending_messages > 25) {
+    while (pi->outputs[OUTPUT_422P].destination && 
+	   pi->outputs[OUTPUT_422P].destination->parent->pending_messages > 25) {
       /* Throttle output.  25ms sleep. */
+      /* THIS IS A HACK.  And it's only enabled for the 422P output slot. */
       nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
     }
  

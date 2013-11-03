@@ -21,7 +21,8 @@ static struct {
 
 static void backtrace_and_hold(void)
 {
-#ifndef __ARMEB__
+#if 0
+  /* This isn't work on ARM, nor n270. */
   int i, n;
   void *buffer[32];
   n = backtrace(buffer, 32);
@@ -37,7 +38,7 @@ static void backtrace_and_hold(void)
 
 void backtrace_and_exit(void)
 {
-#ifndef __ARMEB__
+#if 0
   int i, n;
   void *buffer[32];
   n = backtrace(buffer, 32);
@@ -177,5 +178,4 @@ int _Mem_unref(MemObject *mo, const char *func)
   rc = mo->refcount;
   pthread_mutex_unlock(&mem_lock);
   return rc;
-#warning This will probably crash...
 }

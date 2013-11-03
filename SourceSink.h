@@ -7,6 +7,7 @@
 
 typedef struct {
   FILE *f;			/* file */
+  FILE *p;			/* pipe */
   long file_size;
   int s;			/* socket */
   int eof;
@@ -34,6 +35,7 @@ typedef struct {
 
 extern Sink *Sink_new(char *name);
 extern void Sink_write(Sink *sink, void *data, int length);
+extern void Sink_flush(Sink *sink);
 extern void Sink_close_current(Sink *sink);
 extern void Sink_free(Sink **sink);
 #endif

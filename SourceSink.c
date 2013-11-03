@@ -134,6 +134,18 @@ void Sink_write(Sink *sink, void *data, int length)
 }
 
 
+void Sink_flush(Sink *sink)
+{
+  Sink_private *priv = (Sink_private *)sink;
+  if (priv->f) {
+    fflush(priv->f);
+  }
+  else if (priv->p) {
+    fflush(priv->p);
+  }
+}
+
+
 void Sink_close_current(Sink *sink)
 {
   Sink_private *priv = (Sink_private *)sink;
@@ -207,6 +219,21 @@ Source *Source_new(char *name)
 
     freeaddrinfo(results);  results = 0L;
   }
+#if 0
+  /* FIXME: This code is flaky... */
+  else if (String_ends_with(S(name), "|")) {
+    /* Pipe. */
+    char tmpname[strlen(name)]; strncpy(tmpname, name, strlen(name)-1);
+    source->persist = 1;
+    source->p = popen(tmpname, "rb");
+    if (!source->p) {
+      perror(tmpname);
+    }
+    else {
+      source->file_size = 0;
+    }
+  }
+#endif
   else {
     /* Regular file. */
     source->persist = 1;
@@ -245,6 +272,36 @@ ArrayU8 * Source_read(Source *source, int max_length)
 	printf("EOF remains on file\n");
       }
       if (ferror(source->f)) {
+	printf("error remains on file\n");
+      }
+      Mem_free(tmp);
+      return 0L;
+    }
+
+    if (len < max_length) {
+      tmp = Mem_realloc(tmp, len);	/* Shorten! */
+    }
+
+    ArrayU8 *result = ArrayU8_new();
+    ArrayU8_take_data(result, &tmp, len);
+    return result;
+  }
+  else if (source->p) {
+    uint8_t *tmp = Mem_calloc(1, max_length);
+    int len = fread(tmp, 1, max_length, source->p);
+    if (len == 0) {
+      //perror("fread");
+      if (feof(source->p)) {
+	//printf("EOF on file\n");
+      }
+      if (ferror(source->p)) {
+	//printf("error on file\n");
+      }
+      clearerr(source->p);	/* Clear the EOF so that we can seek backwards. */
+      if (feof(source->p)) {
+	printf("EOF remains on file\n");
+      }
+      if (ferror(source->p)) {
 	printf("error remains on file\n");
       }
       Mem_free(tmp);
@@ -413,6 +470,9 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
       if (!source->eof_flagged) {
 	fprintf(stderr, "%s: EOF on source\n", __func__);
 	source->eof_flagged = 1;
+	/* Adding a short sleep here will tend to sort things out, when a player
+	   is trying to keep up with a live stream and hits the end. */
+	nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/50}, NULL);
       }
       // Source_close_current(source);
       return;

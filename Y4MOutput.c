@@ -29,6 +29,7 @@ enum { Y4MOUTPUT_STATE_INIT, Y4MOUTPUT_STATE_HEADER_SENT, Y4MOUTPUT_STATE_SENDIN
 typedef struct {
   Instance i;
   String output;		/* File or host:port, used to intialize sink. */
+  String interlace;
   Sink *sink;
   int state;
   int width;
@@ -48,7 +49,7 @@ static int set_output(Instance *pi, const char *value)
   }
 
   String_set(&priv->output, value);
-  priv->sink = Sink_new(s(priv->output));
+  priv->sink = Sink_new(sl(priv->output));
 
   return 0;
 }
@@ -58,6 +59,7 @@ static Config config_table[] = {
   { "output", set_output, 0L, 0L },
   { "fps_nom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_nom) },
   { "fps_denom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_denom) },
+  { "interlace", 0L, 0L, 0L, cti_set_string, offsetof(Y4MOutput_private, interlace) },
 };
 
 
@@ -88,9 +90,10 @@ static void Y422P_handler(Instance *pi, void *data)
     if (priv->state == Y4MOUTPUT_STATE_INIT) {
       priv->width = y422p_in->width;
       priv->height = y422p_in->height;
-      snprintf(header, sizeof(header)-1, "YUV4MPEG2 W%d H%d C422 Ip F%d:%d A1:1\n",
+      snprintf(header, sizeof(header)-1, "YUV4MPEG2 W%d H%d C422 I%s F%d:%d A1:1\n",
 	       priv->width,
 	       priv->height,
+	       sl(priv->interlace),
 	       priv->fps_nom,
 	       priv->fps_denom);
       Sink_write(priv->sink, header, strlen(header));
@@ -168,7 +171,8 @@ static void Y4MOutput_tick(Instance *pi)
 
 static void Y4MOutput_instance_init(Instance *pi)
 {
-  // Y4MOutput_private *priv = (Y4MOutput_private *)pi;
+  Y4MOutput_private *priv = (Y4MOutput_private *)pi;
+  String_set(&priv->interlace, "p");
 }
 
 

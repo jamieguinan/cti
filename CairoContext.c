@@ -232,8 +232,8 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
       }
       break;
     case CC_COMMAND_SHOW_TEXT:
-      if (s(priv->text)) {
-	cairo_show_text(priv->context, s(priv->text));
+      if (sl(priv->text)) {
+	cairo_show_text(priv->context, sl(priv->text));
       }
       break;
 
@@ -269,9 +269,7 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
     }
   }
 
-  if (cfg.verbosity) {
-    printf("%d cairo operations done, status=%d\n", i, cairo_status(priv->context));
-  }
+  dpf("%d cairo operations done, status=%d\n", i, cairo_status(priv->context));
 
   /* Now merge into RGB buffer. */
   RGB_buffer_merge_rgba(rgb3, 

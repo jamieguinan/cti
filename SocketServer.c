@@ -368,7 +368,8 @@ static void SocketServer_tick(Instance *pi)
     }
 
     cc->bytes_sent += n;
-    dpf("soccketserver: %d bytes/sec\n", cc->bytes_sent / (time(NULL) - cc->t0));
+    dpf("soccketserver: %lld bytes/sec\n", 
+	cc->bytes_sent / (time(NULL) - cc->t0));
     
   oops:
     cc->raw_offset += n;
@@ -412,6 +413,7 @@ static void SocketServer_instance_init(Instance *pi)
 {
   SocketServer_private *priv = (SocketServer_private *)pi;
 
+   /* Default to 2MB buffered data. */
   priv->max_total_buffered_data = 2*1024*1024;
 
   

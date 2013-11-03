@@ -244,7 +244,7 @@ static void compress_and_post(Instance *pi,
   gettimeofday(&t2, 0L);
   float tdiff =  (t2.tv_sec + t2.tv_usec/1000000.0) - (t1.tv_sec + t1.tv_usec/1000000.0);
 
-  if (cfg.verbosity > 0) { 
+  if (cfg.verbosity > 0) {
     if (pi->counter % (30) == 0) {
       printf("%.5f\n", tdiff);
     }

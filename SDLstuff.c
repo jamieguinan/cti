@@ -104,6 +104,7 @@ typedef struct {
 
   struct timeval tv_sleep_until;
   struct timeval tv_last;
+  struct timeval frame_last;
 
   SDL_Surface *surface;
   int width;
@@ -208,7 +209,7 @@ static int set_label(Instance *pi, const char *value)
   SDLstuff_private *priv = (SDLstuff_private *)pi;
 
   String_set(&priv->label, value);
-  printf("*** label set to %s\n", s(priv->label));
+  printf("*** label set to %s\n", sl(priv->label));
   priv->label_set = 0;
   return 0;
 }
@@ -549,7 +550,7 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
     }
 
     /* Copy Cr and Cb, while basically doing 422 to 420. */
-    if (1){
+    if (1) {
       int x, y, src_index, dst_index, src_width;
       // printf("Copy Cr, Cb\n");
       src_width = y422p_in->width/2;
@@ -586,7 +587,6 @@ static void render_frame_overlay(SDLstuff_private *priv, Y422P_buffer *y422p_in)
       iy = next_iy;
     }
 
-    tsnapshot();
   }
 }
 
@@ -625,7 +625,7 @@ static void render_frame_software(SDLstuff_private *priv, BGR3_buffer *bgr3_in)
 }
 
 
-static void pre_render_frame(SDLstuff_private *priv, int width, int height)
+static void pre_render_frame(SDLstuff_private *priv, int width, int height, Image_common *c)
 {
   dpf("frame %d ready for display\n", priv->inFrames);
 
@@ -650,10 +650,23 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height)
     reset_video(priv);
   }
 
-  if (s(priv->label) && !priv->label_set) {
-    SDL_WM_SetCaption(s(priv->label), NULL); //Sets the Window Title
+  if (sl(priv->label) && !priv->label_set) {
+    SDL_WM_SetCaption(sl(priv->label), NULL); //Sets the Window Title
     priv->label_set = 1;
   }
+
+  /* Handle frame delay timing. IN PROGRESS... */
+  struct timeval tv_now;
+
+  // x(c->tv, priv->frame_last);
+  if (c) {
+    // priv->frame_last = c->tv;
+  }
+
+  gettimeofday(&tv_now, NULL);
+  // nanosleep(tv_next - tv_now);
+  
+  tsnapshot();
 }
 
 static void post_render_frame(Instance *pi)
@@ -682,7 +695,7 @@ static void Y422P_handler(Instance *pi, void *data)
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
 
-  pre_render_frame(priv, y422p->width, y422p->height);
+  pre_render_frame(priv, y422p->width, y422p->height, &y422p->c);
 
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
@@ -744,7 +757,7 @@ static void RGB3_handler(Instance *pi, void *data)
     }
   }
 
-  pre_render_frame(priv, rgb3->width, rgb3->height);
+  pre_render_frame(priv, rgb3->width, rgb3->height, &y422p->c);
 
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
@@ -790,7 +803,7 @@ static void BGR3_handler(Instance *pi, void *data)
   RGB3_buffer *rgb3 = NULL;
   Y422P_buffer *y422p = NULL;
 
-  pre_render_frame(priv, bgr3->width, bgr3->height);
+  pre_render_frame(priv, bgr3->width, bgr3->height, &y422p->c);
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
@@ -835,7 +848,7 @@ static void GRAY_handler(Instance *pi, void *data)
   RGB3_buffer *rgb3 = NULL;
   Y422P_buffer *y422p = NULL;
 
-  pre_render_frame(priv, gray->width, gray->height);
+  pre_render_frame(priv, gray->width, gray->height, &y422p->c);
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
@@ -925,6 +938,7 @@ static int my_event_loop(void *data)
     rc = SDL_WaitEvent(&ev);
     if (!rc) {
       fprintf(stderr, "SDL_error %d %s\n", rc, SDL_GetError());
+      exit(1);
       continue;
     }
     if (ev.type == SDL_USEREVENT) {

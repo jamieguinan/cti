@@ -72,7 +72,7 @@ static int set_input(Instance *pi, const char *value)
   }
   
   String_set(&priv->input, value);
-  priv->source = Source_new(s(priv->input));
+  priv->source = Source_new(sl(priv->input));
   priv->frame_counter = 0;
 
   if (priv->chunk) {

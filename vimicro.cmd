@@ -1,10 +1,12 @@
 new V4L2Capture vc
 new DJpeg dj
+new JpegTran jt
 new SDLstuff sdl
 new UI001 ui
 
 # The jpeg/rgb path can be there even if it isn't used.
-connect vc Jpeg_buffer dj
+connect vc Jpeg_buffer jt
+connect jt Jpeg_buffer dj
 connect dj RGB3_buffer sdl
 
 # Testing YUYV with the gray path.
@@ -28,6 +30,9 @@ config vc size 640x480
 config vc fps 30
 
 #config vc autoexpose 3
+
+# Mirror
+#config jt transform FLIP_H
 
 #config vc autoexpose 1
 #config vc exposure 300

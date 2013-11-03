@@ -21,9 +21,19 @@ int String_begins_with(String *s, const char *s1)
       return 0;
     }
     s1++;
+    i++;
   }
   return 1;
 }
+
+
+int String_ends_with(String *s, const char *s1)
+{
+  int i = strlen(s->bytes) - strlen(s1);
+
+  return (streq(s->bytes+i, s1));
+}
+
 
 void String_cat1(String *s, const char *s1)
 {
@@ -179,6 +189,7 @@ String * String_sprintf(const char *fmt, ...)
   }
   va_end(ap);
   s = String_new(p);
+  free(p);			/* Really!? */
   return s;
 }
 

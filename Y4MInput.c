@@ -83,7 +83,7 @@ static int set_input(Instance *pi, const char *value)
   }
 
   String_set(&priv->input, value);
-  priv->source = Source_new(s(priv->input));
+  priv->source = Source_new(sl(priv->input));
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);

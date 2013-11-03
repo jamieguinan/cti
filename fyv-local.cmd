@@ -36,7 +36,7 @@ config cc command show_text
 # Demuxer setup.
 config mjd use_feedback 0
 config mjd retry 1
-config mjd input 192.168.2.123:6666
+config mjd input 192.168.2.75:6666
 
 # Parameters.  Only handles fixed FPS, and I have to make sure the source 
 # is set up for the same FPS, but it works.

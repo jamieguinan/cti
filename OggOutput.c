@@ -948,6 +948,7 @@ static void id_file(char *f){
 
 }
 
+
 static int spinner=0;
 static char *spinascii="|/-\\";
 static void spinnit(void){
@@ -1993,7 +1994,6 @@ void OggOutput_init(void)
 {
   Template_register(&OggOutput_template);
 }
-
 
 
 static void ogg_setup(OggOutput_private *priv)

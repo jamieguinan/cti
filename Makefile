@@ -109,6 +109,8 @@ OBJS= \
 	$(OBJDIR)/cti_main.o \
 	$(OBJDIR)/AVIDemux.o \
 	$(OBJDIR)/RawSource.o \
+	$(OBJDIR)/ImageOutput.o \
+	$(OBJDIR)/SubProc.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
@@ -127,32 +129,15 @@ OBJS+=\
 LDFLAGS+=-lvisca
 endif
 
-# SDL
-ifeq ($(ARCH),armeb)
-SDLLIBS=
-else
-
-ifeq ($(ARCH),nano)
-# Nothing to do
-else
-
+# SDL on OSX
 ifeq ($(ARCH),i386-Darwin)
 MAIN=SDLMain.o
 OBJS+=$(OBJDIR)/sdl_main.o
 endif
 
-
-OBJS+=$(OBJDIR)/SDLstuff.o
-CPPFLAGS+=$$(sdl-config --cflags) -I/usr/include/GL
-LDFLAGS+=$$(sdl-config --libs) $$(pkg-config glu --libs)
-endif
-endif
-
 # Signals
 ifneq ($(ARCH),armeb)
-ifneq ($(ARCH),nano)
 OBJS+=$(OBJDIR)/Signals.o
-endif
 endif
 
 # Lirc
@@ -162,13 +147,23 @@ CPPFLAGS+=-DHAVE_LIRC
 LDFLAGS+=-llirc_client
 endif
 
+#SDL
+ifneq ($(ARCH),armeb)
+ifeq (0,$(shell (sdl-config --cflags > /dev/null 2> /dev/null; echo $$?)))
+OBJS+=$(OBJDIR)/SDLstuff.o
+CPPFLAGS+=$$(sdl-config --cflags) -I/usr/include/GL
+LDFLAGS+=$$(sdl-config --libs) $$(pkg-config glu --libs)
+CPPFLAGS+=-DHAVE_SDL
+endif
+endif
 
 # Cairo
 ifneq ($(ARCH),armeb)
-ifneq ($(ARCH),nano)
+ifeq (0,$(shell (pkg-config cairo --cflags > /dev/null 2> /dev/null; echo $$?)))
 OBJS+=	$(OBJDIR)/CairoContext.o
 CPPFLAGS+=$$(pkg-config cairo --cflags)
 LDFLAGS+=$$(pkg-config cairo --libs)
+CPPFLAGS+=-DHAVE_CAIRO
 endif
 endif
 
@@ -211,12 +206,18 @@ LDFLAGS+=-lfaac
 CPPFLAGS+=-DHAVE_AAC
 endif
 
+# SQLite
+ifneq ($(ARCH),armeb)
+OBJS+=$(OBJDIR)/SQLite.o
+LDFLAGS += -lsqlite3
+endif
+
 
 $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \
 	$(OBJDIR)/cti_app.o
 	@echo LINK
-	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
+	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 ifeq ($(ARCH),x86_64-Linux)
 # Sigh, some libs bump their version numbers all the fucking time.  And I like to keep
 # cti binaries around for later use, without always having to rebuild.  So, keep a
@@ -225,8 +226,9 @@ ifeq ($(ARCH),x86_64-Linux)
 #	@cp -Lvu $$(ldd $@ | grep -E '264|png' | sed -e 's,.*/usr,/usr,g' -e 's, .*$$,,') $(HOME)/lib/
 # Or ../../platform/$(ARCH)/lib/ ?
 endif
-# if gdb not in cflags
-#	$(STRIP) $@
+#if gdb not in cflags
+	@echo STRIP
+	$(STRIP) $@
 # endif
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))
@@ -253,15 +255,16 @@ $(OBJDIR)/ctest$(EXEEXT): \
 
 $(OBJDIR)/%.o: %.c Makefile
 	@echo CC $<
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+#	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.so: %.c Makefile
 	@echo 'CC (dll)' $<
-	@$(CC) $(CPPFLAGS) $(CFLAGS) $(SHARED_FLAGS) -DCTI_SHARED -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SHARED_FLAGS) -DCTI_SHARED -c $< -o $@
 
 $(OBJDIR)/%.o: %.m Makefile
 	@echo CC $<
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -vf $(OBJDIR)/*.o  $(OBJDIR)/*.dep

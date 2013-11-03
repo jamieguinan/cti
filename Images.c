@@ -182,12 +182,10 @@ void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int heigh
     fclose(f);
   }
 
-  if (cfg.verbosity) {
-    printf("%d pixels copied (%d,%d) to (%d,%d)\n", 
+  dpf("%d pixels copied (%d,%d) to (%d,%d)\n", 
 	   copied, 
 	   offsetx, offsety,
 	   x, y);
-  }
 }
 
 void RGB3_buffer_discard(RGB3_buffer *rgb)

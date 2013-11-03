@@ -4,6 +4,8 @@
 #include <stdlib.h>		/* malloc */
 #include <signal.h>
 #include <unistd.h>
+#include <sys/types.h>	/* gettid */
+#include <sys/prctl.h>	/* prctl */
 
 // #define __USE_GNU
 
@@ -16,23 +18,23 @@ extern int asize1;
 extern const char *argv0;
 
 static const char *signames[] = {
-  [6] = "abort",
+[6] = "abort",
   [11] = "segfault",
-};
+  };
 
 void handler1(int signum, siginfo_t *info, void *context)
 {
   ucontext_t *uc = (ucontext_t *)context;
+  char thread_name[17] = {};           /* Thread name. */
   const char *signame = signames[signum];
   if (!signame) {
     signame = "unknown";
   }
-  fprintf(stderr, "%s: user context available at 0x%lx\n", 
-	  signame, (long)uc);
+  prctl(PR_GET_NAME, thread_name);
+  fprintf(stderr, "%s: %s, user context available at 0x%lx\n",
+	  thread_name, signame, (long)uc);
 
   fprintf(stderr, "asize1=%d\n", asize1);
-
-  while (1) sleep(1);
 
 #ifdef __pentium4__
 #warning Pentium4
@@ -100,5 +102,7 @@ void Signals_init(void)
 {
   int rc;
   rc = sigaction(SIGSEGV, &act_SIGSEGV, &oldact_SIGSEGV);
+  if (rc != 0) { perror("SIGSEGV"); }
   rc = sigaction(SIGABRT, &act_SIGABRT, &oldact_SIGABRT);
+  if (rc != 0) { perror("SIGABRT"); }
 }

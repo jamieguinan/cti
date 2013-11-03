@@ -83,7 +83,7 @@ config cc command show_text
 
 # Demuxer setup.
 config mjd use_feedback 0
-config mjd input 192.168.2.123:6666
+config mjd input 192.168.2.75:6666
 
 # Tap muxer setup.
 config mux1 output cap-%s.mjx

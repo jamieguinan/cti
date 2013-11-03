@@ -28,7 +28,7 @@ config dj dct_method ifast
 # Demuxer setup.
 config mjd use_feedback 0
 config mjd retry 1
-config mjd input 192.168.2.123:6666
+config mjd input 192.168.2.75:6666
 
 # Parameters.  Only handles fixed FPS, and I have to make sure the source 
 # is set up for the same FPS, but it works.
@@ -43,7 +43,9 @@ system mkfifo fifo.wav
 config y4mout output fifo.y4m
 config wo output fifo.wav
 
-system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 25 -F 1  2> /dev/null | tee cap-$(now).ogv |   oggfwd 66.228.32.219 8000 bluebutton0123 /frontyard.ogv &
+system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20 -V 140 -f 25 -F 1  2> /dev/null |   oggfwd 66.228.32.219 8000 bluebutton0123 /frontyard.ogv &
+
+# | tee cap-$(now).ogv 
 
 #system cat fifo.y4m > /dev/null &
 #system cat fifo.wav > /dev/null &
@@ -68,7 +70,7 @@ system ../libtheora-1.2.0alpha1/examples/encoder_example fifo.wav fifo.y4m -A 20
 connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer wo
 
-config mjd output frontyard-%Y%m%d-%H%M%S.mjx
+config mjd output /av/media/tmp/frontyard-%Y%m%d-%H%M%S.mjx
 
 ##connect dj RGB3_buffer cc
 connect dj 422P_buffer cc

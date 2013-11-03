@@ -64,6 +64,9 @@
 #include "NScale.h"
 #include "AVIDemux.h"
 #include "RawSource.h"
+#include "ImageOutput.h"
+#include "SQLite.h"
+#include "SubProc.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -80,10 +83,17 @@ int cti_main(int argc, char *argv[])
   SonyPTZ_init();
 #ifndef __ARMEB__
   Signals_init();
-  SDLstuff_init();
-  CairoContext_init();
   Spawn_init();
+  SQLite_init();
 #endif
+#endif
+
+#ifdef HAVE_SDL
+  SDLstuff_init();
+#endif
+
+#ifdef HAVE_CAIRO
+  CairoContext_init();
 #endif
 
 #ifdef HAVE_AAC
@@ -150,6 +160,8 @@ int cti_main(int argc, char *argv[])
   NScale_init();
   AVIDemux_init();
   RawSource_init();
+  ImageOutput_init();
+  SubProc_init();
 
   return app_code(argc, argv);
 }

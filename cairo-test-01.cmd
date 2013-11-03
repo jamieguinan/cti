@@ -88,5 +88,5 @@ connect md Config_msg cc
 connect cc RGB3_buffer sdl
 connect sdl Feedback_buffer mjd
 
-config mjd input 192.168.2.123:6666
+config mjd input 192.168.2.75:6666
 config mjd enable 1

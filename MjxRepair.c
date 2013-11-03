@@ -53,7 +53,7 @@ static int set_output(Instance *pi, const char *value)
   }
 
   String_set(&priv->output, value);
-  priv->sink = Sink_new(s(priv->output));
+  priv->sink = Sink_new(sl(priv->output));
 
   return 0;
 }

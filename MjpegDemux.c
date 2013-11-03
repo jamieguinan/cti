@@ -64,6 +64,8 @@ typedef struct {
   String output;			/* Side channel. */
   Sink *output_sink;
 
+  long stop_source_at;			/* Stop and close source once it passes this offset. */
+
   struct {
     int eoh;
     String *content_type;
@@ -119,7 +121,7 @@ static int set_input(Instance *pi, const char *value)
   }
 
   String_set(&priv->input, value);
-  priv->source = Source_new(s(priv->input));
+  priv->source = Source_new(sl(priv->input));
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);
@@ -148,7 +150,7 @@ static int set_output(Instance *pi, const char *value)
   }
 
   String_set(&priv->output, value);
-  priv->output_sink = Sink_new(s(priv->output));
+  priv->output_sink = Sink_new(sl(priv->output));
 
   return 0;
 }
@@ -227,6 +229,7 @@ static Config config_table[] = {
   { "seek", do_seek, 0L, 0L},
   //{ "position", set_position, 0L, 0L},
   { "eof_notify", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, eof_notify) },
+  { "stop_source_at", 0L, 0L, 0L, cti_set_long, offsetof(MjpegDemux_private, stop_source_at) },
 };
 
 
@@ -351,10 +354,23 @@ static void MjpegDemux_tick(Instance *pi)
   if (!sleep_and_return && priv->needData) {
     /* Read data, with option to sleep and return on EOF. */
     Source_acquire_data(priv->source, priv->chunk, &priv->needData);
+
+    if (priv->stop_source_at && Source_tell(priv->source) > priv->stop_source_at) {
+      Source_close_current(priv->source);
+      priv->source->eof = 1;
+    }
+
     if (priv->source->eof) {
-      if (!priv->eof_notified) {
+      if (priv->eof_notify && !priv->eof_notified) {
 	notify_outputs_eof(pi);
 	priv->eof_notified = 1;
+      }
+
+      if (priv->retry) {
+	fprintf(stderr, "%s: retrying\n", __func__);
+	Source_close_current(priv->source);
+	Source_free(&priv->source);
+	priv->source = Source_new(sl(priv->input));
       }
       sleep_and_return = 1;
     }
@@ -398,7 +414,7 @@ static void MjpegDemux_tick(Instance *pi)
       }
       else {
 	/* Need more data, will get it on next call. */
-	if (cfg.verbosity) { fprintf(stderr, "needData = 1\n"); }
+	// dpf("needData = 1\n");
 	priv->needData = 1;
       }
       return;
@@ -480,7 +496,7 @@ static void MjpegDemux_tick(Instance *pi)
 
   if (priv->chunk->len < priv->current.eoh + 4 + priv->current.content_length) {
     /* Need more data... */
-    if (cfg.verbosity) { fprintf(stderr, "needData = 1\n"); }
+    // dpf("needData = 1\n");
     priv->needData = 1;
     return;
   }
@@ -582,7 +598,7 @@ static void MjpegDemux_tick(Instance *pi)
 	  double playback_diff = tnow - priv->video.playback_t0;
 	  double delay = stream_diff - playback_diff;
 	  if (delay > 0.0) {
-	    if (cfg.verbosity) { printf("%f %f\n", stream_diff, playback_diff); }
+	    dpf("%f %f\n", stream_diff, playback_diff);
 	    nanosleep( double_to_timespec(delay), NULL);
 	  }
 	}

@@ -5,6 +5,7 @@
 #include <unistd.h>		/* sleep */
 #include <time.h>		/* nanosleep */
 #include <stdarg.h>		/* vprintf */
+#include <sys/prctl.h>	/* prctl */
 
 #define streq(a, b)  (strcmp(a, b) == 0)
 
@@ -17,6 +18,8 @@
 static void * Instance_thread_main(void *vp)
 {
   Instance *pi = vp;
+
+  prctl(PR_SET_NAME, pi->label);
 
   while (1) {
     pi->tick(pi);
@@ -69,6 +72,11 @@ void PostData(void *data, Input *input)
   dpf("%s: %d queued messages\n", input->parent->label, input->parent->pending_messages);
 
   Lock_release(&input->parent->inputs_lock);
+
+  while (input->parent->pending_messages > 100) {
+    dpf("sleeping to drain %s message queue\n", input->parent->label);
+    sleep(1);
+  }
 }
 
 Handler_message *GetData(Instance *pi, int wait_flag)
@@ -249,6 +257,24 @@ Instance * Instantiate(const char *label)
 }
 
 
+Line_msg *Line_msg_new(const char *value)
+{
+  Line_msg *lm = Mem_calloc(1, sizeof(*lm));
+  lm->value = String_new(value);
+  return lm;
+}
+
+
+void Line_msg_discard(Line_msg **lm)
+{
+  if ((*lm)->value) {
+    String_free(&(*lm)->value);
+  }
+  Mem_free(*lm);
+  *lm = 0L;
+}
+
+
 Config_buffer *Config_buffer_new(const char *label, const char *value)
 {
   Config_buffer *cb = Mem_calloc(1, sizeof(*cb));
@@ -290,18 +316,18 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
 
   /* Walk the config table. */
   for (i=0; i < config_table_size; i++) {
-    if (streq(config_table[i].label, cb_in->label->bytes)) {
+    if (streq(config_table[i].label, s(cb_in->label))) {
 
       /* If value is passed in, call the set function. */
       if (cb_in->value && config_table[i].vset) {
 	/* Generic setter. */
 	config_table[i].vset((uint8_t*)pi + config_table[i].value_offset, 
-			     cb_in->value->bytes);
+			     s(cb_in->value));
       }
       else if (cb_in->value && config_table[i].set) {
 	/* Template-specific setter. */
-	int rc;		/* FIXME: What to do with this? */
-	rc = config_table[i].set(pi, cb_in->value->bytes);
+	// int rc = ...		/* FIXME: What to do with this? */
+	config_table[i].set(pi, s(cb_in->value));
       }
 
       /* Check and fill range/value requests. */
@@ -329,6 +355,19 @@ void cti_set_int(void *addr, const char *value)
 {
   *( (int *)addr) = atoi(value);
 }
+
+
+void cti_set_long(void *addr, const char *value)
+{
+  *( (long *)addr) = atol(value);
+}
+
+
+void cti_set_string(void *addr, const char *value)
+{
+  String_set((String *)addr, value);
+}
+
 
 void GetConfigValue(Input *pi, const char *label, Value *vreq)
 {
@@ -499,9 +538,9 @@ void InstanceGroup_connect(InstanceGroup *g,
 			   String * instanceLabel2)
 {
   Instance *pi1 = InstanceGroup_find(g, instanceLabel1);
-  if (!pi1) {  fprintf(stderr, "could not find instance '%s'\n", instanceLabel1->bytes); return; }
+  if (!pi1) {  fprintf(stderr, "could not find instance '%s'\n", s(instanceLabel1)); return; }
   Instance *pi2 = InstanceGroup_find(g, instanceLabel2);
-  if (!pi2) {  fprintf(stderr, "could not find instance '%s'\n", instanceLabel2->bytes); return; }
+  if (!pi2) {  fprintf(stderr, "could not find instance '%s'\n", s(instanceLabel2)); return; }
   Connect(pi1, ioLabel, pi2);
 }
 
@@ -514,9 +553,9 @@ void InstanceGroup_connect2(InstanceGroup *g,
 			    )
 {
   Instance *pi1 = InstanceGroup_find(g, instanceLabel1);
-  if (!pi1) {  fprintf(stderr, "could not find instance '%s'\n", instanceLabel1->bytes); return; }
+  if (!pi1) {  fprintf(stderr, "could not find instance '%s'\n", s(instanceLabel1)); return; }
   Instance *pi2 = InstanceGroup_find(g, instanceLabel2);
-  if (!pi2) {  fprintf(stderr, "could not find instance '%s'\n", instanceLabel2->bytes); return; }
+  if (!pi2) {  fprintf(stderr, "could not find instance '%s'\n", s(instanceLabel2)); return; }
   Connect2(pi1, oLabel, pi2, iLabel);
 }
 

@@ -1,9 +1,6 @@
 /* 
- * I don't like this module so much after all.  I  would rather have seperate
- * modules for different filters.  Only filters that operate in the same pass
- * should be in the same Template.  I suppose I could have several templates
- * in this file, implementing different filters.  They would show all up in
- * the template list.
+ * Filter operations, mostly operating on the Y channel for YCrCb images.
+ * I didn't like this module for a while, but it has sort of grown on me.
  */
 
 #include <stdio.h>		/* fprintf */
@@ -35,10 +32,14 @@ typedef struct {
   int left_right_crop;
   int top_crop;
   int bottom_crop;
-  int linear_blend;
-  int y3blend;
   int trim;
   int field_split;
+  int linear_blend;
+  int y3blend;
+  int adaptive3point;
+  int horizontal_filter[5];
+  int horizontal_filter_divisor;
+  int horizontal_filter_enabled;
 } VFilter_private;
 
 
@@ -104,6 +105,55 @@ static int set_trim(Instance *pi, const char *value)
 }
 
 
+static int set_horizontal_filter(Instance *pi, const char *value)
+{
+  VFilter_private *priv = (VFilter_private *)pi;
+  int i;
+  int n = sscanf(value,
+		 "%d,%d,%d,%d,%d",
+		 &priv->horizontal_filter[0],
+		 &priv->horizontal_filter[1],
+		 &priv->horizontal_filter[2],
+		 &priv->horizontal_filter[3],
+		 &priv->horizontal_filter[4]);
+
+  if (n == 1 && priv->horizontal_filter[0] == 0) {
+    fprintf(stderr, "%s: horizontal filter disabled\n", __func__);
+    return 0;
+  }
+
+  if (n != 5) {
+    fprintf(stderr, "%s: expected 5 comma-separated values\n", __func__);
+    priv->horizontal_filter_enabled = 0;
+    return -1;
+  }
+
+  priv->horizontal_filter_divisor = 0;
+  fprintf(stderr, "\n(");
+  for (i=0; i < 5; i++) {
+    priv->horizontal_filter_divisor += priv->horizontal_filter[i];
+    fprintf(stderr, "%s%d", 
+	    (i == 0 ? "" : ","),
+	    priv->horizontal_filter[i]);
+  }
+
+  if (priv->horizontal_filter_divisor < 0) {
+    /* Use absolute value. */
+    priv->horizontal_filter_divisor = -priv->horizontal_filter_divisor;
+  }
+  else if (priv->horizontal_filter_divisor == 0) {
+    /* Avoid divide-by-zero, and get neat effect. */
+    priv->horizontal_filter_divisor = 1;
+  }
+
+  fprintf(stderr, ") / %d\n", priv->horizontal_filter_divisor);
+
+  priv->horizontal_filter_enabled = 1;
+
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "left_right_crop",  set_left_right_crop, 0L, 0L },
   { "top_crop",    0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, top_crop) },
@@ -112,6 +162,8 @@ static Config config_table[] = {
   { "y3blend",  0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, y3blend) },
   { "trim",  set_trim, 0L, 0L },
   { "field_split",  0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, field_split) },
+  { "a3p",  0L, 0L, 0L, cti_set_int, offsetof(VFilter_private, adaptive3point) },
+  { "horizontal_filter", set_horizontal_filter, 0L, 0L },
 };
 
 
@@ -159,8 +211,12 @@ static void single_121_linear_blend(uint8_t *data_in, uint8_t *data_out, int wid
 
 static void single_y3blend(uint8_t *data_in, uint8_t *data_out, int width, int height)
 {
-  /* I made this to smooth out the luma channel for videos captures
-     from the KWorld em28xx usb device */
+  /* 
+   * I made this to smooth out the luma channel for videos captured
+   * from the KWorld em28xx usb device.  It works pretty good, but
+   * does blur things out a bit.  Running a sharpening filter
+   * afterwards brings the noise right back.
+   */
   int y, x;
   uint8_t *p;
   uint8_t *dest = data_out;
@@ -174,6 +230,100 @@ static void single_y3blend(uint8_t *data_in, uint8_t *data_out, int width, int h
       *dest++ = x;
       p++;
     }
+    *dest++ = *p++;
+  }
+}
+
+
+static void adaptive3point_filter(Y422P_buffer *y422p_src, Y422P_buffer *y422p_out)
+{
+  /* Another attempt at cleaning up saturation artifacts. */
+  int y, x;
+  int i;
+  
+  static struct {
+    int factors[3];
+    int divisor;
+  } filter[3] = {
+    { {1, 1, 1}, 3},
+    { {0, 1, 0}, 1},
+    { {-2, 5, -2}, 3},
+  };
+
+  uint8_t *ysrc = y422p_src->y;
+  uint8_t *cb = y422p_src->cb;
+  uint8_t *cr = y422p_src->cr;
+  uint8_t *yout = y422p_out->y;
+
+  for (y=0; y < y422p_src->height; y++) {
+    *yout++ = *ysrc++; 		/* copy first pixel */
+    for (x=1; x < y422p_src->width - 1; x++) {
+      if (0) {
+	/* High saturation, smooth luma. */
+	i = 0;
+      }
+      else if (0) {
+	/* Low saturation, sharpen luma. */
+	i = 2;
+      }
+      else {
+	/* Medium saturation, keep luma. */
+	i = 1;
+      }
+      int16_t k = (ysrc[-1]*filter[i].factors[0] 
+		   + ysrc[0]*filter[i].factors[1] 
+		   + ysrc[1]*filter[i].factors[2]) / filter[i].divisor;
+      if (k > 255) { k = 255; } else if (k < 0) { k = 0; } /* Clamp. */
+      *yout++ = k;
+      ysrc++;
+
+      if (x % 2 == 1) {
+	/* Not sure if this is accurate regarding co-siting, but this
+	   was written for post-processing messy analog video
+	   anyway. */
+	cr++;
+	cb++;
+      }
+    }
+    *yout++ = *ysrc++;		/* copy last pixel */
+  }
+  
+  memcpy(y422p_out->cb, y422p_src->cb, y422p_out->cb_length);
+  memcpy(y422p_out->cr, y422p_src->cr, y422p_out->cb_length);
+}
+
+
+static void single_horizontal_filter(VFilter_private *priv, uint8_t *data_in, uint8_t *data_out, int width, int height)
+{
+  int y, x;
+  uint8_t *p;
+  uint8_t *dest = data_out;
+
+  p = data_in;
+  for (y=0; y < height; y++) {
+    *dest++ = *p++;
+    *dest++ = *p++;
+    for (x=2; x < width-2; x++) {
+      int16_t x = 
+	(*(p-2)*priv->horizontal_filter[0] +
+	 *(p-1)*priv->horizontal_filter[1] +
+	 *(p+0)*priv->horizontal_filter[2] +
+	 *(p+1)*priv->horizontal_filter[3] +
+	 *(p+1)*priv->horizontal_filter[4])
+	/ priv->horizontal_filter_divisor;
+
+      /* Clamp. */
+      if (x > 255) { 
+	x = 255; 
+      }	
+      else if (x < 0) {
+	x = 0;
+      }
+
+      *dest++ = x;
+      p++;
+    }
+    *dest++ = *p++;
     *dest++ = *p++;
   }
 }
@@ -233,47 +383,7 @@ static void Y422p_handler(Instance *pi, void *msg)
   Y422P_buffer *y422p_out = 0L;
   Y422P_buffer *y422p_src = 0L;
 
-  if (priv->left_right_crop) {
-    y422p_src = y422p_out ? y422p_out : y422p_in;
-    if (priv->left_right_crop > y422p_src->width) {
-      fprintf(stderr, "left_right_crop value %d is wider than input %d\n", 
-	      priv->left_right_crop, y422p_src->width);
-    }
-    else {
-      y422p_out = Y422P_buffer_new(y422p_src->width - (priv->left_right_crop * 2), y422p_src->height, 
-				   &y422p_src->c);
-      memcpy(y422p_out->y, y422p_src->y+priv->left_right_crop, y422p_out->width);
-      memcpy(y422p_out->cb, y422p_src->cb+(priv->left_right_crop/2), y422p_out->width/2);
-      memcpy(y422p_out->cr, y422p_src->cr+(priv->left_right_crop/2), y422p_out->width/2);
-      Y422P_buffer_discard(y422p_src);
-    }
-  }
-  
-  if (priv->linear_blend) {
-    y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
-    single_121_linear_blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
-    single_121_linear_blend(y422p_src->cb, y422p_out->cb, y422p_src->width/2, y422p_src->height);
-    single_121_linear_blend(y422p_src->cr, y422p_out->cr, y422p_src->width/2, y422p_src->height);
-    Y422P_buffer_discard(y422p_src);
-  }
-
-  if (priv->y3blend) {
-    y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
-    single_y3blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
-    memcpy(y422p_out->cb, y422p_src->cb, y422p_src->width*y422p_src->height/2);
-    memcpy(y422p_out->cr, y422p_src->cr, y422p_src->width*y422p_src->height/2);
-    Y422P_buffer_discard(y422p_src);
-  }
-
-  if (priv->trim) {
-    y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
-    single_trim(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
-    Y422P_buffer_discard(y422p_src);
-  }
-
+  /* FIXME: The crop operations could be done by calculations, followed by only a single copy operation. */
   if (priv->top_crop) {
     y422p_src = y422p_out ? y422p_out : y422p_in;
     y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height - priv->top_crop, &y422p_src->c);
@@ -291,11 +401,73 @@ static void Y422p_handler(Instance *pi, void *msg)
     memcpy(y422p_out->cr, y422p_src->cr, y422p_out->width*y422p_out->height/2);
     Y422P_buffer_discard(y422p_src);
   }
-  
+
+  if (priv->left_right_crop) {
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    if (priv->left_right_crop > y422p_src->width) {
+      fprintf(stderr, "left_right_crop value %d is wider than input %d\n", 
+	      priv->left_right_crop, y422p_src->width);
+    }
+    else {
+      y422p_out = Y422P_buffer_new(y422p_src->width - (priv->left_right_crop * 2), y422p_src->height, 
+				   &y422p_src->c);
+      memcpy(y422p_out->y, y422p_src->y+priv->left_right_crop, y422p_out->width);
+      memcpy(y422p_out->cb, y422p_src->cb+(priv->left_right_crop/2), y422p_out->width/2);
+      memcpy(y422p_out->cr, y422p_src->cr+(priv->left_right_crop/2), y422p_out->width/2);
+      Y422P_buffer_discard(y422p_src);
+    }
+  }
+
+  if (priv->y3blend) {
+    /* Horizontal blend, for smoothing out saturation artifact in Y channel. */
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    single_y3blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
+    memcpy(y422p_out->cb, y422p_src->cb, y422p_src->width*y422p_src->height/2);
+    memcpy(y422p_out->cr, y422p_src->cr, y422p_src->width*y422p_src->height/2);
+    Y422P_buffer_discard(y422p_src);
+  }
+
+  if (priv->adaptive3point) {
+    /* Another way to remote saturation artifacts. */
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    adaptive3point_filter(y422p_src, y422p_out);
+    Y422P_buffer_discard(y422p_src);
+  }
+
+  if (priv->horizontal_filter_enabled) {
+    /* Horizontal filter. */
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    single_horizontal_filter(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
+    memcpy(y422p_out->cb, y422p_src->cb, y422p_src->width*y422p_src->height/2);
+    memcpy(y422p_out->cr, y422p_src->cr, y422p_src->width*y422p_src->height/2);
+    Y422P_buffer_discard(y422p_src);
+  }
+
+  if (priv->linear_blend) {
+    /* Vertical blend, for cheap de-interlacing. */
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    single_121_linear_blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
+    single_121_linear_blend(y422p_src->cb, y422p_out->cb, y422p_src->width/2, y422p_src->height);
+    single_121_linear_blend(y422p_src->cr, y422p_out->cr, y422p_src->width/2, y422p_src->height);
+    Y422P_buffer_discard(y422p_src);
+  }
+
+  if (priv->trim) {
+    /* Smooth out low bits to make compression easier. */
+    y422p_src = y422p_out ? y422p_out : y422p_in;
+    y422p_out = Y422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    single_trim(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
+    Y422P_buffer_discard(y422p_src);
+  }
+
   if (!y422p_out) {
     y422p_out = y422p_in; 
- }
-
+  }
+  
   if (priv->field_split) {
     y422p_out->c.interlace_mode = IMAGE_FIELDSPLIT_TOP_FIRST;
     single_field_split(y422p_out->y, y422p_out->width, y422p_out->height);
@@ -320,6 +492,13 @@ static void RGB3_handler(Instance *pi, void *msg)
 
   if (priv->trim) {
     single_trim(priv, rgb3->data, rgb3->data, rgb3->width*3, rgb3->height);
+  }
+
+  if (priv->top_crop) {
+    RGB3_buffer *tmp = RGB3_buffer_new(rgb3->width, rgb3->height - priv->top_crop, &rgb3->c);
+    memcpy(tmp->data, rgb3->data+(rgb3->width*priv->top_crop*3), tmp->data_length);
+    RGB3_buffer_discard(rgb3);
+    rgb3 = tmp;
   }
 
   if (priv->bottom_crop) {

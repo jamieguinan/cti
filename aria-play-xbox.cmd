@@ -27,12 +27,8 @@ config sdl height 480
 
 config sdl label XBox
 
-#connect dj RGB3_buffer vs
-#connect vs RGB3_buffer sdl
-#connect dj RGB3_buffer sdl
-
-connect dj RGB3_buffer vf
-connect vf RGB3_buffer sdl
+connect dj 422P_buffer vf
+connect vf 422P_buffer sdl
 
 #connect dj 422P_buffer sdl
 
@@ -49,3 +45,10 @@ config ap frames_per_io 128
 
 config mjd enable 1
 config ap enable 1
+
+#config vf horizontal_filter -1,2,0,2,-1
+#config vf horizontal_filter -1,2,4,2,-1
+#config vf horizontal_filter -1,3,1,3,-1
+#config vf horizontal_filter 3,2,1,2,3
+#config vf horizontal_filter 0,0,1,0,0
+

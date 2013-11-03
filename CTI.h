@@ -142,6 +142,7 @@ typedef struct _Instance {
   size_t priv_size;		
 
   void (*tick)(struct _Instance *pi); /* One "unit" of processing. */
+  void (*cleanup)(struct _Instance *pi); /* Cleanup function. */
 
   Input *inputs;
   int num_inputs;
@@ -171,6 +172,8 @@ extern void Connect2(Instance *from, const char *fromlabel, Instance *to, const 
 
 extern void PostData(void *pmsg, Input *destination);
 #define PostDataAndClear(m, d) do {PostData(m, d); m = 0L; } while (0)
+extern int PostData(void *pmsg, Input *destination);
+
 extern Handler_message *GetData(Instance *pi, int wait_flag);
 extern Handler_message *GetData_and_requests(Instance *pi, int wait_flag, Config *config_table, int num_configs);
 extern void ReleaseMessage(Handler_message **);
@@ -196,13 +199,14 @@ typedef struct _Template {
   //Config *configs;
   //int num_configs;
 
-  void (*tick)(struct _Instance *pi); /* One "unit" of processing. */
+  /* FIXME: Could use a single "ops" pointer, in Template and Instance. */
 
+  void (*tick)(struct _Instance *pi); /* One "unit" of processing. */
+  void (*cleanup)(struct _Instance *pi); /* Cleanup function. */
+
+  void (*instance_init)(Instance *pi); /* Not needed in Instance */
   /* Control, info (status)... */
 
-  //Instance *(*new)(struct _Template *);
-
-  void (*instance_init)(Instance *pi);
 } Template;
 
 extern Template **all_templates;
@@ -227,8 +231,17 @@ extern Config_buffer *Config_buffer_new(const char *label, const char *value);
 extern Config_buffer *Config_buffer_vrreq_new(const char *label, const char *value, Value *vreq, Range *rreq, Event *event);
 extern void Config_buffer_discard(Config_buffer **cb);
 
+typedef struct {
+  String *value;
+} Line_msg;
+extern Line_msg *Line_msg_new(const char *value);
+extern void Line_msg_discard(Line_msg **lm);
+
+
 extern void Generic_config_handler(Instance *pi, void *data, Config *config_table, int config_table_size);
 extern void cti_set_int(void *addr, const char *value);
+extern void cti_set_long(void *addr, const char *value);
+extern void cti_set_string(void *addr, const char *value);
 
 extern int SetConfig(Instance *pi, const char *label, const char *value);
 extern void GetConfigValue(Input *pi, const char *label, Value *vreq);
@@ -344,7 +357,7 @@ extern void CTI_cmdline_add(const char *key, const char *value);
 extern const char *CTI_cmdline_get(const char *key);
 
 
-/* Debug printfs */
+/* Debug printfs.  FIXME: This requires at least 2 arguments, fmt and one more. */
 #define dpf(fmt, ...) \
 do { \
   static int enabled=1; \

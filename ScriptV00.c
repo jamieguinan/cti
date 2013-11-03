@@ -6,11 +6,13 @@
 #include "Cfg.h"
 
 static void Config_handler(Instance *pi, void *data);
+static void Line_handler(Instance *pi, void *data);
 static void RawData_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_RAWDATA };
+enum { INPUT_CONFIG, INPUT_LINE, INPUT_RAWDATA };
 static Input ScriptV00_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler},
+  [ INPUT_LINE ] = { .type_label = "Line_msg", .handler = Line_handler},
   [ INPUT_RAWDATA ] = { .type_label = "RawData_buffer", .handler = RawData_handler },
 };
 
@@ -227,6 +229,12 @@ static Config config_table[] = {
 static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
+}
+
+static void Line_handler(Instance *pi, void *data)
+{
+  Line_msg *lm = data;
+  Line_msg_discard(&lm);
 }
 
 

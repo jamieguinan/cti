@@ -13,7 +13,11 @@ typedef struct {
   int available;
 } String;
 
-#define s(x) ((x).bytes)
+#define s(x) ((x)->bytes)
+#define sl(x) ((x).bytes)  	/* sl for 's'tring 'l'ocal variable */
+
+/* "Upcast" a char* to a String for easy access to he functions here. */
+#define S(x) (& (String){ .bytes = x, .len = strlen(x), .available = 0} )
 
 /* _new and _free are for free-standing strings that might be passed around independently */
 extern String * String_new(const char *init);
@@ -46,5 +50,6 @@ extern int String_parse_double(String *s, int offset, double *d);
 extern int String_parse_int(String *s, int offset, int *i);
 extern int String_cmp(String *s1, String *s2);
 extern int String_begins_with(String *s, const char *s1);
+extern int String_ends_with(String *s, const char *s1);
 
 #endif

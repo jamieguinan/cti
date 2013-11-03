@@ -65,7 +65,8 @@ static void check_record_state(MjpegLocalBuffer_private *priv)
     gettimeofday(&tv, NULL);
     if (tv.tv_sec > priv->record_until.tv_sec) {
       priv->recording = 0;
-      fprintf(stderr, "md recording OFF\n");
+      fprintf(stderr, "md recording OFF (%lu > %lu)\n", 
+	      (unsigned long)tv.tv_sec, (unsigned long)priv->record_until.tv_sec);
     }
   }
 }

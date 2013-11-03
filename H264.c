@@ -54,7 +54,7 @@ static int set_output(Instance *pi, const char *value)
   }
   
   String_set(&priv->output, value);
-  priv->output_sink = Sink_new(s(priv->output));
+  priv->output_sink = Sink_new(sl(priv->output));
 
   return 0;
 }
@@ -133,7 +133,7 @@ static void Y420P_handler(Instance *pi, void *msg)
       PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
 
-    if (rc > 0 && s(priv->output)) {
+    if (rc > 0 && sl(priv->output)) {
       Sink_write(priv->output_sink, nal[0].p_payload, rc);
     }
 
@@ -189,7 +189,6 @@ static Template H264_template = {
 
 void H264_init(void)
 {
-  puts(__func__);
   Template_register(&H264_template);
 }
 #else

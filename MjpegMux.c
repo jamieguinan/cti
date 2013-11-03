@@ -57,7 +57,7 @@ static int set_output(Instance *pi, const char *value)
   fprintf(stderr, "set_output(%s)\n", value);
 
   String_set(&priv->output, value);
-  priv->sink = Sink_new(s(priv->output));
+  priv->sink = Sink_new(sl(priv->output));
   priv->every = 1;
 
   return 0;
@@ -67,11 +67,11 @@ static int set_output(Instance *pi, const char *value)
 static int do_restart(Instance *pi, const char *value)
 {
   MjpegMux_private *priv = (MjpegMux_private *)pi;
-  if (s(priv->output)) {
+  if (sl(priv->output)) {
     /* Use a copy of the string, because priv->output.bytes will get 
        deleted in String_set()  */
-    char output[strlen(s(priv->output))+1];
-    strcpy(output, s(priv->output));
+    char output[strlen(sl(priv->output))+1];
+    strcpy(output, sl(priv->output));
     set_output(pi, output);
   }
 
@@ -183,7 +183,8 @@ static void Wav_handler(Instance *pi, void *data)
 {
   MjpegMux_private *priv = (MjpegMux_private *)pi;  
   Wav_buffer *wav_in = data;
-  Log(LOG_WAV, "%s popped wav_in @ %p", __func__, wav_in);
+
+  // Log(LOG_WAV, "%s popped wav_in @ %p", __func__, wav_in);
 
   /* Format header. */
   String *header = String_sprintf(part_format,
@@ -193,6 +194,7 @@ static void Wav_handler(Instance *pi, void *data)
 				  "",
 				  wav_in->header_length+wav_in->data_length);
 
+  goto xout;
 
   if (priv->sink) {
     Sink_write(priv->sink, header->bytes, header->len);
@@ -209,6 +211,7 @@ static void Wav_handler(Instance *pi, void *data)
     PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
   }
 
+ xout:
   String_free(&header);
   /* Discard wav buffer */
   // printf("%s discarding wav_in @ %p (%d bytes @ %p)\n", __func__, wav_in, wav_in->data_length, wav_in->data);

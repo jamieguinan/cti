@@ -31,6 +31,7 @@ static Output JpegTran_outputs[] = {
 };
 
 typedef struct  {
+  Instance i;
   jpeg_transform_info info;
 } JpegTran_private;
 
@@ -255,7 +256,6 @@ static void Config_handler(Instance *pi, void *data)
 
 static void JpegTran_tick(Instance *pi)
 {
-
   Handler_message *hm;
 
   hm = GetData(pi, 1);
@@ -270,7 +270,6 @@ static void JpegTran_tick(Instance *pi)
 static void JpegTran_instance_init(Instance *pi)
 {
   JpegTran_private *priv = (JpegTran_private *)pi;
-
 
   /* From jpegtran.c:parse_switches() */
   priv->info.transform = JXFORM_NONE;

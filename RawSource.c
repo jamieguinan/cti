@@ -6,6 +6,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 #include <unistd.h>		/* sleep */
+#include <inttypes.h>		/* for printf */
 
 #include "CTI.h"
 #include "SourceSink.h"
@@ -29,6 +30,7 @@ typedef struct {
   String input;
   Source *source;
   int read_timeout;
+  uint64_t bytes_total;
 } RawSource_private;
 
 
@@ -39,7 +41,7 @@ static int set_input(Instance *pi, const char *value)
     Source_free(&priv->source);
   }
   String_set(&priv->input, value);
-  priv->source = Source_new(s(priv->input));
+  priv->source = Source_new(sl(priv->input));
 
   if (priv->source && pi->outputs[OUTPUT_CONFIG].destination) {
     /* New source activated, send reset message. */
@@ -66,10 +68,10 @@ static void RawSource_move_data(Instance *pi)
   ArrayU8 *chunk;
   int needData = 1;
 
-  if (priv->read_timeout && Source_poll_read(priv->source, priv->read_timeout) == 0) {
+  if (priv->source && priv->read_timeout && Source_poll_read(priv->source, priv->read_timeout) == 0) {
     /* No read activity, assume stalled. */
     Source_close_current(priv->source);
-    set_input(pi, s(priv->input));
+    set_input(pi, sl(priv->input));
   }
   
   if (!priv->source) {
@@ -79,11 +81,22 @@ static void RawSource_move_data(Instance *pi)
   chunk = ArrayU8_new();
   Source_acquire_data(priv->source, chunk, &needData);
 
+  priv->bytes_total += chunk->len;
+
   if (priv->source->eof) {
     Source_close_current(priv->source);
-    set_input(pi, s(priv->input));
+    set_input(pi, sl(priv->input));
   }
-  
+
+  dpf("%s: %d bytes priv->source=%p pi->outputs[OUTPUT_RAWDATA].destination=%p\n", 
+      __func__,
+      chunk->len,
+      priv->source,
+      pi->outputs[OUTPUT_RAWDATA].destination);
+
+  dpf("%s: %" PRIu64 " bytes total (%dMB)\n", 
+      __func__, priv->bytes_total, (priv->bytes_total/1000000) );
+
   if (priv->source && pi->outputs[OUTPUT_RAWDATA].destination) {
     RawData_buffer *raw = RawData_buffer_new(chunk->len);
     memcpy(raw->data, chunk->data, chunk->len);
@@ -99,12 +112,12 @@ static void RawSource_tick(Instance *pi)
   RawSource_private *priv = (RawSource_private *)pi;
   int wait_flag;
 
-  if (!priv->source && s(priv->input)) {
+  if (!priv->source && sl(priv->input)) {
     /* Retry. */
-    set_input(pi, s(priv->input));      
+    set_input(pi, sl(priv->input));
   }
 
-if (!s(priv->input)) {
+  if (!sl(priv->input)) {
     wait_flag = 1;
   }
   else {

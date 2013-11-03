@@ -10,6 +10,8 @@ config vc format MJPG
 config vc size 640x480
 config vc fps 30
 
+config sdl mode OVERLAY
+
 config vc autoexpose 3
 
 #config vc autoexpose 1

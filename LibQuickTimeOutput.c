@@ -157,8 +157,6 @@ static void push_ycc(LibQuickTimeOutput_private *priv, Y422P_buffer *ycc)
 
 static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
 {
-  int rc;
-  
   if (!priv->qt) {
     fprintf(stderr, "%s: no output set!\n", __func__);
     return;
@@ -193,11 +191,13 @@ static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
   uint8_t *video_buffer = Mem_malloc(rgb->data_length);
   memcpy(video_buffer, rgb->data, rgb->data_length);
 
-  rc = quicktime_write_frame(priv->qt,
+  int rc = quicktime_write_frame(priv->qt,
 			     video_buffer,
 			     rgb->data_length,
 			     priv->rgb_track
 			     );
+
+  dpf("quicktime_write_frame returns %d\n", rc);
 
   Mem_free(video_buffer);
 }
