@@ -31,7 +31,7 @@ typedef struct {
 static int set_file(Instance *pi, const char *value)
 {
   JpegSource_private *priv = (JpegSource_private *)pi;
-  ArrayU8 *fdata = File_load_data(value);
+  ArrayU8 *fdata = File_load_data(S((char*)value));
   if (fdata) {
     priv->jpeg = Jpeg_buffer_from(fdata->data, fdata->len, 0L);
   }

@@ -729,7 +729,7 @@ static void y4m_convert_null(unsigned char *_dst,
  unsigned char *_aux){
 }
 
-static void id_file(char *f){
+void id_file(char *f){
   FILE *test;
   unsigned char buffer[80];
   int ret;
@@ -1996,7 +1996,7 @@ void OggOutput_init(void)
 }
 
 
-static void ogg_setup(OggOutput_private *priv)
+void ogg_setup(OggOutput_private *priv)
 {
   int ret;
   fpos_t video_rewind_pos = {};
@@ -2306,7 +2306,7 @@ static void ogg_setup(OggOutput_private *priv)
 }
 
 
-static void ogg_tick(OggOutput_private *priv)
+void ogg_tick(OggOutput_private *priv)
 {
   {
     int ii;

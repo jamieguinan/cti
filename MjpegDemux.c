@@ -24,9 +24,6 @@
 #include "Keycodes.h"
 #include "FPS.h"
 
-#define _min(a, b)  ((a) < (b) ? (a) : (b))
-#define _max(a, b)  ((a) > (b) ? (a) : (b))
-
 static void Config_handler(Instance *pi, void *data);
 static void Feedback_handler(Instance *pi, void *data);
 static void Keycode_handler(Instance *pi, void *data);
@@ -258,11 +255,11 @@ static void Keycode_handler(Instance *pi, void *msg)
     printf("a:%ld b:%ld\n", priv->a, priv->b);
   }
   else if (km->keycode == CTI__KEY_UP) {
-    priv->seek_amount = _min(priv->seek_amount*2, 1000000000); 
+    priv->seek_amount = cti_min(priv->seek_amount*2, 1000000000); 
     fprintf(stderr, "seek_amount=%ld\n", priv->seek_amount);
   }
   else if (km->keycode == CTI__KEY_DOWN) {
-    priv->seek_amount = _max(priv->seek_amount/2, 1); 
+    priv->seek_amount = cti_max(priv->seek_amount/2, 1); 
     fprintf(stderr, "seek_amount=%ld\n", priv->seek_amount);
   }
   else if (km->keycode == CTI__KEY_LEFT) {

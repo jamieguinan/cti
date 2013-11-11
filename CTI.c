@@ -35,7 +35,7 @@ void Instance_loop_thread(Instance *pi)
   pthread_detach(thread);
 }
 
-void PostData(void *data, Input *input)
+void PostDataGetReply(void *pmsg, Input *destination, Event * reply, int * result)
 {
   Handler_message *hm = Mem_calloc(1, sizeof(*hm));
 
@@ -46,38 +46,60 @@ void PostData(void *data, Input *input)
       sleep(1);
     }
   }
+
+  Lock reply_lock = PTHREAD_MUTEX_INITIALIZER;
+
   hm->handler = input->handler;
   hm->data = data;
 
-  /* Wait for lock, lock... */
-  Lock_acquire(&input->parent->inputs_lock);
-
-  if (input->parent->msg_first == 0L) {
-    /* input->parent->msg_last should also be 0L in this case... */
-    input->parent->msg_first = hm;
-    input->parent->msg_last = hm;
-  }
-  else {
-    /* At least one node. */
-    input->parent->msg_last->prev = hm;
-    input->parent->msg_last = hm;
+  if (reply) {
+    Lock_acquire(&reply_lock);
+    hm->reply = reply;
+    hm->result = result;
   }
 
-  if (input->parent->waiting) {
-    Event_signal(&input->parent->inputs_event);
+  { 
+    /* Wait for input lock, lock... */
+    Lock_acquire(&input->parent->inputs_lock);
+    
+    if (input->parent->msg_first == 0L) {
+      /* input->parent->msg_last should also be 0L in this case... */
+      input->parent->msg_first = hm;
+      input->parent->msg_last = hm;
+    }
+    else {
+      /* At least one node. */
+      input->parent->msg_last->prev = hm;
+      input->parent->msg_last = hm;
+    }
+    
+    if (input->parent->waiting) {
+      Event_signal(&input->parent->inputs_event);
+    }
+    
+    input->parent->pending_messages += 1;
+    
+    dpf("%s: %d queued messages\n", input->parent->label, input->parent->pending_messages);
+    
+    Lock_release(&input->parent->inputs_lock);
   }
-
-  input->parent->pending_messages += 1;
-
-  dpf("%s: %d queued messages\n", input->parent->label, input->parent->pending_messages);
-
-  Lock_release(&input->parent->inputs_lock);
 
   while (input->parent->pending_messages > 100) {
     dpf("sleeping to drain %s message queue\n", input->parent->label);
     sleep(1);
   }
+
+  if (reply) {
+    Lock_release__event_wait__lock_acquire(&reply_lock, reply);
+  }
 }
+
+
+void PostData(void *pmsg, Input *destination)
+{
+  PostDataGetReply(pmsg, destination, NULL, NULL);
+}
+
 
 Handler_message *GetData(Instance *pi, int wait_flag)
 {
@@ -648,101 +670,6 @@ void Feedback_buffer_discard(Feedback_buffer *fb)
   Mem_free(fb);
 }
 
-
-typedef struct {
-  const char *file;		/* use streq rather than == for comparison, to allow
-				   registering before first call */
-  int line;
-  int *enabled;
-  const char *fmt;
-} DebugPrintfRecord;
-
-struct {
-  DebugPrintfRecord *records;
-  int count;
-  int available;
-} printfRecords;
-
-
-void cti_debug_printf_register(const char *file, int line, int *enabled, const char *fmt)
-{
-  int i;
-  for (i=0; i < printfRecords.count; i++) {
-    if (streq(file, printfRecords.records[i].file)
-	&& line == printfRecords.records[i].line
-	&& streq(fmt, printfRecords.records[i].fmt))
-      {
-	/* This entry was pre-registered. */
-	printfRecords.records[i].enabled = enabled;
-	/* Enable it! */
-	*enabled = 1;
-	return;
-      }
-  }
-
-  if (!printfRecords.available) {
-    printfRecords.available = 32;
-    printfRecords.records = Mem_calloc(printfRecords.available, sizeof(*printfRecords.records));
-  }
-  else if (printfRecords.available == (printfRecords.count+1)) {
-    printfRecords.available *= 2;
-    printfRecords.records = Mem_realloc(printfRecords.records, 
-				    printfRecords.available*sizeof(*printfRecords.records));
-  }
-  
-  printfRecords.records[printfRecords.count].file = file;
-  printfRecords.records[printfRecords.count].line = line;
-  printfRecords.records[printfRecords.count].enabled = enabled;
-  printfRecords.records[printfRecords.count].fmt = fmt;
-  
-  printfRecords.count += 1;
-}
-
-
-void cti_debug_printf_list(void)
-{
-  int i;
-  int n;
-  for (i=0; i < printfRecords.count; i++) {
-    printf("[%d] %s %s:%d %s",
-	   i,
-	   *printfRecords.records[i].enabled ? " *":"",
-	   printfRecords.records[i].file,
-	   printfRecords.records[i].line,
-	   printfRecords.records[i].fmt);
-  
-    n = strlen(printfRecords.records[i].fmt);
-    if (n && printfRecords.records[i].fmt[n-1] != '\n') {
-      putchar('\n');
-    }
-  }
-}
-
-void cti_debug_printf_toggle(int index)
-{
-  if (index < printfRecords.count) {
-    int e = *printfRecords.records[index].enabled;
-    if (!e) { 
-      *printfRecords.records[index].enabled = 1;
-    }
-    else {
-      *printfRecords.records[index].enabled = 0;
-    }
-  }
-}
-
-
-void cti_debug_printf(const char *fmt, ...)
-{
-  int rc;
-  va_list ap;
-  va_start(ap, fmt);
-  rc = vprintf(fmt, ap);
-  if (-1 == rc) {
-    perror("vsprintf");
-  }
-  va_end(ap);
-}
 
 /* key=value command-line parameter support. */
 typedef struct {

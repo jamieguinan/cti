@@ -1,9 +1,17 @@
 /* 
- * This object receives RawData buffers, and distributes the data to
- * one or more connected clients.  If a client can't keep up, (that
- * is, too much data is buffered up), it gets disconnected.  It isn't
- * likely to scale past a relatively small number of clients, maybe 8
- * at the most.  Write another module if want to scale higher.
+ * SocketServer supports this mode of operation: receive RawData
+ * messages, keep them in a ring buffer, and send the data to all
+ * connected clients.  If a client can't keep up, (that is, too much
+ * data is buffered up), it gets disconnected.
+ *
+ * This module isn't likely to scale past a relatively small number
+ * of clients, maybe 8 at the most.
+ *
+ * It is also single-threaded, which lets it avoid locking the data
+ * ring buffer for client access.
+ *
+ * Am also considering using this as a message listener and protocol
+ * handler.
  */
 
 #include <stdio.h>		/* fprintf */
@@ -20,18 +28,11 @@
 #include "CTI.h"
 #include "SocketServer.h"
 #include "Images.h"
+#include "socket_common.h"
 
 #ifdef __APPLE__
 #define MSG_NOSIGNAL 0
 #endif
-
-/* FIXME: See arch-specific define over in modc code... */
-#ifndef set_reuseaddr
-#define set_reuseaddr 1
-#endif
-
-#define _max(a, b)  ((a) > (b) ? (a) : (b))
-#define _min(a, b)  ((a) < (b) ? (a) : (b))
 
 static void Config_handler(Instance *pi, void *data);
 static void RawData_handler(Instance *pi, void *data);
@@ -72,9 +73,7 @@ typedef struct {
   Instance i;
   int max_total_buffered_data;	/* Start dropping after this is exceeded. */
   int total_buffered_data;
-  char v4addr[4];
-  unsigned short v4port;
-  int listen_socket;
+  listen_common lsc;		/* listen socket_common */
   Client_connection *cc_first;
   Client_connection *cc_last;
   RawData_node *raw_first;
@@ -98,68 +97,18 @@ static int set_v4addr(Instance *pi, const char *value)
 }
 
 
-static int set_v4port(Instance *pi, const char *value)
-{
-  SocketServer_private *priv = (SocketServer_private *)pi;
-  priv->v4port = atoi(value);
-  return 0;
-}
-
 static int set_enable(Instance *pi, const char *value)
 {
   SocketServer_private *priv = (SocketServer_private *)pi;
-  int rc;
 
-  priv->listen_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-  if (priv->listen_socket == -1) {
-    /* FIXME: see Socket.log_error in modc code */
-    fprintf(stderr, "socket error\n");
-    return 1;
-  }
-
-  struct sockaddr_in sa = { .sin_family = AF_INET,
-			    .sin_port = htons(priv->v4port),
-			    .sin_addr = { .s_addr = htonl(INADDR_ANY)}
-  };
-
-  if (set_reuseaddr) {
-    int reuse = 1;
-    rc = setsockopt(priv->listen_socket, SOL_SOCKET, SO_REUSEADDR, (void*)&reuse, sizeof(reuse));
-    if (rc == -1) { 
-      // Socket.log_error(s, "SO_REUSEADDR"); 
-      fprintf(stderr, "SO_REUSEADDR\n"); 
-      close(priv->listen_socket); priv->listen_socket = -1;
-      return 1;
-    }
-  }
-
-  rc = bind(priv->listen_socket, (struct sockaddr *)&sa, sizeof(sa));
-  if (rc == -1) { 
-    /* FIXME: see Socket.log_error in modc code */
-    perror("bind"); 
-    close(priv->listen_socket); priv->listen_socket = -1;
-    return 1;
-  }
-
-  rc = listen(priv->listen_socket, 5);
-  if (rc == -1) { 
-    /* FIXME: see Socket.log_error in modc code */
-    fprintf(stderr, "listen\n"); 
-    close(priv->listen_socket); priv->listen_socket = -1;
-    return 1;
-  }
-
-  printf("listening on port %d\n", priv->v4port);
-  
-  return 0;
+  return listen_socket_setup(&priv->lsc);
 }
 
 
 static Config config_table[] = {
   { "max_total_buffered_data", set_max_total_buffered_data, 0L, 0L },
   { "v4addr", set_v4addr, 0L, 0L },
-  { "v4port", set_v4port, 0L, 0L },
+  { "v4port", 0L, 0L, 0L, cti_set_int, offsetof(SocketServer_private, lsc.port) },
   { "enable", set_enable, 0L, 0L },
   /* Maybe add v6 later... */
 };
@@ -186,8 +135,9 @@ static void RawData_handler(Instance *pi, void *data)
   }
 
   priv->total_buffered_data += priv->raw_last->buffer->data_length;
+
   priv->raw_seq += 1;
-  priv->raw_last->seq = priv->raw_seq;
+  rn->seq = priv->raw_seq;
 }
 
 
@@ -203,7 +153,7 @@ static void SocketServer_tick(Instance *pi)
   int sn;
   struct timeval tv;
 
-  if (priv->listen_socket) {
+  if (priv->lsc.fd > 0) {
     /* Want to handle new and existing connections, so don't block in GetData. */
     wait_flag = 0;
   }
@@ -284,14 +234,14 @@ static void SocketServer_tick(Instance *pi)
 
     if (cc->state == CC_READY_TO_SEND) {
       FD_SET(cc->fd, &wfds);
-      maxfd = _max(cc->fd, maxfd);
+      maxfd = cti_max(cc->fd, maxfd);
     }
 
     cc = cc->next;
   }
 
-  FD_SET(priv->listen_socket, &rfds);
-  maxfd = _max(priv->listen_socket, maxfd);
+  FD_SET(priv->lsc.fd, &rfds);
+  maxfd = cti_max(priv->lsc.fd, maxfd);
 
   tv.tv_sec = 0; tv.tv_usec = 1000;		/* 1ms */
   sn = select(maxfd+1, &rfds, &wfds, 0L, &tv);
@@ -301,12 +251,12 @@ static void SocketServer_tick(Instance *pi)
     goto out;
   }
 
-  if (FD_ISSET(priv->listen_socket, &rfds)) {
+  if (FD_ISSET(priv->lsc.fd, &rfds)) {
     /* Add client connection. */
     cc = Mem_calloc(1, sizeof(*cc));
     cc->addrlen = sizeof(cc->addr);
     cc->t0 = time(NULL);
-    cc->fd = accept(priv->listen_socket, (struct sockaddr *)&cc->addr, &cc->addrlen);
+    cc->fd = accept(priv->lsc.fd, (struct sockaddr *)&cc->addr, &cc->addrlen);
     if (cc->fd == -1) {
       /* This is unlikely but possible.  If it happens, just clean up
 	 and return... */
@@ -315,7 +265,7 @@ static void SocketServer_tick(Instance *pi)
       goto out;
     }
     else {
-      printf("accepted connection on port %d\n", priv->v4port);
+      fprintf(stderr, "accepted connection on port %d\n", priv->lsc.port);
     }
 
     cc->state = CC_INIT;
@@ -347,7 +297,7 @@ static void SocketServer_tick(Instance *pi)
       continue;
     }
 
-    to_send = _min(16384, cc->raw_node->buffer->data_length - cc->raw_offset);
+    to_send = cti_min(16384, cc->raw_node->buffer->data_length - cc->raw_offset);
 
     if (to_send <= 0) {
       fprintf(stderr, "Whoa, to_send is %d (cc->raw_node->buffer->data_length=%d cc->raw_offset=%d)\n", 

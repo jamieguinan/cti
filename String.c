@@ -1,11 +1,26 @@
+/* String object interface.  Has malloc and function call overhead,
+   but aims to be safer than raw <string.h> operations. */
 #include "String.h"
-#include "CTI.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+extern int vasprintf(char **p, const char *fmt, va_list ap);
 #include <stdarg.h>
 
-int String_cmp(String *s1, String *s2)
+#include "String.h"
+#include "Mem.h"
+
+static char unset_string[] = "unset string or empty result";
+
+static String __String_none = {
+  .bytes = unset_string,
+  .len = sizeof(unset_string),
+  .available = 0,
+};
+
+String * _String_none = &__String_none;
+
+int String_cmp(const String *s1, const String *s2)
 {
   return strcmp(s1->bytes, s2->bytes);
 }
@@ -45,6 +60,7 @@ void String_cat1(String *s, const char *s1)
 
   s->bytes = Mem_realloc(s->bytes, s->available);
   strcat(s->bytes, s1);
+  s->len = len;
 }
 
 
@@ -59,6 +75,7 @@ void String_cat2(String *s, const char *s1, const char *s2)
   s->bytes = Mem_realloc(s->bytes, s->available);
   strcat(s->bytes, s1);
   strcat(s->bytes, s2);
+  s->len = len;
 }
 
 
@@ -74,6 +91,7 @@ void String_cat3(String *s, const char *s1, const char *s2, const char *s3)
   strcat(s->bytes, s1);
   strcat(s->bytes, s2);
   strcat(s->bytes, s3);
+  s->len = len;
 }
 
 
@@ -105,6 +123,12 @@ String *String_new(const char *init)
 }
 
 
+String * String_value_none(void)
+{
+  return _String_none;
+}
+
+
 void String_clear(String *s)
 {
   Mem_free(s->bytes);
@@ -120,6 +144,7 @@ void String_free(String **s)
 }
 
 
+#if 0
 void _String_list_append(List *l, String **s, void (*free)(String **))
 {
   if (!l->free) {
@@ -128,6 +153,7 @@ void _String_list_append(List *l, String **s, void (*free)(String **))
   List_append(l, *s); /* List takes ownership. */
   *s = 0L;			
 }
+#endif
 
 
 void String_trim_right(String *s)
@@ -145,6 +171,7 @@ void String_trim_right(String *s)
 }
 
 
+#if 0
 void List_append(List *l, void *thing)
 {
   if (l->things == 0L) {
@@ -158,6 +185,8 @@ void List_append(List *l, void *thing)
   l->things[l->things_count] = thing;
   l->things_count += 1;
 }
+#endif
+
 
 /* I wasn't sure how to portably pass fmt and "..." along between these 2 sprintf variants,
    so I just kept them separate. */
@@ -167,7 +196,10 @@ void String_set_sprintf(String *s, const char *fmt, ...)
   va_list ap;
   int rc;
   va_start(ap, fmt);
-  rc = vasprintf(&p, fmt, ap);	/* Allocates on stack. */
+  /* FIXME: vasprintf allocates on stack.  But it is noted as _GNU_SOURCE in the man page,
+     yet still fails to be declared when _GNU_SOURCE is defined.  Fix to use vsnprintf and
+     alloc functions instead. */
+  rc = vasprintf(&p, fmt, ap);	
   if (-1 == rc) {
     perror("vasprintf");
   }
@@ -194,6 +226,7 @@ String * String_sprintf(const char *fmt, ...)
 }
 
 
+#if 0
 void List_free(List *l)
 {
   int i;
@@ -206,7 +239,7 @@ void List_free(List *l)
   Mem_free(l->things);
   memset(l, 0, sizeof(l));
 }
-
+#endif
 
 int String_find(String *s, int offset, const char *s1, int *end)
 {
@@ -286,6 +319,17 @@ int String_parse_int(String *s, int offset, int *i)
 }
 
 
+int String_len(String * s)
+{
+  return s->len;
+}
+
+
+int String_is_none(String * s)
+{
+  return (s == _String_none ? 1 : 0);
+}
+
 void String_append_bytes(String *s, const char *bytes, int count)
 {
   int newlen = s->len + count;
@@ -298,32 +342,167 @@ void String_append_bytes(String *s, const char *bytes, int count)
 }
 
 
-List *List_new(void)
+String *String_replace(String *s, const char *old, const char *new)
 {
-  List *ls = Mem_calloc(1, sizeof(*ls));
-  return ls;
+  String *rs = String_new("");
+  char *p1 = s->bytes;
+  while (1) {
+    char *p2 = strstr(p1, old);
+    if (!p2) {
+      String_append_bytes(rs, p1, strlen(p1));
+      break;
+    }
+    else {
+      String_append_bytes(rs, p1, p2 - p1);
+      String_append_bytes(rs, new, strlen(new));
+      p1 = p2 + strlen(old);
+    }
+  }
+  return rs;
 }
 
-List *String_split(String *s, const char *splitter)
-{
-  List *ls = List_new();
 
-  char *p1 = s->bytes;
+int String_get_char(String *str, int index)
+{
+  /* This returns the indexed character, as an int, or -1 if out of range. */
+  if (str->len == 0) {
+    return -1;
+  }
+  if (index < 0) {
+    index = str->len - index;
+  }
+  if (index >= str->len) {
+    return -1;
+  }
+  return str->bytes[index];
+}
+
+
+String_list * String_list_new(void)
+{
+  String_list *slst = Mem_calloc(1, sizeof(*slst));
+  slst->available = 4;
+  slst->_strings = Mem_calloc(1, slst->available * sizeof(String *));
+  slst->len = 0;
+  return slst;
+}
+
+void String_list_add(String_list *slst, String **add)
+{
+  slst->_strings[slst->len] = *add;
+  *add = _String_none;
+  slst->len += 1;
+  if (slst->len == slst->available) {
+    slst->available *= 2;
+    slst->_strings = Mem_realloc(slst->_strings,  slst->available * sizeof(String *));
+  }
+}
+
+
+String_list * String_split_s(const char *src, const char *splitter)
+{
+  String_list *slst = String_list_new();
+  const char *p1 = src;
   while (1) {
     char *p2 = strstr(p1, splitter);
     if (p2) {
       String *tmp = String_new("");
       String_append_bytes(tmp, p1, p2 - p1);
-      List_append(ls, tmp);
+      String_list_add(slst, &tmp);
       p1 = p2 + strlen(splitter);
     }
     else {
       String *tmp = String_new("");
       String_append_bytes(tmp, p1, strlen(p1));
-      List_append(ls, tmp);
+      String_list_add(slst, &tmp);
       break;
     }
   }
 
-  return ls;
+  return slst;
+}
+
+
+static String_list *_string_list_none;
+
+
+int String_list_none(String_list *slst)
+{
+  return (slst == _string_list_none ? 1 : 0);
+}
+
+
+String_list * String_split(String *str, const char *splitter)
+{
+  if (String_is_none(str)) {
+    /* Return empty list. */
+    /* FIXME: Could have a _String_list_none type? */
+    return String_list_new();
+  }
+  return String_split_s(s(str), splitter);
+}
+
+int String_list_len(String_list * slst)
+{
+  return slst->len;
+}
+
+
+String * String_list_get(String_list *slst, int index)
+{
+  if (slst->len == 0) {
+    /* FIXME: Maybe make a function that warns, then returns null string? */
+    return _String_none;
+  }
+  else if (index >= slst->len) {
+    /* FIXME: Again, a warning. */
+    return _String_none;
+  }
+  else if (index < 0) {
+    if ((-index) < slst->len) {
+      /* Return from top. */
+      return slst->_strings[slst->len - index];
+    }
+    else {
+      /* FIXME warn... */
+      return _String_none;
+    }
+  }
+  else {
+    return slst->_strings[index];
+  }
+}
+
+
+String * String_list_find(String_list *slst, String *target)
+{
+  int i;
+  for (i=0; i < slst->len; i++) {
+    String *str = slst->_strings[i];
+    if (streq(s(str), s(target))) {
+      return str;
+    }
+  }
+  return _String_none;
+}
+
+
+String * String_list_find_val(String_list *slst, String *key, int skip)
+{
+  int i;
+  String *keyeq = String_dup(key);
+  String_cat1(keyeq, "=");
+  for (i=0; i < slst->len; i++) {
+    String *str = slst->_strings[i];
+    if (String_begins_with(str, s(keyeq))) {
+      return String_new(s(str) + strlen(s(keyeq)));
+    }
+  }
+  return _String_none;
+}
+
+
+void String_list_free(String_list **slst)
+{
+  fprintf(stderr, "%s:%s FIXME: implement...\n", __FILE__, __func__);
 }

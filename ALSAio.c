@@ -194,7 +194,7 @@ static void get_device_range(Instance *pi, Range *range)
       else {
 	hw = String_sprintf("hw:%c", c);
       }
-      desc = File_load_text(s->bytes);
+      desc = File_load_text(s);
 
       printf("%s %s -> %s\n", hw->bytes, s->bytes, desc->bytes);
 

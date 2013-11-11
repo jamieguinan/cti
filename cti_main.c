@@ -67,14 +67,19 @@
 #include "ImageOutput.h"
 #include "SQLite.h"
 #include "SubProc.h"
+#include "XMLMessageServer.h"
 
 extern int app_code(int argc, char *argv[]);
 
 char *argv0;
 
+InstanceGroup *gig;
+
 int cti_main(int argc, char *argv[])
 {
   argv0 = argv[0];
+
+  gig = InstanceGroup_new();
 
 #ifdef __linux__
   ALSAio_init();
@@ -162,6 +167,7 @@ int cti_main(int argc, char *argv[])
   RawSource_init();
   ImageOutput_init();
   SubProc_init();
+  XMLMessageServer_init();
 
   return app_code(argc, argv);
 }

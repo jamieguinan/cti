@@ -4,8 +4,15 @@
 #include "Array.h"
 #include "Mem.h"
 #include "Cfg.h"
+#include "dpf.h"
 
+#ifndef _min
 #define _min(a, b)  ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef table_size
+#define table_size(x) (sizeof(x)/sizeof(x[0]))
+#endif
 
 Gray_buffer *Gray_buffer_new(int width, int height, Image_common *c)
 {

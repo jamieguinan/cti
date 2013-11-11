@@ -101,7 +101,7 @@ static void ResourceMonitor_tick(Instance *pi)
   else if (priv->mode == RESOURCE_MONITOR_MODE_PROCSELFSTAT) {
     int i=0;
     char *p;
-    String *data = File_load_text("/proc/self/stat");
+    String *data = File_load_text(S("/proc/self/stat"));
     p = data->bytes;
     while (*p) {
       if (*p == ' ') {

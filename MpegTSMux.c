@@ -10,8 +10,6 @@
 #include "Audio.h"
 #include "Array.h"
 
-#define _min(a, b)  ((a) < (b)?  (a):(b))
-
 static void Config_handler(Instance *pi, void *msg);
 static void H264_handler(Instance *pi, void *msg);
 static void AAC_handler(Instance *pi, void *msg);

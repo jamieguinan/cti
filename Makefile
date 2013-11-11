@@ -13,6 +13,7 @@ LDFLAGS+=-Wl,-rpath,$(shell pwd)/../../platform/$(ARCH)/lib
 endif
 
 CFLAGS += -g -Wall $(CMDLINE_CFLAGS)
+CFLAGS += -Werror
 # -std=c99 
 CPPFLAGS += -I../../platform/$(ARCH)/include -I../jpeg-7
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
@@ -111,6 +112,11 @@ OBJS= \
 	$(OBJDIR)/RawSource.o \
 	$(OBJDIR)/ImageOutput.o \
 	$(OBJDIR)/SubProc.o \
+	$(OBJDIR)/dpf.o \
+	$(OBJDIR)/XMLMessageServer.o \
+	$(OBJDIR)/socket_common.o \
+	$(OBJDIR)/XmlSubset.o \
+	$(OBJDIR)/nodetree.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
@@ -217,7 +223,7 @@ $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \
 	$(OBJDIR)/cti_app.o
 	@echo LINK
-	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
+	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 ifeq ($(ARCH),x86_64-Linux)
 # Sigh, some libs bump their version numbers all the fucking time.  And I like to keep
 # cti binaries around for later use, without always having to rebuild.  So, keep a
@@ -228,7 +234,7 @@ ifeq ($(ARCH),x86_64-Linux)
 endif
 #if gdb not in cflags
 	@echo STRIP
-	$(STRIP) $@
+	@$(STRIP) $@
 # endif
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))
@@ -256,7 +262,7 @@ $(OBJDIR)/ctest$(EXEEXT): \
 $(OBJDIR)/%.o: %.c Makefile
 	@echo CC $<
 #	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.so: %.c Makefile
 	@echo 'CC (dll)' $<

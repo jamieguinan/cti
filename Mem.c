@@ -1,5 +1,4 @@
 #include "Mem.h"
-#include "Log.h"
 #include "Cfg.h"
 #include <string.h>		/* memcpy */
 #include <stdlib.h>

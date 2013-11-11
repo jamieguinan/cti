@@ -23,7 +23,7 @@ CSV_table *CSV_load(String *path)
     return NULL;
   }
 
-  String *contents = File_load_text(path->bytes);
+  String *contents = File_load_text(path);
   if (!contents) {
     return NULL;
   }

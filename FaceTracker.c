@@ -86,7 +86,7 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
-
+#if 0
 static void analysis_00(FaceTracker_private *priv, Gray_buffer *gray)
 {
   /* confirm previous measurements, and adjust with score */
@@ -104,8 +104,9 @@ static void analysis_00(FaceTracker_private *priv, Gray_buffer *gray)
   
   
 }
+#endif
 
-
+#if 0
 static void analysis_001(FaceTracker_private *priv, Gray_buffer *gray)
 {
   /* Idea: sit still and blink eyes to start.  Track eyes and nostrils. */
@@ -162,6 +163,7 @@ static void analysis_001(FaceTracker_private *priv, Gray_buffer *gray)
   priv->fir_index += 1;
   priv->fir_index %= FIR_COUNT;
 }
+#endif
 
 static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buffer *rgb)
 {

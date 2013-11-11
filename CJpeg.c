@@ -15,9 +15,6 @@
 #include "Cfg.h"
 #include "Log.h"
 
-#define _min(a, b)  ((a) < (b) ? (a) : (b))
-#define _max(a, b)  ((a) > (b) ? (a) : (b))
-
 static void Config_handler(Instance *pi, void *msg);
 static void rgb3_handler(Instance *pi, void *msg);
 static void bgr3_handler(Instance *pi, void *msg);
@@ -267,7 +264,7 @@ static void compress_and_post(Instance *pi,
   else if (priv->adjusted_quality < priv->quality) {
     /* Ratchet quality back up, but only by 2, we don't "ping-pong" +/- 5. */
     int temp = priv->adjusted_quality + 2;
-    priv->adjusted_quality = _min(temp, priv->quality);
+    priv->adjusted_quality = cti_min(temp, priv->quality);
     report_time = 1;
   }
 

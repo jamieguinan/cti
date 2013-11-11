@@ -44,7 +44,7 @@ static void Config_handler(Instance *pi, void *data)
 
 void Cryptor_context_init(Cryptor_context *ctx, String *filename)
 {
-  ctx->cipher = File_load_data(filename->bytes);
+  ctx->cipher = File_load_data(filename);
   if (!ctx->cipher) {
     fprintf(stderr, "failed to load cipher file %s\n", filename->bytes);
   }

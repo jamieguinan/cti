@@ -394,11 +394,7 @@ static void MpegTSDemux_tick(Instance *pi)
 
   if (priv->needData) {
     ArrayU8 *newChunk;
-    /* Network reads should return short numbers if not much data is
-       available, so using a size relatively large comparted to an
-       audio buffer or Jpeg frame should not cause real-time playback
-       to suffer here. */
-    newChunk = Source_read(priv->source, 32768);
+    newChunk = Source_read(priv->source);
 
     //int vsave = cfg.verbosity; cfg.verbosity = 1;
     if (newChunk && cfg.verbosity) { 

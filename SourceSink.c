@@ -1,7 +1,8 @@
 #include "SourceSink.h"
 #include "Mem.h"
-#include "Cfg.h"
-#include "CTI.h"		/* dpf */
+#include "String.h"
+#include "dpf.h"
+//#include "CTI.h"		/* dpf */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -15,20 +16,12 @@
 #include <unistd.h>		/* close */
 #include <poll.h>		/* poll */
 
-typedef struct {
-  FILE *f;			/* file */
-  FILE *p;			/* pipe (popen) */
-  int s;			/* socket */
-  int state;			/* Relevant for sockets, may want to start with a POST. */
-} Sink_private;
 
-
-Sink *Sink_new(char *name)
+static void io_open(IO_common *io, char *name, const char *mode)
 {
   int rc;
-  Sink_private *priv = Mem_calloc(1, sizeof(*priv));
 
-  priv->s = -1;			/* Default to invalid socket value. */
+  io->s = -1;			/* Default to invalid socket value. */
 
   char *colon = strchr(name, ':');
   if (colon && isdigit(colon[1])) {
@@ -38,9 +31,8 @@ Sink *Sink_new(char *name)
     char port[strlen(name)+1];
     strncpy(host, name, hostlen); host[hostlen] = 0;
     strcpy(port, colon+1);
-    printf("host=%s port=%s\n", host, port);
+    //  fprintf(stderr, "host=%s port=%s\n", host, port);
     /* Connect to remote TCP port. */
-
     struct addrinfo hints = {
       .ai_socktype = SOCK_STREAM,
     };
@@ -53,26 +45,26 @@ Sink *Sink_new(char *name)
       perror("getaddrinfo"); goto out;
     }
 
-    priv->s = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+    io->s = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
     /* NOTE: Could be additional entries in linked list above. */
 
-    if (priv->s == -1) {
+    if (io->s == -1) {
       perror("socket"); goto out;
     }
 
-    rc = connect(priv->s, results->ai_addr, results->ai_addrlen);
+    rc = connect(io->s, results->ai_addr, results->ai_addrlen);
     if (rc == -1) {
       perror("connect"); 
       /* Note: alternatively, could keep the socket and retry the open... */
-      close(priv->s);
-      priv->s = -1;
+      close(io->s);
+      io->s = -1;
       goto out;
     }
 
     freeaddrinfo(results);  results = 0L;
   }
   else { 
-    /* Apply strftime() to allow time-based naming. */
+    /* File.  Apply strftime() to allow time-based naming. */
     char out_name[256];
     time_t t = time(NULL);
     struct tm *lt = localtime(&t);
@@ -82,40 +74,40 @@ Sink *Sink_new(char *name)
     }
 
     if (name[0] == '|') {
-      /* Open as pipe. */
+      /* Open as pipe, only for output. */
       strftime(out_name, sizeof(out_name), name, lt);
-      priv->p = popen(out_name+1, "w");
+      io->p = popen(out_name+1, "w");
     }
     else {
       /* Open as file. */
       strftime(out_name, sizeof(out_name), name, lt);
-      priv->f = fopen(out_name, "wb");
+      io->f = fopen(out_name, mode);
     }
   }
   
  out:
-  return (Sink*)priv;
+  return;
 }
 
 
-void Sink_write(Sink *sink, void *data, int length)
+static void io_write(IO_common *io, void *data, int length)
 {
-  Sink_private *priv = (Sink_private *)sink;
+
   int n;
 
-  if (priv->f) {
-    n = fwrite(data, length, 1, priv->f);
+  if (io->f) {
+    n = fwrite(data, length, 1, io->f);
     if (n != 1) {
       fprintf(stderr, "fwrite wrote %d/%d bytes\n", n, length);
     }
   }
-  else if (priv->p) {
-    n = fwrite(data, length, 1, priv->p);
+  else if (io->p) {
+    n = fwrite(data, length, 1, io->p);
     if (n != 1) {
       perror("fwrite");
     }
   }
-  else if (priv->s != -1) {   
+  else if (io->s != -1) {   
     int sent = 0;
     while (sent < length) {
       /* FIXME: This send() can block, which can cause the calling
@@ -123,7 +115,7 @@ void Sink_write(Sink *sink, void *data, int length)
 	 but should have some kind of solution or at least a
 	 recommendation or note.  Maybe a timeout, and fill in an
 	 error value if couldn't send all in time? */
-      n = send(priv->s, ((char*)data)+sent, length, 0);
+      n = send(io->s, ((char*)data)+sent, length, 0);
       if (n <= 0) {
 	perror("send");
 	break;
@@ -134,38 +126,59 @@ void Sink_write(Sink *sink, void *data, int length)
 }
 
 
+Sink *Sink_new(char *name)
+{
+  Sink *sink = Mem_calloc(1, sizeof(*sink));
+
+  io_open(&sink->io, name, "wb");
+
+  return sink;
+}
+
+
+void Sink_write(Sink *sink, void *data, int length)
+{
+  io_write(&sink->io, data, length);
+}
+
+
 void Sink_flush(Sink *sink)
 {
-  Sink_private *priv = (Sink_private *)sink;
-  if (priv->f) {
-    fflush(priv->f);
+  if (sink->io.f) {
+    fflush(sink->io.f);
   }
-  else if (priv->p) {
-    fflush(priv->p);
+  else if (sink->io.p) {
+    fflush(sink->io.p);
   }
+}
+
+
+static void io_close_current(IO_common *io)
+{
+  if (io->f) {
+    fclose(io->f);
+    io->f = NULL;
+  }
+  else if (io->p) {
+    pclose(io->p);
+    io->p = NULL;
+  }
+  else if (io->s != -1) {   
+    close(io->s);
+    io->s = -1;
+  }  
 }
 
 
 void Sink_close_current(Sink *sink)
 {
-  Sink_private *priv = (Sink_private *)sink;
-  if (priv->f) {
-    fclose(priv->f);
-    priv->f = NULL;
-  }
-  else if (priv->p) {
-    pclose(priv->p);
-    priv->p = NULL;
-  }
-  else if (priv->s != -1) {   
-    close(priv->s);
-    priv->s = -1;
-  }  
+  io_close_current(&sink->io);
 }
 
 
 void Sink_free(Sink **sink)
 {
+  /* FIXME... */
 }
 
 
@@ -174,7 +187,7 @@ Source *Source_new(char *name)
   int rc;
   Source *source = Mem_calloc(1, sizeof(*source));
 
-  source->s = -1;			/* Default to invalid socket value. */
+  source->io.s = -1;			/* Default to invalid socket value. */
 
   source->t0 = time(NULL);
 
@@ -186,7 +199,7 @@ Source *Source_new(char *name)
     char port[strlen(name)+1];
     strncpy(host, name, hostlen); host[hostlen] = 0;
     strcpy(port, colon+1);
-    printf("host=%s port=%s\n", host, port);
+    fprintf(stderr, "host=%s port=%s\n", host, port);
     /* Connect to remote TCP port. */
 
     struct addrinfo hints = {
@@ -201,19 +214,19 @@ Source *Source_new(char *name)
       perror("getaddrinfo"); goto out;
     }
 
-    source->s = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
+    source->io.s = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
     /* NOTE: Could be additional entries in linked list above. */
 
-    if (source->s == -1) {
+    if (source->io.s == -1) {
       perror("socket"); goto out;
     }
 
-    rc = connect(source->s, results->ai_addr, results->ai_addrlen);
+    rc = connect(source->io.s, results->ai_addr, results->ai_addrlen);
     if (rc == -1) {
       perror("connect"); 
       /* Note: alternatively, could keep the socket and retry the open... */
-      close(source->s);
-      source->s = -1;
+      close(source->io.s);
+      source->io.s = -1;
       goto out;
     }
 
@@ -225,8 +238,8 @@ Source *Source_new(char *name)
     /* Pipe. */
     char tmpname[strlen(name)]; strncpy(tmpname, name, strlen(name)-1);
     source->persist = 1;
-    source->p = popen(tmpname, "rb");
-    if (!source->p) {
+    source->io.p = popen(tmpname, "rb");
+    if (!source->io.p) {
       perror(tmpname);
     }
     else {
@@ -237,14 +250,14 @@ Source *Source_new(char *name)
   else {
     /* Regular file. */
     source->persist = 1;
-    source->f = fopen(name, "rb");
-    if (!source->f) {
+    source->io.f = fopen(name, "rb");
+    if (!source->io.f) {
       perror(name);
     }
     else {
-      if (fseek(source->f, 0, SEEK_END) == 0) {
-	source->file_size = ftell(source->f);
-	fseek(source->f, 0, SEEK_SET);
+      if (fseek(source->io.f, 0, SEEK_END) == 0) {
+	source->file_size = ftell(source->io.f);
+	fseek(source->io.f, 0, SEEK_SET);
       }
     }
   }
@@ -254,90 +267,85 @@ Source *Source_new(char *name)
 }
 
 
-ArrayU8 * Source_read(Source *source, int max_length)
+ArrayU8 * io_read(IO_common *io)
 {
-  if (source->f) {
-    uint8_t *tmp = Mem_calloc(1, max_length);
-    int len = fread(tmp, 1, max_length, source->f);
+  /* FIXME: Allow and handle timeouts. */
+  /* FIXME: First copy from io->extra. */
+  int max_read = 32000;
+  uint8_t * tmp = Mem_calloc(1, max_read);
+  ArrayU8 * result = NULL;
+  int len = 0;
+
+  if (io->extra) {
+    result = io->extra; io->extra = NULL;
+  }
+  else {
+    result = ArrayU8_new();
+  }
+
+  if (io->f) {
+    len = fread(tmp, 1, max_read, io->f);
     if (len == 0) {
       //perror("fread");
-      if (feof(source->f)) {
+      if (feof(io->f)) {
 	//printf("EOF on file\n");
       }
-      if (ferror(source->f)) {
+      if (ferror(io->f)) {
 	//printf("error on file\n");
       }
-      clearerr(source->f);	/* Clear the EOF so that we can seek backwards. */
-      if (feof(source->f)) {
+      clearerr(io->f);	/* Clear the EOF so that we can seek backwards. */
+      if (feof(io->f)) {
 	printf("EOF remains on file\n");
       }
-      if (ferror(source->f)) {
+      if (ferror(io->f)) {
 	printf("error remains on file\n");
       }
-      Mem_free(tmp);
-      return 0L;
     }
-
-    if (len < max_length) {
-      tmp = Mem_realloc(tmp, len);	/* Shorten! */
-    }
-
-    ArrayU8 *result = ArrayU8_new();
-    ArrayU8_take_data(result, &tmp, len);
-    return result;
   }
-  else if (source->p) {
-    uint8_t *tmp = Mem_calloc(1, max_length);
-    int len = fread(tmp, 1, max_length, source->p);
+  else if (io->p) {
+    len = fread(tmp, 1, max_read, io->p);
     if (len == 0) {
       //perror("fread");
-      if (feof(source->p)) {
+      if (feof(io->p)) {
 	//printf("EOF on file\n");
       }
-      if (ferror(source->p)) {
+      if (ferror(io->p)) {
 	//printf("error on file\n");
       }
-      clearerr(source->p);	/* Clear the EOF so that we can seek backwards. */
-      if (feof(source->p)) {
+      clearerr(io->p);	/* Clear the EOF so that we can seek backwards. */
+      if (feof(io->p)) {
 	printf("EOF remains on file\n");
       }
-      if (ferror(source->p)) {
+      if (ferror(io->p)) {
 	printf("error remains on file\n");
       }
-      Mem_free(tmp);
-      return 0L;
     }
-
-    if (len < max_length) {
-      tmp = Mem_realloc(tmp, len);	/* Shorten! */
-    }
-
-    ArrayU8 *result = ArrayU8_new();
-    ArrayU8_take_data(result, &tmp, len);
-    return result;
   }
-  else if (source->s != -1) {
-    uint8_t *tmp = Mem_calloc(1, max_length);
-    int len = recv(source->s, tmp, max_length, 0);
+  else if (io->s != -1) {
+    len = recv(io->s, tmp, max_read, 0);
     if (len == 0) {
-      fprintf(stderr, "recv(max_length=%d) -> %d\n", max_length, len);
-      Mem_free(tmp);
-      return 0L;
+      fprintf(stderr, "recv(max_read=%d) -> %d\n", max_read, len);
     }
 
-    if (cfg.verbosity) {
-      fprintf(stderr, "recv %d bytes\n", len);
-    }
-
-    if (len < max_length) {
-      tmp = Mem_realloc(tmp, len);	/* Shorten! */
-    }
-
-    ArrayU8 *result = ArrayU8_new();
-    ArrayU8_take_data(result, &tmp, len);
-    return result;
+    dpf("recv %d bytes\n", len);
   }
-  return 0L;
+  
+  if (len == 0) {
+    Mem_free(tmp);
+    io->extra = result;
+    result = 0L;
+  }
+  else {
+    ArrayU8_append(result, ArrayU8_temp_const(tmp, len));
+  }
+
+  return result;
+}
+
+
+ArrayU8 * Source_read(Source *source)
+{
+  return io_read(&source->io);
 }
 
 
@@ -346,11 +354,11 @@ int Source_poll_read(Source *source, int timeout)
   struct pollfd fds[1];
   fds[0].events = POLLIN;
   
-  if (source->f) {
-    fds[0].fd = fileno(source->f);
+  if (source->io.f) {
+    fds[0].fd = fileno(source->io.f);
   }
-  else if (source->s != -1) {
-    fds[0].fd = source->s;
+  else if (source->io.s != -1) {
+    fds[0].fd = source->io.s;
   }
   else {
     return 0;
@@ -363,13 +371,13 @@ int Source_poll_read(Source *source, int timeout)
 int Source_seek(Source *source, long amount)
 {
   /* Seek relative to current position. */
-  if (source->f) {
+  if (source->io.f) {
     int rc;
     struct stat st;
     long pos;
 
-    fstat(fileno(source->f), &st);
-    pos = ftell(source->f);
+    fstat(fileno(source->io.f), &st);
+    pos = ftell(source->io.f);
     
     /* Clamp seek to beginning and end of file. */
     if (pos + amount > st.st_size) {
@@ -379,20 +387,20 @@ int Source_seek(Source *source, long amount)
       amount = - pos;
     }
 
-    rc = fseek(source->f, amount, SEEK_CUR);
+    rc = fseek(source->io.f, amount, SEEK_CUR);
     if (rc != 0) {
       fprintf(stderr, "fseek(%ld) error, feof=%d ferror=%d ftell=%ld\n",
-	      amount, feof(source->f), feof(source->f), ftell(source->f));
+	      amount, feof(source->io.f), feof(source->io.f), ftell(source->io.f));
       perror("fseek");
     }
-    pos = ftell(source->f);
+    pos = ftell(source->io.f);
     if (source->file_size) {
       printf("offset %ld: %ld%%\n", pos, (pos*100)/source->file_size);
     }
 
     return rc;
   }
-  else if (source->s != -1) {
+  else if (source->io.s != -1) {
     fprintf(stderr, "can't seek sockets!\n");
     return -1;
   }
@@ -404,16 +412,16 @@ int Source_seek(Source *source, long amount)
 
 int Source_set_offset(Source *source, long amount)
 {
-  if (source->f) {
-    int rc = fseek(source->f, amount, SEEK_SET);
-    long pos = ftell(source->f);
+  if (source->io.f) {
+    int rc = fseek(source->io.f, amount, SEEK_SET);
+    long pos = ftell(source->io.f);
     if (source->file_size) {
       printf("offset %ld: %ld%%\n", pos, (pos*100)/source->file_size);
     }
     
     return rc;
   }
-  else if (source->s != -1) {
+  else if (source->io.s != -1) {
     fprintf(stderr, "can't seek sockets!\n");
     return -1;
   }
@@ -425,8 +433,8 @@ int Source_set_offset(Source *source, long amount)
 
 long Source_tell(Source *source)
 {
-  if (source->f) {
-    return ftell(source->f);
+  if (source->io.f) {
+    return ftell(source->io.f);
   }
   else {
     /* Not a regular file. */
@@ -437,13 +445,13 @@ long Source_tell(Source *source)
 
 void Source_close_current(Source *source)
 {
-  if (source->f) {
-    fclose(source->f);
-    source->f = 0L;
+  if (source->io.f) {
+    fclose(source->io.f);
+    source->io.f = 0L;
   }
-  else if (source->s != -1) {   
-    close(source->s);
-    source->s = -1;
+  else if (source->io.s != -1) {   
+    close(source->io.s);
+    source->io.s = -1;
   }
 }
 
@@ -464,7 +472,7 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
        available, so using a size relatively large compared to an
        audio buffer or Jpeg frame should not cause real-time playback
        to suffer here. */
-    newChunk = Source_read(source, 32768);
+    newChunk = Source_read(source);
     if (!newChunk) {
       source->eof = 1;
       if (!source->eof_flagged) {
@@ -481,7 +489,6 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
     source->bytes_read += newChunk->len;
     dpf("source reading %d bytes/sec\n", source->bytes_read / (time(NULL) - (source->t0)));
 
-
     if (source->eof_flagged) {
       fprintf(stderr, "%s: EOF reset\n", __func__);      
     }
@@ -489,7 +496,7 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
     source->eof_flagged = 0;
     ArrayU8_append(chunk, newChunk);
     ArrayU8_cleanup(&newChunk);
-    if (cfg.verbosity) { fprintf(stderr, "needData = 0\n"); }
+    dpf("needData = 0\n", NULL);
     *needData = 0;
   }
 }
@@ -499,3 +506,89 @@ void Source_set_persist(Source *source, int value)
 {
   source->persist = value;  
 }
+
+
+/* New 2-way Comm interface. */
+Comm * Comm_new(char * name)
+{
+  Comm * comm = Mem_calloc(1, sizeof(*comm));
+  
+  io_open(&comm->io, name, "w+b");
+  
+  return comm;
+}
+
+
+void Comm_write_string_with_zero(Comm * comm, String *str)
+{
+  /* String data has a null-terminating zero, so passing length+1 should be Ok. */
+  io_write(&comm->io, s(str), String_len(str)+1);
+}
+
+String * Comm_read_string_to_zero(Comm * comm)
+{
+  ArrayU8 * chunk = NULL;
+  int i;
+
+  /* Read up to a zero byte, return a String, store extra in io.extra */
+  while (1) {
+    ArrayU8 * new_chunk = io_read(&comm->io);
+    if (!new_chunk) {
+      /* FIXME: Clean up */
+      return String_value_none();
+    }
+    
+    if (!chunk) {
+      chunk = new_chunk;
+    }
+    else {
+      ArrayU8_append(chunk, new_chunk);
+      /* FIXME: Free new_chunk */
+    }
+    
+    for (i=0; i < chunk->len; i++) {
+      if (chunk->data[i] == 0) {
+	String *result = String_new((char*)chunk->data);
+	if (chunk->len > i && !comm->io.extra) {
+	  comm->io.extra = ArrayU8_new();
+	  ArrayU8_append(comm->io.extra, ArrayU8_temp_const(chunk->data+i, chunk->len-i));
+	}
+	ArrayU8_free(&chunk);
+	return result;
+      }
+    }
+    
+  }
+  return String_value_none();
+}
+
+void Comm_close(Comm * comm)
+{
+  io_close_current(&comm->io);
+}
+
+
+
+#if 0
+
+void Comm_read_append_array(Comm * comm, Array_u8 * array)
+{
+}
+
+
+void Comm_write_from_array(Comm * comm,  Array_u8 * array, unsigned int * offset)
+{
+}
+
+
+// write up to 32000 bytes, maybe less, starting from offset, offset is updated
+void Comm_write_from_array_complete(Comm * comm,  Array_u8 * array)
+{
+}
+#endif
+
+
+void Comm_free(Comm **comm)
+{
+}
+

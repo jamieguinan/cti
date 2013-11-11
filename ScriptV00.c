@@ -275,7 +275,7 @@ static void ScriptV00_instance_init(Instance *pi)
 {
   ScriptV00_private *priv = (ScriptV00_private *)pi;
   
-  priv->g = InstanceGroup_new();
+  priv->g = gig;		/* Use global instance group. */
   priv->exit_on_eof = 1;
 }
 

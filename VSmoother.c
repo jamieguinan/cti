@@ -8,9 +8,6 @@
 #include "Cfg.h"
 #include "Log.h"
 
-#define _min(a, b)  ((a) < (b) ? (a) : (b))
-#define _max(a, b)  ((a) > (b) ? (a) : (b))
-
 static void Config_handler(Instance *pi, void *msg);
 static void rgb3_handler(Instance *pi, void *msg);
 static void bgr3_handler(Instance *pi, void *msg);

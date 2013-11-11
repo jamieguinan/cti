@@ -227,7 +227,7 @@ static void get_device_range(Instance *pi, Range *range)
 
       String *tmp = String_new("");
       String_cat3(tmp, "/sys/class/video4linux/", de->d_name, "/name");
-      desc = File_load_text(tmp->bytes);
+      desc = File_load_text(tmp);
       String_free(&tmp);
       
       String_trim_right(desc);
@@ -1166,7 +1166,7 @@ static void V4L2Capture_tick(Instance *pi)
 
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm, pi);
   }
 
   if (!priv->enable) {

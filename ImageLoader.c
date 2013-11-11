@@ -28,7 +28,7 @@ typedef struct {
 
 static int set_file(Instance *pi, const char *value)
 {
-  ArrayU8 *fdata = File_load_data(value);
+  ArrayU8 *fdata = File_load_data(S((char*) value));
   ImageType t;
   Gray_buffer *gray = 0L;
   Y422P_buffer *y422p = 0L;

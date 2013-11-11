@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "dpf.h"
+
 #define cti_min(a, b)  ( (a) < (b) ? (a) : (b) )
 #define cti_max(a, b)  ( (a) > (b) ? (a) : (b) )
 
@@ -24,8 +26,6 @@ typedef List VPList;
 #include "Index.h"
 
 #include "Collection.h"
-
-extern List *String_split(String *s, const char *splitter);
 
 typedef struct {
   /* Intentionally empty struct. */
@@ -131,6 +131,9 @@ typedef struct _Handler_message {
   struct _Handler_message *prev;
   void (*handler)(struct _Instance *pi, void *data);
   void *data;
+  Event * reply;		/* Provide if want response. */
+  int * result;			/* Provide if want response. */
+  // String * result_str;	/* Provide if want response. */
 } Handler_message;
 
 typedef struct _Instance {
@@ -167,16 +170,19 @@ typedef struct _Instance {
   int pending_messages;		/* FIXME: get rid of this? */
 } Instance;
 
+typedef struct {
+  
+} Result;
+
 extern void Connect(Instance *from, const char *label, Instance *to);
 extern void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *tolabel);
 
 extern void PostData(void *pmsg, Input *destination);
-#define PostDataAndClear(m, d) do {PostData(m, d); m = 0L; } while (0)
-extern int PostData(void *pmsg, Input *destination);
+extern void PostDataGetReply(void *pmsg, Input *destination, Event * reply, int * result);
 
 extern Handler_message *GetData(Instance *pi, int wait_flag);
 extern Handler_message *GetData_and_requests(Instance *pi, int wait_flag, Config *config_table, int num_configs);
-extern void ReleaseMessage(Handler_message **);
+extern void ReleaseMessage(Handler_message **, Instance *pi);
 extern int CountPendingMessages(Instance *pi);
 
 extern void Instance_wait(Instance *pi); /* Wait for notification, then go and check inputs. */
@@ -250,6 +256,8 @@ extern void GetConfigRange(Input *pi, const char *label, Range *rreq);
 typedef struct {
   ISet(Instance) instances;
 } InstanceGroup;
+
+extern InstanceGroup *gig;		/* global instance group */
 
 /* I admit C++ would do a better job at keeping code size down here.
    On the other hand, data sets are typically huge compared to code
@@ -344,35 +352,14 @@ extern void Feedback_buffer_discard(Feedback_buffer *raw);
 /* Useful macros. */
 #define copy_list(a, b, c, d) do { int n = sizeof(*a)*b; *c = Mem_malloc(n); memcpy(*c, a, n); *d = b;} while (0);
 #define table_size(x) (sizeof(x)/sizeof(x[0]))
+#ifndef streq
 #define streq(a, b)  (strcmp(a, b) == 0)
+#endif
 #define timeval_to_double(t) ((double)(t.tv_sec + t.tv_usec/1000000.0))
 #define double_to_timespec(d) (&(struct timespec) { .tv_sec = floor(d), .tv_nsec = fmod(d, 1.0)  * 1000000000})
 
-extern void cti_debug_printf_register(const char *file, int line, int *enabled, const char *fmt);
-extern void cti_debug_printf(const char *fmt, ...);
-extern void cti_debug_printf_list(void);
-extern void cti_debug_printf_toggle(int index);
-
 extern void CTI_cmdline_add(const char *key, const char *value);
 extern const char *CTI_cmdline_get(const char *key);
-
-
-/* Debug printfs.  FIXME: This requires at least 2 arguments, fmt and one more. */
-#define dpf(fmt, ...) \
-do { \
-  static int enabled=1; \
-  static int registered; \
-  if (enabled) { \
-    if (!registered) { \
-      registered = 1; \
-      enabled = 0; \
-      cti_debug_printf_register(__FILE__, __LINE__, &enabled, fmt); \
-    } \
-    else { \
-      cti_debug_printf(fmt, __VA_ARGS__); \
-    } \
-  } \
- } while(0)
 
 #ifdef CTI_SHARED
 #define shared_export(sym) void cti_init(void) { sym(); }

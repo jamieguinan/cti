@@ -226,10 +226,13 @@ static void Y4MInput_tick(Instance *pi)
 
     /* Parse header line. */
     String *s = ArrayU8_extract_string(priv->chunk, soh, eoh);
-    List *ls = String_split(s, " ");
+    String_list *ls = String_split(s, " ");
     int i;
-    for (i=0; i < ls->things_count; i++) {
-      String *t = ls->things[i];
+    for (i=0; i < String_list_len(ls); i++) {
+      String *t = String_list_get(ls, i);
+      if (String_is_none(t)) {
+	continue;
+      }
       int width;
       //int width_set = 0;
       int height;
@@ -265,7 +268,7 @@ static void Y4MInput_tick(Instance *pi)
       String_free(&t);
     }
 
-    List_free(ls);
+    String_list_free(&ls);
     
     priv->state = PARSING_FRAME;
   }
