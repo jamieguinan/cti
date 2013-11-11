@@ -170,7 +170,7 @@ static void GdkCapture_tick(Instance *pi)
   hm = GetData(pi, 0);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   check_files(pi);

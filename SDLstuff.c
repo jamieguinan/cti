@@ -944,7 +944,7 @@ static int my_event_loop(void *data)
     if (ev.type == SDL_USEREVENT) {
       hm = ev.user.data1;
       hm->handler(pi, hm->data);
-      ReleaseMessage(&hm);
+      ReleaseMessage(&hm,pi);
     }
     else if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
       if (pi->outputs[OUTPUT_POINTER].destination) {

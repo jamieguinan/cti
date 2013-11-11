@@ -550,7 +550,7 @@ static void ALSAPlayback_tick(Instance *pi)
   // printf("%s hm=%p\n", __func__, hm);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
     while (pi->pending_messages > 4) {
       /* This happens when capture clock is faster than playback
 	 clock.  In cx88play.cmd, it drops a block every ~2s. */
@@ -563,13 +563,12 @@ static void ALSAPlayback_tick(Instance *pi)
 	       priv->rate, priv->channels, priv->format_bytes
 	       );
 	Wav_buffer_discard(&wav_in);
-	ReleaseMessage(&hm);
       }
       else {
 	/* Should always handle config messages... */
 	hm->handler(pi, hm->data);
       }
-      ReleaseMessage(&hm);
+      ReleaseMessage(&hm,pi);
     }
   }
   else if (priv->enable && priv->rate) {
@@ -643,7 +642,7 @@ static void ALSACapture_tick(Instance *pi)
   hm = GetData(pi, wait_flag);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   if (!priv->enable || !priv->handle) {

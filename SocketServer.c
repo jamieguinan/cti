@@ -166,7 +166,7 @@ static void SocketServer_tick(Instance *pi)
   hm = GetData(pi, wait_flag);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   /* Assemble a select() call and flag each client connection writable

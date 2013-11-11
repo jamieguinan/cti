@@ -12,7 +12,7 @@ ifeq ($(ARCH),$(HOSTARCH))
 LDFLAGS+=-Wl,-rpath,$(shell pwd)/../../platform/$(ARCH)/lib
 endif
 
-CFLAGS += -g -Wall $(CMDLINE_CFLAGS)
+CFLAGS += -O1 -g -Wall $(CMDLINE_CFLAGS)
 CFLAGS += -Werror
 # -std=c99 
 CPPFLAGS += -I../../platform/$(ARCH)/include -I../jpeg-7
@@ -234,7 +234,7 @@ ifeq ($(ARCH),x86_64-Linux)
 endif
 #if gdb not in cflags
 	@echo STRIP
-	@$(STRIP) $@
+	#@$(STRIP) $@
 # endif
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))

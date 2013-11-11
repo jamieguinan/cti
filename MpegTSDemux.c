@@ -385,7 +385,7 @@ static void MpegTSDemux_tick(Instance *pi)
   hm = GetData(pi, wait_flag);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   if (!priv->enable || !priv->source) {

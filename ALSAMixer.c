@@ -242,7 +242,7 @@ static void ALSAMixer_tick(Instance *pi)
   hm = GetData(pi, 1);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   pi->counter++;

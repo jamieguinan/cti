@@ -72,7 +72,7 @@ static void ResourceMonitor_tick(Instance *pi)
   hm = GetData(pi, 0);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   if (priv->period_ms) {

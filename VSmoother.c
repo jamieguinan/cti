@@ -172,7 +172,7 @@ static void VSmoother_tick(Instance *pi)
 
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   pi->counter++;

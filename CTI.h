@@ -136,11 +136,17 @@ typedef struct _Handler_message {
   // String * result_str;	/* Provide if want response. */
 } Handler_message;
 
+typedef enum { 
+  MESSAGERESULT_UNSET = 0,
+  MESSAGERESULT_OK = 1,
+  MESSAGERESULT_ERROR = 2,
+} MessageResult;
+
 typedef struct _Instance {
   const char *label;		/* Copied from corresponding Template */
   /* NO instance label!  Containers should hold label:instance mapping, do not put it here. */
 
-  /* priv structure should includes Instance as first member, priv_size is size of
+  /* priv structure should include Instance as first member, priv_size is size of
      the enclosing structure. */
   size_t priv_size;		
 
@@ -152,9 +158,6 @@ typedef struct _Instance {
 
   Output *outputs;
   int num_outputs;
-
-  //Config *configs;
-  //int num_configs;
 
   int state;
   int counter;			/* Update in tick function. */
@@ -168,17 +171,15 @@ typedef struct _Instance {
   Handler_message *msg_first;
   Handler_message *msg_last;
   int pending_messages;		/* FIXME: get rid of this? */
-} Instance;
 
-typedef struct {
-  
-} Result;
+  int result;			/*  */
+} Instance;
 
 extern void Connect(Instance *from, const char *label, Instance *to);
 extern void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *tolabel);
 
-extern void PostData(void *pmsg, Input *destination);
-extern void PostDataGetReply(void *pmsg, Input *destination, Event * reply, int * result);
+extern void PostData(void *data, Input *destination);
+extern void PostDataGetReply(void *data, Input *destination, Event * reply, int * result);
 
 extern Handler_message *GetData(Instance *pi, int wait_flag);
 extern Handler_message *GetData_and_requests(Instance *pi, int wait_flag, Config *config_table, int num_configs);

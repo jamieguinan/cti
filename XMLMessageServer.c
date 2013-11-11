@@ -99,7 +99,7 @@ static void XMLMessageServer_tick(Instance *pi)
   hm = GetData(pi, 1);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   if (priv->lsc.fd > 0) {
@@ -110,7 +110,7 @@ static void XMLMessageServer_tick(Instance *pi)
   hm = GetData(pi, wait_flag);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   FD_ZERO(&rfds);

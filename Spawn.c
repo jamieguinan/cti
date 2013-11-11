@@ -94,7 +94,7 @@ static void Spawn_tick(Instance *pi)
   hm = GetData(pi, 0);
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
   else {
     nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);

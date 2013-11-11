@@ -154,7 +154,7 @@ static void AVIDemux_tick(Instance *pi)
 
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 
   if (!priv->enable || !priv->source) {

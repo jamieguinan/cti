@@ -429,7 +429,7 @@ static void DJpeg_tick(Instance *pi)
 
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm);
+    ReleaseMessage(&hm,pi);
   }
 }
 

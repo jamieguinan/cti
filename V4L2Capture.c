@@ -1166,7 +1166,7 @@ static void V4L2Capture_tick(Instance *pi)
 
   if (hm) {
     hm->handler(pi, hm->data);
-    ReleaseMessage(&hm, pi);
+    ReleaseMessage(&hm,pi);
   }
 
   if (!priv->enable) {

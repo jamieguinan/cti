@@ -35,7 +35,7 @@ void Instance_loop_thread(Instance *pi)
   pthread_detach(thread);
 }
 
-void PostDataGetReply(void *pmsg, Input *destination, Event * reply, int * result)
+void PostDataGetReply(void *data, Input *input, Event * reply, int * result)
 {
   Handler_message *hm = Mem_calloc(1, sizeof(*hm));
 
@@ -47,7 +47,7 @@ void PostDataGetReply(void *pmsg, Input *destination, Event * reply, int * resul
     }
   }
 
-  Lock reply_lock = PTHREAD_MUTEX_INITIALIZER;
+  Lock reply_lock = { PTHREAD_MUTEX_INITIALIZER };
 
   hm->handler = input->handler;
   hm->data = data;
@@ -95,9 +95,9 @@ void PostDataGetReply(void *pmsg, Input *destination, Event * reply, int * resul
 }
 
 
-void PostData(void *pmsg, Input *destination)
+void PostData(void *data, Input *input)
 {
-  PostDataGetReply(pmsg, destination, NULL, NULL);
+  PostDataGetReply(data, input, NULL, NULL);
 }
 
 
@@ -168,8 +168,19 @@ int CountPendingMessages(Instance *pi)
   return count;
 }
 
-void ReleaseMessage(Handler_message **msg)
+
+void ReleaseMessage(Handler_message **msg, Instance *pi)
 {
+  Handler_message *hm = *msg;
+  if (hm->reply) {
+    /* Caller is waiting for a reply. */
+    if (hm->result) {
+      /* Caller supplied a result destination. */
+      *(hm->result) = pi->result;
+    }
+    /* FIXME: Could also provide a string result, or even a binary (ArrayU8) result. */
+    Event_signal(hm->reply);
+  }
   Mem_free(*msg);
   *msg = 0L;
 }
