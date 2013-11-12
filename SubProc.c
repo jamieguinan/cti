@@ -1,4 +1,4 @@
-/* Search and replace "SubProc" with new module name. */
+/* Sub-process module. */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -24,7 +24,7 @@ static Output SubProc_outputs[] = {
 typedef struct {
   Instance i;
   Sink *sp;
-  String *cmd;
+  String *invocation;
 } SubProc_private;
 
 
@@ -36,21 +36,35 @@ static int set_proc(Instance *pi, const char *value)
     Sink_free(&priv->sp);
   }
 
-  if (priv->cmd) {
-    String_free(&priv->cmd);
+  if (priv->invocation) {
+    String_free(&priv->invocation);
   }
 
-  printf("set_proc(%s)\n", value);
-  priv->cmd = String_sprintf("%s|", value);
-  priv->sp = Sink_new(s(priv->cmd));
-  Sink_write(priv->sp, "ch2\n", strlen("ch2\n"));
-  Sink_flush(priv->sp);
+  fprintf(stderr, "%s(%s)\n", __func__, value);
+  priv->invocation = String_sprintf("|%s", value);
+  priv->sp = Sink_new(s(priv->invocation));
   
   return 0;
 }
 
+
+static int handle_token(Instance *pi, const char *value)
+{
+  SubProc_private *priv = (SubProc_private *)pi;
+
+  String *x = String_sprintf("%s\n", value);
+  fprintf(stderr, "%s: %s", __func__, s(x));
+  Sink_write(priv->sp, s(x), String_len(x));
+  Sink_flush(priv->sp);
+  String_free(&x);
+  
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "proc", set_proc, NULL, NULL},
+  { "token", handle_token, NULL, NULL},
 };
 
 

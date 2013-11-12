@@ -12,8 +12,9 @@ ifeq ($(ARCH),$(HOSTARCH))
 LDFLAGS+=-Wl,-rpath,$(shell pwd)/../../platform/$(ARCH)/lib
 endif
 
-CFLAGS += -O1 -g -Wall $(CMDLINE_CFLAGS)
-CFLAGS += -Werror
+CFLAGS += -O2 -Wall $(CMDLINE_CFLAGS)
+# CFLAGS += -Werror
+# CFLAGS += -O0 -ggdb
 # -std=c99 
 CPPFLAGS += -I../../platform/$(ARCH)/include -I../jpeg-7
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
@@ -213,9 +214,10 @@ CPPFLAGS+=-DHAVE_AAC
 endif
 
 # SQLite
-ifneq ($(ARCH),armeb)
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/sqlite3.pc))
 OBJS+=$(OBJDIR)/SQLite.o
 LDFLAGS += -lsqlite3
+CPPFLAGS+=-DHAVE_SQLITE3
 endif
 
 
@@ -234,7 +236,7 @@ ifeq ($(ARCH),x86_64-Linux)
 endif
 #if gdb not in cflags
 	@echo STRIP
-	#@$(STRIP) $@
+	@$(STRIP) $@
 # endif
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))

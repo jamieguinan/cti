@@ -145,7 +145,7 @@ Node * node_find_subnode(Node * node, const char * subnode_tag)
 }
 
 
-Node * node_find_subnode_by_path(Node * node, const char * path, const char *subnode_text)
+Node * node_find_subnode_by_path_match(Node * node, const char * path, const char *subnode_text)
 {
   int i;
   if (!node) {
@@ -159,13 +159,22 @@ Node * node_find_subnode_by_path(Node * node, const char * path, const char *sub
 	 );
 
   if (!path) {
-    /* End of patch search, check for match in first subnode, or return NULL. */
+    /* End of path search.  If there is a text subnode, return it,
+       first comparing to subnode_text if supplied. */
     if (node->subnodes_count 
-	&& node->subnodes[0]->text
-	&& streq(node->subnodes[0]->text, subnode_text)
-	) {
-      if (nodetree_debug) printf("found text node: %s\n", node->subnodes[0]->text);
-      return node;
+	&& node->subnodes[0]->text) {
+      if (subnode_text) {
+	/* Require a match, or return NULL. */
+	if (streq(node->subnodes[0]->text, subnode_text)) {
+	  return node;
+	}
+	else {
+	  return NULL;
+	}
+      }
+      else {
+	return node;
+      }
     }
     else {
       puts("");
@@ -189,7 +198,7 @@ Node * node_find_subnode_by_path(Node * node, const char * path, const char *sub
     //printf("i=%d subnode->tag=%p (%s)\n", i, subnode->tag, subnode->tag ? subnode->tag :"");
     if (subnode->tag && streq(subnode->tag, local_path)) {
       /* Try again with remainder of path. */
-      Node *x = node_find_subnode_by_path(subnode, slash ? slash+1 : NULL, subnode_text);
+      Node *x = node_find_subnode_by_path_match(subnode, slash ? slash+1 : NULL, subnode_text);
       if (x) {
 	return x;
       }
@@ -201,4 +210,10 @@ Node * node_find_subnode_by_path(Node * node, const char * path, const char *sub
 
   /* Path component not found at current level! */
   return NULL;
+}
+
+
+Node * node_find_subnode_by_path(Node * node, const char * path)
+{
+  return node_find_subnode_by_path_match(node, path, NULL);
 }

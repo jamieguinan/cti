@@ -77,6 +77,7 @@ static void io_open(IO_common *io, char *name, const char *mode)
       /* Open as pipe, only for output. */
       strftime(out_name, sizeof(out_name), name, lt);
       io->p = popen(out_name+1, "w");
+      fprintf(stderr, "io->p=%p\n", io->p);
     }
     else {
       /* Open as file. */
@@ -535,8 +536,11 @@ String * Comm_read_string_to_zero(Comm * comm)
     ArrayU8 * new_chunk = io_read(&comm->io);
     if (!new_chunk) {
       /* FIXME: Clean up */
+      fprintf(stderr, "new_chunk NULL\n");
       return String_value_none();
     }
+
+    fprintf(stderr, "new_chunk len %d\n", new_chunk->len);
     
     if (!chunk) {
       chunk = new_chunk;

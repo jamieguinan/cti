@@ -1,3 +1,7 @@
+/*
+ * This module handles remote "config instance key value" requests.
+ * Might add other functionality later.
+ */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -48,23 +52,47 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void handle_client_message(IO_common *io, String *msg)
+static void handle_client_message(IO_common *io, String *msg, Node * response)
 {
-  // Node * top = xml_string_to_nodetree(msg);
-  // Example message,
-  // 
-  //  <channel>
-  //  <chid>ch1</chid>
-  //  </channel>
-  // 
-  // Or,
-  //  <config>
-  //  <instance>channel_control</instance>
-  //  <key>chid</key>
-  //  <value>ch133</value>
-  // </config>
-  //
-  // What about return values???
+  /* Right now this only handle config messages. */
+  Node * top = xml_string_to_nodetree(msg);
+
+  node_fwrite(top, stderr);
+  // node_add_node_and_text(response, "bonus", "1");
+
+  /*
+   * FIXME: Combine 2 calls into a single function,
+   * String * instance_str = xml_find_simple_node_value_by_path(top, "config/instance") 
+   */
+
+  Node * instance_node = node_find_subnode_by_path(top, "config/instance");
+  Node * key_node = node_find_subnode_by_path(top, "config/key");
+  Node * value_node = node_find_subnode_by_path(top, "config/value");
+
+  if (instance_node && key_node && value_node) {
+    String *instance_str = xml_simple_node_value(instance_node);
+    String *key_str = xml_simple_node_value(key_node);
+    String *value_str = xml_simple_node_value(value_node);
+
+    if (!String_is_none(instance_str) &&
+	!String_is_none(key_str) &&
+	!String_is_none(value_str)) {
+      // What about return values?  Return on "reponse" node tree.
+      fprintf(stderr, "config %s %s %s\n", 
+	      s(instance_str),
+	      s(key_str),
+	      s(value_str));
+      Instance *inst = InstanceGroup_find(gig, instance_str);
+      if (inst) {
+	Config_buffer *c = Config_buffer_new(s(key_str), s(value_str));
+	PostData(c, &inst->inputs[0]);
+      }
+      else {
+	/* note instance not found */
+      }
+    }
+  }
+
   // 
   // Using node_find_subnode_by_path(), xml_simple_node_value()
   // 
@@ -72,15 +100,6 @@ static void handle_client_message(IO_common *io, String *msg)
   // String * key = ...;
   // String * value = ...;
   // 
-  // Instance *inst = InstanceGroup_find(gig, String_new(instance_name));
-  // String * resp = String_value_none();
-  // if (inst) {
-  //   Config_buffer *c = Config_buffer_new(s(key), s(value));
-  //   /*   */
-  //   PostData(c, &inst->inputs[0]);
-  // }
-  // else {
-  // }
   //
 }
 
@@ -95,12 +114,6 @@ static void XMLMessageServer_tick(Instance *pi)
   int maxfd = 0;
   int sn;
   struct timeval tv;
-
-  hm = GetData(pi, 1);
-  if (hm) {
-    hm->handler(pi, hm->data);
-    ReleaseMessage(&hm,pi);
-  }
 
   if (priv->lsc.fd > 0) {
     /* Want to handle new and existing connections, so don't block in GetData. */
@@ -132,6 +145,7 @@ static void XMLMessageServer_tick(Instance *pi)
     Comm comm = { .io.s = -1 };
     Node * resp = node_new("response");
     comm.io.s = accept(priv->lsc.fd, (struct sockaddr *)&comm.io.addr, &comm.io.addrlen);
+    fprintf(stderr, "%s: new connection!\n", __func__);
     if (comm.io.s == -1) {    
       /* This is unlikely but possible.  If it happens, just clean up
 	 and return... */
@@ -141,7 +155,7 @@ static void XMLMessageServer_tick(Instance *pi)
       /* Read, parse, respond, close.... */
       String *message = Comm_read_string_to_zero(&comm);
       if (!String_is_none(message)) {
-	/* resp = */ handle_client_message(&comm.io, message);
+	handle_client_message(&comm.io, message, resp);
       }
     }
     String *resp_str = node_to_string(resp);

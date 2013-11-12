@@ -28,7 +28,8 @@ extern void node_fwrite(Node * node, FILE * output);
 extern Node * Text(const char * text);
 extern void node_add_node_and_text(Node * node, const char * tag, const char * text); /* convenience function */
 extern Node * node_find_subnode(Node * node, const char * child_tag);
-extern Node * node_find_subnode_by_path(Node * node, const char * path, const char * text);
+extern Node * node_find_subnode_by_path(Node * node, const char * path);
+extern Node * node_find_subnode_by_path_match(Node * node, const char * path, const char * text);
 extern Node * node_none(Node * node); /* Use this instead of checking for NULL result. */
 extern String * node_to_string(Node * node);
 

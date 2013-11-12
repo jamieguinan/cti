@@ -26,7 +26,9 @@ Node * xml_string_to_nodetree(String *str)
     return NULL;
   }
 
-  Node * top = node_new("document");
+  /* This top node has an empty-string tag, and no text.  It serves as the invisible
+     top-level "document" node.*/
+  Node * top = node_new("");	
   Node * current = top;
 
   int i=0;
