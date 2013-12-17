@@ -15,6 +15,7 @@ endif
 CFLAGS += -O2 -Wall $(CMDLINE_CFLAGS)
 # CFLAGS += -Werror
 # CFLAGS += -O0 -ggdb
+CFLAGS += -Wno-unused-result
 # -std=c99 
 CPPFLAGS += -I../../platform/$(ARCH)/include -I../jpeg-7
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)

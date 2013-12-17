@@ -192,7 +192,9 @@ void Sink_close_current(Sink *sink)
 
 void Sink_free(Sink **sink)
 {
-  fprintf(stderr, "%s: FIXME, cleanup...\n");
+  Sink_close_current(*sink);
+  Mem_free(*sink);
+  *sink = NULL;
 }
 
 

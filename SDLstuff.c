@@ -620,6 +620,7 @@ static void render_frame_software(SDLstuff_private *priv, BGR3_buffer *bgr3_in)
 static void pre_render_frame(SDLstuff_private *priv, int width, int height, Image_common *c)
 {
   dpf("frame %d ready for display\n", priv->inFrames);
+  int need_reset = 0;
 
   if (priv->toggle_fullscreen) {
     // priv->fullscreen = (priv->fullscreen + 1) % 2;
@@ -628,14 +629,28 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
     //priv->toggle_fullscreen = 0;
     // reset_video(priv);
   }
-  else if ((priv->renderMode != RENDER_MODE_SOFTWARE)
-	   && (priv->new_width != priv->width ||
-	       priv->new_height != priv->height)) {
-    /* Resize. */
-    width = priv->width = priv->new_width;
-    height = priv->height = priv->new_height;
+
+  if (priv->new_width && priv->new_height) {
+    if (priv->new_width != priv->width || 
+	priv->new_height != priv->height) {
+      /* Resize based on config-adjusted size. */
+      priv->width = priv->new_width;
+      priv->height = priv->new_height;
+      need_reset = 1;
+    }
+  }
+  else if (width != priv->width ||
+	   height != priv->height) {
+    /* Resize based on incoming frame. */
+    priv->width = width;
+    priv->height = height;
+    need_reset = 1;
+  }
+    
+  if (need_reset) {
     reset_video(priv);
   }
+
 
   if (sl(priv->label) && !priv->label_set) {
     SDL_WM_SetCaption(sl(priv->label), NULL); //Sets the Window Title

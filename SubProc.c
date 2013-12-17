@@ -21,38 +21,65 @@ static Output SubProc_outputs[] = {
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
 };
 
+typedef enum { SUBPROC_NONE, SUBPROC_READ, SUBPROC_WRITE, SUBPROC_FANCY  } SubProc_mode;
+
 typedef struct {
   Instance i;
 
-  /* The subprocess invocation and handle is the main point of this
-     module.  INPUT_RAWDATA is fed to stdin, and so are token messages
-     unless control_channel is also set. */
+  /* The sub-process command to run. */
   String *proc;
-  Sink *proc_sp;
 
-  /* But some programs might want separate control input, such as
+  SubProc_mode mode;
+
+  /* Optional connections for stdin/stdout/stderr. */
+  Sink *proc_stdin;
+  Source *proc_stdout;
+  Source *proc_stderr;
+
+  /* Fancy sub-process pid/handle. */
+  union {
+    void *handle;
+    int pid;
+  } subproc_handle;
+
+  /* Some programs might want separate control input, such as
      mplayer's slave mode.*/
   String *control_channel;
   Sink *control_sp;
-
-  /* Here I'm thinking about capturing output, too.  Might have to add
-   * a double-ended Pipe type to SourceSink module, or use Comm instead
-   of a Sink and Source. */
-  // String *return_channel;
-  // Source *return_sp;
 
   /* Invocation for a cleanup command. */
   String *cleanup;
 } SubProc_private;
 
 
+static void close_all(SubProc_private *priv)
+{
+  if (priv->proc_stdin) {
+    Sink_free(&priv->proc_stdin);
+  }
+  
+  if (priv->proc_stdout) {
+    Source_free(&priv->proc_stdout);
+  }
+
+  if (priv->proc_stderr) {
+    Source_free(&priv->proc_stderr);
+  }
+
+  if (priv->control_sp) {
+    Sink_free(&priv->control_sp);
+  }
+
+  if (priv->cleanup) {
+  }
+
+  priv->mode = SUBPROC_NONE;
+}
+
+
 static int set_proc(Instance *pi, const char *value)
 {
   SubProc_private *priv = (SubProc_private *)pi;
-  if (priv->proc_sp) {
-    Sink_close_current(priv->proc_sp);
-    Sink_free(&priv->proc_sp);
-  }
 
   if (priv->proc) {
     String_free(&priv->proc);
@@ -68,10 +95,6 @@ static int set_proc(Instance *pi, const char *value)
 static int set_control_channel(Instance *pi, const char *value)
 {
   SubProc_private *priv = (SubProc_private *)pi;
-  if (priv->control_sp) {
-    Sink_close_current(priv->control_sp);
-    Sink_free(&priv->control_sp);
-  }
 
   if (priv->control_channel) {
     // String_unref(&priv->control_channel);
@@ -79,7 +102,6 @@ static int set_control_channel(Instance *pi, const char *value)
 
   fprintf(stderr, "%s(%s)\n", __func__, value);
   priv->control_channel = String_sprintf("|%s", value);
-  priv->control_sp = Sink_new(s(priv->control_channel));
   
   return 0;
 }
@@ -104,33 +126,74 @@ static int handle_token(Instance *pi, const char *value)
 {
   SubProc_private *priv = (SubProc_private *)pi;
 
-  String *x = String_sprintf("%s\n", value);
-  fprintf(stderr, "%s: %s", __func__, s(x));
+  String *token = String_sprintf("%s\n", value);
+  fprintf(stderr, "%s: %s", __func__, s(token));
+
   if (priv->control_channel) {
-    Sink_write(priv->control_sp, s(x), String_len(x));
+    /* Prefer writing to the control channel. */
+    Sink_write(priv->control_sp, s(token), String_len(token));
     Sink_flush(priv->control_sp);
   }
-  else if (priv->proc_sp) {
-    Sink_write(priv->proc_sp, s(x), String_len(x));
-    Sink_flush(priv->proc_sp);
+  else if (priv->proc_stdin) {
+    /* But write to stdin as a fallback. */
+    Sink_write(priv->proc_stdin, s(token), String_len(token));
+    Sink_flush(priv->proc_stdin);
   }
-  String_free(&x);
+  String_free(&token);
   
   return 0;
 }
 
 
-static int handle_start(Instance *pi, const char *value_ignored)
+static int handle_start_readonly(Instance *pi, const char *value_ignored)
 {
   SubProc_private *priv = (SubProc_private *)pi;
   
-  if (priv->proc_sp) {
-    /* FIXME: Close/stop process... */
-    Sink_free(&priv->proc_sp);
+  close_all(priv);
+
+  priv->proc_stdout = Source_new(s(priv->proc));
+
+  if (!priv->proc_stdout) {
+    return 1;
   }
 
-  priv->proc_sp = Sink_new(s(priv->proc));
+  priv->mode = SUBPROC_READ;
+
+  if (priv->control_channel) {
+    priv->control_sp = Sink_new(s(priv->control_channel));
+  }
+
+  return 0;
+}
+
+
+static int handle_start_writeonly(Instance *pi, const char *value_ignored)
+{
+  SubProc_private *priv = (SubProc_private *)pi;
   
+  close_all(priv);
+
+  priv->proc_stdin = Sink_new(s(priv->proc));
+
+  if (!priv->proc_stdin) {
+    return 1;
+  }
+
+  if (priv->control_channel) {
+    priv->control_sp = Sink_new(s(priv->control_channel));
+  }
+
+  priv->mode = SUBPROC_WRITE;
+  return 0;
+}
+
+
+static int handle_start_fancy(Instance *pi, const char *value_ignored)
+{
+  SubProc_private *priv = (SubProc_private *)pi;
+  close_all(priv);
+  /* FIXME: Implement... */
+  priv->mode = SUBPROC_FANCY;
   return 0;
 }
 
@@ -138,6 +201,8 @@ static int handle_start(Instance *pi, const char *value_ignored)
 static int handle_stop(Instance *pi, const char *value_ignored)
 {
   SubProc_private *priv = (SubProc_private *)pi;
+
+  close_all(priv);
 
   if (priv->cleanup) {
     system(s(priv->cleanup));
@@ -154,7 +219,9 @@ static Config config_table[] = {
 
   { "token", handle_token, NULL, NULL},
 
-  { "start", handle_start, NULL, NULL},
+  { "start_readonly", handle_start_readonly, NULL, NULL},
+  { "start_writeonly", handle_start_writeonly, NULL, NULL},
+  { "start_fancy", handle_start_fancy, NULL, NULL},
   { "stop", handle_stop, NULL, NULL},
 
 };
@@ -172,8 +239,8 @@ static void RawData_handler(Instance *pi, void *data)
   RawData_buffer *raw = data;
 
   /* Pass raw data to main process sink. */
-  if (priv->proc_sp) {
-    Sink_write(priv->proc_sp, raw->data, raw->data_length);
+  if (priv->proc_stdin) {
+    Sink_write(priv->proc_stdin, raw->data, raw->data_length);
   }
 
   RawData_buffer_discard(raw);
@@ -195,9 +262,7 @@ static void SubProc_tick(Instance *pi)
 
 static void SubProc_instance_init(Instance *pi)
 {
-  SubProc_private *priv = (SubProc_private *)pi;
-  //priv->proc = String_value_none();
-  //priv->control_channel = String_value_none();
+  // SubProc_private *priv = (SubProc_private *)pi;
 }
 
 
