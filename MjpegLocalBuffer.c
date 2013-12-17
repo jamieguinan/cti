@@ -126,7 +126,7 @@ static void Wav_handler(Instance *pi, void *data)
     PostData(wav, pi->outputs[OUTPUT_WAV].destination);    
   }
   else {
-    Wav_buffer_discard(&wav);
+    Wav_buffer_release(&wav);
   }
 }
 

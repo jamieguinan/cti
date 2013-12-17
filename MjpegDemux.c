@@ -530,8 +530,8 @@ static void MjpegDemux_tick(Instance *pi)
       }
     }
     else {
-      fprintf(stderr, "discarding wav data\n");
-      Wav_buffer_discard(&w);
+      // fprintf(stderr, "discarding wav data\n");
+      Wav_buffer_release(&w);
     }
   }
   

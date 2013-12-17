@@ -762,18 +762,118 @@ static int set_frequency(Instance *pi, const char *value)
 }
 
 
+static int V4L2_queue_setup(V4L2Capture_private *priv)
+{
+  int i;
+  int rc;
+
+  struct v4l2_requestbuffers req = {
+    .count = NUM_BUFFERS,
+    .type = priv->vbuffer.type,
+    .memory = priv->vbuffer.memory,
+  };
+    
+  rc = ioctl(priv->fd, VIDIOC_REQBUFS, &req);
+  if (rc == -1) {
+    perror("VIDIOC_REQBUFS");
+    return 1;
+  }
+
+  for (i=0; i < req.count; i+=1) {
+    priv->vbuffer.index = i;
+      
+    rc = ioctl(priv->fd, VIDIOC_QUERYBUF, &priv->vbuffer);
+    if (-1 == rc) {
+      perror("VIDIOC_QUERYBUF");
+      return 1;
+    }
+
+    priv->buffers[i].data = mmap(0L, priv->vbuffer.length, 
+				 PROT_READ | PROT_WRITE, MAP_SHARED, 
+				 priv->fd, priv->vbuffer.m.offset);
+    if (priv->buffers[i].data == MAP_FAILED) {
+      perror("mmap");
+      return 1;
+    }
+
+    priv->buffers[i].length = priv->vbuffer.length;
+  }
+
+  return 0;
+}
+
+
+static int stream_enable(V4L2Capture_private *priv)
+{
+  int i, rc;
+
+  if (priv->buffers[0].data == 0L) {
+    V4L2_queue_setup(priv);
+  }
+
+  /* Queue up N-1 buffers.  Have to do this every time the stream is enabled.*/
+  for (i=0; i < (NUM_BUFFERS-1); i++) {
+    priv->vbuffer.index = i;
+    rc = ioctl(priv->fd, VIDIOC_QBUF, &priv->vbuffer);
+    if (-1 == rc) {
+      perror("VIDIOC_QBUF");
+      exit(1);
+      return 1;
+    }
+    priv->last_queued = i;
+  }
+
+  int capture = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  rc = ioctl(priv->fd, VIDIOC_STREAMON, &capture);
+  if (-1 == rc) { 
+    perror("VIDIOC_STREAMON"); 
+  }
+
+  /* Always start waiting on the first queued buffer, otherwise there
+     is a lag NUM_BUFFERS frames. */
+  priv->wait_on = 0;		
+
+  return 0;
+}
+
+
+static void stream_disable(V4L2Capture_private *priv)
+{
+  /* Disable streaming.  According to the docs, "all images captured
+     but not dequeued yet will be lost", so the enable function above
+     needs to re-queue from scratch. */
+  int capture = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+  int rc = ioctl(priv->fd, VIDIOC_STREAMOFF, &capture);
+  if (-1 == rc) { 
+    perror("VIDIOC_STREAMOFF"); 
+  }
+}
+
+
 static int set_enable(Instance *pi, const char *value)
 {
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+
   if (priv->fd == -1) {
     fprintf(stderr, "device is not open!\n");
     priv->enable = 0;
+    return 1;
+  }
+
+  int newval = atoi(value);
+  if (newval == priv->enable) {
+    return 1;
+  }
+
+  priv->enable = newval;
+  printf("V4L2Capture enable set to %d\n", priv->enable);
+
+  if (priv->enable) {
+    stream_enable(priv);
   }
   else {
-    priv->enable = atoi(value);
+    stream_disable(priv);
   }
-  
-  printf("V4L2Capture enable set to %d\n", priv->enable);
 
   return 0;
 }
@@ -961,66 +1061,6 @@ static int generic_set(Instance *pi, const char *label, const char *value)
   return 0;
 }
 
-static int V4L2_queue_setup(V4L2Capture_private *priv)
-{
-  int i;
-  int rc;
-
-  struct v4l2_requestbuffers req = {
-    .count = NUM_BUFFERS,
-    .type = priv->vbuffer.type,
-    .memory = priv->vbuffer.memory,
-  };
-    
-  rc = ioctl(priv->fd, VIDIOC_REQBUFS, &req);
-  if (rc == -1) {
-    perror("VIDIOC_REQBUFS");
-    return 1;
-  }
-
-  for (i=0; i < req.count; i+=1) {
-    priv->vbuffer.index = i;
-      
-    rc = ioctl(priv->fd, VIDIOC_QUERYBUF, &priv->vbuffer);
-    if (-1 == rc) {
-      perror("VIDIOC_QUERYBUF");
-      return 1;
-    }
-
-    priv->buffers[i].data = mmap(0L, priv->vbuffer.length, 
-				 PROT_READ | PROT_WRITE, MAP_SHARED, 
-				 priv->fd, priv->vbuffer.m.offset);
-    if (priv->buffers[i].data == MAP_FAILED) {
-      perror("mmap");
-      return 1;
-    }
-
-    priv->buffers[i].length = priv->vbuffer.length;
-  }
-
-  /* Queue up N-1 buffers. */
-  for (i=0; i < (NUM_BUFFERS-1); i++) {
-    priv->vbuffer.index = i;
-    rc = ioctl(priv->fd, VIDIOC_QBUF, &priv->vbuffer);
-    if (-1 == rc) {
-      perror("VIDIOC_QBUF");
-      exit(1);
-      return 1;
-    }
-    priv->last_queued = i;
-  }
-
-  /* Enable streaming. */
-  int capture = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-  rc = ioctl(priv->fd, VIDIOC_STREAMON, &capture);
-  if (-1 == rc) { 
-    perror("VIDIOC_STREAMON"); 
-    /* continue despite error... */
-  }
-
-  return 0;
-}
-
 
 static void Config_handler(Instance *pi, void *data)
 {
@@ -1180,11 +1220,6 @@ static void V4L2Capture_tick(Instance *pi)
     return;
   }
 
-  /* If no frames queued, set things up and queue a first frame. */
-  if (priv->buffers[0].data == 0L) {
-    V4L2_queue_setup(priv);
-  }
-
   /* Queue next frame. */
   priv->vbuffer.index = (priv->last_queued + 1 ) % NUM_BUFFERS;
 
@@ -1262,6 +1297,7 @@ static void V4L2Capture_tick(Instance *pi)
       Y422P_buffer *y422p = Y422P_buffer_new(priv->width, priv->height, 0L);
       Log(LOG_Y422P, "%s allocated y422p @ %p", __func__, y422p);
       gettimeofday(&y422p->c.tv, NULL);
+      calc_fps(&y422p->c.tv);
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y422p->cb, 
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 

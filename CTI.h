@@ -11,26 +11,11 @@
 
 #include "locks.h"
 
-/* This "List" structure will probably be obviated by ISet.  Or not. */
-typedef struct {
-  void **things;
-  int things_max;
-  int things_count;
-  void (*free)(/* Arbitary args! */);
-} List;
-
-typedef List VPList;
-
 #include "String.h"
 #include "Mem.h"
 #include "Index.h"
 
 #include "Collection.h"
-
-typedef struct {
-  /* Intentionally empty struct. */
-} Message;
-
 
 /* 
  * The ISet() macro is for declaring structures compatible with the
@@ -39,11 +24,6 @@ typedef struct {
  */
 #define ISet(type) struct { type **items; int avail; int count; Index *index; } 
 
-extern void List_append(List *l, void *thing);
-extern void List_free(List *l);
-extern void _String_list_append(List *l, String **s, void (*free)(String **));
-#define String_list_append(l, s) _String_list_append(l, s, String_free)
-
 struct _Instance;
 
 /* Input, Output, Instance, Template. */
@@ -51,7 +31,7 @@ typedef struct {
   const char *type_label;	/* Must match up with corresponding Output. */
   struct _Instance *parent;
   void (*handler)(struct _Instance *pi, void *data);
-  int warn_max;
+  int max_pending_messages;
 } Input;
 
 typedef struct {
@@ -184,7 +164,6 @@ extern void PostDataGetReply(void *data, Input *destination, Event * reply, int 
 extern Handler_message *GetData(Instance *pi, int wait_flag);
 extern Handler_message *GetData_and_requests(Instance *pi, int wait_flag, Config *config_table, int num_configs);
 extern void ReleaseMessage(Handler_message **, Instance *pi);
-extern int CountPendingMessages(Instance *pi);
 
 extern void Instance_wait(Instance *pi); /* Wait for notification, then go and check inputs. */
 
@@ -247,7 +226,9 @@ extern void Line_msg_discard(Line_msg **lm);
 
 extern void Generic_config_handler(Instance *pi, void *data, Config *config_table, int config_table_size);
 extern void cti_set_int(void *addr, const char *value);
+extern void cti_set_uint(void *addr, const char *value);
 extern void cti_set_long(void *addr, const char *value);
+extern void cti_set_ulong(void *addr, const char *value);
 extern void cti_set_string(void *addr, const char *value);
 
 extern int SetConfig(Instance *pi, const char *label, const char *value);

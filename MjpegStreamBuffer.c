@@ -112,7 +112,7 @@ static void Wav_handler(Instance *pi, void *data)
   Wav_buffer *wav = data;
   /* Update record state.  */
   /* If recording, pass along to MjpegMux output, else discard. */
-  Wav_buffer_discard(&wav);
+  Wav_buffer_release(&wav);
 }
 
 

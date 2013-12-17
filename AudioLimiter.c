@@ -58,7 +58,7 @@ static void Wav_handler(Instance *pi, void *msg)
   AudioLimiter_private *priv = (AudioLimiter_private *)pi;
 
   if (!pi->outputs[OUTPUT_WAV].destination) {
-      Wav_buffer_discard(&wav_in);
+      Wav_buffer_release(&wav_in);
       return;
   }
 

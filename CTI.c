@@ -35,11 +35,13 @@ void Instance_loop_thread(Instance *pi)
   pthread_detach(thread);
 }
 
+
 void PostDataGetReply(void *data, Input *input, Event * reply, int * result)
 {
   Handler_message *hm = Mem_calloc(1, sizeof(*hm));
 
   if (!input->handler) {
+    /* Error, send calling thread to tar pit... */
     while (1) {
       fprintf(stderr, "instance %s input %s does not have a handler!\n", 
 	      input->parent->label, input->type_label);
@@ -58,19 +60,22 @@ void PostDataGetReply(void *data, Input *input, Event * reply, int * result)
     hm->result = result;
   }
 
-  { 
+  {
     /* Wait for input lock, lock... */
     Lock_acquire(&input->parent->inputs_lock);
-    
-    if (input->parent->msg_first == 0L) {
-      /* input->parent->msg_last should also be 0L in this case... */
-      input->parent->msg_first = hm;
-      input->parent->msg_last = hm;
-    }
-    else {
-      /* At least one node. */
-      input->parent->msg_last->prev = hm;
-      input->parent->msg_last = hm;
+
+    {
+      /* Add node to list. */ 
+      if (input->parent->msg_first == 0L) {
+	/* input->parent->msg_last should also be 0L in this case... */
+	input->parent->msg_first = hm;
+	input->parent->msg_last = hm;
+      }
+      else {
+	/* At least one node. */
+	input->parent->msg_last->prev = hm;
+	input->parent->msg_last = hm;
+      }
     }
     
     if (input->parent->waiting) {
@@ -90,6 +95,7 @@ void PostDataGetReply(void *data, Input *input, Event * reply, int * result)
   }
 
   if (reply) {
+    /* Wait for messages recipient to signal back. */
     Lock_release__event_wait__lock_acquire(&reply_lock, reply);
   }
 }
@@ -112,6 +118,21 @@ Handler_message *GetData(Instance *pi, int wait_flag)
     nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/50}, NULL);
   }
 
+  /* 
+     I thought about doing the if (...) check before the
+     Lock_acquire(), and changing the goto to a return, thus avoiding
+     the acquire/release cycle when there are no messages pending and
+     wait flag is zero.  But I am unsure about ARM memory behavior, in
+     particular I worry that memory might not be synchronized properly
+     without the memory barrier events imposed by the locking, which
+     could make a thread return when there IS actually data available.
+     So I am leaving the lock acquire/relesae.  Links,
+
+     http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0472c/CJAEGDEA.html
+     http://iphonedevsdk.com/forum/iphone-sdk-development/115122-multi-core-arm-and-sharing-global-variable-between-threads.html     
+
+  */
+
   Lock_acquire(&pi->inputs_lock);
 
   if (pi->msg_first == 0L && pi->msg_last == 0L && wait_flag == 0)  {
@@ -125,47 +146,29 @@ Handler_message *GetData(Instance *pi, int wait_flag)
 
   pi->waiting = 0;
 
-  if (pi->msg_first == pi->msg_last) {
-    /* Single node */
-    hm = pi->msg_first;
-    hm->prev = 0L;
-    pi->msg_first = 0L;
-    pi->msg_last = 0L;
+  {
+    /* Take node, remove from list. */
+    if (pi->msg_first == pi->msg_last) {
+      /* Single node */
+      hm = pi->msg_first;
+      hm->prev = 0L;
+      pi->msg_first = 0L;
+      pi->msg_last = 0L;
+    }
+    else {
+      /* >1 nodes. */
+      hm = pi->msg_first;
+      pi->msg_first = hm->prev;
+      hm->prev = 0L;
+    }
   }
-  else {
-    /* >1 nodes. */
-    hm = pi->msg_first;
-    pi->msg_first = hm->prev;
-    hm->prev = 0L;
-  }
-
+    
   pi->pending_messages -= 1;
 
 out:
   Lock_release(&pi->inputs_lock);
 
   return hm;
-}
-
-
-int CountPendingMessages(Instance *pi)
-{
-  int count = 0;
-  Handler_message *p;
-
-  Lock_acquire(&pi->inputs_lock);
-
-  if (pi->msg_first == 0L) {
-    goto out;
-  }
-
-  for (p = pi->msg_last; p; p = p->prev) {
-    count += 1;
-  }
-
- out:
-  Lock_release(&pi->inputs_lock);
-  return count;
 }
 
 
@@ -390,9 +393,21 @@ void cti_set_int(void *addr, const char *value)
 }
 
 
+void cti_set_uint(void *addr, const char *value)
+{
+  *( (int *)addr) = (unsigned int) strtoul(value, NULL, 0);
+}
+
+
 void cti_set_long(void *addr, const char *value)
 {
   *( (long *)addr) = atol(value);
+}
+
+
+void cti_set_ulong(void *addr, const char *value)
+{
+  *( (int *)addr) = strtoull(value, NULL, 0);
 }
 
 

@@ -112,7 +112,7 @@ void *_Mem_calloc(int count, int size, const char *func)
     ((uint8_t*)ptr)[count*size] = 0xFA;
     store(ptr, count*size, func);
   }
-  if (cfg.verbosity & 0x10000000) fprintf(stderr, "calloc, %d, %p, %s\n", count*size, ptr, func);
+  if (cfg.verbosity == 1000) fprintf(stderr, "calloc, %d, %p, %s\n", count*size, ptr, func);
   pthread_mutex_unlock(&mem_lock);
   return ptr;
 }
@@ -125,7 +125,7 @@ void *_Mem_malloc(int size, const char *func)
     ((uint8_t*)ptr)[size] = 0xFA;
     store(ptr, size, func);
   }
-  if (cfg.verbosity & 0x10000000) fprintf(stderr, "malloc, %d, %p, %s\n", size, ptr, func);
+  if (cfg.verbosity== 1000) fprintf(stderr, "malloc, %d, %p, %s\n", size, ptr, func);
   pthread_mutex_unlock(&mem_lock);
   return ptr;
 }
@@ -141,7 +141,7 @@ void *_Mem_realloc(void *ptr, int newsize, const char *func)
     store(newptr, newsize, func);
     ((uint8_t*)newptr)[newsize] = 0xFA;
   }
-  if (cfg.verbosity & 0x10000000) fprintf(stderr, "realloc, %d, %p, %s\n", newsize, ptr, func);
+  if (cfg.verbosity== 1000) fprintf(stderr, "realloc, %d, %p, %s\n", newsize, ptr, func);
   pthread_mutex_unlock(&mem_lock);
   return newptr;
 }
@@ -153,7 +153,7 @@ void _Mem_free(void *ptr, const char *func)
   if (cfg.mem_tracking) {
     clear(ptr, func);
   }
-  if (cfg.verbosity & 0x10000000) fprintf(stderr, "free, %p, %s\n", ptr, func);
+  if (cfg.verbosity== 1000) fprintf(stderr, "free, 0, %p, %s\n", ptr, func);
   free(ptr);
   pthread_mutex_unlock(&mem_lock);
 }

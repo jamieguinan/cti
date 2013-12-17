@@ -131,8 +131,27 @@ RGB3_buffer *RGB3_buffer_new(int width, int height, Image_common *c)
   rgb->height = height;
   rgb->data_length = width * height * 3;
   rgb->data = Mem_calloc(1, rgb->data_length); 	/* Caller must fill in data! */
+  Lock_init(&rgb->c.ref.lock);
   return rgb;
 }
+
+
+RGB3_buffer *RGB3_buffer_clone(RGB3_buffer *rgb_src)
+{
+  RGB3_buffer *rgb = RGB3_buffer_new(rgb_src->width, rgb_src->height, &rgb_src->c);
+  memcpy(rgb->data, rgb_src->data, rgb_src->data_length);
+  return rgb;  
+}
+
+
+RGB3_buffer *RGB3_buffer_ref(RGB3_buffer *rgb)
+{
+  Lock_acquire(&rgb->c.ref.lock);
+  rgb->c.ref.count += 1;
+  Lock_release(&rgb->c.ref.lock);
+  return rgb;
+}
+
 
 void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int height, int stride)
 {
@@ -197,9 +216,16 @@ void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int heigh
 
 void RGB3_buffer_discard(RGB3_buffer *rgb)
 {
-  Mem_free(rgb->data);
-  memset(rgb, 0, sizeof(*rgb));
-  Mem_free(rgb);
+  Lock_acquire(&rgb->c.ref.lock);
+  rgb->c.ref.count -= 1;
+
+  if (rgb->c.ref.count == 0) {
+    Mem_free(rgb->data);
+    memset(rgb, 0, sizeof(*rgb));
+    Mem_free(rgb);
+  }
+  Lock_release(&rgb->c.ref.lock);
+
 }
 
 
@@ -670,15 +696,34 @@ Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c)
   jpeg->height = -1;
   jpeg->data_length = size;
   jpeg->data = Mem_calloc(1, jpeg->data_length);	/* Caller must fill in data! */
+  jpeg->c.ref.count = 1;
+  Lock_init(&jpeg->c.ref.lock);
   return jpeg;
 }
 
+
 void Jpeg_buffer_discard(Jpeg_buffer *jpeg)
 {
-  Mem_free(jpeg->data);
-  memset(jpeg, 0, sizeof(*jpeg));
-  Mem_free(jpeg);
+  Lock_acquire(&jpeg->c.ref.lock);
+  jpeg->c.ref.count -= 1;
+
+  if (jpeg->c.ref.count == 0) {
+    Mem_free(jpeg->data);
+    memset(jpeg, 0, sizeof(*jpeg));
+    Mem_free(jpeg);
+  }
+  Lock_release(&jpeg->c.ref.lock);
 }
+
+
+Jpeg_buffer *Jpeg_buffer_ref(Jpeg_buffer *jpeg)
+{
+  Lock_acquire(&jpeg->c.ref.lock);
+  jpeg->c.ref.count += 1;
+  Lock_release(&jpeg->c.ref.lock);
+  return jpeg;
+}
+
 
 
 O511_buffer *O511_buffer_new(int width, int height, Image_common *c)

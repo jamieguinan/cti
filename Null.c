@@ -43,7 +43,7 @@ static void O511_handler(Instance *pi, void *data)
 static void Wav_handler(Instance *pi, void *data)
 {
   Wav_buffer *wav_in = data;
-  Wav_buffer_discard(&wav_in);
+  Wav_buffer_release(&wav_in);
 }
 
 static void RawData_handler(Instance *pi, void *data)

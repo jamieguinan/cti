@@ -4,7 +4,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-extern int vasprintf(char **p, const char *fmt, va_list ap);
 #include <stdarg.h>
 
 #include "String.h"
@@ -144,18 +143,6 @@ void String_free(String **s)
 }
 
 
-#if 0
-void _String_list_append(List *l, String **s, void (*free)(String **))
-{
-  if (!l->free) {
-    l->free = String_free;
-  }
-  List_append(l, *s); /* List takes ownership. */
-  *s = 0L;			
-}
-#endif
-
-
 void String_trim_right(String *s)
 {
   while (s->len && 
@@ -167,79 +154,32 @@ void String_trim_right(String *s)
       s->bytes[s->len-1] = '\0';
       s->len -= 1;
     }
-
-}
-
-
-#if 0
-void List_append(List *l, void *thing)
-{
-  if (l->things == 0L) {
-    l->things_max = 2;
-    l->things = Mem_calloc(l->things_max, sizeof(*l->things));
-  }
-  else if (l->things_count == l->things_max) {
-    l->things_max *= 2;
-    l->things = Mem_realloc(l->things, l->things_max * sizeof(*l->things));
-  }
-  l->things[l->things_count] = thing;
-  l->things_count += 1;
-}
-#endif
-
-
-/* I wasn't sure how to portably pass fmt and "..." along between these 2 sprintf variants,
-   so I just kept them separate. */
-void String_set_sprintf(String *s, const char *fmt, ...)
-{
-  char *p = NULL;
-  va_list ap;
-  int rc;
-  va_start(ap, fmt);
-  /* FIXME: vasprintf allocates on stack.  But it is noted as _GNU_SOURCE in the man page,
-     yet still fails to be declared when _GNU_SOURCE is defined.  Fix to use vsnprintf and
-     alloc functions instead. */
-  rc = vasprintf(&p, fmt, ap);	
-  if (-1 == rc) {
-    perror("vasprintf");
-  }
-  va_end(ap);
-  String_set(s, p);
 }
 
 
 String * String_sprintf(const char *fmt, ...)
 {
-  String *s = NULL;
-  char *p = NULL;
   va_list ap;
-  int rc;
-  va_start(ap, fmt);
-  rc = vasprintf(&p, fmt, ap);	/* Allocates on stack. */
-  if (-1 == rc) {
-    perror("vasprintf");
-  }
-  va_end(ap);
-  s = String_new(p);
-  free(p);			/* Really!? */
-  return s;
-}
+  int n;
+  int psize = 64;
 
-
-#if 0
-void List_free(List *l)
-{
-  int i;
-  for (i=0; i < l->things_count; i++) {
-    void *p = l->things[i];
-    if (l->free) {
-      l->free(&p);
+  while (1) {
+    char p[psize]; 		/* size varies, but its on the stack so no malloc required */
+    va_start(ap, fmt);
+    n = vsnprintf(p, psize, fmt, ap);
+    va_end(ap);
+    /* Prior to C99, vsnprintf would return -1 if the buffer wasn't large enough.
+       In C99, it returns the number of characters that would have been formatted.
+       Either way, if it didn't fit, double the size of the stack buffer. */
+    if ((n < 0)	|| (n >= psize)) {
+      psize *= 2;
+    }
+    else {
+      return String_new(p);
     }
   }
-  Mem_free(l->things);
-  memset(l, 0, sizeof(l));
 }
-#endif
+
 
 int String_find(String *s, int offset, const char *s1, int *end)
 {
@@ -252,7 +192,9 @@ int String_find(String *s, int offset, const char *s1, int *end)
       }
     }
     if (j == s1len) {
-      *end = (i+j);
+      if (end) {
+	*end = (i+j);
+      }
       return i;
     }
   }

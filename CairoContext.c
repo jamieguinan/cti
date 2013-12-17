@@ -73,6 +73,9 @@ typedef struct {
   Instance i;
   cairo_surface_t *surface;
   cairo_t *context;
+  /* FIXME: Enable left, top */
+  //int left;
+  //int top;
   int width;
   int height;
   XArray(CairoCommand, commands);

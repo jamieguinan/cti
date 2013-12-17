@@ -6,6 +6,7 @@
 void Lock_init(Lock *lock)
 {
 #ifdef __linux__
+  pthread_mutex_init(&lock->mlock, NULL);
 #endif
 }
 
@@ -16,7 +17,7 @@ void Lock_acquire(Lock *lock)
   int rc;
   rc = pthread_mutex_lock(&lock->mlock);
   if (rc != 0) {
-    perror("pthread_mutex_lock");
+    fprintf(stderr, "pthread_mutex_lock returned %d\n", rc);
     exit(1);
   }
 #endif

@@ -124,7 +124,7 @@ static void Wav_handler(Instance *pi, void *data)
   }
 
   String_free(&header);
-  Wav_buffer_discard(&wav_in);
+  Wav_buffer_release(&wav_in);
 }
 
 

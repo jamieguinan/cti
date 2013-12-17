@@ -25,8 +25,10 @@ config ap frames_per_io 128
 config sdl mode OVERLAY
 #config sdl mode GL
 #config sdl mode SOFTWARE
-#config sdl width 1920
-#config sdl height 1080
+#config sdl width 640
+#config sdl height 360
+config sdl width 1280
+config sdl height 720
 
 
 config mjd input 192.168.2.75:6666
@@ -34,3 +36,5 @@ config mjd retry 1
 config mjd enable 1
 
 config ap enable 1
+
+ignoreeof 1

@@ -13,8 +13,6 @@
 #include "Cfg.h"
 #include "File.h"
 
-int asize1;
-
 static void Config_handler(Instance *pi, void *msg);
 static void Wav_handler(Instance *pi, void *msg);
 
@@ -523,7 +521,7 @@ static void Wav_handler(Instance *pi, void *data)
     PostData(fb, pi->outputs[OUTPUT_FEEDBACK].destination);
   }
 
-  Wav_buffer_discard(&wav_in);
+  Wav_buffer_release(&wav_in);
 }
 
 
@@ -562,7 +560,7 @@ static void ALSAPlayback_tick(Instance *pi)
 	printf("dropping %.4fs of audio (%d %d %d)\n", s,
 	       priv->rate, priv->channels, priv->format_bytes
 	       );
-	Wav_buffer_discard(&wav_in);
+	Wav_buffer_release(&wav_in);
       }
       else {
 	/* Should always handle config messages... */
@@ -698,7 +696,6 @@ static void ALSACapture_tick(Instance *pi)
   }
 
   /* Allocate buffer for PCM samples. */
-  asize1=size+1;
   uint8_t *buffer = Mem_malloc(size+1);
   buffer[size] = 0x55;
 
@@ -734,7 +731,7 @@ static void ALSACapture_tick(Instance *pi)
       wav = 0L;
     }
     else {
-      Wav_buffer_discard(&wav);
+      Wav_buffer_release(&wav);
     }
   }
   else {

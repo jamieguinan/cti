@@ -80,7 +80,7 @@ static void Wav_handler(Instance *pi, void *msg)
 
   Sink_write(priv->sink, wav->data, wav->data_length);
 
-  Wav_buffer_discard(&wav);
+  Wav_buffer_release(&wav);
 }
 
 static void WavOutput_tick(Instance *pi)

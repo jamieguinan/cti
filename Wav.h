@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <sys/time.h>
+#include "locks.h"
 
 /* 
  * Wav buffer.
@@ -31,12 +32,17 @@ typedef struct {
   int seq;
   int no_feedback;
   int eof;			/* EOF marker. */
+  struct {
+    Lock lock;
+    int count;
+  } ref;
 } Wav_buffer;
 
 extern Wav_buffer *Wav_buffer_new(int rate, int channels, int format_bytes);
 extern void Wav_buffer_finalize(Wav_buffer *buffer);
-extern void Wav_buffer_discard(Wav_buffer **buffer);
+extern void Wav_buffer_release(Wav_buffer **buffer);
 
 extern Wav_buffer *Wav_buffer_from(unsigned char *bytes, int length);
+extern Wav_buffer *Wav_ref(Wav_buffer *wav);
 
 #endif

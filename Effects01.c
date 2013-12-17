@@ -122,7 +122,7 @@ static void Y422p_handler(Instance *pi, void *data)
   if (priv->invert) {
     invert_plane(y422p_in->data, y422p_in->data_length);
   }
-  /* FIXME: this kinda because Y422P has 2x1 aspect ratio pixels. */
+  /* FIXME: this kinda breaks because Y422P has 2x1 aspect ratio pixels. */
   if (priv->rotate == 90) {
     Y422P_buffer *y422p_new = Y422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
     rotate_rgb_90(y422p_in->data, y422p_new->data, y422p_in->width, y422p_in->height);

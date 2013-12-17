@@ -69,6 +69,7 @@ typedef enum {
   CC_CLOSEME,
 } ClientStates;
 
+
 typedef struct {
   Instance i;
   int max_total_buffered_data;	/* Start dropping after this is exceeded. */
@@ -76,9 +77,11 @@ typedef struct {
   listen_common lsc;		/* listen socket_common */
   Client_connection *cc_first;
   Client_connection *cc_last;
+  int num_client_connections;
   RawData_node *raw_first;
   RawData_node *raw_last;
   int raw_seq;
+  ISet(Instance) notify_instances; 
 } SocketServer_private;
 
 
@@ -100,8 +103,25 @@ static int set_v4addr(Instance *pi, const char *value)
 static int set_enable(Instance *pi, const char *value)
 {
   SocketServer_private *priv = (SocketServer_private *)pi;
-
   return listen_socket_setup(&priv->lsc);
+}
+
+
+static int set_notify(Instance *pi, const char *value)
+{
+  /* Add to list of clients that get a notify message when connection
+     count transtions to/from zero. */
+  SocketServer_private *priv = (SocketServer_private *)pi;
+
+  Instance *px = InstanceGroup_find(gig, S((char*)value));
+
+  if (!px) {
+    return 1;
+  }
+
+  ISet_add(priv->notify_instances, px);
+  
+  return 0;
 }
 
 
@@ -110,6 +130,7 @@ static Config config_table[] = {
   { "v4addr", set_v4addr, 0L, 0L },
   { "v4port", 0L, 0L, 0L, cti_set_int, offsetof(SocketServer_private, lsc.port) },
   { "enable", set_enable, 0L, 0L },
+  { "notify", set_notify, 0L, 0L},
   /* Maybe add v6 later... */
 };
 
@@ -138,6 +159,32 @@ static void RawData_handler(Instance *pi, void *data)
 
   priv->raw_seq += 1;
   rn->seq = priv->raw_seq;
+}
+
+
+static void toggle_services(SocketServer_private *priv)
+{
+  /* This is called whenever priv->num_client_connections changes, so
+     the value has just been transitioned to. */
+  int i;
+  printf("toggle_services() priv->num_client_connections=%d\n", priv->num_client_connections);
+
+  if (priv->num_client_connections == 0) {
+    /* Turn off. */
+    for (i=0; i < priv->notify_instances.count; i++) {
+      Instance *px = priv->notify_instances.items[i];
+      printf("enable 0 to %s\n", px->label);
+      PostData(Config_buffer_new("enable", "0"), &px->inputs[0]);
+    }
+  }
+  else if (priv->num_client_connections == 1) {
+    /* Turn on. */    
+    for (i=0; i < priv->notify_instances.count; i++) {
+      Instance *px = priv->notify_instances.items[i];
+      printf("enable 1 to %s\n", px->label);
+      PostData(Config_buffer_new("enable", "1"), &px->inputs[0]);
+    }
+  }
 }
 
 
@@ -206,7 +253,9 @@ static void SocketServer_tick(Instance *pi)
 
       cc_tmp = cc->next;
       Mem_free(cc);
-      cc = cc_tmp;
+      cc = cc_tmp; 
+      priv->num_client_connections -= 1;
+      toggle_services(priv);
       continue;
     }
 
@@ -243,7 +292,7 @@ static void SocketServer_tick(Instance *pi)
   FD_SET(priv->lsc.fd, &rfds);
   maxfd = cti_max(priv->lsc.fd, maxfd);
 
-  tv.tv_sec = 0; tv.tv_usec = 1000;		/* 1ms */
+  tv.tv_sec = 0; tv.tv_usec = 1000  * 10;		/* 10ms */
   sn = select(maxfd+1, &rfds, &wfds, 0L, &tv);
 
   if (sn == 0) {
@@ -264,9 +313,11 @@ static void SocketServer_tick(Instance *pi)
       Mem_free(cc);
       goto out;
     }
-    else {
-      fprintf(stderr, "accepted connection on port %d\n", priv->lsc.port);
-    }
+
+    fprintf(stderr, "accepted connection on port %d\n", priv->lsc.port);
+
+    priv->num_client_connections += 1;
+    toggle_services(priv);
 
     cc->state = CC_INIT;
 

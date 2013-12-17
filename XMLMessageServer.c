@@ -1,6 +1,6 @@
 /*
- * This module handles remote "config instance key value" requests.
- * Might add other functionality later.
+ * This module handles remote "config instance key value" requests,
+ * one message per connection.  Might add other functionality later.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -54,7 +54,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void handle_client_message(IO_common *io, String *msg, Node * response)
 {
-  /* Right now this only handle config messages. */
+  /* Right now this only handles config messages. */
   Node * top = xml_string_to_nodetree(msg);
 
   node_fwrite(top, stderr);
@@ -124,6 +124,10 @@ static void XMLMessageServer_tick(Instance *pi)
   if (hm) {
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm,pi);
+  }
+
+  if (priv->lsc.fd <= 0) {
+    return;
   }
 
   FD_ZERO(&rfds);

@@ -27,8 +27,6 @@ endif
 
 OBJDIR ?= .
 
-#default1: $(OBJDIR)/avcap$(EXEEXT) $(OBJDIR)/avidemux$(EXEEXT) $(OBJDIR)/cjbench$(EXEEXT) $(OBJDIR)/dvdgen$(EXEEXT) $(OBJDIR)/avtest$(EXEEXT) $(OBJDIR)/demux$(EXEEXT) $(OBJDIR)/alsacaptest$(EXEEXT) $(OBJDIR)/mjxtomp2$(EXEEXT) $(OBJDIR)/cti$(EXEEXT)
-
 default1:  $(OBJDIR)/cti$(EXEEXT)
 
 #	@echo wd=$(shell pwd)
@@ -77,6 +75,7 @@ OBJS= \
 	$(OBJDIR)/Y4MOutput.o \
 	$(OBJDIR)/XArray.o \
 	$(OBJDIR)/JpegSource.o \
+	$(OBJDIR)/RGB3Source.o \
 	$(OBJDIR)/HalfWidth.o \
 	$(OBJDIR)/Mp2Enc.o \
 	$(OBJDIR)/Mpeg2Enc.o \
@@ -134,6 +133,7 @@ OBJS+=\
 	$(OBJDIR)/SonyPTZ.o \
 	../../platform/$(ARCH)/jpeg-7/libjpeg.la
 LDFLAGS+=-lvisca
+CPPFLAGS+=-DHAVE_PRCTL
 endif
 
 # SDL on OSX
@@ -143,9 +143,9 @@ OBJS+=$(OBJDIR)/sdl_main.o
 endif
 
 # Signals
-ifneq ($(ARCH),armeb)
+#ifneq ($(ARCH),armeb)
 OBJS+=$(OBJDIR)/Signals.o
-endif
+#endif
 
 # Lirc
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../liblirc_client.so))
@@ -170,6 +170,8 @@ ifeq (0,$(shell (pkg-config cairo --cflags > /dev/null 2> /dev/null; echo $$?)))
 OBJS+=	$(OBJDIR)/CairoContext.o
 CPPFLAGS+=$$(pkg-config cairo --cflags)
 LDFLAGS+=$$(pkg-config cairo --libs)
+# This is a new requirement to resolve undefined reference to `pixman_*' errors
+LDFLAGS+=$$(pkg-config pixman-1 --libs)
 CPPFLAGS+=-DHAVE_CAIRO
 endif
 endif
@@ -225,6 +227,7 @@ $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \
 	$(OBJDIR)/cti_app.o
 	@echo LINK
+#	@echo $(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 ifeq ($(ARCH),x86_64-Linux)
 # Sigh, some libs bump their version numbers all the fucking time.  And I like to keep
@@ -235,8 +238,8 @@ ifeq ($(ARCH),x86_64-Linux)
 # Or ../../platform/$(ARCH)/lib/ ?
 endif
 #if gdb not in cflags
-	@echo STRIP
-	@$(STRIP) $@
+#	@echo STRIP
+#	@$(STRIP) $@
 # endif
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))

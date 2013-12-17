@@ -39,6 +39,7 @@
 #include "CairoContext.h"
 #include "Signals.h"
 #include "JpegSource.h"
+#include "RGB3Source.h"
 #include "LibQuickTimeOutput.h"
 #include "OggOutput.h"
 #include "SonyPTZ.h"
@@ -86,10 +87,8 @@ int cti_main(int argc, char *argv[])
   ALSAMixer_init();
   V4L2Capture_init();
   SonyPTZ_init();
-#ifndef __ARMEB__
   Signals_init();
   Spawn_init();
-#endif
 #endif
 
 #ifdef HAVE_SDL
@@ -133,6 +132,7 @@ int cti_main(int argc, char *argv[])
   JpegFiler_init();
   JpegTran_init();
   JpegSource_init();
+  RGB3Source_init();
   PGMFiler_init();
   MjpegMux_init();
   MjpegDemux_init();

@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include "Mem.h"
+#include "locks.h"
 
 /* http://en.wikipedia.org/wiki/Layers_%28digital_image_editing%29 */
 typedef struct {
@@ -38,6 +39,10 @@ typedef struct {
   float nominal_period;
   int interlace_mode;
   int eof;			/* EOF marker. */
+  struct {
+    Lock lock;
+    int count;
+  } ref;
 } Image_common;
 
 
@@ -167,7 +172,8 @@ extern Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c);
 extern void Gray32_buffer_discard(Gray32_buffer *gray);
 extern RGB3_buffer *PPM_buffer_from(uint8_t *data, int len, Image_common *c);
 extern RGB3_buffer *RGB3_buffer_new(int width, int height, Image_common *c);
-
+extern RGB3_buffer *RGB3_buffer_clone(RGB3_buffer *rgb);
+extern RGB3_buffer *RGB3_buffer_ref(RGB3_buffer *rgb);
 extern void RGB3_buffer_discard(RGB3_buffer *rgb);
 extern void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int height, int stride);
 
@@ -200,6 +206,7 @@ extern Y422P_buffer *BGR3_toY422P(BGR3_buffer *bgr);
 extern Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c);
 extern Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c); /* DJpeg.c */
 extern void Jpeg_buffer_discard(Jpeg_buffer *jpeg);
+extern Jpeg_buffer *Jpeg_buffer_ref(Jpeg_buffer *jpeg);
 
 extern O511_buffer *O511_buffer_new(int width, int height, Image_common *c);
 extern O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c);

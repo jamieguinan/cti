@@ -30,7 +30,7 @@ typedef struct {
 
 /* _new and _free are for free-standing strings that might be passed around independently */
 extern String * String_new(const char *init);
-extern String * String_set_none(void);
+//extern String * String_set_none(void);
 
 extern void String_free(String **s);
 
@@ -65,7 +65,6 @@ extern int String_ends_with(String *s, const char *s1);
 extern int String_len(String *str);
 extern int String_is_none(String *str);
 extern String * String_value_none(void);
-
 extern int String_get_char(String *str, int index);
 
 

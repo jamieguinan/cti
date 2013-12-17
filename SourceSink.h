@@ -8,6 +8,12 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+typedef enum {
+  IO_CLOSED,
+  IO_OPEN_FILE,
+  IO_OPEN_PIPE,
+  IO_OPEN_SOCKET,
+} IO_state;
 
 typedef struct {
   FILE *f;			/* file */
@@ -15,7 +21,9 @@ typedef struct {
   int s;			/* socket */
   struct sockaddr_in addr;	/* socket details... */
   socklen_t addrlen;		/* socket details... */
-  ArrayU8 * extra;		/* extra data leftover after certain operations */
+  IO_state state;
+  unsigned int read_timeout_ms;
+  ArrayU8 * extra;		/* extra data left over after certain operations */
 } IO_common;
 
 typedef struct {
@@ -54,8 +62,9 @@ extern void Sink_free(Sink **sink);
 typedef struct {
   /* 2-way socket or pipe. */
   IO_common io;
-  unsigned int read_timeout_ms;
 } Comm;
+
+#define IO_ok(x)  (x->io.state != IO_CLOSED)
 
 extern Comm * Comm_new(char * name);
 extern void Comm_close(Comm * comm);

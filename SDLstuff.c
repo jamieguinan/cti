@@ -168,7 +168,7 @@ static void Keycode_handler(Instance *pi, void *msg)
   //   puts(__func__);
   
   if (km->keycode == CTI__KEY_F) {
-    priv->toggle_fullscreen = 1;
+    // priv->toggle_fullscreen = 1;
     handled = 1;
   }
   else if (km->keycode == CTI__KEY_PLUS || km->keycode == CTI__KEY_EQUALS) {
@@ -242,13 +242,10 @@ static int set_mode(Instance *pi, const char *value)
 static int set_width(Instance *pi, const char *value)
 {
   SDLstuff_private *priv = (SDLstuff_private *)pi;
-  int oldWidth = priv->width;
   int newWidth = atoi(value);
 
-  if (oldWidth != newWidth) {
-    printf("width: %d -> %d\n", oldWidth, newWidth);
-    priv->width = newWidth;
-    reset_video(priv);
+  if (newWidth > 0) {
+    priv->new_width = newWidth;
   }
 
   return 0;
@@ -258,15 +255,10 @@ static int set_width(Instance *pi, const char *value)
 static int set_height(Instance *pi, const char *value)
 {
   SDLstuff_private *priv = (SDLstuff_private *)pi;
-  int oldHeight = priv->height;
   int newHeight = atoi(value);
 
-  priv->hard_dimensions = 1;
-
-  if (oldHeight != newHeight) {
-    printf("height: %d -> %d\n", oldHeight, newHeight);
-    priv->height = newHeight;
-    reset_video(priv);
+  if (newHeight > 0) {
+    priv->new_height = newHeight;
   }
 
   return 0;
@@ -331,9 +323,9 @@ static void _reset_video(SDLstuff_private *priv, const char *func)
 
   SDL_putenv("SDL_VIDEO_CENTERED=center");
 
-  if (priv->fullscreen) {
-    sdl_vid_flags |= SDL_FULLSCREEN;
-  }
+  //if (priv->fullscreen) {
+  //  sdl_vid_flags |= SDL_FULLSCREEN;
+  //}
 
   if (priv->renderMode == RENDER_MODE_GL) {
     rc = SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -630,23 +622,18 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   dpf("frame %d ready for display\n", priv->inFrames);
 
   if (priv->toggle_fullscreen) {
-    priv->fullscreen = (priv->fullscreen + 1) % 2;
-    priv->toggle_fullscreen = 0;
-    reset_video(priv);
+    // priv->fullscreen = (priv->fullscreen + 1) % 2;
+    //priv->old_width = priv->width;
+    //priv->old_height = priv->height;
+    //priv->toggle_fullscreen = 0;
+    // reset_video(priv);
   }
-  else if (priv->new_width &&
-	   priv->new_width != priv->width) {
+  else if ((priv->renderMode != RENDER_MODE_SOFTWARE)
+	   && (priv->new_width != priv->width ||
+	       priv->new_height != priv->height)) {
     /* Resize. */
     width = priv->width = priv->new_width;
     height = priv->height = priv->new_height;
-    reset_video(priv);
-  }
-
-  if ( ( priv->renderMode == RENDER_MODE_SOFTWARE ||
-	 priv->hard_dimensions == 0)
-       && (priv->width != width || priv->height != height)) {
-    priv->width = width;
-    priv->height = height;
     reset_video(priv);
   }
 
@@ -962,6 +949,7 @@ static int my_event_loop(void *data)
     }
 
     else if (ev.type == SDL_QUIT) {
+      fprintf(stderr, "Got SDL_QUIT\n");
       exit(0);
     }
 

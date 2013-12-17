@@ -6,6 +6,7 @@ typedef struct {
   int logging;
   int mem_tracking;
   int pause;
+  int max_pending_messages;
 } Cfg;
 
 extern Cfg cfg;

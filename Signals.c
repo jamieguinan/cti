@@ -4,105 +4,51 @@
 #include <stdlib.h>		/* malloc */
 #include <signal.h>
 #include <unistd.h>
-#include <sys/types.h>	/* gettid */
-#include <sys/prctl.h>	/* prctl */
 
-// #define __USE_GNU
-
-//#include <ucontext.h>
-
-#include <execinfo.h>
-
-extern int asize1;
+#ifdef HAVE_PRCTL
+#include <sys/prctl.h>
+#endif
 
 extern const char *argv0;
 
-static const char *signames[] = {
-[6] = "abort",
-  [11] = "segfault",
-  };
+static const char *signames[64] = {
+  // [SIGHUP] = "SIGHUP",
+  [SIGINT] = "SIGINT",
+  // [SIGQUIT] = "SIGQUIT",
+  [SIGABRT] = "SIGABRT",
+  [SIGSEGV] = "SIGSEGV",
+};
 
-void handler1(int signum, siginfo_t *info, void *context)
+
+static void shutdown_handler(int signo)
 {
-  ucontext_t *uc = (ucontext_t *)context;
-  char thread_name[17] = {};           /* Thread name. */
-  const char *signame = signames[signum];
+  const char *signame = signames[signo];
   if (!signame) {
     signame = "unknown";
   }
-  prctl(PR_GET_NAME, thread_name);
-  fprintf(stderr, "%s: %s, user context available at 0x%lx\n",
-	  thread_name, signame, (long)uc);
 
-  fprintf(stderr, "asize1=%d\n", asize1);
-
-#ifdef __pentium4__
-#warning Pentium4
-  void **buffer = malloc(256*sizeof(void*));
-  int n = backtrace(buffer, 256);
-  if (n > 0) {
-    int j;
-    char **btsyms = backtrace_symbols(buffer, n);
-    for (j=0; j < n; j++) {
-      puts(btsyms[j]);
-    }
-    // pause();
+  const char threadname[17] = "thread";
+#ifdef HAVE_PRCTL
+  {
+    prctl(PR_GET_NAME, threadname);
   }
 #endif
 
-
-#ifdef __x86_64__
-  void **buffer = malloc(256*sizeof(void*));
-  int n = backtrace(buffer, 256);
-  if (n > 0) {
-    int j;
-    char **btsyms = backtrace_symbols(buffer, n);
-    for (j=0; j < n; j++) {
-      puts(btsyms[j]);
-    }
-    // pause();
-  }
-#endif
-
-  //while (1) {
-    // fprintf(stderr, "RSP=0x%lx\n", uc->uc_mcontext.gregs[REG_RSP]);  // amd64
-    // uc->uc_link ...
-  //break;
-  //}
-
-  // Give instructions for attaching with GDB, then suspend.
-  if (0) {
-    int pid = getpid();
-    printf("To resume this program with debugger:\n  kill -SIGCONT %d\n  gdb -nx %s\n  (gdb) attach %d\n",
-	   pid, argv0, pid);
-    kill(pid, SIGSTOP);
-    while (1) {
-      sleep(1);
-    }
-  }
-
-  _exit(1);
+  fprintf(stderr, "%s: caught signal %d (%s)\n", threadname, signo, signame);
+  exit(signo);
 }
 
-static struct sigaction oldact_SIGSEGV;
-static struct sigaction act_SIGSEGV = {
-  .sa_sigaction = handler1,
-  // .sa_mask = { 0 } ,
-  .sa_flags = SA_SIGINFO,
-};
 
-static struct sigaction oldact_SIGABRT;
-static struct sigaction act_SIGABRT = {
-  .sa_sigaction = handler1,
-  // .sa_mask = { 0 } ,
-  .sa_flags = SA_SIGINFO,
-};
+void Signals_handle(int signo, void (*handler)(int))
+{
+
+  if (signal(signo, handler) == SIG_ERR) {
+    fprintf(stderr, "signal(%d) failed\n", signo); 
+  }
+}
 
 void Signals_init(void)
 {
-  int rc;
-  rc = sigaction(SIGSEGV, &act_SIGSEGV, &oldact_SIGSEGV);
-  if (rc != 0) { perror("SIGSEGV"); }
-  rc = sigaction(SIGABRT, &act_SIGABRT, &oldact_SIGABRT);
-  if (rc != 0) { perror("SIGABRT"); }
+  Signals_handle(SIGSEGV, shutdown_handler);
+  Signals_handle(SIGABRT, shutdown_handler);
 }

@@ -215,7 +215,7 @@ static void Wav_handler(Instance *pi, void *data)
   String_free(&header);
   /* Discard wav buffer */
   // printf("%s discarding wav_in @ %p (%d bytes @ %p)\n", __func__, wav_in, wav_in->data_length, wav_in->data);
-  Wav_buffer_discard(&wav_in);
+  Wav_buffer_release(&wav_in);
 }
 
 

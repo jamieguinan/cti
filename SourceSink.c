@@ -16,6 +16,7 @@
 #include <unistd.h>		/* close */
 #include <poll.h>		/* poll */
 
+static void io_close_current(IO_common *io);
 
 static void io_open(IO_common *io, char *name, const char *mode)
 {
@@ -62,6 +63,7 @@ static void io_open(IO_common *io, char *name, const char *mode)
     }
 
     freeaddrinfo(results);  results = 0L;
+    io->state = IO_OPEN_SOCKET;
   }
   else { 
     /* File.  Apply strftime() to allow time-based naming. */
@@ -78,11 +80,17 @@ static void io_open(IO_common *io, char *name, const char *mode)
       strftime(out_name, sizeof(out_name), name, lt);
       io->p = popen(out_name+1, "w");
       fprintf(stderr, "io->p=%p\n", io->p);
+      if (io->p) {
+	io->state = IO_OPEN_PIPE;
+      }
     }
     else {
       /* Open as file. */
       strftime(out_name, sizeof(out_name), name, lt);
       io->f = fopen(out_name, mode);
+      if (io->f) {
+	io->state = IO_OPEN_FILE;
+      }
     }
   }
   
@@ -93,19 +101,20 @@ static void io_open(IO_common *io, char *name, const char *mode)
 
 static void io_write(IO_common *io, void *data, int length)
 {
-
   int n;
 
   if (io->f) {
-    n = fwrite(data, length, 1, io->f);
-    if (n != 1) {
+    n = fwrite(data, 1, length, io->f);
+    if (n != length) {
       fprintf(stderr, "fwrite wrote %d/%d bytes\n", n, length);
+      io_close_current(io);
     }
   }
   else if (io->p) {
-    n = fwrite(data, length, 1, io->p);
-    if (n != 1) {
-      perror("fwrite");
+    n = fwrite(data, 1, length, io->p);
+    if (n != length) {
+      fprintf(stderr, "fwrite wrote %d/%d bytes\n", n, length);
+      io_close_current(io);
     }
   }
   else if (io->s != -1) {   
@@ -130,6 +139,9 @@ static void io_write(IO_common *io, void *data, int length)
 Sink *Sink_new(char *name)
 {
   Sink *sink = Mem_calloc(1, sizeof(*sink));
+
+  sink->io.s = -1;			/* Default to invalid socket value. */
+  sink->io.state = IO_CLOSED;
 
   io_open(&sink->io, name, "wb");
 
@@ -167,7 +179,8 @@ static void io_close_current(IO_common *io)
   else if (io->s != -1) {   
     close(io->s);
     io->s = -1;
-  }  
+  }
+  io->state = IO_CLOSED;
 }
 
 
@@ -179,7 +192,7 @@ void Sink_close_current(Sink *sink)
 
 void Sink_free(Sink **sink)
 {
-  /* FIXME... */
+  fprintf(stderr, "%s: FIXME, cleanup...\n");
 }
 
 
@@ -189,6 +202,7 @@ Source *Source_new(char *name)
   Source *source = Mem_calloc(1, sizeof(*source));
 
   source->io.s = -1;			/* Default to invalid socket value. */
+  source->io.state = IO_CLOSED;
 
   source->t0 = time(NULL);
 
@@ -228,6 +242,7 @@ Source *Source_new(char *name)
       /* Note: alternatively, could keep the socket and retry the open... */
       close(source->io.s);
       source->io.s = -1;
+      source->io.state = IO_CLOSED;
       goto out;
     }
 
@@ -271,7 +286,7 @@ Source *Source_new(char *name)
 ArrayU8 * io_read(IO_common *io)
 {
   /* FIXME: Allow and handle timeouts. */
-  /* FIXME: First copy from io->extra. */
+  /* First copy from io->extra. */
   int max_read = 32000;
   uint8_t * tmp = Mem_calloc(1, max_read);
   ArrayU8 * result = NULL;
@@ -326,19 +341,26 @@ ArrayU8 * io_read(IO_common *io)
     len = recv(io->s, tmp, max_read, 0);
     if (len == 0) {
       fprintf(stderr, "recv(max_read=%d) -> %d\n", max_read, len);
+      exit(0);
     }
 
     dpf("recv %d bytes\n", len);
   }
   
   if (len == 0) {
-    Mem_free(tmp);
+    io->extra = result;
+    result = 0L;
+  }
+  else if (len == -1) {
+    fprintf(stderr, "read returned -1 (socket read?)\n");
     io->extra = result;
     result = 0L;
   }
   else {
     ArrayU8_append(result, ArrayU8_temp_const(tmp, len));
   }
+
+  Mem_free(tmp);
 
   return result;
 }
@@ -454,6 +476,7 @@ void Source_close_current(Source *source)
     close(source->io.s);
     source->io.s = -1;
   }
+  source->io.state = IO_CLOSED;
 }
 
 
@@ -513,6 +536,9 @@ void Source_set_persist(Source *source, int value)
 Comm * Comm_new(char * name)
 {
   Comm * comm = Mem_calloc(1, sizeof(*comm));
+
+  comm->io.s = -1;			/* Default to invalid socket value. */
+  comm->io.state = IO_CLOSED;
   
   io_open(&comm->io, name, "w+b");
   

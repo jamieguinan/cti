@@ -101,7 +101,7 @@ static void Wav_handler(Instance *pi, void *msg)
   }
   
  out:
-  Wav_buffer_discard(&wav_in);
+  Wav_buffer_release(&wav_in);
 }
 
 
