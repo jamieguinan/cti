@@ -71,6 +71,7 @@ static void close_all(SubProc_private *priv)
   }
 
   if (priv->cleanup) {
+    system(s(priv->cleanup));
   }
 
   priv->mode = SUBPROC_NONE;
@@ -131,13 +132,17 @@ static int handle_token(Instance *pi, const char *value)
 
   if (priv->control_channel) {
     /* Prefer writing to the control channel. */
+    fprintf(stderr, "%s: writing to subproc control channel\n", __func__);
     Sink_write(priv->control_sp, s(token), String_len(token));
     Sink_flush(priv->control_sp);
+    fprintf(stderr, "%s: subproc control channel flushed\n", __func__);
   }
   else if (priv->proc_stdin) {
     /* But write to stdin as a fallback. */
+    fprintf(stderr, "%s: writing to subproc stdin\n", __func__);
     Sink_write(priv->proc_stdin, s(token), String_len(token));
     Sink_flush(priv->proc_stdin);
+    fprintf(stderr, "%s: subproc stdin flushed\n", __func__);
   }
   String_free(&token);
   
@@ -192,8 +197,8 @@ static int handle_start_fancy(Instance *pi, const char *value_ignored)
 {
   SubProc_private *priv = (SubProc_private *)pi;
   close_all(priv);
-  /* FIXME: Implement... */
-  priv->mode = SUBPROC_FANCY;
+  fprintf(stderr, "%s is not implemented yet!\n", __func__);
+  priv->mode = SUBPROC_NONE;
   return 0;
 }
 

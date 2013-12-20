@@ -320,6 +320,41 @@ int String_get_char(String *str, int index)
 }
 
 
+static inline int xval(char c)
+{
+  if (c >= 'A' && c <= 'F') {
+    return (c - 'A'+ 10);
+  }
+  else if (c >= '0' && c <= '9') {
+    return (c - '0');
+  }
+  else {
+    return 0;
+  }
+}
+
+String * String_unescape(StringConst *str)
+{
+  /* http://en.wikipedia.org/wiki/Percent-encoding */
+  String *rs = String_new("");
+  const char *p = str->bytes;
+  while (*p) {
+    if (p[0] == '%' && p[1] && p[2]) {
+      char b[1] = { (16 * xval(p[1])) + (1 * xval(p[2])) };
+      printf("setting char[%d]\n", b[0]);
+      String_append_bytes(rs, b, 1);
+      p += 3;
+    }
+    else {
+      printf("setting char[%d]\n", p[0]);
+      String_append_bytes(rs, p, 1);
+      p += 1;
+    }
+  }
+  return rs;
+}
+
+
 String_list * String_list_new(void)
 {
   String_list *slst = Mem_calloc(1, sizeof(*slst));

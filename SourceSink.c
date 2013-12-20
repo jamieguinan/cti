@@ -13,8 +13,9 @@
 #include <sys/stat.h>		/* fstat */
 #include <sys/socket.h>
 #include <netdb.h>
-#include <unistd.h>		/* close */
+#include <unistd.h>		/* close, fcntl */
 #include <poll.h>		/* poll */
+#include <fcntl.h>		/* fcntl */
 
 static void io_close_current(IO_common *io);
 
@@ -51,6 +52,10 @@ static void io_open(IO_common *io, char *name, const char *mode)
 
     if (io->s == -1) {
       perror("socket"); goto out;
+    }
+
+    if (fcntl(io->s, FD_CLOEXEC)) {
+      perror("FD_CLOEXEC");
     }
 
     rc = connect(io->s, results->ai_addr, results->ai_addrlen);
@@ -568,7 +573,7 @@ String * Comm_read_string_to_zero(Comm * comm)
       return String_value_none();
     }
 
-    fprintf(stderr, "new_chunk len %d\n", new_chunk->len);
+    // fprintf(stderr, "new_chunk len %d\n", new_chunk->len);
     
     if (!chunk) {
       chunk = new_chunk;

@@ -79,7 +79,7 @@ typedef struct {
   int width;
   int height;
   XArray(CairoCommand, commands);
-  String text;
+  String * text;
   long timeout;
   long timeout_timestamp;
 } CairoContext_private;
@@ -89,7 +89,11 @@ static int set_show_text(Instance *pi, const char *value)
 {
   CairoContext_private *priv = (CairoContext_private *)pi;
 
-  String_set(&priv->text, value);
+  if (priv->text) {
+    String_free(&priv->text);
+  }
+  //priv->text = String_new(value);
+  priv->text = String_unescape(SC(value));
 
   if (priv->timeout) {
     struct timeval tv;
@@ -235,8 +239,8 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
       }
       break;
     case CC_COMMAND_SHOW_TEXT:
-      if (sl(priv->text)) {
-	cairo_show_text(priv->context, sl(priv->text));
+      if (s(priv->text)) {
+	cairo_show_text(priv->context, s(priv->text));
       }
       break;
 

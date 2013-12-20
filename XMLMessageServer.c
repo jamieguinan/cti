@@ -92,15 +92,6 @@ static void handle_client_message(IO_common *io, String *msg, Node * response)
       }
     }
   }
-
-  // 
-  // Using node_find_subnode_by_path(), xml_simple_node_value()
-  // 
-  // String * instance_name = ...;
-  // String * key = ...;
-  // String * value = ...;
-  // 
-  //
 }
 
 

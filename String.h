@@ -66,6 +66,7 @@ extern int String_len(String *str);
 extern int String_is_none(String *str);
 extern String * String_value_none(void);
 extern int String_get_char(String *str, int index);
+extern String * String_unescape(StringConst *str);
 
 
 /* List of strings. */
