@@ -77,8 +77,8 @@ typedef struct {
 } String_list;
 
 extern String_list * String_list_new(void);
-
-extern int String_list_none(String_list *slst);
+extern String_list * String_list_value_none(void);
+extern int String_list_is_none(String_list *slst);
 
 extern String_list * String_split_s(const char *src, const char *splitter);
 extern String_list * String_split(String *str, const char *splitter);

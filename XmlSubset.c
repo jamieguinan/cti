@@ -11,6 +11,13 @@ enum states {
   INVALID_XML,
 };
 
+static const char *state_labels[] = {
+  [IN_TAG] = "IN_TAG",
+  [WAITING_FOR_TEXT_OR_SUBNODES] = "WAITING_FOR_TEXT_OR_SUBNODES",
+  [IN_TEXT] = "IN_TEXT",
+  [INVALID_XML] = "INVALID_XML",
+};
+
 static int debug = 0;
 
 
@@ -39,6 +46,8 @@ Node * xml_string_to_nodetree(String *str)
       break;
     }
     char ch = c;
+
+    // fprintf(stderr, ": %c\n", ch);
 
     if (state == IN_TAG) {
       if (ch == '>') {
@@ -101,7 +110,8 @@ Node * xml_string_to_nodetree(String *str)
   }
 
   if (state != WAITING_FOR_TEXT_OR_SUBNODES || depth != 0) {
-    fprintf(stderr, "XML error (state=%d depth=%d)\n", state, depth);
+    fprintf(stderr, "XML error (state=%d(%s) depth=%d)\n", 
+	    state, state_labels[state], depth);
     /* FIXME: Clean up node tree... */
     top = NULL;
   }

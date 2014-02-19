@@ -100,6 +100,16 @@ static int set_v4addr(Instance *pi, const char *value)
 }
 
 
+static int set_v4port(Instance *pi, const char *value)
+{
+  /* NOTE: cannot cast int addresses to shorts in armeb, so don't
+     use cti_set_*() for v4port */
+  SocketServer_private *priv = (SocketServer_private *)pi;
+  priv->lsc.port = atoi(value);
+  return 0;
+}
+
+
 static int set_enable(Instance *pi, const char *value)
 {
   SocketServer_private *priv = (SocketServer_private *)pi;
@@ -128,7 +138,7 @@ static int set_notify(Instance *pi, const char *value)
 static Config config_table[] = {
   { "max_total_buffered_data", set_max_total_buffered_data, 0L, 0L },
   { "v4addr", set_v4addr, 0L, 0L },
-  { "v4port", 0L, 0L, 0L, cti_set_int, offsetof(SocketServer_private, lsc.port) },
+  { "v4port", set_v4port, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
   { "notify", set_notify, 0L, 0L},
   /* Maybe add v6 later... */

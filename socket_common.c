@@ -2,9 +2,11 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
-#include <unistd.h>		/* close */
+#include <unistd.h>		/* close, fcntl */
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>		/* fcntl */
+
 
 #include "socket_common.h"
 
@@ -12,6 +14,22 @@
 #ifndef set_reuseaddr
 #define set_reuseaddr 1
 #endif
+
+void set_cloexec(int fd)
+{
+  /* Prevent listen socket from being inherited by child processes. */
+  int flags;
+  flags = fcntl(fd, F_GETFD);
+  if (flags == -1) {
+    perror("fcntl F_GETFD");
+  }
+  else {
+    flags |= FD_CLOEXEC;
+    if (fcntl(fd, F_SETFD, flags) == -1) {
+      perror("fcntl F_SETFD FD_CLOEXEC");
+    }
+  }
+}
 
 
 int listen_socket_setup(listen_common *lsc)
@@ -41,6 +59,8 @@ int listen_socket_setup(listen_common *lsc)
       return 1;
     }
   }
+
+  set_cloexec(lsc->fd);
 
   rc = bind(lsc->fd, (struct sockaddr *)&sa, sizeof(sa));
   if (rc == -1) { 

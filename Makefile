@@ -15,7 +15,9 @@ endif
 CFLAGS += -O2 -Wall $(CMDLINE_CFLAGS)
 # CFLAGS += -Werror
 # CFLAGS += -O0 -ggdb
+ifneq ($(ARCH),armeb)
 CFLAGS += -Wno-unused-result
+endif
 # -std=c99 
 CPPFLAGS += -I../../platform/$(ARCH)/include -I../jpeg-7
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
@@ -239,8 +241,8 @@ ifeq ($(ARCH),x86_64-Linux)
 # Or ../../platform/$(ARCH)/lib/ ?
 endif
 #if gdb not in cflags
-#	@echo STRIP
-#	@$(STRIP) $@
+	@echo STRIP
+	@$(STRIP) $@
 # endif
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))

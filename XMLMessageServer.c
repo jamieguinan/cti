@@ -33,6 +33,16 @@ typedef struct {
 } XMLMessageServer_private;
 
 
+static int set_v4port(Instance *pi, const char *value)
+{
+  /* NOTE: cannot cast int addresses to shorts in armeb, so don't
+     use cti_set_*() for v4port */
+  XMLMessageServer_private *priv = (XMLMessageServer_private *)pi;
+  priv->lsc.port = atoi(value);
+  return 0;
+}
+
+
 static int set_enable(Instance *pi, const char *value)
 {
   XMLMessageServer_private *priv = (XMLMessageServer_private *)pi;
@@ -41,7 +51,7 @@ static int set_enable(Instance *pi, const char *value)
 }
 
 static Config config_table[] = {
-  { "v4port", 0L, 0L, 0L, cti_set_int, offsetof(XMLMessageServer_private, lsc.port) },
+  { "v4port", set_v4port, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
 };
 
@@ -148,13 +158,13 @@ static void XMLMessageServer_tick(Instance *pi)
     }
     else {
       /* Read, parse, respond, close.... */
-      String *message = Comm_read_string_to_zero(&comm);
+      String *message = Comm_read_string_to_byte(&comm, '$');
       if (!String_is_none(message)) {
 	handle_client_message(&comm.io, message, resp);
       }
     }
     String *resp_str = node_to_string(resp);
-    Comm_write_string_with_zero(&comm, resp_str);
+    Comm_write_string_with_byte(&comm, resp_str, '$');
     String_free(&resp_str);
     Comm_close(&comm);
   }  

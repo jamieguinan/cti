@@ -1,6 +1,7 @@
 /* 
- * Transform (rotate/flip) and crop Jpeg buffers, like "jpegtran" command-line app.
- * Processing order is transform-then-crop.
+ * Transform (rotate/flip) and crop Jpeg buffers, like "jpegtran"
+ * command-line app.  Processing order is transform-then-crop.
+ * Also adds standard quantization tables if absent.
  */
 #include <stdio.h>		
 #include <string.h>
@@ -180,9 +181,11 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
 
   /* Specify data destination for compression */
 
-  jpeg_out = Jpeg_buffer_new(srcinfo.image_width*srcinfo.image_height*3+16384, &jpeg_in->c); /*  Leave enough space for 100% of original size, plus some header. */
-  jpeg_out->c.tv.tv_sec = 0L;
-  jpeg_out->c.tv.tv_usec = 0L;
+  /*  Leave enough space for 100% of original size, plus some header. */
+  jpeg_out = Jpeg_buffer_new(srcinfo.image_width*srcinfo.image_height*3+16384, &jpeg_in->c); 
+
+  //jpeg_out->c.tv.tv_sec = 0L;
+  //jpeg_out->c.tv.tv_usec = 0L;
 
   jpeg_mem_dest(&dstinfo, jpeg_out->data, jpeg_out->data_length, &jpeg_out->encoded_length);
 
@@ -239,7 +242,6 @@ static void jpeg_handler(Instance *pi, void *msg)
     // fprintf(stderr, "transform...\n");
     transform(priv, jpeg_in, &jpeg_out);
     if (jpeg_out) {
-      jpeg_out->c.tv = jpeg_in->c.tv;	/* Preserve timestamp. */
       PostData(jpeg_out, pi->outputs[OUTPUT_JPEG].destination);
     }
   }

@@ -52,6 +52,11 @@ static void Jpeg_handler(Instance *pi, void *msg)
     }
   }
 
+  if (jpeg_in->c.eof) {
+    fprintf(stderr, "%s detected EOF\n", __func__);
+    exit(0);
+  }
+
   /* Discard input buffer. */
   Jpeg_buffer_discard(jpeg_in);
   pi->counter += 1;
@@ -67,8 +72,6 @@ static void JpegFiler_tick(Instance *pi)
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm,pi);
   }
-
-  pi->counter++;
 }
 
 

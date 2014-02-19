@@ -1,5 +1,8 @@
 /* String object interface.  Has malloc and function call overhead,
-   but aims to be safer than raw <string.h> operations. */
+ * but aims to be safer than raw <string.h> operations.  The automatic
+ * size alloction for String_sprintf is one of my favorite things
+ * about it.
+ */
 #include "String.h"
 #include <string.h>
 #include <stdlib.h>
@@ -137,6 +140,10 @@ void String_clear(String *s)
 
 void String_free(String **s)
 {
+  if (String_is_none(*s)) {
+    fprintf(stderr, "%s: cannot free special NONE string!\n", __func__);
+    return;
+  }
   String_clear(*s);
   Mem_free(*s);
   *s = 0L;
@@ -164,12 +171,14 @@ String * String_sprintf(const char *fmt, ...)
   int psize = 64;
 
   while (1) {
-    char p[psize]; 		/* size varies, but its on the stack so no malloc required */
+    /* p size varies, but its on the stack so no malloc required. */
+    char p[psize]; 
     va_start(ap, fmt);
     n = vsnprintf(p, psize, fmt, ap);
     va_end(ap);
     /* Prior to C99, vsnprintf would return -1 if the buffer wasn't large enough.
        In C99, it returns the number of characters that would have been formatted.
+       They changed the semantics!  What the fuck were they thinking?
        Either way, if it didn't fit, double the size of the stack buffer. */
     if ((n < 0)	|| (n >= psize)) {
       psize *= 2;
@@ -367,7 +376,7 @@ String_list * String_list_new(void)
 void String_list_add(String_list *slst, String **add)
 {
   slst->_strings[slst->len] = *add;
-  *add = _String_none;
+  *add = _String_none;		/* List takes ownership. */
   slst->len += 1;
   if (slst->len == slst->available) {
     slst->available *= 2;
@@ -403,7 +412,7 @@ String_list * String_split_s(const char *src, const char *splitter)
 static String_list *_string_list_none;
 
 
-int String_list_none(String_list *slst)
+int String_list_is_none(String_list *slst)
 {
   return (slst == _string_list_none ? 1 : 0);
 }
@@ -479,7 +488,23 @@ String * String_list_find_val(String_list *slst, String *key, int skip)
 }
 
 
+String_list * String_list_value_none(void)
+{
+  return _string_list_none;
+}
+
+
 void String_list_free(String_list **slst)
 {
-  fprintf(stderr, "%s:%s FIXME: implement...\n", __FILE__, __func__);
+  int i;
+  if (String_list_is_none(*slst)) {
+    fprintf(stderr, "%s: cannot free special NONE string list!\n", __func__);
+    return;
+  }
+  String_list *lst = *slst;
+  for (i=0; i < lst->len; i++) {
+    String_free(&(lst->_strings[i]));
+  }
+  
+  *slst = String_list_value_none();
 }

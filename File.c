@@ -13,7 +13,7 @@ ArrayU8 * File_load_data(String * filename)
   FILE *f = fopen(s(filename), "rb");
 
   if (!f) {
-    perror(s(filename));
+    // perror(s(filename));
     return 0L;
   }
 
@@ -44,8 +44,12 @@ ArrayU8 * File_load_data(String * filename)
 String * File_load_text(String * filename)
 {
   ArrayU8 *a = File_load_data(filename);
-  String *s = ArrayU8_to_string(&a);
-  return s;
+  if (a) {
+    return ArrayU8_to_string(&a);
+  }
+  else {
+    return String_value_none();
+  }
 }
 
 

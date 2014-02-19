@@ -148,13 +148,15 @@ static void tsnapshot()
   if (tcount == 600) {
     int i;
     FILE *f = fopen("tcount.csv", "w");
-    for (i=1; i < 600; i++) {
-      double t0 = field_times[i-1].tv_sec + (field_times[i-1].tv_nsec/1000000000.0);
-      double t1 = field_times[i].tv_sec + (field_times[i].tv_nsec/1000000000.0);
-      fprintf(f, "%.9f, %.9f\n", t0, (t1-t0));
+    if (f) {
+      for (i=1; i < 600; i++) {
+	double t0 = field_times[i-1].tv_sec + (field_times[i-1].tv_nsec/1000000000.0);
+	double t1 = field_times[i].tv_sec + (field_times[i].tv_nsec/1000000000.0);
+	fprintf(f, "%.9f, %.9f\n", t0, (t1-t0));
+      }
+      fclose(f);
+      printf("field times saved\n");
     }
-    fclose(f);
-    printf("field times saved\n");
   }
 
 }
@@ -696,6 +698,7 @@ static void Y422P_handler(Instance *pi, void *data)
   Y422P_buffer *y422p = data;
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
+  Gray_buffer *gray = NULL;
 
   pre_render_frame(priv, y422p->width, y422p->height, &y422p->c);
 
@@ -743,6 +746,7 @@ static void RGB3_handler(Instance *pi, void *data)
   RGB3_buffer *rgb3 = data;
   Y422P_buffer *y422p = NULL;
   BGR3_buffer *bgr3 = NULL;
+  Gray_buffer *gray = NULL;
 
   if (0) {
     static int n = 0;
@@ -804,6 +808,7 @@ static void BGR3_handler(Instance *pi, void *data)
   BGR3_buffer *bgr3 = data;
   RGB3_buffer *rgb3 = NULL;
   Y422P_buffer *y422p = NULL;
+  Gray_buffer *gray = NULL;
 
   pre_render_frame(priv, bgr3->width, bgr3->height, &y422p->c);
   switch (priv->renderMode) {

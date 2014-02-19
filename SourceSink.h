@@ -68,8 +68,8 @@ typedef struct {
 
 extern Comm * Comm_new(char * name);
 extern void Comm_close(Comm * comm);
-extern void Comm_write_string_with_zero(Comm * comm, String *str);
-extern String * Comm_read_string_to_zero(Comm * comm);
+extern void Comm_write_string_with_byte(Comm * comm, String *str, char byteval);
+extern String * Comm_read_string_to_byte(Comm * comm, char byteval);
 
 #if 0
 extern void Comm_read_append_array(Comm * comm, Array_u8 * array);

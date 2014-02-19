@@ -54,9 +54,11 @@ static void io_open(IO_common *io, char *name, const char *mode)
       perror("socket"); goto out;
     }
 
+#if 0
     if (fcntl(io->s, FD_CLOEXEC)) {
       perror("FD_CLOEXEC");
     }
+#endif
 
     rc = connect(io->s, results->ai_addr, results->ai_addrlen);
     if (rc == -1) {
@@ -553,18 +555,20 @@ Comm * Comm_new(char * name)
 }
 
 
-void Comm_write_string_with_zero(Comm * comm, String *str)
+void Comm_write_string_with_byte(Comm * comm, String *str, char byteval)
 {
-  /* String data has a null-terminating zero, so passing length+1 should be Ok. */
-  io_write(&comm->io, s(str), String_len(str)+1);
+  /* FIXME: Could make this a single call if implemented io_writev. */
+  io_write(&comm->io, s(str), String_len(str));
+  io_write(&comm->io, &byteval, 1);
 }
 
-String * Comm_read_string_to_zero(Comm * comm)
+
+String * Comm_read_string_to_byte(Comm * comm, char byteval)
 {
   ArrayU8 * chunk = NULL;
   int i;
 
-  /* Read up to a zero byte, return a String, store extra in io.extra */
+  /* Read up to indicated byte value, return a String, store extra in io.extra. */
   while (1) {
     ArrayU8 * new_chunk = io_read(&comm->io);
     if (!new_chunk) {
@@ -583,9 +587,14 @@ String * Comm_read_string_to_zero(Comm * comm)
       /* FIXME: Free new_chunk */
     }
     
+    //fprintf(stderr, "scanning %d bytes for value 0x%x\n", chunk->len, byteval);
+    
     for (i=0; i < chunk->len; i++) {
-      if (chunk->data[i] == 0) {
-	String *result = String_new((char*)chunk->data);
+      //fprintf(stderr, "chunk->data[i] = 0x%x [%c]\n", chunk->data[i], chunk->data[i]);
+      if (chunk->data[i] == byteval) {
+	//fprintf(stderr, "found at offset %d\n", i);	
+	String *result = String_new("");
+	String_append_bytes(result, (char*)chunk->data, i);
 	if (chunk->len > i && !comm->io.extra) {
 	  comm->io.extra = ArrayU8_new();
 	  ArrayU8_append(comm->io.extra, ArrayU8_temp_const(chunk->data+i, chunk->len-i));
