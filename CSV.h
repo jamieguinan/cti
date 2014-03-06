@@ -9,7 +9,7 @@ typedef struct {
   ISet(String) _entries;
 } CSV_table;
 
-String *CSV_get(CSV_table *csv, int row, int column);
+String * CSV_get(CSV_table *csv, int row, int column);
 
 CSV_table *CSV_load(String *path);
 

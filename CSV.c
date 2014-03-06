@@ -17,6 +17,7 @@ String *CSV_get(CSV_table *csv, int row, int column)
   return csv->_entries.items[i];
 }
 
+
 CSV_table *CSV_load(String *path)
 {
   if (!path) {
@@ -28,20 +29,23 @@ CSV_table *CSV_load(String *path)
     return NULL;
   }
 
-  CSV_table *csv = Mem_calloc(1, sizeof(&csv));
+  CSV_table *csv = Mem_calloc(1, sizeof(*csv));
 
-  const char *p = contents->bytes;
-  const char *newline;
-  const char *comma;
+  char *p = contents->bytes;
+  char *newline;
+  char *comma;
   int columns = 0;
   int rows = 0;
 
   while (1) {
+    //puts("-------");
     int ccount = 0;
     newline = strchr(p, '\n');
     if (!newline) {
       break;
     }
+
+    *newline = 0;
 
     while (p < newline) {
       ccount += 1;
@@ -49,10 +53,13 @@ CSV_table *CSV_load(String *path)
       if (!comma) {
 	comma = newline;	/* allow trailing comma or newline to end a row */
       }
+
       int len = comma - p + 1; 	/* leave room to null-terminate tmp */
       char tmp[len];
       strncpy(tmp, p, len);	/* does not copy the comma */
       tmp[len-1] = 0;		/* null-terminate */
+
+      //printf("%s\n", tmp);
 
 #if 1
       ISet_add(csv->_entries, String_new(tmp));

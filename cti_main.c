@@ -16,6 +16,7 @@
 #include "JpegTran.h"
 #include "PGMFiler.h"
 #include "MotionDetect.h"
+#include "V4L1Capture.h"
 #include "V4L2Capture.h"
 #include "MjpegMux.h"
 #include "MjpegDemux.h"
@@ -26,7 +27,6 @@
 #include "Mpeg2Enc.h"
 #include "SDLstuff.h"
 #include "String.h"
-#include "V4L2Capture.h"
 #include "VFilter.h"
 #include "AudioLimiter.h"
 #include "ScriptV00.h"
@@ -83,10 +83,14 @@ int cti_main(int argc, char *argv[])
   gig = InstanceGroup_new();
 
 #ifdef __linux__
+#ifdef __ARMEL__
+  V4L1Capture_init();
+#else
   ALSAio_init();
   ALSAMixer_init();
   V4L2Capture_init();
   SonyPTZ_init();
+#endif
   Signals_init();
   Spawn_init();
 #endif

@@ -115,6 +115,8 @@ typedef struct  {
 
 
 static void get_device_range(Instance *pi, Range *range);
+static void stream_disable(V4L2Capture_private *priv);
+static int stream_enable(V4L2Capture_private *priv);
 
 static int set_device(Instance *pi, const char *value)
 {
@@ -655,13 +657,18 @@ static int set_fps(Instance *pi, const char *value)
   struct v4l2_streamparm setfps = { .type = V4L2_BUF_TYPE_VIDEO_CAPTURE };
   int rc;
   int n = 0, d = 0;
+  int re_enable = 0;
   float fps = atof(value);
-
-  /* FIXME: Should stop/restart the video for UVC. */
 
   float_to_fraction(fps, &n, &d);
   setfps.parm.capture.timeperframe.numerator = d;
   setfps.parm.capture.timeperframe.denominator = n;
+
+  if (priv->enable) {
+    /* UVC requires stop/restart if capture is running. */
+    stream_disable(priv);
+    re_enable = 1;
+  }
 
   rc = ioctl(priv->fd, VIDIOC_S_PARM, &setfps);
   if(rc == -1) {
@@ -676,6 +683,11 @@ static int set_fps(Instance *pi, const char *value)
     }
     
   }
+
+  if (re_enable) {
+    stream_enable(priv);
+  }
+
   return rc;
 }
 
@@ -685,10 +697,7 @@ static int set_size(Instance *pi, const char *value)
   struct v4l2_format format = {};
   int n, w, h;
   int rc;
-
-  /* FIXME: For certain capture devices, like UVC, if currently
-     running, need to stop and drain frames, then restart after
-     resizing. */
+  int re_enable = 0;
 
   n = sscanf(value, "%dx%d", &w, &h);
   if (n != 2) {
@@ -711,17 +720,25 @@ static int set_size(Instance *pi, const char *value)
   format.fmt.pix.width = priv->width;
   format.fmt.pix.height = priv->height;
 
+  if (priv->enable) {
+    re_enable = 1;
+    stream_disable(priv);
+  }
+
   rc = ioctl(priv->fd, VIDIOC_S_FMT, &format);
   if (rc == -1) {
     perror("VIDIOC_S_FMT");
-    goto out;
   }
-
-  printf("Capture size set to %dx%d\n", format.fmt.pix.width, format.fmt.pix.height);
+  else {
+    printf("Capture size set to %dx%d\n", format.fmt.pix.width, format.fmt.pix.height);
+  }
     
  out:
+  if (re_enable) {
+    stream_enable(priv);
+  }
+
   return rc;
-  
 }
 
 

@@ -16,14 +16,16 @@ CFLAGS += -O2 -Wall $(CMDLINE_CFLAGS)
 # CFLAGS += -Werror
 # CFLAGS += -O0 -ggdb
 ifneq ($(ARCH),armeb)
+ifneq ($(ARCH),lpd)
 CFLAGS += -Wno-unused-result
+endif
 endif
 # -std=c99 
 CPPFLAGS += -I../../platform/$(ARCH)/include -I../jpeg-7
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
 LDFLAGS += -L../../platform/$(ARCH)/lib -ljpeg -lpthread
 ifeq ($(OS),Linux)
-LDFLAGS += -lasound -ldl -lrt
+LDFLAGS += -ldl -lrt
 endif
 
 # "-static" is a problem for alsa, and other things...
@@ -129,15 +131,24 @@ OBJS= \
 ifeq ($(OS),Linux)
 OBJS+=\
 	$(OBJDIR)/Uvc.o \
+	$(OBJDIR)/FFmpegEncode.o \
+	../../platform/$(ARCH)/jpeg-7/libjpeg.la
+ifneq ($(ARCH),lpd)
+OBJS+=\
 	$(OBJDIR)/V4L2Capture.o \
 	$(OBJDIR)/ALSAio.o \
 	$(OBJDIR)/ALSAMixer.o \
-	$(OBJDIR)/FFmpegEncode.o \
-	$(OBJDIR)/SonyPTZ.o \
-	../../platform/$(ARCH)/jpeg-7/libjpeg.la
+	$(OBJDIR)/SonyPTZ.o
 LDFLAGS+=-lvisca
+LDFLAGS+=-lasound 
 CPPFLAGS+=-DHAVE_PRCTL
+else
+OBJS+= \
+	$(OBJDIR)/V4L1Capture.o
+LDFLAGS+=-lm
 endif
+endif
+
 
 # SDL on OSX
 ifeq ($(ARCH),i386-Darwin)
@@ -159,6 +170,7 @@ endif
 
 #SDL
 ifneq ($(ARCH),armeb)
+ifneq ($(ARCH),lpd)
 ifeq (0,$(shell (sdl-config --cflags > /dev/null 2> /dev/null; echo $$?)))
 OBJS+=$(OBJDIR)/SDLstuff.o
 CPPFLAGS+=$$(sdl-config --cflags) -I/usr/include/GL
@@ -166,9 +178,11 @@ LDFLAGS+=$$(sdl-config --libs) $$(pkg-config glu --libs)
 CPPFLAGS+=-DHAVE_SDL
 endif
 endif
+endif
 
 # Cairo
 ifneq ($(ARCH),armeb)
+ifneq ($(ARCH),lpd)
 ifeq (0,$(shell (pkg-config cairo --cflags > /dev/null 2> /dev/null; echo $$?)))
 OBJS+=	$(OBJDIR)/CairoContext.o
 CPPFLAGS+=$$(pkg-config cairo --cflags)
@@ -176,6 +190,7 @@ LDFLAGS+=$$(pkg-config cairo --libs)
 # This is a new requirement to resolve undefined reference to `pixman_*' errors
 LDFLAGS+=$$(pkg-config pixman-1 --libs)
 CPPFLAGS+=-DHAVE_CAIRO
+endif
 endif
 endif
 

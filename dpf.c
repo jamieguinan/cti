@@ -71,7 +71,7 @@ void cti_debug_printf_list(void)
   
     n = strlen(printfRecords.records[i].fmt);
     if (n && printfRecords.records[i].fmt[n-1] != '\n') {
-      putchar('\n');
+      fputc('\n', stdout);
     }
   }
 }
