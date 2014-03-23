@@ -1116,6 +1116,9 @@ static void Keycode_handler(Instance *pi, void *msg)
   Keycode_message_cleanup(&km);
 }
 
+
+/* FIXME: Could this code be shared?  Maybe include the variables as a
+   substructure, and move calc_fps into a different module. */
 static double period = 0.0;
 static int count = 0;
 static struct timeval tv_last = { };

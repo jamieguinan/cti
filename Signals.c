@@ -1,4 +1,5 @@
 #include "Signals.h"
+#include "StackDebug.h"
 
 #include <stdio.h>
 #include <stdlib.h>		/* malloc */
@@ -38,6 +39,11 @@ static void shutdown_handler(int signo)
   exit(signo);
 }
 
+static void usr1_handler(int signo)
+{
+  StackDebug();
+}
+
 
 void Signals_handle(int signo, void (*handler)(int))
 {
@@ -51,4 +57,5 @@ void Signals_init(void)
 {
   Signals_handle(SIGSEGV, shutdown_handler);
   Signals_handle(SIGABRT, shutdown_handler);
+  Signals_handle(SIGUSR1, usr1_handler);
 }

@@ -108,10 +108,16 @@ static void O511_handler(Instance *pi, void *data)
   y420p_out->c.tv = o511_in->c.tv;
     
   temp = malloc( (o511_in->width * o511_in->height * 3)/ 2);
-  
+
+#if 0  
+  /* I think this was necessary for the GSPCA build. */
   remove0blocks(o511_in->data, &o511_in->data_length);
-    
 #define MAGIC_OFFSET 9
+#else
+  /* But this works for the older V4L1 build. */
+#define MAGIC_OFFSET 0
+#endif
+  // printf("o511_in->data_length=%d\n", o511_in->data_length);
   ov511_decomp_420(o511_in->data+MAGIC_OFFSET, 
 		   y420p_out->data, 
 		   temp, 

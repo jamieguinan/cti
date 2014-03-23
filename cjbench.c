@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
   DJpeg_init();
   JpegFiler_init();
 
-  Template_list();
+  Template_list(0);
 
   Instance *cj = Instantiate("CJpeg");
   printf("instance: %s\n", cj->label);

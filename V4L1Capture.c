@@ -1,6 +1,5 @@
 /* V4L (old API, "1") code.  This is obsolete, but works great for
-   OV511 cameras attached to LPD boards, and I have no plans to update
-   that platform to kernels beyond 2.6.x.
+   OV511 cameras attached to LPD and NSLU2 boards based on 2.6.x builds.
 
    References,
      ~/projects/bbtv/v4linput.c
@@ -16,11 +15,11 @@
 #include <sys/stat.h>		/* open */
 #include <fcntl.h>		/* open */
 
-
 #include "CTI.h"
 #include "V4L1Capture.h"
 #include "Mem.h"
 #include "Array.h"
+#include "Images.h"
 
 #define table_size(x) (sizeof(x)/sizeof(x[0]))
 
@@ -36,9 +35,10 @@ static Input V4L1Capture_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-//enum { /* OUTPUT_... */ };
+enum { OUTPUT_420P, OUTPUT_O511 };
 static Output V4L1Capture_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
+  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },  
+  [ OUTPUT_O511 ] = {.type_label = "O511_buffer", .destination = 0L },  
 };
 
 typedef struct {
@@ -64,12 +64,37 @@ typedef struct {
   ArrayU8 *frame;		/* Most recent captured frame. */
 } V4L1Capture_private;
 
+static struct {
+  const char *enumString;
+  const char *textString;  
+}
+v4l1_formats[] = {
+  [1] = { .enumString="VIDEO_PALETTE_GREY", .textString="Linear greyscale"},
+  [2] = { .enumString="VIDEO_PALETTE_HI240", .textString="High 240 cube (BT848)"},
+  [3] = { .enumString="VIDEO_PALETTE_RGB565", .textString="565 16 bit RGB"},
+  [4] = { .enumString="VIDEO_PALETTE_RGB24", .textString="24bit RGB"},
+  [5] = { .enumString="VIDEO_PALETTE_RGB32", .textString="32bit RGB"},
+  [6] = { .enumString="VIDEO_PALETTE_RGB555", .textString="555 15bit RGB"},
+  [7] = { .enumString="VIDEO_PALETTE_YUV422", .textString="YUV422 capture"},
+  [8] = { .enumString="VIDEO_PALETTE_YUYV", .textString="YUYV"},
+  [9] = { .enumString="VIDEO_PALETTE_UYVY", .textString="UYUV"},
+  [10] = { .enumString="VIDEO_PALETTE_YUV420", .textString="YUV420"},
+  [11] = { .enumString="VIDEO_PALETTE_YUV411", .textString="YUV411 capture"},
+  [12] = { .enumString="VIDEO_PALETTE_RAW", .textString="RAW capture (BT848)"},
+  [13] = { .enumString="VIDEO_PALETTE_YUV422P", .textString="YUV 4:2:2 Planar"},
+  [14] = { .enumString="VIDEO_PALETTE_YUV411P", .textString="YUV 4:1:1 Planar"},
+  [15] = { .enumString="VIDEO_PALETTE_YUV420P", .textString="YUV 4:2:0 Planar"},
+  [16] = { .enumString="VIDEO_PALETTE_YUV410P", .textString="YUV 4:1:0 Planar"},
+};
+
+
 static int set_w_h(Instance *pi, const char *value);
 
 static int set_device(Instance *pi, const char *value)
 {
   V4L1Capture_private *v = (V4L1Capture_private *)pi;
   int rc;
+  int i;
 
   v->fd = open(value, O_RDWR);
   if (v->fd == -1) {
@@ -102,15 +127,13 @@ static int set_device(Instance *pi, const char *value)
 
   v->brightness = v->picture.brightness;
 
-#if 0
   for (i=0; i < table_size(v4l1_formats); i++) {
     if (v4l1_formats[i].enumString && i == v->picture.palette) {
       printf("%s (%s)\n", v4l1_formats[i].enumString, v4l1_formats[i].textString);
       break;
     }
   }
-
-  
+#if 0
   v->picture.brightness = 18000;
   v->picture.hue = 32000;
   v->picture.colour = 15000;
@@ -161,6 +184,9 @@ static int set_device(Instance *pi, const char *value)
   /* No frame at start. */
   v->frame = NULL;
 
+  /* Automatically enable. */
+  v->enable = 1;
+
   return 0;
 }
 
@@ -197,6 +223,12 @@ static int set_w_h(Instance *pi, const char *value)
   V4L1Capture_private *v = (V4L1Capture_private *)pi;
   int rc;
   int n, w, h;
+
+  if (v->fd == -1) {
+    fprintf(stderr, "%s: video is running\n", __func__);
+    return 1;
+  }
+
   n = sscanf(value, "%dx%d", &w, &h);
   if (n != 2) {
     fprintf(stderr, "invalid size string!\n");
@@ -285,14 +317,14 @@ static void V4L1Capture_tick(Instance *pi)
   current_frame = v->next_frame;
 
   /* If more than 1 frame, can queue up next capture before waiting for last one to complete. */
-  printf("%d frames\n", v->vmbuf.frames);
+  dpf("%d frames available\n", v->vmbuf.frames);
+
   if (v->vmbuf.frames > 1) {
     v->next_frame = (v->next_frame + 1) % v->vmbuf.frames;
     v->vmmap.frame = v->next_frame;
     /* printf("capturing %dx%d\n",v->vmmap.width, v->vmmap.height); */
     rc = ioctl(v->fd, VIDIOCMCAPTURE, &v->vmmap /* .frame */);
-    rc_check("VIDIOCMCAPTURE");
-    
+    rc_check("VIDIOCMCAPTURE");    
   }
 
   rc = ioctl(v->fd, VIDIOCSYNC, &current_frame);
@@ -303,24 +335,42 @@ static void V4L1Capture_tick(Instance *pi)
     rc = ioctl(v->fd, VIDIOCMCAPTURE, &v->vmmap /* .frame */);  
   }
 
-  /* Use depth to calculate captured frame size. */
-  int img_size = (v->w * v->h * v->picture.depth)/8;
-
-  ArrayU8 *img = ArrayU8_new();
-  ArrayU8_append(img, 
-		 ArrayU8_temp_const(v->map + v->vmbuf.offsets[current_frame], img_size));
-
-  if (v->frame) {
-    // FIXME:  If doing mark/sweep, can leave this float.  Otherwise
-    // should unref previous frame.
+  if (pi->outputs[OUTPUT_420P].destination) {
+    Y420P_buffer *y420p = Y420P_buffer_new(v->w, v->h, 0L);
+    memcpy(y420p->y, 
+	   v->map + v->vmbuf.offsets[current_frame],
+	   y420p->y_length);
+    memcpy(y420p->cr,
+	   v->map + v->vmbuf.offsets[current_frame] + y420p->y_length,
+	   y420p->cr_length);
+    memcpy(y420p->cb,
+	   v->map + v->vmbuf.offsets[current_frame] + y420p->y_length + y420p->cr_length,
+	   y420p->cb_length);
+    PostData(y420p, pi->outputs[OUTPUT_420P].destination);
   }
-  v->frame = img;
+  else if (pi->outputs[OUTPUT_O511].destination) {
+    uint8_t *pdata = v->map + v->vmbuf.offsets[current_frame];
+    int dlen = (v->w * v->h)*3/2;
+    while (pdata[dlen] == 0) {
+      dlen -= 1;
+    }
+    dpf("O511 data length = %d\n", dlen);
+    O511_buffer *o511 = O511_buffer_from(pdata,
+					 dlen,
+					 v->w, v->h,
+					 0L);
+    PostData(o511, pi->outputs[OUTPUT_O511].destination);
+  }
+ 
+  dpf("frame %d captured\n", pi->counter);
 
+  pi->counter += 1;
 }
 
 static void V4L1Capture_instance_init(Instance *pi)
 {
-  // V4L1Capture_private *priv = (V4L1Capture_private *)pi;
+  V4L1Capture_private *v = (V4L1Capture_private *)pi;
+  v->fd = -1;
 }
 
 

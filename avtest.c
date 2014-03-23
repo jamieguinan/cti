@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
   //MjpegMux_init();
   SDLstuff_init();
 
-  Template_list();
+  Template_list(1);
 
   Instance *vc = Instantiate("V4L2Capture");
   printf("instance: %s\n", vc->label);

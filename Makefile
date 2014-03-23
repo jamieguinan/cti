@@ -28,6 +28,8 @@ ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 endif
 
+INSTRUMENT = -finstrument-functions
+
 # "-static" is a problem for alsa, and other things...
 
 OBJDIR ?= .
@@ -122,6 +124,8 @@ OBJS= \
 	$(OBJDIR)/socket_common.o \
 	$(OBJDIR)/XmlSubset.o \
 	$(OBJDIR)/nodetree.o \
+	$(OBJDIR)/Stats.o \
+	$(OBJDIR)/StackDebug.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
@@ -142,11 +146,17 @@ OBJS+=\
 LDFLAGS+=-lvisca
 LDFLAGS+=-lasound 
 CPPFLAGS+=-DHAVE_PRCTL
-else
-OBJS+= \
-	$(OBJDIR)/V4L1Capture.o
+endif
+
+ifeq ($(ARCH),lpd)
+OBJS+=$(OBJDIR)/V4L1Capture.o
 LDFLAGS+=-lm
 endif
+
+ifeq ($(ARCH),armeb)
+OBJS+=$(OBJDIR)/V4L1Capture.o
+endif
+
 endif
 
 
@@ -255,10 +265,11 @@ ifeq ($(ARCH),x86_64-Linux)
 #	@cp -Lvu $$(ldd $@ | grep -E '264|png' | sed -e 's,.*/usr,/usr,g' -e 's, .*$$,,') $(HOME)/lib/
 # Or ../../platform/$(ARCH)/lib/ ?
 endif
-#if gdb not in cflags
+	@echo Generating map
+	$(NM) $@ | sort > $@.map
 	@echo STRIP
 	@$(STRIP) $@
-# endif
+
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))
 
@@ -283,6 +294,11 @@ $(OBJDIR)/ctest$(EXEEXT): \
 
 
 $(OBJDIR)/%.o: %.c Makefile
+	@echo CC $<
+#	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CPPFLAGS) $(INSTRUMENT) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/StackDebug.o: StackDebug.c Makefile
 	@echo CC $<
 #	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@

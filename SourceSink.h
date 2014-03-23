@@ -2,6 +2,7 @@
 #define _SOURCESINK_H_
 
 #include "Array.h"
+#include "Stats.h"
 #include <stdint.h>
 #include <stdio.h>		/* FILE * */
 #include <time.h>
@@ -32,8 +33,7 @@ typedef struct {
   int eof;
   int eof_flagged;
   int persist;			/* return on EOF */
-  uint64_t bytes_read;
-  time_t t0;
+  Items_per_sec bytes_per_sec;
 } Source;
 
 extern Source *Source_new(char *name /* , options? */ );

@@ -379,9 +379,7 @@ static void SocketServer_tick(Instance *pi)
     }
 
     cc->bytes_sent += n;
-    dpf("soccketserver: %lld bytes/sec\n", 
-	cc->bytes_sent / (time(NULL) - cc->t0));
-    
+
   oops:
     cc->raw_offset += n;
     if (cc->raw_offset == cc->raw_node->buffer->data_length) {

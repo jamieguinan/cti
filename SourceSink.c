@@ -213,8 +213,6 @@ Source *Source_new(char *name)
   source->io.s = -1;			/* Default to invalid socket value. */
   source->io.state = IO_CLOSED;
 
-  source->t0 = time(NULL);
-
   char *colon = strchr(name, ':');
   if (colon && isdigit(colon[1])) {
     /* Split into host, port parts. */
@@ -350,7 +348,7 @@ ArrayU8 * io_read(IO_common *io)
     len = recv(io->s, tmp, max_read, 0);
     if (len == 0) {
       fprintf(stderr, "recv(max_read=%d) -> %d\n", max_read, len);
-      exit(0);
+      io_close_current(io);
     }
 
     dpf("recv %d bytes\n", len);
@@ -496,6 +494,7 @@ void Source_free(Source **source)
   *source = 0L;
 }
 
+extern void StackDebug(void);
 
 void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
 {
@@ -519,8 +518,11 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
       return;
     }
 
-    source->bytes_read += newChunk->len;
-    dpf("source reading %d bytes/sec\n", source->bytes_read / (time(NULL) - (source->t0)));
+    Items_per_sec_update(&source->bytes_per_sec, newChunk->len);
+    dpf("source bytes/sec %.1f %.1f %1.f\n",
+	source->bytes_per_sec.records[0].value,
+	source->bytes_per_sec.records[1].value,
+	source->bytes_per_sec.records[2].value);
 
     if (source->eof_flagged) {
       fprintf(stderr, "%s: EOF reset\n", __func__);      

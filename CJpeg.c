@@ -19,14 +19,16 @@ static void Config_handler(Instance *pi, void *msg);
 static void rgb3_handler(Instance *pi, void *msg);
 static void bgr3_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
+static void y420p_handler(Instance *pi, void *msg);
 
 /* CJpeg Instance and Template implementation. */
-enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_422P, INPUT_420P };
 static Input CJpeg_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = bgr3_handler },
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
+  [ INPUT_420P ] = { .type_label = "420P_buffer", .handler = y420p_handler },
 };
 
 enum { OUTPUT_JPEG };
@@ -112,9 +114,12 @@ static Config config_table[] = {
 
 /// extern int jchuff_verbose;
 
+enum { COMPRESS_RGB, COMPRESS_Y444, COMPRESS_Y422, COMPRESS_Y420 };
+
 static void compress_and_post(Instance *pi, 
 			      int width, int height,
-			      uint8_t *c1, uint8_t *c2, uint8_t *c3)
+			      uint8_t *c1, uint8_t *c2, uint8_t *c3,
+			      int compress_mode)
 {
   /* Compress input buffer.  See "libjpeg.txt" in IJPEG source, and "cjpeg.c". */
   CJpeg_private *priv = (CJpeg_private *)pi;
@@ -137,18 +142,9 @@ static void compress_and_post(Instance *pi,
 
   jpeg_out->c.tv = t1;		/* Store timestamp! */
 
-  if (c2 && c3) {
+  if (compress_mode == COMPRESS_Y422) {
     int w2 = (width/8)*8;
     int h2 = (height/8)*8;
-
-    // DEBUGGING 
-    if (w2 != width || h2 != height) {
-      fprintf(stderr, 
-	      "width and/or height is off:\n");
-      fflush(stderr);
-      Log_dump();
-      backtrace_and_exit();
-    }
 
     if (w2 != width) {
       fprintf(stderr, "warning: truncating width from %d to %d\n", width, w2);
@@ -173,8 +169,8 @@ static void compress_and_post(Instance *pi,
 
   jpeg_set_defaults(&cinfo);
 
-  if (c2 && c3) {
-    /* See "Raw (downsampled) image data" section in libjpeg.txt. */
+  /* See "Raw (downsampled) image data" section in libjpeg.txt. */
+  if (compress_mode == COMPRESS_Y422) {
     cinfo.raw_data_in = TRUE;
     jpeg_set_colorspace(&cinfo, JCS_YCbCr);
       
@@ -189,6 +185,21 @@ static void compress_and_post(Instance *pi,
     cinfo.comp_info[2].h_samp_factor = 1;
     cinfo.comp_info[2].v_samp_factor = 2;
   }
+  else if (compress_mode == COMPRESS_Y420) {
+    cinfo.raw_data_in = TRUE;
+    jpeg_set_colorspace(&cinfo, JCS_YCbCr);
+      
+    cinfo.do_fancy_downsampling = FALSE;  // http://www.lavrsen.dk/svn/motion/trunk/picture.c
+
+    cinfo.comp_info[0].h_samp_factor = 2;
+    cinfo.comp_info[0].v_samp_factor = 2;
+
+    cinfo.comp_info[1].h_samp_factor = 1;
+    cinfo.comp_info[1].v_samp_factor = 1;
+
+    cinfo.comp_info[2].h_samp_factor = 1;
+    cinfo.comp_info[2].v_samp_factor = 1;
+  }
 
   /* Various options can be set here... */
   //cinfo.dct_method = JDCT_FLOAT;
@@ -199,7 +210,7 @@ static void compress_and_post(Instance *pi,
   jpeg_start_compress(&cinfo, TRUE);
 
   while (cinfo.next_scanline < cinfo.image_height) {
-    if (c2 && c3) {
+    if (COMPRESS_Y422) {
       int n;
       /* Setup necessary for raw downsampled data.  */
       JSAMPROW y[16];
@@ -209,6 +220,23 @@ static void compress_and_post(Instance *pi,
 	y[n] = c1 + ((cinfo.next_scanline+n)* width);
 	cb[n] = c2 + ((cinfo.next_scanline+n) * width / 2);
 	cr[n] = c3 + ((cinfo.next_scanline+n) * width / 2);
+      }
+
+      JSAMPARRAY array[3] = { y, cb, cr};
+      JSAMPIMAGE image = array;
+      /* Need to pass enough lines at a time, see "(num_lines < lines_per_iMCU_row)" test in
+	 jcapistd.c */
+      jpeg_write_raw_data(&cinfo, image, 16);
+    } else if (COMPRESS_Y420) {
+      int n;
+      /* Setup necessary for raw downsampled data.  */
+      JSAMPROW y[16];
+      JSAMPROW cb[16];
+      JSAMPROW cr[16];
+      for (n=0; n < 16; n++) {
+	y[n] = c1 + ((cinfo.next_scanline+n)* width);
+	cb[n] = c2 + ((cinfo.next_scanline+n) * width / 4);
+	cr[n] = c3 + ((cinfo.next_scanline+n) * width / 4);
       }
 
       JSAMPARRAY array[3] = { y, cb, cr};
@@ -285,7 +313,8 @@ static void rgb3_handler(Instance *pi, void *data)
   RGB3_buffer *rgb3_in = data;
   compress_and_post(pi, 
 		    rgb3_in->width, rgb3_in->height,
-		    rgb3_in->data, 0L, 0L);
+		    rgb3_in->data, 0L, 0L,
+		    COMPRESS_RGB);
   RGB3_buffer_discard(rgb3_in);
 }
 
@@ -296,7 +325,8 @@ static void bgr3_handler(Instance *pi, void *data)
   bgr3_to_rgb3(&bgr3_in, &rgb3_in);
   compress_and_post(pi, 
 		    rgb3_in->width, rgb3_in->height,
-		    rgb3_in->data, 0L, 0L);
+		    rgb3_in->data, 0L, 0L,
+		    COMPRESS_RGB);
   RGB3_buffer_discard(rgb3_in);
 }
 
@@ -305,10 +335,20 @@ static void y422p_handler(Instance *pi, void *data)
   Y422P_buffer *y422p_in = data;
   compress_and_post(pi, 
 		    y422p_in->width, y422p_in->height,
-		    y422p_in->y, y422p_in->cb, y422p_in->cr);
+		    y422p_in->y, y422p_in->cb, y422p_in->cr,
+		    COMPRESS_Y422);
   Y422P_buffer_discard(y422p_in);
 }
 
+static void y420p_handler(Instance *pi, void *data)
+{
+  Y420P_buffer *y420p_in = data;
+  compress_and_post(pi, 
+		    y420p_in->width, y420p_in->height,
+		    y420p_in->y, y420p_in->cb, y420p_in->cr,
+		    COMPRESS_Y420);
+  Y420P_buffer_discard(y420p_in);
+}
 
 static void CJpeg_tick(Instance *pi)
 {

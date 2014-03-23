@@ -52,12 +52,21 @@ typedef struct {
 } WaitLock;
 #endif
 
+typedef struct {
+  Lock lock;
+  int _count;			/* should only be accessed within API functions */
+} LockedRef;
+
 extern void Lock_init(Lock *lock);
 extern void Lock_acquire(Lock *lock);
 extern void Lock_release(Lock *lock);
 
 extern void Lock_release__event_wait__lock_acquire(Lock *lock, Event *ev);
 extern void Event_signal(Event *ev);
+
+extern void LockedRef_init(LockedRef *ref);
+extern void LockedRef_increment(LockedRef *ref);
+extern void LockedRef_decrement(LockedRef *ref, int * ok_to_free);
 
 extern void WaitLock_init(WaitLock *w);
 extern void WaitLock_wait(WaitLock *w);

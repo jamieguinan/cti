@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
   AVIDemux_init();
 
-  Template_list();
+  Template_list(1);
 
   Instance *ad = Instantiate("AVIDemux");
   printf("instance: %s\n", ad->label);

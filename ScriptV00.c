@@ -87,14 +87,18 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       perror("system");
     }
   }
+  /* FIXME: These strstr() comparisons are sloppy.  Can I at least tokenize them?  */
   else if ((strstr(line->bytes, "exit") == line->bytes)) {
     exit(1);
   }
   else if ((strstr(line->bytes, "mt") == line->bytes)) {
     cfg.mem_tracking = !cfg.mem_tracking;
   }
+  else if ((strstr(line->bytes, "tlv") == line->bytes)) {
+    Template_list(1);
+  }
   else if ((strstr(line->bytes, "tl") == line->bytes)) {
-    Template_list();
+    Template_list(0);
   }
   else if ((strstr(line->bytes, "abort") == line->bytes)) {
     puts("");			/* Wrap line on console. */

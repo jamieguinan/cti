@@ -85,8 +85,7 @@ Wav_buffer *Wav_buffer_new(int rate, int channels, int format_bytes)
   buffer->params.rate = rate;
   buffer->params.bits_per_sample = format_bytes * 8;
 
-  buffer->ref.count = 1;
-  Lock_init(&buffer->ref.lock);
+  LockedRef_init(&buffer->ref);
   // buffer->data is allocated by caller
   return buffer;
 }
@@ -101,20 +100,17 @@ void Wav_buffer_finalize(Wav_buffer *buffer)
 void Wav_buffer_release(Wav_buffer **buffer)
 {
   Wav_buffer *w = *buffer;
-
-  Lock_acquire(&w->ref.lock);
-  w->ref.count -= 1;
-  
-  if (w->ref.count == 0) {
+  int count;
+  LockedRef_decrement(&w->ref, &count);
+  if (count == 0) {
     if (w->data) {
       Mem_free(w->data);
     }
     memset(w, 0, sizeof(*w));
     Mem_free(w);
   }
-
+  
   *buffer = 0L;			/* Clear buffer in any case. */
-  Lock_release(&w->ref.lock);
 }
 
 Wav_buffer *Wav_buffer_from(unsigned char *src_bytes, int src_length)
@@ -169,8 +165,6 @@ Wav_buffer *Wav_buffer_from(unsigned char *src_bytes, int src_length)
 
 Wav_buffer * Wav_ref(Wav_buffer * wav)
 {
-  Lock_acquire(&wav->ref.lock);
-  wav->ref.count += 1;
-  Lock_release(&wav->ref.lock);
+  LockedRef_increment(&wav->ref);
   return wav;
 }

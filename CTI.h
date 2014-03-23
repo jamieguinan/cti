@@ -17,6 +17,10 @@
 
 #include "Collection.h"
 
+extern pthread_key_t instance_key;
+extern int instance_key_initialized;
+extern void instance_key_init(void); /* Call once at startup. */
+
 /* 
  * The ISet() macro is for declaring structures compatible with the
  * ISet_* macros.  "index" should initially be 0L, allocated and used
@@ -152,7 +156,11 @@ typedef struct _Instance {
   Handler_message *msg_last;
   int pending_messages;		/* FIXME: get rid of this? */
 
-  int result;			/*  */
+  int result;			/* Destination for messages results. */
+
+#define CTI_INSTANCE_STACK_MAX 32
+  void * stack[CTI_INSTANCE_STACK_MAX];	/* call stack debugging */
+  int stack_index;
 } Instance;
 
 extern void Connect(Instance *from, const char *label, Instance *to);
@@ -199,7 +207,7 @@ extern Template **all_templates;
 extern int num_templates;
 
 extern void Template_register(Template *t);
-extern void Template_list(void);
+extern void Template_list(int verbose);
 
 extern Instance * Instantiate(const char *label);
 
@@ -326,7 +334,6 @@ extern void RawData_buffer_discard(RawData_buffer *raw);
 typedef struct {
   int seq;
 } Feedback_buffer;
-
 extern Feedback_buffer *Feedback_buffer_new(void);
 extern void Feedback_buffer_discard(Feedback_buffer *raw);
 

@@ -785,7 +785,7 @@ static void RGB3_handler(Instance *pi, void *data)
     break;
   }
 
-  post_render_frame(pi);  
+  post_render_frame(pi);
 
   if (rgb3) {
     RGB3_buffer_discard(rgb3);

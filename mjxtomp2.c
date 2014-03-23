@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
   MjpegDemux_init();
   Mp2Enc_init();
 
-  Template_list();
+  Template_list(0);
 
   Instance *mjd = Instantiate("MjpegDemux");
   SetConfig(mjd, "input", mjxfile);

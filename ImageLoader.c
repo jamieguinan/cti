@@ -57,8 +57,10 @@ static int set_file(Instance *pi, const char *value)
     }
     break;
   case IMAGE_TYPE_PPM:
+    fprintf(stderr, "%s:%d PPM load not supported yet\n", __FILE__, __LINE__);
     break;
   case IMAGE_TYPE_JPEG:
+    fprintf(stderr, "%s:%d JPEG load not supported yet\n", __FILE__, __LINE__);
     break;
   case IMAGE_TYPE_Y422P:
     y422p = Y422P_buffer_from(fdata->data, fdata->len, 0L);
@@ -73,6 +75,7 @@ static int set_file(Instance *pi, const char *value)
     }
     break;
   case IMAGE_TYPE_UNKNOWN:
+  default:
     break;
   }
 

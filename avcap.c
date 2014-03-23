@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
   MjpegMux_init();
   HalfWidth_init();
 
-  Template_list();
+  Template_list(1);
 
   Instance *cj = Instantiate("CJpeg");
   printf("instance: %s\n", cj->label);

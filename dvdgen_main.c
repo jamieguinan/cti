@@ -64,7 +64,7 @@ int main(int argc, char *argv[])
   Mp2Enc_init();
   AudioLimiter_init();
 
-  Template_list();
+  Template_list(0);
 
   Instance *vf = Instantiate("VFilter");
   Instance_loop_thread(vf);  

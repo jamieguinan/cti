@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
   ALSACapture_init();
   MjpegMux_init();
 
-  Template_list();
+  Template_list(1);
 
   Instance *mj = Instantiate("MjpegMux");
   printf("instance: %s\n", mj->label);

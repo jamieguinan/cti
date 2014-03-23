@@ -14,12 +14,24 @@
 #include "Cfg.h"
 
 
+pthread_key_t instance_key;
+int instance_key_initialized;
+
+void instance_key_init(void)
+{
+  pthread_key_create(&instance_key, NULL);
+  pthread_setspecific(instance_key, NULL);
+  instance_key_initialized = 1;
+}
+
 
 static void * Instance_thread_main(void *vp)
 {
   Instance *pi = vp;
 
   prctl(PR_SET_NAME, pi->label);
+
+  pthread_setspecific(instance_key, vp);	/* For later retrieval */
 
   while (1) {
     pi->tick(pi);
@@ -196,13 +208,16 @@ void Template_register(Template *t)
   ISet_add(templates, t);
 }
 
-void Template_list(void)
+void Template_list(int verbose)
 {
   int i, j;
   printf("Templates:\n");
 
   for (i=0; i < templates.count; i++) {
     printf("[%d] %s\n", i, templates.items[i]->label);
+    if (!verbose) {
+      continue;
+    }
     printf("  Inputs:\n");
     for (j=0; j < templates.items[i]->num_inputs; j++) {
       if (templates.items[i]->inputs[j].type_label) {

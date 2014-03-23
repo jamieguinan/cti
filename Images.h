@@ -21,6 +21,7 @@ typedef enum {
   IMAGE_TYPE_PGM,
   IMAGE_TYPE_PPM,
   IMAGE_TYPE_Y422P,		/* raw dumps from V4L2Capture module */
+  IMAGE_TYPE_O511,
 } ImageType;
 
 extern ImageType Image_guess_type(uint8_t * data, int len);
@@ -39,10 +40,7 @@ typedef struct {
   float nominal_period;
   int interlace_mode;
   int eof;			/* EOF marker. */
-  struct {
-    Lock lock;
-    int count;
-  } ref;
+  LockedRef ref;
 } Image_common;
 
 

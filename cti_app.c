@@ -14,7 +14,7 @@ int app_code(int argc, char *argv[])
   int argn = 1;
   const char *input_arg = NULL;
 
-  // Template_list();
+  // Template_list(0);
 
   /* Set up the callback before starting anything else. */
   ui_callback = Callback_new();

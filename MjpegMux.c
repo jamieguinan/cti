@@ -17,6 +17,7 @@
 #include "SourceSink.h"
 #include "Mem.h"
 #include "Log.h"
+#include "Signals.h"
 
 static void Config_handler(Instance *pi, void *data);
 static void Jpeg_handler(Instance *pi, void *data);
