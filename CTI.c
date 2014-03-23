@@ -272,7 +272,6 @@ static Instance * _Instantiate_local(const char *label, int run)
       }
 
       Lock_init(&pi->inputs_lock);
-      WaitLock_init(&pi->notification_lock);
 
       /* Type-specific instance initialization. */
       if (t->instance_init) {

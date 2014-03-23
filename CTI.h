@@ -146,8 +146,6 @@ typedef struct _Instance {
   int state;
   int counter;			/* Update in tick function. */
 
-  WaitLock notification_lock;
-
   Lock inputs_lock;		
   Event inputs_event;
   int waiting; 			/* 0 or 1, better to treat as boolean than counter. */

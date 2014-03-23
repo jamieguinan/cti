@@ -1,4 +1,5 @@
 #include "locks.h"
+#include "StackDebug.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -54,41 +55,6 @@ void Event_signal(Event *ev)
 #endif
 }
 
-void WaitLock_init(WaitLock *w)
-{
-#ifdef __linux__
-#endif
-}
-
-void WaitLock_wait(WaitLock *w)
-{
-#ifdef __linux__
-  int rc;
-  rc = sem_wait(&w->wlock);
-  if (rc != 0) {
-    perror("sem_wait");
-    StackDebug(); exit(1);
-  }
-#endif
-}
-
-void WaitLock_wake(WaitLock *w)
-{
-#ifdef __APPLE__
-  if (pthread_cond_signal(&input->parent->notification_cond) != 0) {
-    perror("pthread_cond_signal");
-  }
-#endif
-#ifdef __linux__
-  int rc;
-  /* Wake receiver. */
-  rc = sem_post(&w->wlock);
-  if (rc != 0) {
-    perror("sem_wait");
-    StackDebug(); exit(1);
-  }
-#endif
-}
 
 /* Reference count with lock. */
 void LockedRef_init(LockedRef *ref)

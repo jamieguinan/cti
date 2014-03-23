@@ -12,9 +12,6 @@ typedef struct {
   pthread_cond_t event;
 } Event;
 
-typedef struct {
-  sem_t wlock;
-} WaitLock;
 #endif
 
 #ifdef __APPLE__
@@ -22,11 +19,6 @@ typedef struct {
 typedef struct {
   pthread_mutex_t lock;
 } Lock;
-
-typedef struct {
-  pthread_cond_t lock;
-  pthread_mutex_t lockm;
-} WaitLock;
 #endif
 
 #ifdef __MINGW32__
@@ -35,9 +27,6 @@ typedef struct {
 
 typedef struct {
 } Event;
-
-typedef struct {
-} WaitLock;
 #endif
 
 #ifdef __MSP430__
@@ -48,8 +37,6 @@ typedef struct {
 typedef struct {
 } Event;
 
-typedef struct {
-} WaitLock;
 #endif
 
 typedef struct {
@@ -67,9 +54,5 @@ extern void Event_signal(Event *ev);
 extern void LockedRef_init(LockedRef *ref);
 extern void LockedRef_increment(LockedRef *ref);
 extern void LockedRef_decrement(LockedRef *ref, int * ok_to_free);
-
-extern void WaitLock_init(WaitLock *w);
-extern void WaitLock_wait(WaitLock *w);
-extern void WaitLock_wake(WaitLock *w);
 
 #endif
