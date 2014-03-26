@@ -145,7 +145,7 @@ static void Y420P_handler(Instance *pi, void *msg)
     }
 
     if (frame_size > 0 && sl(priv->output)) {
-      //Sink_write(priv->output_sink, nal[0].p_payload, frame_size);
+      Sink_write(priv->output_sink, nal[0].p_payload, frame_size);
     }
 
     if (frame_size > 0) {
