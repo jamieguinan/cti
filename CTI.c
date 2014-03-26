@@ -138,7 +138,7 @@ Handler_message *GetData(Instance *pi, int wait_flag)
      particular I worry that memory might not be synchronized properly
      without the memory barrier events imposed by the locking, which
      could make a thread return when there IS actually data available.
-     So I am leaving the lock acquire/relesae.  Links,
+     So I am leaving the lock acquire/release.  Links,
 
      http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0472c/CJAEGDEA.html
      http://iphonedevsdk.com/forum/iphone-sdk-development/115122-multi-core-arm-and-sharing-global-variable-between-threads.html     

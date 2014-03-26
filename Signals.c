@@ -36,7 +36,7 @@ static void shutdown_handler(int signo)
 #endif
 
   fprintf(stderr, "%s: caught signal %d (%s)\n", threadname, signo, signame);
-  exit(signo);
+  _exit(signo);
 }
 
 static void usr1_handler(int signo)

@@ -250,6 +250,15 @@ LDFLAGS += -lsqlite3
 CPPFLAGS+=-DHAVE_SQLITE3
 endif
 
+# CUDA
+ifeq ($(ARCH),x86_64-Linux)
+ifneq (,$(shell /bin/ls /opt/cuda/bin/nvcc))
+OBJS+=$(OBJDIR)/NVidiaCUDA.o
+LDFLAGS += 
+CPPFLAGS+=
+endif
+endif
+
 
 $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \

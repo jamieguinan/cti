@@ -9,6 +9,7 @@
 #include "H264.h"
 #include "Images.h"
 #include "x264.h"
+//#include "output/output.h"
 #include "SourceSink.h"
 
 static void Config_handler(Instance *pi, void *msg);
@@ -19,7 +20,7 @@ static void Y422P_handler(Instance *pi, void *msg);
 enum { INPUT_CONFIG, INPUT_420P, INPUT_422P };
 static Input H264_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_420P ] = { .type_label = "Y420P_buffer", .handler = Y420P_handler },
+  [ INPUT_420P ] = { .type_label = "420P_buffer", .handler = Y420P_handler },
   [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
 };
 
@@ -35,6 +36,11 @@ typedef struct {
   x264_t *encoder;
   String output;			/* Side channel. */
   Sink *output_sink;
+
+  /* Similar to as used in x264.c: */
+  //cli_output_t cli_output;
+  //hnd_t hout;
+
 } H264_private;
 
 
@@ -98,6 +104,10 @@ static void Y420P_handler(Instance *pi, void *msg)
 
     printf("params fps=%d/%d\n", params.i_fps_num, params.i_fps_den);
 
+    //priv->cli_output = mp4_output;
+    //cli_output_opt_t output_opt = {};
+    //rc = priv->cli_output.open_file("output.mp4", &priv->hout, &output_opt);
+    //printf("cli_output.open_file returns %d\n", rc);
   }
 
   {
@@ -120,21 +130,27 @@ static void Y420P_handler(Instance *pi, void *msg)
     pic_in.i_pts = priv->pts;
     priv->pts += 1;
 
-    rc = x264_encoder_encode(priv->encoder, &nal, &pi_nal, &pic_in, &pic_out );
+    int frame_size = x264_encoder_encode(priv->encoder, &nal, &pi_nal, &pic_in, &pic_out );
 
-    dpf("rc/frame_size=%d pi_nal=%d nal=%p p_payload=%p i_payload=%d\n", rc, pi_nal, nal,
+    //dpf
+    printf
+      ("frame_size=%d pi_nal=%d nal=%p p_payload=%p i_payload=%d\n", frame_size, pi_nal, nal,
 	nal ? (nal->p_payload) : NULL,
 	nal ? (nal->i_payload) : 0
 	);
 
-    if (rc > 0 && pi->outputs[OUTPUT_H264].destination) {
-      int frame_size = rc;
+    if (frame_size > 0 && pi->outputs[OUTPUT_H264].destination) {
       H264_buffer *hout = H264_buffer_from(nal[0].p_payload, frame_size, y420->width, y420->height, &y420->c);
       PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
 
-    if (rc > 0 && sl(priv->output)) {
-      Sink_write(priv->output_sink, nal[0].p_payload, rc);
+    if (frame_size > 0 && sl(priv->output)) {
+      //Sink_write(priv->output_sink, nal[0].p_payload, frame_size);
+    }
+
+    if (frame_size > 0) {
+      // i_frame_size = cli_output.write_frame( priv->hout, nal[0].p_payload, i_frame_size, &pic_out );
+      // *last_dts = pic_out.i_dts;
     }
 
   }
@@ -173,6 +189,7 @@ static void H264_tick(Instance *pi)
 
 static void H264_instance_init(Instance *pi)
 {
+
 }
 
 

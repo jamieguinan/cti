@@ -13,12 +13,14 @@
 static void Config_handler(Instance *pi, void *msg);
 static void H264_handler(Instance *pi, void *msg);
 static void AAC_handler(Instance *pi, void *msg);
+static void MP3_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_H264, INPUT_AAC };
+enum { INPUT_CONFIG, INPUT_H264, INPUT_AAC, INPUT_MP3 };
 static Input MpegTSMux_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_H264 ] = { .type_label = "H264_buffer", .handler = H264_handler },
   [ INPUT_AAC ] = { .type_label = "AAC_buffer", .handler = AAC_handler },
+  [ INPUT_MP3 ] = { .type_label = "MP3_buffer", .handler = MP3_handler },
 };
 
 //enum { /* OUTPUT_... */ };
@@ -86,7 +88,7 @@ static void H264_handler(Instance *pi, void *msg)
   dts.hi_bit = pts.hi_bit;
   dts.value = pts.value;
 
-  if (1) {
+  if (0) {
     /* Debug testing... */
     static FILE *f;
     if (!f) {
@@ -262,6 +264,19 @@ static void AAC_handler(Instance *pi, void *msg)
   
   /* Discard AAC data. */
   AAC_buffer_discard(&aac);
+}
+
+
+static void MP3_handler(Instance *pi, void *msg)
+{
+  // MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+  //MP3_buffer *mp3 = msg;
+
+  /* Assemble TS packets, save in a list so they can be smoothly
+     interleaved with video packets. */
+  
+  /* Discard MP3 data. */
+  //MP3_buffer_discard(&mp3);
 }
 
 static void flush(Instance *pi)

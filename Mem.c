@@ -159,7 +159,13 @@ void _Mem_free(void *ptr, const char *func)
 }
 
 
-void _Mem_memcpy(Ptr dest, int dest_offset, uint8_t *src, int length, const char *func)
+void _Mem_memcpy(void *dest, uint8_t *src, int length, const char *func)
+{
+  memcpy(dest, src, length);
+}
+
+
+void _Mem_memcpyPtr(Ptr dest, int dest_offset, uint8_t *src, int length, const char *func)
 {
   if (dest_offset + length < dest.length ) {
     printf("whoa!\n");

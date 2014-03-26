@@ -14,6 +14,22 @@
 #include "SourceSink.h"
 #include "Cfg.h"
 
+static const char *stream_type_strings[256] = {
+  [0x0f] = "AAC",
+  [0x1b] = "H.264",
+};
+
+
+static const char *stream_type_string(int index)
+{
+  const char * result = stream_type_strings[index];
+  if (result == NULL) {
+    result = "unknown";
+  }
+  return result;
+}
+
+
 static void Config_handler(Instance *pi, void *msg);
 
 enum { INPUT_CONFIG };
@@ -46,7 +62,7 @@ static Stream * Stream_new(pid)
 {
   Stream *s = Mem_calloc(1, sizeof(*s));
   s->pid = pid;
-  printf("new pid %d\n", pid);
+  printf("\n[new pid %d]\n", pid);
   return s;
 }
 
@@ -61,6 +77,8 @@ typedef struct {
 
   int enable;			/* Set this to start processing. */
   int filter_pid;
+  
+  int pmt_id;			/* Program Map Table ID */
 
   uint64_t offset;
 
@@ -69,6 +87,7 @@ typedef struct {
   //int feedback_threshold;
 
   int retry;
+  int exit_on_eof;
 
   Stream *streams;
 
@@ -137,6 +156,7 @@ static Config config_table[] = {
   { "input", set_input, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
   { "filter_pid", set_filter_pid, 0L, 0L },
+  { "exit_on_eof", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, exit_on_eof) },
   // { "use_feedback", set_use_feedback, 0L, 0L },
 };
 
@@ -147,6 +167,23 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
+static void print_packet(uint8_t * packet)
+{
+  int i = 0;
+  printf("   ");
+  while (i < 188) {
+    printf(" %02x", packet[i]);
+    i++;
+    if (i % 16 == 0) {
+      printf("\n   ");
+    }
+  }
+
+  if (i % 16 != 0) {
+    printf("\n");
+  }
+}
+
 static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 {
   int payloadLen = 188 - 4;
@@ -155,16 +192,10 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
   int afLen = 0;
   int isPUS = 0;
 
-  int save_verbosity = cfg.verbosity;
-
   if (priv->filter_pid && priv->filter_pid != pid) {
-    cfg.verbosity = 0;
+    // cfg.verbosity = 0;
   }
 
-  if (cfg.verbosity) { 
-    printf("packet %d, pid %d\n", packetCounter, pid);
-  }
-  
   if (priv->streams == NULL) {
     priv->streams = Stream_new(pid);
   }
@@ -172,8 +203,13 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
   Stream *s = priv->streams;
 
   while (s) {
+    if (1 || cfg.verbosity) { 
+      // printf("packet %d, pid %d s->pid=%d\n", packetCounter, pid, s->pid);
+    }
+
     if (pid == s->pid) {
-      /* Append data. */
+      printf("\npacket %d, pid %d\n", packetCounter, pid);
+      print_packet(packet);
 
       if (MpegTS_sync_byte(packet) != 0x47) {
 	printf("invalid packet at offset %" PRIu64 "\n", priv->offset);
@@ -186,9 +222,10 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
       }
 
       if (MpegTS_PUS(packet)) {
+	printf("  payload unit start (PES or PSI)\n");
 	isPUS = 1;
-	/* Flush, free, reallocate. */
 	if (s->data) {
+	  /* Flush, free, reallocate. */
 	  if (s->data->len) {
 	    char name[32];
 	    FILE *f;
@@ -202,11 +239,10 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	    }
 
 	    if (cfg.verbosity) { 
-	      /* NOTE: This is peeking down into the PES layer, and is only 
-		 written to handle one specific example case. */
-
+	      /* NOTE: This is peeking down into the PES layer, and is
+		 only written to handle one specific example case. */
 	      if (pid > 256) { 
-		printf("    [PES] previous payload PTS: %d%d%d%d (%d) %d",
+		printf("  [PES] previous payload PTS: %d%d%d%d (%d) %d",
 		       (s->data->data[9] >> 7) & 1,
 		       (s->data->data[9] >> 6) & 1,
 		       (s->data->data[9] >> 5) & 1,
@@ -215,12 +251,11 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 		       (s->data->data[9] >> 0) & 1);
 
 		printf(" %" PRIu64 "", MpegTS_PTS(s->data->data + 9));
-
 		printf("\n");
 	      }
 
 	      if (pid == 258) { 
-		printf("    [PES] previous payload DTS: %d%d%d%d (%d) %d",
+		printf("  [PES] previous payload DTS: %d%d%d%d (%d) %d",
 		       (s->data->data[14] >> 7) & 1,
 		       (s->data->data[14] >> 6) & 1,
 		       (s->data->data[14] >> 5) & 1,
@@ -229,7 +264,6 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 		       (s->data->data[14] >> 0) & 1);
 
 		printf(" %" PRIu64, MpegTS_PTS(s->data->data + 14));
-
 		printf("\n");
 	      }
 	    }
@@ -239,13 +273,17 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	  s->seq += 1;
 	  ArrayU8_cleanup(&s->data);
 	} /* if (s->data) */
-
-	if (cfg.verbosity) printf("  payload unit start\n");
 	s->data = ArrayU8_new();
       }
 
       if (MpegTS_TP(packet)) {
 	if (cfg.verbosity) printf("  transport priority bit set\n");
+      }
+
+      if (MpegTS_SC(packet)) {
+	int bits = MpegTS_SC(packet);
+	if (cfg.verbosity) printf("  scrambling control enabled (bits %d%d)\n",
+				  (bits>>1), (bits&1));
       }
 
       if (MpegTS_AFE(packet)) {
@@ -311,12 +349,13 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	  if (cfg.verbosity) printf("  adapdation field extension\n");
 	}
 
-      xx:
+      xx:;
 
-	if (cfg.verbosity) printf("  remaining payload length: %d\n", payloadLen);
-      }
+      }	/* AFE... */
+
 
       if (MpegTS_PDE(packet)) {
+	if (cfg.verbosity) printf("  payload data present, length %d\n", payloadLen);
 	if (!s->data) {
 	  s->data = ArrayU8_new();
 	}
@@ -325,7 +364,115 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
       else {
 	if (cfg.verbosity) printf("  no payload data\n");
       }
+
+      int cc = MpegTS_CC(packet);
+      printf("  continuity counter=%d\n", cc);
+
+      /* http://en.wikipedia.org/wiki/Program_Specific_Information */
+      if (pid == 0) {
+	printf("  PSI: Program Association Table\n");
+	int pointer_filler_bytes = MpegTS_PSI_PTRFIELD(packet);
+	printf("  (%d pointer filler bytes)\n", pointer_filler_bytes);
+	uint8_t * table_header = MpegTS_PSI_TABLEHDR(packet);
+	
+	int table_id = MpegTS_PSI_TABLE_ID(table_header);
+	printf("  Table ID %d\n", table_id);
+	printf("  Section syntax indicator: %d\n", MpegTS_PSI_TABLE_SSI(table_header));
+	printf("  Private bit: %d\n", MpegTS_PSI_TABLE_PB(table_header));
+	printf("  Reserved bits: %d\n", MpegTS_PSI_TABLE_RBITS(table_header));
+	printf("  Section length unused bits: %d\n", MpegTS_PSI_TABLE_SUBITS(table_header));
+	int slen = MpegTS_PSI_TABLE_SLEN(table_header);
+	printf("  Section length: %d\n", slen);
+
+	if (MpegTS_PSI_TABLE_SSI(table_header)) {
+	  uint8_t * tss = MpegTS_PSI_TSS(table_header);
+	  printf("    Table ID extension: %d\n", MpegTS_PSI_TSS_ID_EXT(tss));
+	  printf("    Reserved bits: %d\n", MpegTS_PSI_TSS_RBITS(tss));
+	  printf("    Version number: %d\n", MpegTS_PSI_TSS_VERSION(tss));
+	  printf("    current/next: %d\n", MpegTS_PSI_TSS_CURRNEXT(tss));
+	  printf("    Section number: %d\n", MpegTS_PSI_TSS_SECNO(tss));
+	  printf("    Last section number: %d\n", MpegTS_PSI_TSS_LASTSECNO(tss));
+	  
+	  uint8_t * pasd = MpegTS_PAT_PASD(tss);
+	  uint32_t crc;
+	  int remain = 
+	    slen 
+	    - 5 /* PSI_TSS */
+	    - sizeof(crc);
+	  while (remain > 0) {
+	    printf("      Program number: %d\n", MpegTS_PAT_PASD_PROGNUM(pasd));
+	    printf("      Reserved bits: %d\n", MpegTS_PAT_PASD_RBITS(pasd));
+	    priv->pmt_id = MpegTS_PAT_PASD_PMTID(pasd);
+	    printf("      PMT ID: %d\n", priv->pmt_id);
+	    pasd += 4;
+	    remain -= 4;
+	  }
+	  crc = (pasd[0]<<24)|(pasd[1]<<16)|(pasd[2]<<8)|(pasd[3]<<0);
+	  printf("      crc: (supplied:calculated) 0x%08x:0x????????\n", crc);
+	}
+      }
+
+      else if (priv->pmt_id != 0 && pid == priv->pmt_id) {
+	printf("  PSI: Program Map Table\n");
+	int pointer_filler_bytes = MpegTS_PSI_PTRFIELD(packet);
+	printf("  (%d pointer filler bytes)\n", pointer_filler_bytes);
+	uint8_t * table_header = MpegTS_PSI_TABLEHDR(packet);
+	
+	int table_id = MpegTS_PSI_TABLE_ID(table_header);
+	printf("  Table ID %d\n", table_id);
+	printf("  Section syntax indicator: %d\n", MpegTS_PSI_TABLE_SSI(table_header));
+	printf("  Private bit: %d\n", MpegTS_PSI_TABLE_PB(table_header));
+	printf("  Reserved bits: %d\n", MpegTS_PSI_TABLE_RBITS(table_header));
+	printf("  Section length unused bits: %d\n", MpegTS_PSI_TABLE_SUBITS(table_header));
+	int slen = MpegTS_PSI_TABLE_SLEN(table_header);
+	printf("  Section length: %d\n", slen);
+
+	if (MpegTS_PSI_TABLE_SSI(table_header)) {
+	  uint8_t * tss = MpegTS_PSI_TSS(table_header);
+	  printf("    Table ID extension: %d\n", MpegTS_PSI_TSS_ID_EXT(tss));
+	  printf("    Reserved bits: %d\n", MpegTS_PSI_TSS_RBITS(tss));
+	  printf("    Version number: %d\n", MpegTS_PSI_TSS_VERSION(tss));
+	  printf("    current/next: %d\n", MpegTS_PSI_TSS_CURRNEXT(tss));
+	  printf("    Section number: %d\n", MpegTS_PSI_TSS_SECNO(tss));
+	  printf("    Last section number: %d\n", MpegTS_PSI_TSS_LASTSECNO(tss));
+	  
+	  uint8_t * pmsd = MpegTS_PMT_PMSD(tss);
+	  printf("      [--Program Map Specific data]\n");
+	  printf("      Reserved bits: 0x%x\n", MpegTS_PMT_PMSD_RBITS(pmsd));
+	  printf("      PCR PID: %d\n", MpegTS_PMT_PMSD_PCRPID(pmsd));
+	  printf("      Reserved bits 2: 0x%x\n", MpegTS_PMT_PMSD_RBITS2(pmsd));
+	  printf("      Unused bits: %d\n", MpegTS_PMT_PMSD_UNUSED(pmsd));
+	  printf("      Program descriptors length: %d\n", MpegTS_PMT_PMSD_PROGINFOLEN(pmsd));
+
+	  uint8_t * essd = MpegTS_PMT_ESSD(pmsd);
+	  uint32_t crc;
+	  int remain = 
+	    slen 
+	    - 5 /* PSI_TSS */
+	    - 4 /* PMT_PMSD */
+	    - MpegTS_PMT_PMSD_PROGINFOLEN(pmsd)
+	    - sizeof(crc);
+	  while (remain > 0) {
+	    printf("      [--Elementary stream specific data]\n");
+	    printf("      Stream type: 0x%02x (%s)\n", 
+		   MpegTS_ESSD_STREAMTYPE(essd),
+		   stream_type_string(MpegTS_ESSD_STREAMTYPE(essd)));
+	    printf("      Reserved bits: %d\n", MpegTS_ESSD_RBITS1(essd));
+	    printf("      Elementary PID: %d\n", MpegTS_ESSD_ELEMENTARY_PID(essd));
+	    printf("      Reserved bits2: %d\n", MpegTS_ESSD_RBITS2(essd));
+	    printf("      Unused: %d\n", MpegTS_ESSD_UNUSED(essd));
+	    printf("      Stream descriptors length: %d\n", MpegTS_ESSD_DESCRIPTORSLENGTH(essd));
+	    int n = 5 + MpegTS_ESSD_DESCRIPTORSLENGTH(essd);
+	    remain -= n;
+	    essd += n;
+	  }
+	  
+	  crc = (essd[0]<<24)|(essd[1]<<16)|(essd[2]<<8)|(essd[3]<<0);
+	  printf("      crc: (supplied:calculated) 0x%08x:0x????????\n", crc);
+	}
+      }
       
+
       break;
     }
 
@@ -347,9 +494,6 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
       fclose(f);
     }
   }
-
-
-  cfg.verbosity = save_verbosity;
 }
 
 
@@ -412,6 +556,9 @@ static void MpegTSDemux_tick(Instance *pi)
 	sleep(1);
 	Source_free(&priv->source);
 	priv->source = Source_new(sl(priv->input));
+      }
+      else if (priv->exit_on_eof) {
+	exit(0);
       }
       else {
 	priv->enable = 0;

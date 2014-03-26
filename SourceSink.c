@@ -351,7 +351,7 @@ ArrayU8 * io_read(IO_common *io)
       io_close_current(io);
     }
 
-    dpf("recv %d bytes\n", len);
+    dpf("recv %d bytes (max_read=%d)\n", len, max_read);
   }
   
   if (len == 0) {
@@ -519,10 +519,18 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
     }
 
     Items_per_sec_update(&source->bytes_per_sec, newChunk->len);
-    dpf("source bytes/sec %.1f %.1f %1.f\n",
-	source->bytes_per_sec.records[0].value,
-	source->bytes_per_sec.records[1].value,
-	source->bytes_per_sec.records[2].value);
+
+    { 
+      static time_t t_last = 0;
+      time_t tnow = time(NULL);
+      if (tnow > t_last) {
+	dpf("source bytes/sec %.1f %.1f %1.f\n",
+	    source->bytes_per_sec.records[0].value,
+	    source->bytes_per_sec.records[1].value,
+	    source->bytes_per_sec.records[2].value);
+	t_last = tnow;
+      }
+    }
 
     if (source->eof_flagged) {
       fprintf(stderr, "%s: EOF reset\n", __func__);      

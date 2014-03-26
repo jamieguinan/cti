@@ -76,6 +76,7 @@ typedef struct {
   Image_common c;
 } RGB3_buffer;
 
+
 /* BGR3 buffer */
 typedef struct {
   MemObject mo;
@@ -108,12 +109,14 @@ typedef struct {
   Image_common c;
 } Y422P_buffer;
 
+
 /* 420P buffer */
 typedef struct {
   MemObject mo;
   int width;
   int height;
-  uint8_t *data;
+  /* "data" contains all components; y,cb,cr point into this */
+  uint8_t *data;		
   uint8_t *y;
   int y_length;
   uint8_t *cb;
@@ -123,6 +126,7 @@ typedef struct {
 
   Image_common c;
 } Y420P_buffer;
+
 
 /* Jpeg buffer */
 typedef struct {
@@ -136,6 +140,7 @@ typedef struct {
   Image_common c;
 } Jpeg_buffer;
 
+
 /* O511 buffer */
 typedef struct {
   MemObject mo;
@@ -147,6 +152,7 @@ typedef struct {
 
   Image_common c;
 } O511_buffer;
+
 
 /* H264 buffer */
 typedef struct {
@@ -193,6 +199,7 @@ extern RGB3_buffer *Y422P_to_RGB3(Y422P_buffer *y422p);
 extern BGR3_buffer *Y422P_to_BGR3(Y422P_buffer *y422p);
 
 extern Y420P_buffer *Y420P_buffer_new(int width, int height, Image_common *c);
+extern Y420P_buffer *Y420P_buffer_from(uint8_t *data, int width, int height, Image_common *c);
 extern void Y420P_buffer_discard(Y420P_buffer *y420p);
 extern RGB3_buffer *Y420P_to_RGB3(Y420P_buffer *y420p);
 

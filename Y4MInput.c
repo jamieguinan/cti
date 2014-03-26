@@ -25,9 +25,9 @@ static Input Y4MInput_inputs[] = {
   [ INPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .handler = Feedback_handler },
 };
 
-enum { OUTPUT_422P };
+enum { OUTPUT_420P };
 static Output Y4MInput_outputs[] = {
-  [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },
 };
 
 enum { PARSING_HEADER, PARSING_FRAME };
@@ -199,6 +199,7 @@ static void Y4MInput_tick(Instance *pi)
 
   if (priv->needData) {
     Source_acquire_data(priv->source, priv->chunk, &priv->needData);
+    //printf("read %d bytes\n", priv->chunk->len);
   }
 
   if (priv->state == PARSING_HEADER) {
@@ -233,6 +234,7 @@ static void Y4MInput_tick(Instance *pi)
       if (String_is_none(t)) {
 	continue;
       }
+
       int width;
       //int width_set = 0;
       int height;
@@ -251,58 +253,85 @@ static void Y4MInput_tick(Instance *pi)
       //int interlacing_set = 0;
 
       if (sscanf(t->bytes, "W%d", &width) == 1) {
+	printf("width %d\n", width);
+	priv->current.width = width;
       }
       else if (sscanf(t->bytes, "H%d", &height) == 1) {
+	printf("height %d\n", height);
+	priv->current.height = height;
       }
       else if (sscanf(t->bytes, "C%32s", chroma_subsamping) == 1) {
+	printf("chroma subsampling %s\n", chroma_subsamping);
       }
       else if (sscanf(t->bytes, "I%c", &interlacing) == 1) {
+	printf("interlacing %c\n", interlacing);
       }
       else if (sscanf(t->bytes, "F%d:%d", &frame_numerator, &frame_denominator) == 2) {
+	printf("frame %d:%d\n", frame_numerator, frame_denominator);
       }
       else if (sscanf(t->bytes, "A%d:%d", &aspect_numerator, &aspect_denominator) == 2) {
+	printf("aspect %d:%d\n", aspect_numerator, aspect_denominator);
       }
       // else if (sscanf(t->bytes, "X%s", metadata) == 1) { }
-
-      /* Free the strings as we go along... */
-      String_free(&t);
     }
 
     String_list_free(&ls);
     
     priv->state = PARSING_FRAME;
+    /* Trim out header plus newline. */
+    ArrayU8_trim_left(priv->chunk, eoh+1);
   }
 
+  /* Should always be in PARSING_FRAME state here. */
   if (priv->state != PARSING_FRAME) {
     fprintf(stderr, "%s: not in PARSING_FRAME state!\n", __func__);
     priv->enable = 0;
+  }
+
+  int eol = -1;
+  int sol = ArrayU8_search(priv->chunk, 0, ArrayU8_temp_const("FRAME", 5));
+  //printf("sol=%d\n", sol);
+  if (sol == 0)  {
+    /* Search for newline at end of FRAME header line. */
+    eol = ArrayU8_search(priv->chunk, sol, ArrayU8_temp_const("\n", 1));
+  }
+
+  if (sol != 0 || eol == -1) {
+    if (priv->chunk->len > priv->max_chunk_size) {
+      fprintf(stderr, "%s: header size too big, bogus data??\n", __func__);
+      priv->enable = 0;
+    }
+    else {
+      /* Need more data, will get it on next call. */
+      priv->needData = 1;
+    }
     return;
   }
 
-  /* TODO: Parse FRAME line... */
+  /* Data begins after eol. */
+  /* FIXME: frame_size should be calculated from subsampling */
+  int frame_size = (priv->current.width * priv->current.height) 
+    + ((priv->current.width * priv->current.height)/4)
+    + ((priv->current.width * priv->current.height)/4);
 
-  if (0) {
-    /* Need more data... */
-    if (cfg.verbosity) { fprintf(stderr, "needData = 1\n"); }
+  if ((priv->chunk->len - eol) < frame_size) {
     priv->needData = 1;
     return;
   }
 
-  if (pi->outputs[OUTPUT_422P].destination) {
-    //Y422P_buffer *y422p = Y422P_buffer_from(priv->chunk->...);
-    //PostData(y422p, pi->outputs[OUTPUT_422P].destination);
-    if (priv->use_feedback & (1<<2)) {
-      priv->pending_feedback += 1;
-    }
+  if (pi->outputs[OUTPUT_420P].destination) {
+    /* FIXME: Could preserve the chunk instead of making a copy here. */
+    Y420P_buffer * yuv = Y420P_buffer_from(priv->chunk->data+eol+1, 
+					   priv->current.width, priv->current.height, NULL);
+    PostData(yuv, pi->outputs[OUTPUT_420P].destination);
+    //if (priv->use_feedback & (1<<2)) {
+    //priv->pending_feedback += 1;
+    //}
   }
 
   /* trim consumed data from chunk, reset "current" variables. */
-  // ArrayU8_trim_left(priv->chunk, priv->current.eoh + 4 + priv->current.content_length);
-  // priv->current.content_length = 0;
-  priv->current.timestamp = 0.0;
-  priv->current.width = 0;
-  priv->current.height = 0;
-  priv->state = PARSING_HEADER;
+  ArrayU8_trim_left(priv->chunk, eol+1 + frame_size);
+
   pi->counter += 1;
 }
 

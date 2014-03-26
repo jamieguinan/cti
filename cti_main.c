@@ -150,6 +150,7 @@ int cti_main(int argc, char *argv[])
   Effects01_init();
   SocketServer_init();
   VSmoother_init();
+  Y4MInput_init();
   Y4MOutput_init();
   MotionDetect_init();
   HalfWidth_init();
