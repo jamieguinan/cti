@@ -62,16 +62,16 @@ void PostDataGetResult(void *data, Input *input, int * result)
   }
 
   Lock reply_lock;
-  Event reply_event;
+  Sem reply_sem;
 
   hm->handler = input->handler;
   hm->data = data;
 
   if (result) {
-    Event_init(&reply_event);
+    Sem_init(&reply_sem);
     Lock_init(&reply_lock);
     Lock_acquire(&reply_lock);
-    hm->reply_event = &reply_event;
+    hm->reply_sem = &reply_sem;
     hm->result = result;
   }
 
@@ -111,9 +111,10 @@ void PostDataGetResult(void *data, Input *input, int * result)
 
   if (result) {
     /* Wait for message recipient to signal back. */
-    printf("%s: sender is now waiting on reply event signal...\n", __func__);
-    Lock_release__event_wait__lock_acquire(&reply_lock, &reply_event);
-    Event_destroy(&reply_event);
+    printf("%s sender is now waiting on reply event semaphore...\n", __func__);
+    Sem_wait(&reply_sem);
+    printf("%s wait complete.\n", __func__);
+    Sem_destroy(&reply_sem);
     Lock_destroy(&reply_lock);
   }
 }
@@ -193,15 +194,15 @@ out:
 void ReleaseMessage(Handler_message **msg, Instance *pi)
 {
   Handler_message *hm = *msg;
-  if (hm->reply_event) {
+  if (hm->reply_sem) {
     /* Caller is waiting for a reply. */
     if (hm->result) {
       /* Caller supplied a result destination. */
       *(hm->result) = pi->result;
     }
     /* FIXME: Could also provide a string result, or even a binary (ArrayU8) result. */
-    printf("%s: caller is waiting on reply event, signalling...\n", __func__);
-    Event_signal(hm->reply_event);
+    printf("%s (%s): caller is waiting on reply event, signalling...\n", __func__, pi->label);
+    Sem_post(hm->reply_sem);
   }
   Mem_free(*msg);
   *msg = 0L;

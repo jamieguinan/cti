@@ -78,6 +78,45 @@ void Event_signal(Event *ev)
 #endif
 }
 
+/* Semaphores */
+void Sem_init(Sem *sem)
+{
+#ifdef __linux__
+  int rc = sem_init(&sem->sem, 
+		    0, /* shared between threads only */
+		    0  /* initial value */
+    );
+  if (rc != 0) {
+    perror("sem_init");
+    exit(1);
+  }
+#endif
+}
+
+
+void Sem_post(Sem *sem)
+{
+#ifdef __linux__
+  if (sem_post(&sem->sem) != 0) { perror("sem_post"); }
+#endif
+}
+
+
+void Sem_wait(Sem *sem)
+{
+#ifdef __linux__
+  if (sem_wait(&sem->sem) != 0) { perror("sem_wait"); }
+#endif
+}
+
+
+void Sem_destroy(Sem *sem)
+{
+#ifdef __linux__
+  if (sem_destroy(&sem->sem) != 0) { perror("sem_destroy"); }
+#endif
+}
+
 
 /* Reference count with lock. */
 void LockedRef_init(LockedRef *ref)

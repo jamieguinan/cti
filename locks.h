@@ -12,6 +12,11 @@ typedef struct {
   pthread_cond_t event;
 } Event;
 
+
+typedef struct {
+  sem_t sem;
+} Sem;
+
 #endif
 
 #ifdef __APPLE__
@@ -54,6 +59,11 @@ extern void Event_init(Event *ev);
 extern void Lock_release__event_wait__lock_acquire(Lock *lock, Event *ev);
 extern void Event_signal(Event *ev);
 extern void Event_destroy(Event *ev);
+
+extern void Sem_init(Sem *sem);
+extern void Sem_post(Sem *sem);
+extern void Sem_wait(Sem *sem);
+extern void Sem_destroy(Sem *sem);
 
 extern void LockedRef_init(LockedRef *ref);
 extern void LockedRef_increment(LockedRef *ref);

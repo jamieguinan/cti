@@ -115,7 +115,7 @@ typedef struct _Handler_message {
   struct _Handler_message *prev;
   void (*handler)(struct _Instance *pi, void *data);
   void *data;
-  Event * reply_event;		/* Provide if want response. */
+  Sem * reply_sem;		/* Provide if want response. */
   int * result;			/* Provide if want response. */
   // String * result_str;	/* Provide if want response. */
 } Handler_message;
