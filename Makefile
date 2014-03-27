@@ -12,7 +12,7 @@ ifeq ($(ARCH),$(HOSTARCH))
 LDFLAGS+=-Wl,-rpath,$(shell pwd)/../../platform/$(ARCH)/lib
 endif
 
-CFLAGS += -O2 -Wall $(CMDLINE_CFLAGS)
+CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
 # CFLAGS += -Werror
 # CFLAGS += -O0 -ggdb
 ifneq ($(ARCH),armeb)
@@ -28,7 +28,7 @@ ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 endif
 
-INSTRUMENT = -finstrument-functions
+# INSTRUMENT = -finstrument-functions
 
 # "-static" is a problem for alsa, and other things...
 
@@ -276,8 +276,8 @@ ifeq ($(ARCH),x86_64-Linux)
 endif
 	@echo Generating map
 	$(NM) $@ | sort > $@.map
-	@echo STRIP
-	@$(STRIP) $@
+#	@echo STRIP
+#	@$(STRIP) $@
 
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))

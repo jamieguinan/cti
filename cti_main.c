@@ -122,7 +122,7 @@ int cti_main(int argc, char *argv[])
 #endif
 
 #ifdef HAVE_LIBQUICKTIME
-  LibQuickTimeOutput_init();
+  // LibQuickTimeOutput_init();
 #endif
 
 #ifdef HAVE_LIRC

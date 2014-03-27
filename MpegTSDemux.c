@@ -1,6 +1,14 @@
 /*
  * Unpack data from Mpeg2 Transport Streams.
  * See earlier code "modc/MpegTS.h" for starters.
+ *   https://en.wikipedia.org/wiki/MPEG_transport_stream
+ *   https://en.wikipedia.org/wiki/Program_Specific_Information
+ *   https://en.wikipedia.org/wiki/Packetized_Elementary_Stream
+ * This was mostly written as an exercise and testing tool, so 
+ * that MpegTSMux.c (not Demux) could be developed in parallel
+ * doing the inverse of what this module does.  But it could
+ * be a useful TS demuxer by defining some outputs and passing
+ * along the elementary stream data chunks.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -184,6 +192,136 @@ static void print_packet(uint8_t * packet)
   }
 }
 
+
+static void show_pes(Stream *s)
+{
+  uint8_t *edata = s->data->data;
+  int i;
+
+  printf("    [completed PES packet from earlier TS packets]\n");
+  if (!(edata[0]==0 && edata[1]==0 && edata[2]==1)) {
+    printf("    *** bad prefix [%02x %02x %02x]\n",
+	   edata[0], edata[1], edata[2]);
+    return;
+  }
+
+  printf("    Prefix 000001 OK\n");
+
+  printf("    Final PES unit length %d\n", s->data->len);
+  printf("    Stream id %d\n", edata[3]);
+  int ppl = (edata[4]<<8)|(edata[5]);
+  printf("    PES Packet length %d%s\n", ppl, (ppl?"":" (unspecified)"));
+  if (ppl) {
+    /* Note, ppl can be 0 for video streams */
+    if (ppl != s->data->len) {
+      // 
+    }
+  }
+  
+  printf("    Marker bits: %d\n", ((edata[6]>>6)&0x3));
+  printf("    Scramblig control: %d\n", ((edata[6]>>4)&0x3));
+  printf("    Priority: %d\n", ((edata[6]>>3)&0x1));
+  printf("    Data alignment indicator: %d\n", ((edata[6]>>2)&0x1));
+  printf("    Copyright: %d\n", ((edata[6]>>1)&0x1));
+  printf("    Original: %d\n", ((edata[6]>>0)&0x1));
+  int pts = ((edata[7]>>6)&0x2);
+  int dts = ((edata[7]>>6)&0x1);
+  if (!pts && dts) {
+    printf("    *** bad PTS DTS value 1\n");
+  }
+  if (pts) {
+    printf("    PTS present\n");    
+  }
+  if (dts) {
+    printf("    DTS present\n");    
+  }
+  printf("    ESCR: %d\n", ((edata[7]>>5)&0x1));
+  printf("    ES rate: %d\n", ((edata[7]>>4)&0x1));
+  printf("    DSM trick: %d\n", ((edata[7]>>3)&0x1));
+  printf("    Addl copy info: %d\n", ((edata[7]>>2)&0x1));
+  printf("    CRC: %d\n", ((edata[7]>>1)&0x1));
+  printf("    extension: %d\n", ((edata[7]>>0)&0x1));
+  printf("    remaining header: %d\n", edata[8]);
+  int n = 9;
+  if (pts) {
+    printf("    PTS bytes %02x %02x %02x %02x %02x\n",
+	   edata[n], edata[n+1], edata[n+2], edata[n+3],edata[n+4]);
+    uint64_t value = 0;
+    value = (edata[n]>>5)&0x7;
+    value <<= 30;
+    value |= ((uint64_t)edata[n+1] << 22);
+    value |= ((uint64_t)(edata[n+2]>>1) << 15);
+    value |= ((uint64_t)edata[n+3] << 7);
+    value |= ((uint64_t)edata[n+4] >> 1);
+    printf("    PTS value: %" PRIu64 "\n", value);
+    n += 5;
+
+    if (dts) {
+      printf("    DTS bytes %02x %02x %02x %02x %02x\n",
+	     edata[n],edata[n+1], edata[n+2], edata[n+3],edata[n+4]);
+      value = (edata[n]>>5)&0x7;
+      value <<= 30;
+      value |= ((uint64_t)edata[n+1] << 22);
+      value |= ((uint64_t)(edata[n+2]>>1) << 15);
+      value |= ((uint64_t)edata[n+3] << 7);
+      value |= ((uint64_t)edata[n+4] >> 1);
+      printf("    DTS value: %" PRIu64 "\n", value);
+      n += 5;
+    }
+  }
+
+  int elementary_payload_bytes = (s->data->len - n);
+  printf("    remaining bytes: %d\n", elementary_payload_bytes);
+  for (i=0; i < 4 && i < elementary_payload_bytes; i++) {
+    printf("      [%02x]\n", edata[n+i]);
+  }
+
+  {
+    char name[64];
+    sprintf(name, "%05d-es-%04d-%04d", packetCounter, s->pid, s->seq);
+    FILE *f = fopen(name, "wb");
+    if (f) {
+      if (fwrite(edata+n, elementary_payload_bytes, 1, f) != 1) {
+	perror("fwrite");
+      }
+      fclose(f);
+    }
+  }
+
+  printf("    [end completed PES packet]\n");            
+  
+#if 0
+	  /* NOTE: This is peeking down into the PES layer, and is
+	     only written to handle one specific example case. */
+	  if (pid > 256) { 
+	    printf("  [PES] completed payload PTS: %d%d%d%d (%d) %d",
+		   (s->data->data[9] >> 7) & 1,
+		   (s->data->data[9] >> 6) & 1,
+		   (s->data->data[9] >> 5) & 1,
+		   (s->data->data[9] >> 4) & 1,
+		   (s->data->data[9] >> 1) & 7,
+		   (s->data->data[9] >> 0) & 1);
+	    
+	    printf(" %" PRIu64 "", MpegTS_PTS(s->data->data + 9));
+	    printf("\n");
+	  }
+	  
+	  if (pid == 258) { 
+	    printf("  [PES] completed payload DTS: %d%d%d%d (%d) %d",
+		   (s->data->data[14] >> 7) & 1,
+		   (s->data->data[14] >> 6) & 1,
+		   (s->data->data[14] >> 5) & 1,
+		   (s->data->data[14] >> 4) & 1,
+		   (s->data->data[14] >> 1) & 7,
+		   (s->data->data[14] >> 0) & 1);
+	    
+	    printf(" %" PRIu64, MpegTS_PTS(s->data->data + 14));
+	    printf("\n");
+	  }
+#endif
+}
+
+
 static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 {
   int payloadLen = 188 - 4;
@@ -243,36 +381,9 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	  f = NULL;
 	}
 	
-	if (cfg.verbosity) { 
-	  /* NOTE: This is peeking down into the PES layer, and is
-	     only written to handle one specific example case. */
-	  if (pid > 256) { 
-	    printf("  [PES] previous payload PTS: %d%d%d%d (%d) %d",
-		   (s->data->data[9] >> 7) & 1,
-		   (s->data->data[9] >> 6) & 1,
-		   (s->data->data[9] >> 5) & 1,
-		   (s->data->data[9] >> 4) & 1,
-		   (s->data->data[9] >> 1) & 7,
-		   (s->data->data[9] >> 0) & 1);
-	    
-	    printf(" %" PRIu64 "", MpegTS_PTS(s->data->data + 9));
-	    printf("\n");
-	  }
-	  
-	  if (pid == 258) { 
-	    printf("  [PES] previous payload DTS: %d%d%d%d (%d) %d",
-		   (s->data->data[14] >> 7) & 1,
-		   (s->data->data[14] >> 6) & 1,
-		   (s->data->data[14] >> 5) & 1,
-		   (s->data->data[14] >> 4) & 1,
-		   (s->data->data[14] >> 1) & 7,
-		   (s->data->data[14] >> 0) & 1);
-	    
-	    printf(" %" PRIu64, MpegTS_PTS(s->data->data + 14));
-	    printf("\n");
-	  }
+	if (cfg.verbosity && pid != 0 && pid != priv->pmt_id) { 
+	  show_pes(s);
 	}
-	
 	
       } /* if (s->data->len) */
       s->seq += 1;
@@ -375,7 +486,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 
   /* http://en.wikipedia.org/wiki/Program_Specific_Information */
   if (pid == 0) {
-    printf("  PSI: Program Association Table\n");
+    printf("  PSI: PAT (Program Association Table)\n");
     int pointer_filler_bytes = MpegTS_PSI_PTRFIELD(packet);
     printf("  (%d pointer filler bytes)\n", pointer_filler_bytes);
     uint8_t * table_header = MpegTS_PSI_TABLEHDR(packet);
@@ -418,7 +529,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
   }
 
   else if (priv->pmt_id != 0 && pid == priv->pmt_id) {
-    printf("  PSI: Program Map Table\n");
+    printf("  PSI: PMT (Program Map Table)\n");
     int pointer_filler_bytes = MpegTS_PSI_PTRFIELD(packet);
     printf("  (%d pointer filler bytes)\n", pointer_filler_bytes);
     uint8_t * table_header = MpegTS_PSI_TABLEHDR(packet);
@@ -476,7 +587,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
       printf("      crc: (supplied:calculated) 0x%08x:0x????????\n", crc);
     }
   }
-      
+
 
   {
     char filename[256];

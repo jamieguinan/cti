@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "Images.h"
+#include "Audio.h"
 #include "Array.h"
 #include "Mem.h"
 #include "Cfg.h"
@@ -807,6 +808,13 @@ ImageType Image_guess_type(uint8_t *data, int len)
     }
     else if (data[0] == 0xff && data[1] == 0xd8 && data[2] == 0xff && data[3] == 0xe0) {
       t = IMAGE_TYPE_JPEG;
+    }
+    else if (data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x00 && data[3] == 0x01) {
+      t = IMAGE_TYPE_H264;
+    }
+    else if (data[0] == 0xff && data[1] == 0xf1 && data[2] == 0x5c && data[3] == 0x40) {
+      /* Confirmed format at http://www.p23.nl/projects/aac-header/ */
+      t = AUDIO_TYPE_AAC;
     }
   }
 

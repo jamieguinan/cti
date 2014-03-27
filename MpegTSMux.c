@@ -34,6 +34,7 @@ typedef struct _ts_packet {
   struct _ts_packet *next;
 } TSPacket;
 
+#define ESSD_MAX 2
 
 typedef struct {
   Instance i;
@@ -50,13 +51,85 @@ typedef struct {
   TSPacket *packets;
   TSPacket *last_packet;
 
+  struct {
+    uint8_t continuity_counter;
+  } PAT;
+
+  TSPacket PAT_packet;
+
+
+  struct {
+    uint16_t PCR_PID;
+    /* Elementary stream specific data: */
+    struct {
+      uint8_t streamType;
+      uint16_t elementary_PID;
+    } ESSD[ESSD_MAX];
+    uint8_t continuity_counter;
+  } PMT;
+
+  TSPacket PMT_packet;
+
   uint32_t continuity_counter;
 
   time_t tv_sec_offset;
 } MpegTSMux_private;
 
 
+static int set_pmt_essd(Instance *pi, const char *value)
+{
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+  String_list * parts = String_split_s(value, ":");
+  
+  if (String_list_len(parts) != 3) {
+    fprintf(stderr, "%s expected essd as index:streamtype:elementary_pid\n", __func__);
+    return 1;
+  }
+
+  int i, streamtype, elementary_pid;
+  String_parse_int(String_list_get(parts, 0), 0, &i);
+  String_parse_int(String_list_get(parts, 1), 0, &streamtype);
+  String_parse_int(String_list_get(parts, 2), 0, &elementary_pid);
+
+  if (i < 0 || i >= (ESSD_MAX)) {
+    fprintf(stderr, "%s: essd index out of range\n",  __func__);
+    return 1;
+  }
+
+  if (elementary_pid < 0 || elementary_pid > 8191) {
+    fprintf(stderr, "%s: essd elementary_pid out of range\n",  __func__);
+    return 1;
+  }
+
+  if (streamtype < 0 || streamtype > 255) {
+    fprintf(stderr, "%s: essd streamtype out of range\n",  __func__);
+    return 1;
+  }
+
+  priv->PMT.ESSD[i].elementary_PID = elementary_pid;
+  priv->PMT.ESSD[i].streamType = streamtype;
+
+  String_list_free(&parts);
+  return 0;
+}
+
+
+static int set_pmt_pcrpid(Instance *pi, const char *value)
+{
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+  int pcrpid = atoi(value);
+  if (pcrpid < 0 || pcrpid > 8191) {
+    fprintf(stderr, "%s: pmt pcrpid out of range\n",  __func__);
+    return 1;
+  }
+  priv->PMT.PCR_PID = pcrpid;
+  return 0;
+}
+
+
 static Config config_table[] = {
+  { "pmt_essd", set_pmt_essd, 0L, 0L },
+  { "pmt_pcrpid", set_pmt_pcrpid, 0L, 0L },
   // { "...",    set_..., get_..., get_..._range },
 };
 
@@ -249,7 +322,6 @@ static void H264_handler(Instance *pi, void *msg)
       priv->last_packet->next = packet;
       priv->last_packet = packet;
     }
-
   }
 }
 
@@ -279,6 +351,25 @@ static void MP3_handler(Instance *pi, void *msg)
   //MP3_buffer_discard(&mp3);
 }
 
+
+static void generate_pat(MpegTSMux_private *priv)
+{
+  memset(priv->PAT_packet.data, 0xff, sizeof(priv->PAT_packet.data));
+
+  /* Calculate CRC... */
+  priv->PAT.continuity_counter = (priv->PAT.continuity_counter + 1) % 16;
+}
+
+
+static void generate_pmt(MpegTSMux_private *priv)
+{
+  memset(priv->PMT_packet.data, 0xff, sizeof(priv->PMT_packet.data));
+
+  /* Calculate CRC... */
+  priv->PMT.continuity_counter = (priv->PMT.continuity_counter + 1) % 16;
+}
+
+
 static void flush(Instance *pi)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
@@ -290,10 +381,17 @@ static void flush(Instance *pi)
     }
   }
 
+  generate_pat(priv);
+  if (fwrite(priv->PAT_packet.data, 
+	     sizeof(priv->PAT_packet.data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
+
+  generate_pmt(priv);
+  if (fwrite(priv->PMT_packet.data, 
+	     sizeof(priv->PMT_packet.data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
+
   while (priv->packets) {
     TSPacket *tmp = priv->packets;
-    int n = fwrite(tmp->data, sizeof(tmp->data), 1, priv->chunk_file);
-    if (n != 1) perror("fwrite");
+    if (fwrite(tmp->data, sizeof(tmp->data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
     priv->packets = priv->packets->next;
     Mem_free(tmp);
   }

@@ -22,6 +22,8 @@ typedef enum {
   IMAGE_TYPE_PPM,
   IMAGE_TYPE_Y422P,		/* raw dumps from V4L2Capture module */
   IMAGE_TYPE_O511,
+  IMAGE_TYPE_H264,		/* One unit of compressor output */
+  AUDIO_TYPE_AAC,
 } ImageType;
 
 extern ImageType Image_guess_type(uint8_t * data, int len);

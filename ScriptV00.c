@@ -75,7 +75,9 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       expand(token3);
       Config_buffer *c = Config_buffer_new(token2, token3);
       printf("posting config message %s %s to %s\n", token2, token3, inst->label);
-      PostData(c, &inst->inputs[0]);
+      // PostData(c, &inst->inputs[0]);
+      int result;
+      PostDataGetResult(c, &inst->inputs[0], &result);
     }
   }
   else if ((sscanf(line->bytes, "include %255s", token1) == 1)) {

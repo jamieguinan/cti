@@ -115,7 +115,7 @@ typedef struct _Handler_message {
   struct _Handler_message *prev;
   void (*handler)(struct _Instance *pi, void *data);
   void *data;
-  Event * reply;		/* Provide if want response. */
+  Event * reply_event;		/* Provide if want response. */
   int * result;			/* Provide if want response. */
   // String * result_str;	/* Provide if want response. */
 } Handler_message;
@@ -165,7 +165,7 @@ extern void Connect(Instance *from, const char *label, Instance *to);
 extern void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *tolabel);
 
 extern void PostData(void *data, Input *destination);
-extern void PostDataGetReply(void *data, Input *destination, Event * reply, int * result);
+extern void PostDataGetResult(void *data, Input *destination, int * result);
 
 extern Handler_message *GetData(Instance *pi, int wait_flag);
 extern Handler_message *GetData_and_requests(Instance *pi, int wait_flag, Config *config_table, int num_configs);

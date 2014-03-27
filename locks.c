@@ -11,6 +11,12 @@ void Lock_init(Lock *lock)
 #endif
 }
 
+void Lock_destroy(Lock *lock)
+{
+#ifdef __linux__
+  pthread_mutex_destroy(&lock->mlock);
+#endif
+}
 
 void Lock_acquire(Lock *lock)
 {
@@ -47,6 +53,23 @@ void Lock_release__event_wait__lock_acquire(Lock *lock, Event *event)
   }
 #endif
 }
+
+
+void Event_init(Event *ev)
+{
+#ifdef __linux__
+  pthread_cond_init(&ev->event, NULL);
+#endif
+}
+
+
+void Event_destroy(Event *ev)
+{
+#ifdef __linux__
+  pthread_cond_destroy(&ev->event);
+#endif
+}
+
 
 void Event_signal(Event *ev)
 {

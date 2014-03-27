@@ -64,9 +64,11 @@ void Audio_buffer_discard(Audio_buffer **buffer)
 
 AAC_buffer *AAC_buffer_from(uint8_t *data, int data_length)
 {
-  AAC_buffer *buffer = Mem_calloc(1, sizeof(*buffer));
-  
-  return buffer;
+  AAC_buffer *aac = Mem_calloc(1, sizeof(*aac));
+  aac->data = Mem_malloc(data_length);
+  aac->data_length = data_length;
+  Mem_memcpy(aac->data, data, data_length);
+  return aac;
 }
 
 void AAC_buffer_discard(AAC_buffer **buffer)

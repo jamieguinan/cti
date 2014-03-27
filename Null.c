@@ -4,6 +4,7 @@
 #include "CTI.h"
 #include "Images.h"
 #include "Wav.h"
+#include "Audio.h"
 #include "Mem.h"
 #include "Cfg.h"
 #include "Log.h"
@@ -52,6 +53,18 @@ static void Wav_handler(Instance *pi, void *data)
   Wav_buffer_release(&wav_in);
 }
 
+static void H264_handler(Instance *pi, void *data)
+{
+  H264_buffer *h264 = data;
+  H264_buffer_discard(h264);
+}
+
+static void AAC_handler(Instance *pi, void *data)
+{
+  AAC_buffer *aac = data;
+  AAC_buffer_discard(&aac);
+}
+
 static void RawData_handler(Instance *pi, void *data)
 { 
   RawData_buffer *raw = data;
@@ -68,7 +81,7 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-enum { INPUT_CONFIG, INPUT_GRAY, INPUT_JPEG, INPUT_422P, INPUT_420P, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_RAWDATA };
+enum { INPUT_CONFIG, INPUT_GRAY, INPUT_JPEG, INPUT_422P, INPUT_420P, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_H264, INPUT_AAC, INPUT_RAWDATA };
 static Input Null_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = Gray_handler },
@@ -78,6 +91,8 @@ static Input Null_inputs[] = {
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_O511 ] = { .type_label = "O511_buffer", .handler = O511_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer",   .handler = Wav_handler },
+  [ INPUT_H264 ] = { .type_label = "H264_buffer", .handler = H264_handler },
+  [ INPUT_AAC ] = { .type_label = "AAC_buffer",   .handler = AAC_handler },
   [ INPUT_RAWDATA ] = { .type_label = "RawData_buffer", .handler = RawData_handler },
 };
 
@@ -98,6 +113,7 @@ static void Null_tick(Instance *pi)
 
   if (hm) {
     hm->handler(pi, hm->data);
+    // printf("%s handler called, releaseing message...\n", __func__);
     ReleaseMessage(&hm,pi);
   }
 }

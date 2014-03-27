@@ -48,7 +48,7 @@ void Instance_loop_thread(Instance *pi)
 }
 
 
-void PostDataGetReply(void *data, Input *input, Event * reply, int * result)
+void PostDataGetResult(void *data, Input *input, int * result)
 {
   Handler_message *hm = Mem_calloc(1, sizeof(*hm));
 
@@ -61,14 +61,17 @@ void PostDataGetReply(void *data, Input *input, Event * reply, int * result)
     }
   }
 
-  Lock reply_lock = { PTHREAD_MUTEX_INITIALIZER };
+  Lock reply_lock;
+  Event reply_event;
 
   hm->handler = input->handler;
   hm->data = data;
 
-  if (reply) {
+  if (result) {
+    Event_init(&reply_event);
+    Lock_init(&reply_lock);
     Lock_acquire(&reply_lock);
-    hm->reply = reply;
+    hm->reply_event = &reply_event;
     hm->result = result;
   }
 
@@ -106,16 +109,19 @@ void PostDataGetReply(void *data, Input *input, Event * reply, int * result)
     sleep(1);
   }
 
-  if (reply) {
-    /* Wait for messages recipient to signal back. */
-    Lock_release__event_wait__lock_acquire(&reply_lock, reply);
+  if (result) {
+    /* Wait for message recipient to signal back. */
+    printf("%s: sender is now waiting on reply event signal...\n", __func__);
+    Lock_release__event_wait__lock_acquire(&reply_lock, &reply_event);
+    Event_destroy(&reply_event);
+    Lock_destroy(&reply_lock);
   }
 }
 
 
 void PostData(void *data, Input *input)
 {
-  PostDataGetReply(data, input, NULL, NULL);
+  PostDataGetResult(data, input, NULL);
 }
 
 
@@ -187,14 +193,15 @@ out:
 void ReleaseMessage(Handler_message **msg, Instance *pi)
 {
   Handler_message *hm = *msg;
-  if (hm->reply) {
+  if (hm->reply_event) {
     /* Caller is waiting for a reply. */
     if (hm->result) {
       /* Caller supplied a result destination. */
       *(hm->result) = pi->result;
     }
     /* FIXME: Could also provide a string result, or even a binary (ArrayU8) result. */
-    Event_signal(hm->reply);
+    printf("%s: caller is waiting on reply event, signalling...\n", __func__);
+    Event_signal(hm->reply_event);
   }
   Mem_free(*msg);
   *msg = 0L;

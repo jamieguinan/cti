@@ -45,11 +45,15 @@ typedef struct {
 } LockedRef;
 
 extern void Lock_init(Lock *lock);
+extern void Lock_init(Lock *lock);
 extern void Lock_acquire(Lock *lock);
 extern void Lock_release(Lock *lock);
+extern void Lock_destroy(Lock *lock);
 
+extern void Event_init(Event *ev);
 extern void Lock_release__event_wait__lock_acquire(Lock *lock, Event *ev);
 extern void Event_signal(Event *ev);
+extern void Event_destroy(Event *ev);
 
 extern void LockedRef_init(LockedRef *ref);
 extern void LockedRef_increment(LockedRef *ref);
