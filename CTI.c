@@ -111,9 +111,7 @@ void PostDataGetResult(void *data, Input *input, int * result)
 
   if (result) {
     /* Wait for message recipient to signal back. */
-    printf("%s sender is now waiting on reply event semaphore...\n", __func__);
     Sem_wait(&reply_sem);
-    printf("%s wait complete.\n", __func__);
     Sem_destroy(&reply_sem);
     Lock_destroy(&reply_lock);
   }
@@ -201,7 +199,6 @@ void ReleaseMessage(Handler_message **msg, Instance *pi)
       *(hm->result) = pi->result;
     }
     /* FIXME: Could also provide a string result, or even a binary (ArrayU8) result. */
-    printf("%s (%s): caller is waiting on reply event, signalling...\n", __func__, pi->label);
     Sem_post(hm->reply_sem);
   }
   Mem_free(*msg);

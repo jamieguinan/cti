@@ -1,4 +1,7 @@
-/* Mpeg TS/PES muxer.  This might also handle generating sequential files and indexes. */
+/*
+ * Mpeg TS/PES muxer.  
+ * This might also handle generating sequential files and indexes.
+ */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -48,8 +51,11 @@ typedef struct {
   // Index file format string.
   String *index_fmt;
 
-  TSPacket *packets;
-  TSPacket *last_packet;
+  TSPacket *video_packets;
+  TSPacket *last_video_packet;
+
+  TSPacket *audio_packets;
+  TSPacket *last_audio_packet;
 
   struct {
     uint8_t continuity_counter;
@@ -314,13 +320,13 @@ static void H264_handler(Instance *pi, void *msg)
     payload_index += 1;
 
     /* Add to list. */
-    if (!priv->packets) {
-      priv->packets = packet;
-      priv->last_packet = packet;
+    if (!priv->video_packets) {
+      priv->video_packets = packet;
+      priv->last_video_packet = packet;
     }
     else {
-      priv->last_packet->next = packet;
-      priv->last_packet = packet;
+      priv->last_video_packet->next = packet;
+      priv->last_video_packet = packet;
     }
   }
 }
@@ -372,6 +378,8 @@ static void generate_pmt(MpegTSMux_private *priv)
 
 static void flush(Instance *pi)
 {
+  /* Write out interleaved video and audio packets, adding PAT and PMT
+     packets as needed.  I don't know how to schedule them yet... */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
 
   if (!priv->chunk_file) {
@@ -389,10 +397,10 @@ static void flush(Instance *pi)
   if (fwrite(priv->PMT_packet.data, 
 	     sizeof(priv->PMT_packet.data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
 
-  while (priv->packets) {
-    TSPacket *tmp = priv->packets;
+  while (priv->video_packets) {
+    TSPacket *tmp = priv->video_packets;
     if (fwrite(tmp->data, sizeof(tmp->data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
-    priv->packets = priv->packets->next;
+    priv->video_packets = priv->video_packets->next;
     Mem_free(tmp);
   }
 }
