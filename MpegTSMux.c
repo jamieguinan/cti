@@ -160,14 +160,16 @@ static void H264_handler(Instance *pi, void *msg)
   uint64_t tv90k;
 
   /* Map timestamp to 33-bit 90KHz units. */
-  tv90k = ((h264->c.tv.tv_sec - priv->tv_sec_offset) * 90000) + (h264->c.tv.tv_usec * 9 / 100);
+  //tv90k = ((h264->c.tv.tv_sec - priv->tv_sec_offset) * 90000) + (h264->c.tv.tv_usec * 9 / 100);
+  tv90k = 897600;
 
   /* Assign to PTS, and same to DTS. */
-  pts.set = 1;
+  /* FIXME: This might not actually be the right thing to do. */
+  pts.set = 0;
   pts.hi_bit = ((tv90k/2) >> 31 & 1);
   pts.value = (tv90k & 0xFFFFFFFF);
 
-  dts.set = 1;
+  dts.set = 0;
   dts.hi_bit = pts.hi_bit;
   dts.value = pts.value;
 
@@ -236,7 +238,7 @@ static void H264_handler(Instance *pi, void *msg)
     if (payload_index == 0) {
       packet->data[1] = 
 	(1 << 6) |		      /* PUS */
-	(0 << 5) |		      /* priority */
+	(0 << 5) |		      /* priority bit, not set */
 	((pid & 0x1f00) >> 8);	      /* pid[13:8] */
 
       packet->data[2] = (pid & 0xff); /* pid[7:0] */
@@ -255,18 +257,20 @@ static void H264_handler(Instance *pi, void *msg)
       packet->data[3] |= (1 << 5); /* adaptation field */
       afLen = 7; 
 
-      /* Using timestamp value stored in pts to fill in PCR.
-	 FIXME: Verify that PCR is formatted correctly. */
+      /* Fill in PCR. */
+      printf("PCR fill\n");
+      // (packet[6] << 25) | (packet[7] << 17) | (packet[8] << 9) | (packet[9] << 1) | (packet[10] >> 7));
       ArrayU8_append_bytes(pes,
 			   (1<<4), /* Flags: PCR */
-			   (pts.hi_bit << 7) | ((pts.value & 0xfe000000) >> 25),
-			   ((pts.value & 0x01fe0000) >> 17),
-			   ((pts.value & 0x0001fe00) >> 9),
-			   ((pts.value & 0x000001fe) >> 1),
-			   ((pts.value & 0x00000001) << 7) /* low bit of 33 bits */
+			   ((tv90k >> 25) & 0xff),
+			   ((tv90k >> 17) & 0xff),
+			   ((tv90k >> 9) & 0xff),
+			   ((tv90k >> 1) & 0xff),
+			   ((tv90k >> 1) & 0xff),
+			   ((tv90k & 1) << 7) /* low bit of 33 bits */
 			      | (0x3f << 1)  /* 6 bits reserved/padding */
 			      | (0<<0),	/* 9th bit of extension */
-			   (0x00)	/* bits 8:0 of exntension */
+			   (0x00)	/* bits 8:0 of extension */
 			   );
       
       int available_payload_size = (188 - 4 - 1 - afLen);
