@@ -1,9 +1,14 @@
 /*
  * Unpack data from Mpeg2 Transport Streams.
  * See earlier code "modc/MpegTS.h" for starters.
+ * References,
+ * 
  *   https://en.wikipedia.org/wiki/MPEG_transport_stream
  *   https://en.wikipedia.org/wiki/Program_Specific_Information
  *   https://en.wikipedia.org/wiki/Packetized_Elementary_Stream
+ *   https://en.wikipedia.org/wiki/Elementary_stream
+ *   file:///home/guinan/projects/video/iso13818-1.pdf
+ *   
  * This was mostly written as an exercise and testing tool, so 
  * that MpegTSMux.c (not Demux) could be developed in parallel
  * doing the inverse of what this module does.  But it could
@@ -13,7 +18,9 @@
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
-#include <unistd.h>		/* sleep */
+#include <unistd.h>		/* sleep, access */
+#include <sys/stat.h>		/* mkdir */
+#include <sys/types.h>		/* mkdir */
 #include <inttypes.h>
 
 #include "CTI.h"
@@ -591,7 +598,10 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 
   {
     char filename[256];
-    sprintf(filename, "tmp/%05d-ts%04d-%03d%s%s", packetCounter, pid, afLen, afLen ? "-AF" : "", isPUS ? "-PUS" : "");
+    if (access("tspackets", R_OK) != 0) {
+      mkdir("tspackets", 0744);
+    }
+    sprintf(filename, "tspackets/%05d-ts%04d-%03d%s%s", packetCounter, pid, afLen, afLen ? "-AF" : "", isPUS ? "-PUS" : "");
     FILE *f = fopen(filename, "wb");
     if (f) {
       int n = fwrite(packet, 188, 1, f);

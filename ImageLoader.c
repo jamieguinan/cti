@@ -92,7 +92,7 @@ static int set_file(Instance *pi, const char *value)
     if (h264) {
       if (pi->outputs[OUTPUT_H264].destination) {
 	PostDataGetResult(h264, pi->outputs[OUTPUT_H264].destination, &result);
-	printf("H264 result=%d\n", result);
+	// printf("H264 result=%d\n", result);
       }
     }
     break;
@@ -101,7 +101,7 @@ static int set_file(Instance *pi, const char *value)
     if (aac) {
       if (pi->outputs[OUTPUT_AAC].destination) {
 	PostDataGetResult(aac, pi->outputs[OUTPUT_AAC].destination, &result);
-	printf("AAC result=%d\n", result);
+	// printf("AAC result=%d\n", result);
       }
     }
     break;

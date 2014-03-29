@@ -5,6 +5,9 @@
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
+#include <unistd.h>		/* access */
+#include <sys/stat.h>		/* mkdir */
+#include <sys/types.h>		/* mkdir */
 
 #include "CTI.h"
 #include "MpegTSMux.h"
@@ -45,8 +48,9 @@ typedef struct {
   String *chunk_fmt;
   // TS sequence duration in seconds.
   int chunk_duration;
-
   FILE *chunk_file;
+
+  int pktseq;			/* Output packet counter... */
 
   // Index file format string.
   String *index_fmt;
@@ -167,20 +171,6 @@ static void H264_handler(Instance *pi, void *msg)
   dts.hi_bit = pts.hi_bit;
   dts.value = pts.value;
 
-  if (0) {
-    /* Debug testing... */
-    static FILE *f;
-    if (!f) {
-      f = fopen("out.264", "wb");
-    }
-    if (fwrite(h264->data, h264->data_length, 1, f) != 1) {
-      perror("fwrite");
-    }
-    else {
-      printf("wrote %d bytes\n", h264->data_length);
-    }
-  }
-
   /* Wrap the data in a PES packet (prepend a chunk of header data),
      then divide into TS packets, and either write out, or save in a
      list so they can be smoothly interleaved with audio packets.  See
@@ -246,7 +236,7 @@ static void H264_handler(Instance *pi, void *msg)
     if (payload_index == 0) {
       packet->data[1] = 
 	(1 << 6) |		      /* PUS */
-	(1 << 5) |		      /* priority */
+	(0 << 5) |		      /* priority */
 	((pid & 0x1f00) >> 8);	      /* pid[13:8] */
 
       packet->data[2] = (pid & 0xff); /* pid[7:0] */
@@ -382,25 +372,46 @@ static void flush(Instance *pi)
      packets as needed.  I don't know how to schedule them yet... */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
 
-  if (!priv->chunk_file) {
-    priv->chunk_file = fopen("muxout.ts", "wb");
-    if (!priv->chunk_file) {
-      return;
-    }
+  if (access("outpackets", R_OK) != 0) {
+    mkdir("outpackets", 0744);
   }
 
-  generate_pat(priv);
-  if (fwrite(priv->PAT_packet.data, 
-	     sizeof(priv->PAT_packet.data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
+  // printf("%s: priv->video_packets = %p\n", __func__, priv->video_packets);
 
-  generate_pmt(priv);
-  if (fwrite(priv->PMT_packet.data, 
-	     sizeof(priv->PMT_packet.data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
+  if (!priv->audio_packets && !priv->video_packets) {
+    /* Don't flush unless have both audio and video available. 
+       FIXME: Could make this configurable for any combination... */
+    return;
+  }
 
+  /* This is temporary, I'll eventually set up a proper output, or
+     m3u8 generation. */
+  if (0) {
+    generate_pat(priv);
+  }
+  
+  if (0) {
+    generate_pmt(priv);
+  }
+  
   while (priv->video_packets) {
     TSPacket *tmp = priv->video_packets;
-    if (fwrite(tmp->data, sizeof(tmp->data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
+    {
+      char fname[256]; sprintf(fname, "outpackets/%04d-ts0258", priv->pktseq++);
+      FILE * f = fopen(fname, "wb");
+      if (f) {
+	if (fwrite(tmp->data, sizeof(tmp->data), 1, f) != 1) { perror("fwrite"); }
+	fclose(f);
+      }
+    }
     priv->video_packets = priv->video_packets->next;
+    Mem_free(tmp);
+  }
+
+  while (priv->audio_packets) {
+    TSPacket *tmp = priv->audio_packets;
+    if (fwrite(tmp->data, sizeof(tmp->data), 1, priv->chunk_file) != 1) { perror("fwrite"); }
+    priv->audio_packets = priv->audio_packets->next;
     Mem_free(tmp);
   }
 }

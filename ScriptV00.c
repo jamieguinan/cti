@@ -74,7 +74,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       strcpy(token3, p);
       expand(token3);
       Config_buffer *c = Config_buffer_new(token2, token3);
-      printf("posting config message %s %s to %s\n", token2, token3, inst->label);
+      // printf("posting config message %s %s to %s\n", token2, token3, inst->label);
       // PostData(c, &inst->inputs[0]);
       int result;
       PostDataGetResult(c, &inst->inputs[0], &result);
