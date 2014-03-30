@@ -254,7 +254,8 @@ static void show_pes(Stream *s)
     printf("    PTS bytes %02x %02x %02x %02x %02x\n",
 	   edata[n], edata[n+1], edata[n+2], edata[n+3],edata[n+4]);
     uint64_t value = 0;
-    value = (edata[n]>>5)&0x7;
+    /* 00[01][01]NNN[1] */
+    value = (edata[n]>>1)&0x7;
     value <<= 30;
     value |= ((uint64_t)edata[n+1] << 22);
     value |= ((uint64_t)(edata[n+2]>>1) << 15);

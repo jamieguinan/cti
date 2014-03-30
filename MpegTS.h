@@ -80,8 +80,7 @@ extern void MpegTSDemux_init(void);
 
 
 typedef struct {
-  uint32_t value;
-  unsigned int hi_bit:1;
+  uint64_t value;
   unsigned int set:1;			/* boolean */
 } MpegTimeStamp;
 
