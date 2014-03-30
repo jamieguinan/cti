@@ -450,14 +450,13 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 				     ((packet[10] & 1) << 8) | packet[11]);
 
       if (cfg.verbosity) {
-	printf("  PCR present:  [%02x] 90kHz:%d",
-	       /* 33 bits, 90KHz */
-	       packet[6],
-	       (packet[6] << 25) | (packet[7] << 17) | (packet[8] << 9) | (packet[9] << 1) | (packet[10] >> 7));
+	uint64_t pcr = ((uint64_t)packet[6] << 25) \
+	  | (packet[7] << 17) | (packet[8] << 9) | (packet[9] << 1) | ((packet[10] >> 7) & 1);
+	printf("  PCR present: %" PRIu64 " @90kHz", pcr);
 	/* 6 bits "reserved", see iso13818-1.pdf Table 2-6 */
 	printf(" res:%d", (packet[10] >> 1) & 0x3f);
 	/* 9 bits, 27MHz */
-	printf(" [%02x, %02x] 27MHz:%d\n", packet[10], packet[11], ((packet[10] & 1) << 8) | packet[11]);
+	printf(" 27MHz:%d\n", ((packet[10] & 1) << 8) | packet[11]);
       }
     }
     if (MpegTS_AF_OPCRI(packet)) {
