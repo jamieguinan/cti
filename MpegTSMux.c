@@ -156,8 +156,6 @@ typedef struct {
   } PMT;
 
   uint32_t continuity_counter;
-
-  time_t tv_sec_offset;
 } MpegTSMux_private;
 
 
@@ -245,7 +243,6 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   }
 
   /* Map timestamp to 33-bit 90KHz units. */
-  //tv90k = ((h264->c.tv.tv_sec - priv->tv_sec_offset) * 90000) + (h264->c.tv.tv_usec * 9 / 100);
   tv90k = stream->running_pcr;
 
   /* Assign to PTS, and same to DTS. */
@@ -580,7 +577,10 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
 static void flush(Instance *pi)
 {
   /* Write out interleaved video and audio packets, adding PAT and PMT
-     packets as needed.  I don't know how to schedule them yet... */
+     packets at least every 100ms. */
+
+  /* I'll eventually set up m3u8 generation. */
+
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   int i;
 
@@ -589,9 +589,6 @@ static void flush(Instance *pi)
   }
 
   // printf("%s: priv->video_packets = %p\n", __func__, priv->video_packets);
-
-  /* This is temporary, I'll eventually set up a proper output, or
-     m3u8 generation. */
 
   if (priv->pktseq == 0) {
     {
@@ -695,11 +692,6 @@ static void MpegTSMux_instance_init(Instance *pi)
     .running_pts = 900000,
     .pts_add = 4180
   };
-  
-  /* FIXME: This is arbitrary, based on an early 2011 epoch date.  The
-     real problem is I don't know to handle PTS wraps.  Should fix
-     that sometime... */
-  priv->tv_sec_offset = 1300000000;  
 }
 
 
