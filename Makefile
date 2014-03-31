@@ -126,6 +126,7 @@ OBJS= \
 	$(OBJDIR)/nodetree.o \
 	$(OBJDIR)/Stats.o \
 	$(OBJDIR)/StackDebug.o \
+	$(OBJDIR)/crc.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 

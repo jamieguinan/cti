@@ -581,7 +581,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	       MpegTS_ESSD_STREAMTYPE(essd),
 	       stream_type_string(MpegTS_ESSD_STREAMTYPE(essd)));
 	printf("      Reserved bits: %d\n", MpegTS_ESSD_RBITS1(essd));
-	printf("      Elementary PID: %d\n", MpegTS_ESSD_ELEMENTARY_PID(essd));
+	printf("      PID: %d\n", MpegTS_ESSD_PID(essd));
 	printf("      Reserved bits2: %d\n", MpegTS_ESSD_RBITS2(essd));
 	printf("      Unused: %d\n", MpegTS_ESSD_UNUSED(essd));
 	printf("      Stream descriptors length: %d\n", MpegTS_ESSD_DESCRIPTORSLENGTH(essd));

@@ -72,7 +72,7 @@ extern void MpegTSDemux_init(void);
 #define MpegTS_PMT_ESSD(pmsd) (&(pmsd[4]) + MpegTS_PMT_PMSD_PROGINFOLEN(pmsd))
 #define MpegTS_ESSD_STREAMTYPE(essd) (essd[0])
 #define MpegTS_ESSD_RBITS1(essd) ((essd[1]>>5) & 0x7)
-#define MpegTS_ESSD_ELEMENTARY_PID(essd) ((essd[1] & 0x1f) | essd[2])
+#define MpegTS_ESSD_PID(essd) ((essd[1] & 0x1f) | essd[2])
 #define MpegTS_ESSD_RBITS2(essd) ((essd[3]>>4) & 0xf)
 #define MpegTS_ESSD_UNUSED(essd) ((essd[3]>>2) & 0x3)
 #define MpegTS_ESSD_DESCRIPTORSLENGTH(essd) (((essd[3]& 0x3)<<8)|essd[4])
