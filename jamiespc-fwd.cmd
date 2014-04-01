@@ -67,7 +67,7 @@ config vc autoexpose 3
 #connect cc RGB3_buffer y4mout
 #connect md Config_msg cc
 
-connect vc 422P_buffer y4mout
+connect vc YUV422P_buffer y4mout
 connect ac Wav_buffer wo
 
 # Enable vc to start the whole thing running.

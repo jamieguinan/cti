@@ -75,11 +75,11 @@ connect mjd Wav_buffer wo
 config mjd output frontyard-%Y%m%d-%H%M%S.mjx
 
 ##connect dj RGB3_buffer cc
-connect dj 422P_buffer cc
+connect dj YUV422P_buffer cc
 connect dj GRAY_buffer md
 
 ##connect cc RGB3_buffer y4mout
-connect cc 422P_buffer y4mout
+connect cc YUV422P_buffer y4mout
 
 #connect cc RGB3_buffer vf
 #connect vf RGB3_buffer y4mout

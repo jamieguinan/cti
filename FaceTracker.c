@@ -15,20 +15,20 @@ static void Config_handler(Instance *pi, void *msg);
 static void gray_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_GRAY, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_GRAY, INPUT_YUV422P };
 static Input FaceTracker_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = gray_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_POSITION, OUTPUT_GRAY, OUTPUT_RGB3, OUTPUT_422P };
+enum { OUTPUT_POSITION, OUTPUT_GRAY, OUTPUT_RGB3, OUTPUT_YUV422P };
 static Output FaceTracker_outputs[] = {
   [ OUTPUT_POSITION ] = { .type_label = "Position_msg", .destination = 0L },
   /* The image outputs are for tuning and debugging. */
   [ OUTPUT_GRAY ] = { .type_label = "GRAY_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
-  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -312,7 +312,7 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
 }
 
 
-static void analysis_01(FaceTracker_private *priv, YUV422P_buffer *y422p)
+static void analysis_01(FaceTracker_private *priv, YUVYUV422P_buffer *y422p)
 {
 #if 0
   /* Locate 3 points matching the selected color.  Calculate values to
@@ -371,17 +371,17 @@ static void gray_handler(Instance *pi, void *msg)
 static void y422p_handler(Instance *pi, void *msg)
 {
   FaceTracker_private *priv = (FaceTracker_private *)pi;
-  YUV422P_buffer *y422p = msg;
+  YUVYUV422P_buffer *y422p = msg;
 
   /* Position message will contain 3D coordinate offset and 3D rotation offset. */
 
   analysis_01(priv, y422p);
 
-  if (pi->outputs[OUTPUT_422P].destination) {
-    PostData(y422p, pi->outputs[OUTPUT_422P].destination);
+  if (pi->outputs[OUTPUT_YUV422P].destination) {
+    PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
-    YUV422P_buffer_discard(y422p);
+    YUVYUV422P_buffer_discard(y422p);
   }
 }
 

@@ -5,7 +5,7 @@ new DJpeg dj
 
 connect mjd Jpeg_buffer jt
 connect jt Jpeg_buffer dj
-connect dj 422P_buffer y4mout
+connect dj YUV422P_buffer y4mout
 
 config mjd use_feedback 0
 config mjd input 127.0.0.1:6666

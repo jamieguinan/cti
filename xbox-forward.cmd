@@ -50,7 +50,7 @@ connect mjd Wav_buffer wo
 
 config mjd output xbox-%Y%m%d-%H%M%S.mjx
 
-connect dj 422P_buffer  y4mout
+connect dj YUV422P_buffer  y4mout
 
 # Enable mjd to start the whole thing running.
 config mjd enable 1

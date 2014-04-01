@@ -8,7 +8,7 @@ new CJpeg cj
 new JpegFiler jf
 new PGMFiler pf
 
-connect il 422P_buffer cj
+connect il YUV422P_buffer cj
 connect cj Jpeg_buffer jf
 connect il GRAY_buffer pf
 

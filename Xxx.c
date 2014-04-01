@@ -26,11 +26,11 @@ static Input Xxx_inputs[] = {
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_422P, OUTPUT_JPEG };
+enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_JPEG };
 static Output Xxx_outputs[] = { 
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
-  [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_JPEG ] = {.type_label = "Jpeg_buffer", .destination = 0L }, /* pass-through */
 };
 
@@ -240,16 +240,16 @@ static void Jpeg_handler(Instance *pi, void *data)
     jpeg_destroy_decompress(&cinfo);
   }
 
-  if (pi->outputs[OUTPUT_422P].destination
+  if (pi->outputs[OUTPUT_YUV422P].destination
       || (pi->outputs[OUTPUT_GRAY].destination && !gray_handled)) {
     /* Decompress to YCbCr, and copy Y channel to Gray buffer if needed. */
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
-    YUV422P_buffer * y422p_out = 0L;
+    YUVYUV422P_buffer * y422p_out = 0L;
     int error = 0;
     jmp_buf jb;
 
-    while (pi->outputs[OUTPUT_422P].destination->parent->pending_messages > 25) {
+    while (pi->outputs[OUTPUT_YUV422P].destination->parent->pending_messages > 25) {
       /* Throttle output.  25ms sleep. */
       nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
     }
@@ -274,7 +274,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
     (void) jpeg_read_header(&cinfo, TRUE);
 
-    y422p_out = YUV422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
+    y422p_out = YUVYUV422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
 
     save_width = cinfo.image_width;
     save_height = cinfo.image_height;
@@ -383,17 +383,17 @@ static void Jpeg_handler(Instance *pi, void *data)
 	PostData(gray_out, pi->outputs[OUTPUT_GRAY].destination);
       }
       
-      if (pi->outputs[OUTPUT_422P].destination) {
-	PostData(y422p_out, pi->outputs[OUTPUT_422P].destination);
+      if (pi->outputs[OUTPUT_YUV422P].destination) {
+	PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
       }
       else {
 	/* Only wanted gray output, discard the ycrcb buffer */
-	YUV422P_buffer_discard(y422p_out);
+	YUVYUV422P_buffer_discard(y422p_out);
       }
     }
     else {
       if (y422p_out) {
-	YUV422P_buffer_discard(y422p_out);
+	YUVYUV422P_buffer_discard(y422p_out);
       }
     }
     

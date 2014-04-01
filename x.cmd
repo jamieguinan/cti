@@ -9,7 +9,7 @@ connect sdl Feedback_buffer mjd
 connect sdl:Keycode_msg sdl:Keycode_msg
 
 #connect dj RGB3_buffer sdl
-connect dj 422P_buffer sdl
+connect dj YUV422P_buffer sdl
 
 config sdl mode OVERLAY
 #config sdl mode GL

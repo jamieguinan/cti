@@ -24,8 +24,8 @@ config sdl mode OVERLAY
 #connect dj RGB3_buffer vs
 #connect vs RGB3_buffer sdl
 #connect dj RGB3_buffer sdl
-connect dj 422P_buffer vf
-connect vf 422P_buffer sdl
+connect dj YUV422P_buffer vf
+connect vf YUV422P_buffer sdl
 
 config mjd input 192.168.2.74:6667
 

@@ -43,16 +43,16 @@ connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer wo
 
 # 1:
-#connect dj 422P_buffer ns
-#connect ns 422P_buffer y4mout
+#connect dj YUV422P_buffer ns
+#connect ns YUV422P_buffer y4mout
 
 # 2:
-#connect dj 422P_buffer y4mout
+#connect dj YUV422P_buffer y4mout
 
 # 3:
-connect dj 422P_buffer vf
+connect dj YUV422P_buffer vf
 config vf bottom_crop 240
-connect vf 422P_buffer y4mout
+connect vf YUV422P_buffer y4mout
 
 
 # Enable mjd to start the whole thing running.

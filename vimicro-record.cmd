@@ -5,10 +5,10 @@ new Splitter sp
 
 new MjpegMux mjm
 
-connect vc 422P_buffer sp
+connect vc YUV422P_buffer sp
 
-connect sp:422P_buffer.1 sdl:422P_buffer
-connect sp:422P_buffer.2 cj:422P_buffer
+connect sp:YUV422P_buffer.1 sdl:YUV422P_buffer
+connect sp:YUV422P_buffer.2 cj:YUV422P_buffer
 
 #connect sdl Pointer_event ui
 #connect sdl mode OVERLAY

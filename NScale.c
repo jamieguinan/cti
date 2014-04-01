@@ -14,15 +14,15 @@ static void Config_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
 
 
-enum { INPUT_CONFIG, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_YUV422P };
 static Input NScale_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_422P /* , OUTPUT_JPEG  */};
+enum { OUTPUT_YUV422P /* , OUTPUT_JPEG  */};
 static Output NScale_outputs[] = {
-  [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -66,19 +66,19 @@ static void N_scale(NScale_private *priv, uint8_t *indata, int in_width, int in_
 static void y422p_handler(Instance *pi, void *data)
 {
   NScale_private *priv = (NScale_private *)pi;
-  YUV422P_buffer *y422p_in = data;
+  YUVYUV422P_buffer *y422p_in = data;
 
-  if (pi->outputs[OUTPUT_422P].destination) {
+  if (pi->outputs[OUTPUT_YUV422P].destination) {
 
     if (priv->Nx == 1 && priv->Ny == 1) {
       /* Pass-through */
-      PostData(y422p_in, pi->outputs[OUTPUT_422P].destination);
+      PostData(y422p_in, pi->outputs[OUTPUT_YUV422P].destination);
       return;
     }
 
     /* else... */
 
-    YUV422P_buffer *y422p_out = YUV422P_buffer_new(y422p_in->width/priv->Nx, y422p_in->height/priv->Ny,
+    YUVYUV422P_buffer *y422p_out = YUVYUV422P_buffer_new(y422p_in->width/priv->Nx, y422p_in->height/priv->Ny,
 					       &y422p_in->c);
     N_scale(priv, y422p_in->y, y422p_in->width, y422p_in->height, 
 	    y422p_out->y, y422p_out->width, y422p_out->height);
@@ -88,9 +88,9 @@ static void y422p_handler(Instance *pi, void *data)
 	    y422p_out->cb, y422p_out->cb_width, y422p_out->cb_height);
     dpf("posting %dx%d image to output\n", y422p_out->width, y422p_out->height);
     y422p_out->c.tv = y422p_in->c.tv;
-    PostData(y422p_out, pi->outputs[OUTPUT_422P].destination);
+    PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
-  YUV422P_buffer_discard(y422p_in);
+  YUVYUV422P_buffer_discard(y422p_in);
 }
 
 

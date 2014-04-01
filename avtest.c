@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     printf("search for BT878 returned %d, should use device %s\n", n, s->bytes);
     bt = 1;
     SetConfig(vc, "device", s->bytes);
-    //Connect(vc, "422P_buffer", cj);
+    //Connect(vc, "YUV422P_buffer", cj);
   }
   else if ((n = Range_match_substring(range, "gspca")) >= 0) {
     String *s = range->x.strings.values.things[n];
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
   }
 
   if (bt) {
-    SetConfig(vc, "format", "422P");
+    SetConfig(vc, "format", "YUV422P");
     SetConfig(vc, "std", "NTSC");
     SetConfig(vc, "size", "704x480");
     if (T) {
@@ -171,11 +171,11 @@ int main(int argc, char *argv[])
   if (topro) {
     Instance *dj = Instantiate("DJpeg");
     Connect(vc, "Jpeg_buffer", dj);
-    Connect(dj, "422P_buffer", sdl);
+    Connect(dj, "YUV422P_buffer", sdl);
     Instance_loop_thread(dj);
   }
   else {
-    Connect(vc, "422P_buffer", sdl);
+    Connect(vc, "YUV422P_buffer", sdl);
   }
 
   

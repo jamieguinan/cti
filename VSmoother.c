@@ -14,19 +14,19 @@ static void bgr3_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
 
 /* VSmoother Instance and Template implementation. */
-enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_YUV422P };
 static Input VSmoother_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = bgr3_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_BGR3, OUTPUT_422P };
+enum { OUTPUT_RGB3, OUTPUT_BGR3, OUTPUT_YUV422P };
 static Output VSmoother_outputs[] = { 
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_BGR3 ] = {.type_label = "BGR3_buffer", .destination = 0L },
-  [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -153,13 +153,13 @@ static void bgr3_handler(Instance *pi, void *data)
 static void y422p_handler(Instance *pi, void *data)
 {
   VSmoother_private *priv = (VSmoother_private *)pi;
-  YUV422P_buffer *y422p_in = data;
-  if (pi->outputs[OUTPUT_422P].destination) {
+  YUVYUV422P_buffer *y422p_in = data;
+  if (pi->outputs[OUTPUT_YUV422P].destination) {
     smooth(priv, &y422p_in->c.tv,pi->pending_messages);
-    PostData(y422p_in, pi->outputs[OUTPUT_422P].destination);
+    PostData(y422p_in, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
-    YUV422P_buffer_discard(y422p_in);
+    YUVYUV422P_buffer_discard(y422p_in);
   }
 }
 

@@ -22,10 +22,10 @@ static Input ImageLoader_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-enum { OUTPUT_GRAY, OUTPUT_422P, OUTPUT_JPEG, OUTPUT_H264, OUTPUT_AAC };
+enum { OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_JPEG, OUTPUT_H264, OUTPUT_AAC };
 static Output ImageLoader_outputs[] = {
   [ OUTPUT_GRAY ] = { .type_label = "GRAY_buffer", .destination = 0L },
-  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
   [ OUTPUT_AAC ] = { .type_label = "AAC_buffer", .destination = 0L },
@@ -41,7 +41,7 @@ static int set_file(Instance *pi, const char *value)
   ArrayU8 *fdata = File_load_data(S((char*) value));
   ImageType t;
   Gray_buffer *gray = 0L;
-  YUV422P_buffer *y422p = 0L;
+  YUVYUV422P_buffer *y422p = 0L;
   Jpeg_buffer *jpeg = 0L;
   H264_buffer *h264 = 0L;
   AAC_buffer *aac = 0L;
@@ -59,7 +59,7 @@ static int set_file(Instance *pi, const char *value)
 
   if (t == IMAGE_TYPE_UNKNOWN) {
     if (strstr(value, ".y422p")) {
-      t = IMAGE_TYPE_YUV422P;
+      t = IMAGE_TYPE_YUVYUV422P;
     }
   }
   
@@ -89,7 +89,7 @@ static int set_file(Instance *pi, const char *value)
       }
     }
     break;
-  case IMAGE_TYPE_YUV422P:
+  case IMAGE_TYPE_YUVYUV422P:
     // y422p = ...
     if (y422p) {
       if (pi->outputs[OUTPUT_GRAY].destination) {
@@ -97,8 +97,8 @@ static int set_file(Instance *pi, const char *value)
 	PostDataGetResult(gray, pi->outputs[OUTPUT_GRAY].destination, &result);
 	// Gray_buffer_discard();
       }
-      if (pi->outputs[OUTPUT_422P].destination) {
-	PostDataGetResult(y422p, pi->outputs[OUTPUT_422P].destination, &result);
+      if (pi->outputs[OUTPUT_YUV422P].destination) {
+	PostDataGetResult(y422p, pi->outputs[OUTPUT_YUV422P].destination, &result);
       }
       else {
 	// discard

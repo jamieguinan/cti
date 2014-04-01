@@ -22,12 +22,12 @@ static void y422p_handler(Instance *pi, void *msg);
 static void y420p_handler(Instance *pi, void *msg);
 
 /* CJpeg Instance and Template implementation. */
-enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_422P, INPUT_420P };
+enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_YUV422P, INPUT_420P };
 static Input CJpeg_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = bgr3_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
   [ INPUT_420P ] = { .type_label = "420P_buffer", .handler = y420p_handler },
 };
 
@@ -332,12 +332,12 @@ static void bgr3_handler(Instance *pi, void *data)
 
 static void y422p_handler(Instance *pi, void *data)
 {
-  YUV422P_buffer *y422p_in = data;
+  YUVYUV422P_buffer *y422p_in = data;
   compress_and_post(pi, 
 		    y422p_in->width, y422p_in->height,
 		    y422p_in->y, y422p_in->cb, y422p_in->cr,
 		    COMPRESS_Y422);
-  YUV422P_buffer_discard(y422p_in);
+  YUVYUV422P_buffer_discard(y422p_in);
 }
 
 static void y420p_handler(Instance *pi, void *data)

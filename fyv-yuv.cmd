@@ -64,7 +64,7 @@ connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer wo
 
 #connect dj RGB3_buffer cc
-connect dj 422P_buffer y4mout
+connect dj YUV422P_buffer y4mout
 connect dj GRAY_buffer md
 
 #connect cc RGB3_buffer y4mout

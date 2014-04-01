@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 
   if (streq(mode, "vcr") || streq(mode, "wii") || streq(mode, "sullytv")) {
 
-    SetConfig(vc, "format", "422P");
+    SetConfig(vc, "format", "YUV422P");
     SetConfig(vc, "std", "NTSC");
 
     if (streq(mode, "vcr") || streq(mode, "wii")) {
@@ -137,12 +137,12 @@ int main(int argc, char *argv[])
       if (streq(mode, "vcr")) {
 	/* Insert a half-width scaler. */
 	Instance *hw = Instantiate("HalfWidth");
-	Connect(vc, "422P_buffer", hw);
-	Connect(hw, "422P_buffer", cj);
+	Connect(vc, "YUV422P_buffer", hw);
+	Connect(hw, "YUV422P_buffer", cj);
 	Instance_loop_thread(hw);
       }
       else { /* wii */
-	Connect(vc, "422P_buffer", cj);
+	Connect(vc, "YUV422P_buffer", cj);
       }
 
       SetConfig(vc, "size", "704x480");
@@ -157,11 +157,11 @@ int main(int argc, char *argv[])
       /* Insert a half-width scaler. */
 #if 0
       Instance *hw = Instantiate("HalfWidth");
-      Connect(vc, "422P_buffer", hw);
-      Connect(hw, "422P_buffer", cj);
+      Connect(vc, "YUV422P_buffer", hw);
+      Connect(hw, "YUV422P_buffer", cj);
       Instance_loop_thread(hw);
 #else
-      Connect(vc, "422P_buffer", cj);
+      Connect(vc, "YUV422P_buffer", cj);
 #endif
       SetConfig(vc, "input", "Television");
       SetConfig(vc, "size", "704x480");

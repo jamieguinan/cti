@@ -61,10 +61,10 @@ system cat fifo.wav > /dev/null &
 connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer wo
 
-connect dj 422P_buffer cc
+connect dj YUV422P_buffer cc
 connect dj GRAY_buffer md
 
-connect cc 422P_buffer y4mout
+connect cc YUV422P_buffer y4mout
 #connect cc RGB3_buffer vf
 #connect vf RGB3_buffer y4mout
 

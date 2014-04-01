@@ -1,6 +1,6 @@
 new V4L2Capture vc
 
-connect vc 422P_buffer sdl
+connect vc YUV422P_buffer sdl
 
 config vc device em28xx
 config vc format YUYV

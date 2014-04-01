@@ -4,7 +4,7 @@ new UI001 ui
 new FaceTracker ft
 new Null null
 
-#connect vc 422P_buffer sdl
+#connect vc YUV422P_buffer sdl
 #connect vc GRAY_buffer sdl
 
 connect vc GRAY_buffer ft

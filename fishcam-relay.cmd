@@ -60,7 +60,7 @@ system ../libtheora-1.2.0alpha1/examples/encoder_example fishcam.wav fishcam.y4m
 connect mjd Jpeg_buffer dj
 connect mjd Wav_buffer wo
 
-connect dj 422P_buffer y4mout
+connect dj YUV422P_buffer y4mout
 
 config mjd output fishcam-%Y%m%d-%H%M%S.mjx
 

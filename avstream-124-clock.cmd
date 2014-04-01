@@ -60,7 +60,7 @@ config cc command fill
 
 connect mjd Jpeg_buffer jt
 connect jt Jpeg_buffer dj
-connect dj 422P_buffer y4mout
+connect dj YUV422P_buffer y4mout
 
 config mjd use_feedback 0
 config mjd input 192.168.2.124:6666

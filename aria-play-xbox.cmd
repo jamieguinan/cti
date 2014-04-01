@@ -27,10 +27,10 @@ config sdl height 480
 
 config sdl label XBox
 
-connect dj 422P_buffer vf
-connect vf 422P_buffer sdl
+connect dj YUV422P_buffer vf
+connect vf YUV422P_buffer sdl
 
-#connect dj 422P_buffer sdl
+#connect dj YUV422P_buffer sdl
 
 #config mjd input ./rcv
 config mjd input 192.168.2.22:6667

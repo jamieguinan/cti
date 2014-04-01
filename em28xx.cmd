@@ -3,7 +3,7 @@ new SDLstuff sdl
 
 connect sdl:Keycode_msg sdl:Keycode_msg
 
-connect vc 422P_buffer sdl
+connect vc YUV422P_buffer sdl
 
 config sdl mode OVERLAY
 #config sdl mode SOFTWARE

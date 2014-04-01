@@ -13,7 +13,7 @@ connect dj RGB3_buffer sdl
 #connect vc GRAY_buffer sdl
 
 # Testing YUYV with the YCbCr path.
-connect vc 422P_buffer sdl
+connect vc YUV422P_buffer sdl
 
 connect sdl Pointer_event ui
 

@@ -1,4 +1,4 @@
-/* Provide a single 422P buffer repeatedly, for benchmarking. */
+/* Provide a single YUV422P buffer repeatedly, for benchmarking. */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -12,21 +12,21 @@
 static void y422p_handler(Instance *pi, void *msg);
 static void Config_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_YUV422P };
 static Input Y4MSource_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_422P, OUTPUT_CONFIG };
+enum { OUTPUT_YUV422P, OUTPUT_CONFIG };
 static Output Y4MSource_outputs[] = { 
-  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
 };
 
 typedef struct {
   Instance i;
-  YUV422P_buffer *y4m;
+  YUVYUV422P_buffer *y4m;
 } Y4MSource_private;
 
 
@@ -44,25 +44,25 @@ static int do_run(Instance *pi, const char *value)
     return 1;
   }
 
-  if (!pi->outputs[OUTPUT_422P].destination) {
+  if (!pi->outputs[OUTPUT_YUV422P].destination) {
     fprintf(stderr, "Y4MSource has no destination!\n");
     return 1;
   }
 
   for (i=0; i < count; i++) {
-    YUV422P_buffer *tmp = YUV422P_copy(priv->y4m, 0, 0, priv->y4m->width, priv->y4m->height);
+    YUVYUV422P_buffer *tmp = YUVYUV422P_copy(priv->y4m, 0, 0, priv->y4m->width, priv->y4m->height);
 
     if (cfg.verbosity) {
       printf("%d/%d (%d)\n", i, count,
-	     pi->outputs[OUTPUT_422P].destination->parent->pending_messages);
+	     pi->outputs[OUTPUT_YUV422P].destination->parent->pending_messages);
     }
 
-    while (pi->outputs[OUTPUT_422P].destination->parent->pending_messages > 5) {
+    while (pi->outputs[OUTPUT_YUV422P].destination->parent->pending_messages > 5) {
       /* Throttle output.  25ms sleep. */
       nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
     }
 
-    PostData(tmp, pi->outputs[OUTPUT_422P].destination);
+    PostData(tmp, pi->outputs[OUTPUT_YUV422P].destination);
   }
 
   if (pi->outputs[OUTPUT_CONFIG].destination) {

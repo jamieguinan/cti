@@ -65,16 +65,16 @@ static int SDLtoCTI_Keymap[SDLK_LAST] = {
 
 
 static void Config_handler(Instance *pi, void *data);
-static void YUV422P_handler(Instance *pi, void *data);
+static void YUVYUV422P_handler(Instance *pi, void *data);
 static void RGB3_handler(Instance *pi, void *data);
 static void BGR3_handler(Instance *pi, void *data);
 static void GRAY_handler(Instance *pi, void *data);
 static void Keycode_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3, INPUT_BGR3, INPUT_GRAY, INPUT_KEYCODE };
+enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_RGB3, INPUT_BGR3, INPUT_GRAY, INPUT_KEYCODE };
 static Input SDLstuff_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = YUV422P_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = YUVYUV422P_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = BGR3_handler },
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = GRAY_handler },
@@ -455,7 +455,7 @@ static void render_frame_gl(SDLstuff_private *priv, RGB3_buffer *rgb3_in)
   SDL_GL_SwapBuffers();
 }
 
-static void render_frame_overlay(SDLstuff_private *priv, YUV422P_buffer *y422p_in)
+static void render_frame_overlay(SDLstuff_private *priv, YUVYUV422P_buffer *y422p_in)
 {
   if (!priv->overlay) {
     int i;
@@ -692,10 +692,10 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void YUV422P_handler(Instance *pi, void *data)
+static void YUVYUV422P_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = (SDLstuff_private *)pi;
-  YUV422P_buffer *y422p = data;
+  YUVYUV422P_buffer *y422p = data;
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
   Gray_buffer *gray = NULL;
@@ -705,7 +705,7 @@ static void YUV422P_handler(Instance *pi, void *data)
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
-      rgb3 = YUV422P_to_RGB3(y422p);
+      rgb3 = YUVYUV422P_to_RGB3(y422p);
       render_frame_gl(priv, rgb3);
       RGB3_buffer_discard(rgb3);
     }
@@ -717,7 +717,7 @@ static void YUV422P_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_SOFTWARE: 
     {
-      bgr3 = YUV422P_to_BGR3(y422p);
+      bgr3 = YUVYUV422P_to_BGR3(y422p);
       render_frame_software(priv, bgr3);
     }
     break;
@@ -731,7 +731,7 @@ static void YUV422P_handler(Instance *pi, void *data)
   }
 
   if (y422p) {
-    YUV422P_buffer_discard(y422p);
+    YUVYUV422P_buffer_discard(y422p);
   }
 
   if (bgr3) {
@@ -744,7 +744,7 @@ static void RGB3_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = (SDLstuff_private *)pi;
   RGB3_buffer *rgb3 = data;
-  YUV422P_buffer *y422p = NULL;
+  YUVYUV422P_buffer *y422p = NULL;
   BGR3_buffer *bgr3 = NULL;
   Gray_buffer *gray = NULL;
 
@@ -773,7 +773,7 @@ static void RGB3_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_OVERLAY: 
     {
-      y422p = RGB3_toYUV422P(rgb3);
+      y422p = RGB3_toYUVYUV422P(rgb3);
       render_frame_overlay(priv, y422p);
     }
     break;
@@ -792,7 +792,7 @@ static void RGB3_handler(Instance *pi, void *data)
   }
 
   if (y422p) {
-    YUV422P_buffer_discard(y422p);
+    YUVYUV422P_buffer_discard(y422p);
   }
 
   if (bgr3) {
@@ -807,7 +807,7 @@ static void BGR3_handler(Instance *pi, void *data)
   SDLstuff_private *priv = (SDLstuff_private *)pi;
   BGR3_buffer *bgr3 = data;
   RGB3_buffer *rgb3 = NULL;
-  YUV422P_buffer *y422p = NULL;
+  YUVYUV422P_buffer *y422p = NULL;
   Gray_buffer *gray = NULL;
 
   pre_render_frame(priv, bgr3->width, bgr3->height, &y422p->c);
@@ -838,7 +838,7 @@ static void BGR3_handler(Instance *pi, void *data)
   }
 
   if (y422p) {
-    YUV422P_buffer_discard(y422p);
+    YUVYUV422P_buffer_discard(y422p);
   }
 
   if (bgr3) {
@@ -853,7 +853,7 @@ static void GRAY_handler(Instance *pi, void *data)
   Gray_buffer *gray = data;
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
-  YUV422P_buffer *y422p = NULL;
+  YUVYUV422P_buffer *y422p = NULL;
 
   pre_render_frame(priv, gray->width, gray->height, &y422p->c);
   switch (priv->renderMode) {
@@ -872,7 +872,7 @@ static void GRAY_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_OVERLAY: 
     {
-      YUV422P_buffer *y422p = YUV422P_buffer_new(gray->width, gray->height, &gray->c);
+      YUVYUV422P_buffer *y422p = YUVYUV422P_buffer_new(gray->width, gray->height, &gray->c);
       memcpy(y422p->y, gray->data, gray->data_length);
       memset(y422p->cb, 128, y422p->cb_length);
       memset(y422p->cr, 128, y422p->cr_length);
@@ -904,7 +904,7 @@ static void GRAY_handler(Instance *pi, void *data)
   }
 
   if (y422p) {
-    YUV422P_buffer_discard(y422p);
+    YUVYUV422P_buffer_discard(y422p);
   }
 
   if (bgr3) {

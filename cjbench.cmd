@@ -7,8 +7,8 @@ new CJpeg cj
 new Null null 
 
 connect js Jpeg_buffer dj
-connect dj 422P_buffer ys
-connect ys 422P_buffer cj
+connect dj YUV422P_buffer ys
+connect ys YUV422P_buffer cj
 connect cj Jpeg_buffer null
 
 # This signals "quit" when done.

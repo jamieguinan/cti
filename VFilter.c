@@ -14,16 +14,16 @@ static void Config_handler(Instance *pi, void *msg);
 static void Y422p_handler(Instance *pi, void *msg);
 static void RGB3_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3 };
+enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_RGB3 };
 static Input VFilter_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = Y422p_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
 };
 
-enum { OUTPUT_422P, OUTPUT_RGB3 };
+enum { OUTPUT_YUV422P, OUTPUT_RGB3 };
 static Output VFilter_outputs[] = {
-  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
 };
 
@@ -235,7 +235,7 @@ static void single_y3blend(uint8_t *data_in, uint8_t *data_out, int width, int h
 }
 
 
-static void adaptive3point_filter(YUV422P_buffer *y422p_src, YUV422P_buffer *y422p_out)
+static void adaptive3point_filter(YUVYUV422P_buffer *y422p_src, YUVYUV422P_buffer *y422p_out)
 {
   /* Another attempt at cleaning up saturation artifacts. */
   int y, x;
@@ -379,27 +379,27 @@ static void single_trim(VFilter_private * priv, uint8_t *data_in, uint8_t *data_
 static void Y422p_handler(Instance *pi, void *msg)
 {
   VFilter_private *priv = (VFilter_private *)pi;
-  YUV422P_buffer *y422p_in = msg;
-  YUV422P_buffer *y422p_out = 0L;
-  YUV422P_buffer *y422p_src = 0L;
+  YUVYUV422P_buffer *y422p_in = msg;
+  YUVYUV422P_buffer *y422p_out = 0L;
+  YUVYUV422P_buffer *y422p_src = 0L;
 
   /* FIXME: The crop operations could be done by calculations, followed by only a single copy operation. */
   if (priv->top_crop) {
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height - priv->top_crop, &y422p_src->c);
+    y422p_out = YUVYUV422P_buffer_new(y422p_src->width, y422p_src->height - priv->top_crop, &y422p_src->c);
     memcpy(y422p_out->y, y422p_src->y+(y422p_src->width * priv->top_crop), y422p_out->width*y422p_out->height);
     memcpy(y422p_out->cb, y422p_src->cb+(y422p_src->width * priv->top_crop)/2, y422p_out->width*y422p_out->height/2);
     memcpy(y422p_out->cr, y422p_src->cr+(y422p_src->width * priv->top_crop)/2, y422p_out->width*y422p_out->height/2);
-    YUV422P_buffer_discard(y422p_src);
+    YUVYUV422P_buffer_discard(y422p_src);
   }
 
   if (priv->bottom_crop) {
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height - priv->bottom_crop, &y422p_src->c);
+    y422p_out = YUVYUV422P_buffer_new(y422p_src->width, y422p_src->height - priv->bottom_crop, &y422p_src->c);
     memcpy(y422p_out->y, y422p_src->y, y422p_out->width*y422p_out->height);
     memcpy(y422p_out->cb, y422p_src->cb, y422p_out->width*y422p_out->height/2);
     memcpy(y422p_out->cr, y422p_src->cr, y422p_out->width*y422p_out->height/2);
-    YUV422P_buffer_discard(y422p_src);
+    YUVYUV422P_buffer_discard(y422p_src);
   }
 
   if (priv->left_right_crop) {
@@ -409,59 +409,59 @@ static void Y422p_handler(Instance *pi, void *msg)
 	      priv->left_right_crop, y422p_src->width);
     }
     else {
-      y422p_out = YUV422P_buffer_new(y422p_src->width - (priv->left_right_crop * 2), y422p_src->height, 
+      y422p_out = YUVYUV422P_buffer_new(y422p_src->width - (priv->left_right_crop * 2), y422p_src->height, 
 				   &y422p_src->c);
       memcpy(y422p_out->y, y422p_src->y+priv->left_right_crop, y422p_out->width);
       memcpy(y422p_out->cb, y422p_src->cb+(priv->left_right_crop/2), y422p_out->width/2);
       memcpy(y422p_out->cr, y422p_src->cr+(priv->left_right_crop/2), y422p_out->width/2);
-      YUV422P_buffer_discard(y422p_src);
+      YUVYUV422P_buffer_discard(y422p_src);
     }
   }
 
   if (priv->y3blend) {
     /* Horizontal blend, for smoothing out saturation artifact in Y channel. */
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    y422p_out = YUVYUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     single_y3blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     memcpy(y422p_out->cb, y422p_src->cb, y422p_src->width*y422p_src->height/2);
     memcpy(y422p_out->cr, y422p_src->cr, y422p_src->width*y422p_src->height/2);
-    YUV422P_buffer_discard(y422p_src);
+    YUVYUV422P_buffer_discard(y422p_src);
   }
 
   if (priv->adaptive3point) {
     /* Another way to remote saturation artifacts. */
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    y422p_out = YUVYUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     adaptive3point_filter(y422p_src, y422p_out);
-    YUV422P_buffer_discard(y422p_src);
+    YUVYUV422P_buffer_discard(y422p_src);
   }
 
   if (priv->horizontal_filter_enabled) {
     /* Horizontal filter. */
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    y422p_out = YUVYUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     single_horizontal_filter(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     memcpy(y422p_out->cb, y422p_src->cb, y422p_src->width*y422p_src->height/2);
     memcpy(y422p_out->cr, y422p_src->cr, y422p_src->width*y422p_src->height/2);
-    YUV422P_buffer_discard(y422p_src);
+    YUVYUV422P_buffer_discard(y422p_src);
   }
 
   if (priv->linear_blend) {
     /* Vertical blend, for cheap de-interlacing. */
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    y422p_out = YUVYUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     single_121_linear_blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     single_121_linear_blend(y422p_src->cb, y422p_out->cb, y422p_src->width/2, y422p_src->height);
     single_121_linear_blend(y422p_src->cr, y422p_out->cr, y422p_src->width/2, y422p_src->height);
-    YUV422P_buffer_discard(y422p_src);
+    YUVYUV422P_buffer_discard(y422p_src);
   }
 
   if (priv->trim) {
     /* Smooth out low bits to make compression easier. */
     y422p_src = y422p_out ? y422p_out : y422p_in;
-    y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
+    y422p_out = YUVYUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     single_trim(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
-    YUV422P_buffer_discard(y422p_src);
+    YUVYUV422P_buffer_discard(y422p_src);
   }
 
   if (!y422p_out) {
@@ -475,11 +475,11 @@ static void Y422p_handler(Instance *pi, void *msg)
     single_field_split(y422p_out->cr, y422p_out->width/2, y422p_out->height);
   }
   
-  if (pi->outputs[OUTPUT_422P].destination) {
-    PostData(y422p_out, pi->outputs[OUTPUT_422P].destination);
+  if (pi->outputs[OUTPUT_YUV422P].destination) {
+    PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
-    YUV422P_buffer_discard(y422p_out);
+    YUVYUV422P_buffer_discard(y422p_out);
   }
   
 }

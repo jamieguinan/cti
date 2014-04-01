@@ -17,10 +17,10 @@ connect mjd Wav_buffer mae
 
 #connect al Wav_buffer mae
 
-connect dj 422P_buffer mve
+connect dj YUV422P_buffer mve
 
-#connect dj 422P_buffer vf
-#connect vf 422P_buffer mve
+#connect dj YUV422P_buffer vf
+#connect vf YUV422P_buffer mve
 
 connect mve Feedback_buffer mjd
 

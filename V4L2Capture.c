@@ -46,11 +46,11 @@ static Input V4L2Capture_inputs[] = {
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_422P, OUTPUT_JPEG, OUTPUT_O511, OUTPUT_H264, OUTPUT_GRAY };
+enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_YUV422P, OUTPUT_JPEG, OUTPUT_O511, OUTPUT_H264, OUTPUT_GRAY };
 static Output V4L2Capture_outputs[] = {
   [ OUTPUT_BGR3 ] = { .type_label = "BGR3_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
-  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_O511 ] = { .type_label = "O511_buffer", .destination = 0L },
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
@@ -1195,7 +1195,7 @@ static void bgr3_snapshot(Instance *pi, BGR3_buffer *bgr3)
 }
 
 
-static void y422p_snapshot(Instance *pi, YUV422P_buffer *y422p)
+static void y422p_snapshot(Instance *pi, YUVYUV422P_buffer *y422p)
 {
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   FILE *f;
@@ -1312,10 +1312,10 @@ static void V4L2Capture_tick(Instance *pi)
       PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
     }
   }
-  else if (streq(sl(priv->format), "422P")) {
-    if (pi->outputs[OUTPUT_422P].destination) {
-      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
-      Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
+  else if (streq(sl(priv->format), "YUV422P")) {
+    if (pi->outputs[OUTPUT_YUV422P].destination) {
+      YUVYUV422P_buffer *y422p = YUVYUV422P_buffer_new(priv->width, priv->height, 0L);
+      Log(LOG_YUVYUV422P, "%s allocated y422p @ %p", __func__, y422p);
       gettimeofday(&y422p->c.tv, NULL);
       calc_fps(&y422p->c.tv);
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
@@ -1325,8 +1325,8 @@ static void V4L2Capture_tick(Instance *pi)
       memcpy(y422p->cr, 
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height + priv->width*priv->height/2,
 	     priv->width*priv->height/2);
-      Log(LOG_YUV422P, "%s posting y422p @ %p", __func__, y422p);
-      PostData(y422p, pi->outputs[OUTPUT_422P].destination);
+      Log(LOG_YUVYUV422P, "%s posting y422p @ %p", __func__, y422p);
+      PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
     }
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
@@ -1377,13 +1377,13 @@ static void V4L2Capture_tick(Instance *pi)
       fprintf(stderr, "%s: YUYV buffer is not the expected size!\n", __func__);
     }
 
-    if (pi->outputs[OUTPUT_422P].destination) {
+    if (pi->outputs[OUTPUT_YUV422P].destination) {
       int i;
       int iy = 0;
       int icr = 0;
       int icb = 0;
       uint8_t *p = priv->buffers[priv->wait_on].data;
-      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
+      YUVYUV422P_buffer *y422p = YUVYUV422P_buffer_new(priv->width, priv->height, 0L);
       gettimeofday(&y422p->c.tv, NULL);
       for (i=0; i < priv->vbuffer.bytesused/4; i++) {
 	y422p->y[iy++] = *p++;
@@ -1394,7 +1394,7 @@ static void V4L2Capture_tick(Instance *pi)
       if (priv->snapshot > 0) {
 	y422p_snapshot(pi, y422p);
       }
-      PostData(y422p, pi->outputs[OUTPUT_422P].destination);
+      PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
     }
 
     if (pi->outputs[OUTPUT_GRAY].destination) {

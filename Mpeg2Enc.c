@@ -9,10 +9,10 @@
 static void Config_handler(Instance *pi, void *msg);
 static void Y422p_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_YUV422P };
 static Input Mpeg2Enc_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = Y422p_handler },
 };
 
 enum { OUTPUT_FEEDBACK };
@@ -80,7 +80,7 @@ static void Config_handler(Instance *pi, void *data)
 static void Y422p_handler(Instance *pi, void *msg)
 {
   Mpeg2Enc_private *priv = (Mpeg2Enc_private *)pi;
-  YUV422P_buffer *y422p_in = msg;
+  YUVYUV422P_buffer *y422p_in = msg;
   int n = 0;
 
 #if 0    
@@ -134,7 +134,7 @@ static void Y422p_handler(Instance *pi, void *msg)
   }
   
  out:
-  YUV422P_buffer_discard(y422p_in);
+  YUVYUV422P_buffer_discard(y422p_in);
 }
 
 

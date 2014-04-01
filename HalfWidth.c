@@ -10,15 +10,15 @@ static void Config_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
 
 
-enum { INPUT_CONFIG, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_YUV422P };
 static Input HalfWidth_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_422P /* , OUTPUT_JPEG  */};
+enum { OUTPUT_YUV422P /* , OUTPUT_JPEG  */};
 static Output HalfWidth_outputs[] = {
-  [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -40,17 +40,17 @@ static void half_width_scale(uint8_t *indata, int width, int height, uint8_t *ou
 
 static void y422p_handler(Instance *pi, void *data)
 {
-  YUV422P_buffer *y422p_in = data;
-  if (pi->outputs[OUTPUT_422P].destination) {
-    YUV422P_buffer *y422p_out = YUV422P_buffer_new(y422p_in->width/2, y422p_in->height, &y422p_in->c);
+  YUVYUV422P_buffer *y422p_in = data;
+  if (pi->outputs[OUTPUT_YUV422P].destination) {
+    YUVYUV422P_buffer *y422p_out = YUVYUV422P_buffer_new(y422p_in->width/2, y422p_in->height, &y422p_in->c);
     half_width_scale(y422p_in->y, y422p_in->width, y422p_in->height, y422p_out->y);
     half_width_scale(y422p_in->cr, y422p_in->width/2, y422p_in->height, y422p_out->cr);
     half_width_scale(y422p_in->cb, y422p_in->width/2, y422p_in->height, y422p_out->cb);
     dpf("posting %dx%d image to output\n", y422p_out->width, y422p_out->height);
     y422p_out->c.tv = y422p_in->c.tv;
-    PostData(y422p_out, pi->outputs[OUTPUT_422P].destination);
+    PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
-  YUV422P_buffer_discard(y422p_in);
+  YUVYUV422P_buffer_discard(y422p_in);
 }
 
 

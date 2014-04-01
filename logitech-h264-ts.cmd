@@ -6,7 +6,7 @@ new MpegTSMux mtm
 
 connect vc Jpeg_buffer jt
 connect jt Jpeg_buffer dj
-connect dj 422P_buffer h
+connect dj YUV422P_buffer h
 connect h H264_buffer mtm
 
 config vc device UVC

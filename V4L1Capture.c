@@ -81,7 +81,7 @@ v4l1_formats[] = {
   [10] = { .enumString="VIDEO_PALETTE_YUV420", .textString="YUV420"},
   [11] = { .enumString="VIDEO_PALETTE_YUV411", .textString="YUV411 capture"},
   [12] = { .enumString="VIDEO_PALETTE_RAW", .textString="RAW capture (BT848)"},
-  [13] = { .enumString="VIDEO_PALETTE_YUV422P", .textString="YUV 4:2:2 Planar"},
+  [13] = { .enumString="VIDEO_PALETTE_YUVYUV422P", .textString="YUV 4:2:2 Planar"},
   [14] = { .enumString="VIDEO_PALETTE_YUV411P", .textString="YUV 4:1:1 Planar"},
   [15] = { .enumString="VIDEO_PALETTE_YUV420P", .textString="YUV 4:2:0 Planar"},
   [16] = { .enumString="VIDEO_PALETTE_YUV410P", .textString="YUV 4:1:0 Planar"},

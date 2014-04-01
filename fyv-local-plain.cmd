@@ -21,7 +21,7 @@ config y4mout output | ffmpeg2theora - -V 180 -o /dev/stdout 2> /dev/null | tee 
 #connect mjd Jpeg_buffer jt
 #connect jt Jpeg_buffer dj
 connect mjd Jpeg_buffer dj
-connect dj 422P_buffer y4mout
+connect dj YUV422P_buffer y4mout
 
 # Enable mjd to start the whole thing running.
 config mjd enable 1

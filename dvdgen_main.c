@@ -101,14 +101,14 @@ int main(int argc, char *argv[])
   }
 
   if (1) {
-    Connect(dj, "422P_buffer", vf);
+    Connect(dj, "YUV422P_buffer", vf);
     /* Don't actually need this if source is 352x480. */
     // SetConfig(vf, "left_right_crop", "4");
     SetConfig(vf, "linear_blend", "1");
-    Connect(vf, "422P_buffer", mve);
+    Connect(vf, "YUV422P_buffer", mve);
   }
   else {
-    Connect(dj, "422P_buffer", mve);
+    Connect(dj, "YUV422P_buffer", mve);
   }
 
   Instance_loop_thread(mjd);

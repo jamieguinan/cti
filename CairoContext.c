@@ -17,18 +17,18 @@ static void Command_handler(Instance *pi, void *msg);
 static void rgb3_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_COMMAND, INPUT_RGB3, INPUT_422P };
+enum { INPUT_CONFIG, INPUT_COMMAND, INPUT_RGB3, INPUT_YUV422P };
 static Input CairoContext_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_COMMAND ] = { .type_label = "CairoCommand", .handler = Command_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_422P };
+enum { OUTPUT_RGB3, OUTPUT_YUV422P };
 static Output CairoContext_outputs[] = {
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
-  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
 };
 
 
@@ -318,7 +318,7 @@ static void rgb3_handler(Instance *pi, void *msg)
 static void y422p_handler(Instance *pi, void *msg)
 {
   CairoContext_private *priv = (CairoContext_private *)pi;
-  YUV422P_buffer * y422p = msg;
+  YUVYUV422P_buffer * y422p = msg;
   int do_apply = 1;
 
   if (priv->timeout) {
@@ -330,27 +330,27 @@ static void y422p_handler(Instance *pi, void *msg)
   }
 
   if (do_apply) {
-    YUV422P_buffer * temp;
+    YUVYUV422P_buffer * temp;
     RGB3_buffer * rgb3;
     /* I could avoid some of the "temp" buffers here by setting up
        in-place structures, if strides are used correctly in the image
        code. */
-    temp = YUV422P_copy(y422p, 0, 0, priv->width, priv->height);
-    rgb3 = YUV422P_to_RGB3(temp);
+    temp = YUVYUV422P_copy(y422p, 0, 0, priv->width, priv->height);
+    rgb3 = YUVYUV422P_to_RGB3(temp);
     rgb3->c.tv = y422p->c.tv;	/* Preserve timestamp! */
-    YUV422P_buffer_discard(temp);
+    YUVYUV422P_buffer_discard(temp);
     apply_commands(priv, rgb3);
-    temp = RGB3_toYUV422P(rgb3);
+    temp = RGB3_toYUVYUV422P(rgb3);
     RGB3_buffer_discard(rgb3);
-    YUV422P_paste(y422p, temp, 0, 0, priv->width, priv->height);
-    YUV422P_buffer_discard(temp);
+    YUVYUV422P_paste(y422p, temp, 0, 0, priv->width, priv->height);
+    YUVYUV422P_buffer_discard(temp);
   }
   
-  if (pi->outputs[OUTPUT_422P].destination) {
-    PostData(y422p, pi->outputs[OUTPUT_422P].destination);
+  if (pi->outputs[OUTPUT_YUV422P].destination) {
+    PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
-    YUV422P_buffer_discard(y422p);
+    YUVYUV422P_buffer_discard(y422p);
   }
 }
 

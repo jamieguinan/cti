@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
       printf("search for BT878 returned %d, should use device %s\n", n, s->bytes);
       bt = 1;
       SetConfig(vc, "device", s->bytes);
-      Connect(vc, "422P_buffer", cj);
+      Connect(vc, "YUV422P_buffer", cj);
     }
     else {
       Connect(vc, "BGR3_buffer", cj);
@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     GetConfigRange(vc, "format", &range);
 
     if (bt) {
-      SetConfig(vc, "format", "422P");
+      SetConfig(vc, "format", "YUV422P");
       SetConfig(vc, "std", "NTSC");
       if (T) {
 	SetConfig(vc, "input", "Television");

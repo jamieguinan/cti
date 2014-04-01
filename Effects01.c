@@ -9,16 +9,16 @@ static void Config_handler(Instance *pi, void *msg);
 static void Y422p_handler(Instance *pi, void *msg);
 static void RGB3_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3 };
+enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_RGB3 };
 static Input Effects01_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422p_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = Y422p_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
 };
 
-enum { OUTPUT_422P, OUTPUT_RGB3 };
+enum { OUTPUT_YUV422P, OUTPUT_RGB3 };
 static Output Effects01_outputs[] = {
-  [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
 };
 
@@ -107,39 +107,39 @@ static void rotate_single_270(uint8_t *src, uint8_t *dst, int src_width, int src
 static void Y422p_handler(Instance *pi, void *data)
 {
   // Effects01_private *priv = (Effects01_private *)pi;
-  YUV422P_buffer *y422p_in = data;
+  YUVYUV422P_buffer *y422p_in = data;
 
-  if (!pi->outputs[OUTPUT_422P].destination) {
-    YUV422P_buffer_discard(y422p_in);
+  if (!pi->outputs[OUTPUT_YUV422P].destination) {
+    YUVYUV422P_buffer_discard(y422p_in);
     return;
   }
 
   /* Operate in-place, pass along to output... */
 #if 0
-  YUV422P_buffer *y422p_out = 0L;
-  YUV422P_buffer *y422p_src = 0L;
+  YUVYUV422P_buffer *y422p_out = 0L;
+  YUVYUV422P_buffer *y422p_src = 0L;
 
   if (priv->invert) {
     invert_plane(y422p_in->data, y422p_in->data_length);
   }
-  /* FIXME: this kinda breaks because YUV422P has 2x1 aspect ratio pixels. */
+  /* FIXME: this kinda breaks because YUVYUV422P has 2x1 aspect ratio pixels. */
   if (priv->rotate == 90) {
-    YUV422P_buffer *y422p_new = YUV422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
+    YUVYUV422P_buffer *y422p_new = YUVYUV422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
     rotate_rgb_90(y422p_in->data, y422p_new->data, y422p_in->width, y422p_in->height);
-    YUV422P_buffer_discard(y422p_in);
+    YUVYUV422P_buffer_discard(y422p_in);
     y422p_in = y422p_new;
   }
   if (priv->rotate == 270) {
-    YUV422P_buffer *y422p_new = YUV422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
+    YUVYUV422P_buffer *y422p_new = YUVYUV422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
     rotate_single_270(y422p_in->y, y422p_new->y, y422p_in->width, y422p_in->height);
     //rotate_single_270(y422p_in->cb, y422p_new->cb, y422p_in->width/2, y422p_in->height);
     rotate_single_270(y422p_in->cr, y422p_new->cr, y422p_in->width/2, y422p_in->height);
-    YUV422P_buffer_discard(y422p_in);
+    YUVYUV422P_buffer_discard(y422p_in);
     y422p_in = y422p_new;
   }
 #endif
 
-  PostData(y422p_in, pi->outputs[OUTPUT_422P].destination);
+  PostData(y422p_in, pi->outputs[OUTPUT_YUV422P].destination);
 }
 
 
