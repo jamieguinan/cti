@@ -8,7 +8,7 @@ config vc format O511
 config vc size 640x480
 config vc fps 15
 connect vc O511_buffer do
-connect do Y420P_buffer h
+connect do YUV420P_buffer h
 connect h H264_buffer tsm
 
 config vc enable 1

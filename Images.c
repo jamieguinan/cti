@@ -520,9 +520,9 @@ YUV422P_buffer *BGR3_toYUV422P(BGR3_buffer *bgr)
 }
 
 
-Y420P_buffer * Y420P_buffer_new(int width, int height, Image_common *c)
+YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
 {
-  Y420P_buffer * y420p = Mem_calloc(1, sizeof(*y420p));
+  YUV420P_buffer * y420p = Mem_calloc(1, sizeof(*y420p));
   if (c) {
     y420p->c = *c;
   }
@@ -543,25 +543,25 @@ Y420P_buffer * Y420P_buffer_new(int width, int height, Image_common *c)
 }
 
 
-Y420P_buffer *Y420P_buffer_from(uint8_t *data, int width, int height, Image_common *c)
+YUV420P_buffer *YUV420P_buffer_from(uint8_t *data, int width, int height, Image_common *c)
 {
-  Y420P_buffer * yuv = Y420P_buffer_new(width, height, c);
+  YUV420P_buffer * yuv = YUV420P_buffer_new(width, height, c);
   Mem_memcpy(yuv->y, data, yuv->y_length);
   Mem_memcpy(yuv->cb, data + yuv->y_length, yuv->cb_length);
   Mem_memcpy(yuv->cr, data + yuv->y_length + yuv->cb_length, yuv->cr_length);
   return yuv;
 }
 
-void Y420P_buffer_discard(Y420P_buffer *y420p)
+void YUV420P_buffer_discard(YUV420P_buffer *y420p)
 {
   Mem_free(y420p->data);
   memset(y420p, 0, sizeof(*y420p));
   Mem_free(y420p);
 }
 
-Y420P_buffer *YUV422P_to_Y420P(YUV422P_buffer *y422p)
+YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *y422p)
 {
-  Y420P_buffer * y420p = Y420P_buffer_new(y422p->width, y422p->height, &y422p->c);
+  YUV420P_buffer * y420p = YUV420P_buffer_new(y422p->width, y422p->height, &y422p->c);
   int x, y;
   int n = 0;
 
@@ -647,7 +647,7 @@ void YUV422P_paste(YUV422P_buffer *dest, YUV422P_buffer *src, int xoffset, int y
 }
 
 
-RGB3_buffer *Y420P_to_RGB3(Y420P_buffer *y420p)
+RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *y420p)
 {
   RGB3_buffer *rgb = RGB3_buffer_new(y420p->width, y420p->height, &y420p->c);
 

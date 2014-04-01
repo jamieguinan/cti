@@ -321,7 +321,7 @@ static void Y4MInput_tick(Instance *pi)
 
   if (pi->outputs[OUTPUT_420P].destination) {
     /* FIXME: Could preserve the chunk instead of making a copy here. */
-    Y420P_buffer * yuv = Y420P_buffer_from(priv->chunk->data+eol+1, 
+    YUV420P_buffer * yuv = YUV420P_buffer_from(priv->chunk->data+eol+1, 
 					   priv->current.width, priv->current.height, NULL);
     PostData(yuv, pi->outputs[OUTPUT_420P].destination);
     //if (priv->use_feedback & (1<<2)) {

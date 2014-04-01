@@ -336,7 +336,7 @@ static void V4L1Capture_tick(Instance *pi)
   }
 
   if (pi->outputs[OUTPUT_420P].destination) {
-    Y420P_buffer *y420p = Y420P_buffer_new(v->w, v->h, 0L);
+    YUV420P_buffer *y420p = YUV420P_buffer_new(v->w, v->h, 0L);
     memcpy(y420p->y, 
 	   v->map + v->vmbuf.offsets[current_frame],
 	   y420p->y_length);

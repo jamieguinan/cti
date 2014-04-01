@@ -73,7 +73,7 @@ static void YUV422P_handler(Instance *pi, void *data)
 {
   Y4MOutput_private *priv = (Y4MOutput_private *)pi;
   YUV422P_buffer *y422p_in = data;
-  Y420P_buffer *y420p = 0L;
+  YUV420P_buffer *y420p = 0L;
   char header[256];
 
   if (y422p_in->c.eof) {
@@ -108,8 +108,8 @@ static void YUV422P_handler(Instance *pi, void *data)
     Sink_write(priv->sink, y422p_in->cr, y422p_in->cr_length);
   }
   else {
-    /* For downstream that can only handle Y420P. */
-    y420p = YUV422P_to_Y420P(y422p_in);
+    /* For downstream that can only handle YUV420P. */
+    y420p = YUV422P_to_YUV420P(y422p_in);
 
     if (priv->state == Y4MOUTPUT_STATE_INIT) {
       priv->width = y420p->width;
@@ -134,7 +134,7 @@ static void YUV422P_handler(Instance *pi, void *data)
  out:
   YUV422P_buffer_discard(y422p_in);
   if (y420p) {
-    Y420P_buffer_discard(y420p);
+    YUV420P_buffer_discard(y420p);
   }
 }
 

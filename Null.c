@@ -35,10 +35,10 @@ static void YUV422P_handler(Instance *pi, void *data)
   YUV422P_buffer_discard(y422p_in);
 }
 
-static void Y420P_handler(Instance *pi, void *data)
+static void YUV420P_handler(Instance *pi, void *data)
 {
-  Y420P_buffer *y420p_in = data;
-  Y420P_buffer_discard(y420p_in);
+  YUV420P_buffer *y420p_in = data;
+  YUV420P_buffer_discard(y420p_in);
 }
 
 static void O511_handler(Instance *pi, void *data)
@@ -87,7 +87,7 @@ static Input Null_inputs[] = {
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = Gray_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
   [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = YUV422P_handler },
-  [ INPUT_420P ] = { .type_label = "420P_buffer", .handler = Y420P_handler },
+  [ INPUT_420P ] = { .type_label = "420P_buffer", .handler = YUV420P_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_O511 ] = { .type_label = "O511_buffer", .handler = O511_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer",   .handler = Wav_handler },

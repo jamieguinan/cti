@@ -127,7 +127,7 @@ typedef struct {
   int cr_length;
 
   Image_common c;
-} Y420P_buffer;
+} YUV420P_buffer;
 
 
 /* Jpeg buffer */
@@ -200,12 +200,12 @@ extern void YUV422P_paste(YUV422P_buffer *dest, YUV422P_buffer *src, int x, int 
 extern RGB3_buffer *YUV422P_to_RGB3(YUV422P_buffer *y422p);
 extern BGR3_buffer *YUV422P_to_BGR3(YUV422P_buffer *y422p);
 
-extern Y420P_buffer *Y420P_buffer_new(int width, int height, Image_common *c);
-extern Y420P_buffer *Y420P_buffer_from(uint8_t *data, int width, int height, Image_common *c);
-extern void Y420P_buffer_discard(Y420P_buffer *y420p);
-extern RGB3_buffer *Y420P_to_RGB3(Y420P_buffer *y420p);
+extern YUV420P_buffer *YUV420P_buffer_new(int width, int height, Image_common *c);
+extern YUV420P_buffer *YUV420P_buffer_from(uint8_t *data, int width, int height, Image_common *c);
+extern void YUV420P_buffer_discard(YUV420P_buffer *y420p);
+extern RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *y420p);
 
-extern Y420P_buffer *YUV422P_to_Y420P(YUV422P_buffer *y422p);
+extern YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *y422p);
 
 extern YUV422P_buffer *RGB3_toYUV422P(RGB3_buffer *rgb);
 extern YUV422P_buffer *BGR3_toYUV422P(BGR3_buffer *bgr);

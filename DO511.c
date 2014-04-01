@@ -32,7 +32,7 @@ typedef struct {
 
 
 #if 0
-static void junk(O511_buffer *o511_in, Y420P_buffer *y420p_out)
+static void junk(O511_buffer *o511_in, YUV420P_buffer *y420p_out)
 {
   {
     static int x = 0;
@@ -97,14 +97,14 @@ static void remove0blocks(unsigned char *pIn, int *inSize)
 static void O511_handler(Instance *pi, void *data)
 {
   O511_buffer *o511_in = data;
-  Y420P_buffer *y420p_out;
+  YUV420P_buffer *y420p_out;
   unsigned char *temp;
 
   struct timeval t1;
 
   gettimeofday(&t1, 0L);
 
-  y420p_out = Y420P_buffer_new(o511_in->width, o511_in->height, 0L);
+  y420p_out = YUV420P_buffer_new(o511_in->width, o511_in->height, 0L);
   y420p_out->c.tv = o511_in->c.tv;
     
   temp = malloc( (o511_in->width * o511_in->height * 3)/ 2);
@@ -127,7 +127,7 @@ static void O511_handler(Instance *pi, void *data)
   free(temp);
 
   if (pi->outputs[OUTPUT_RGB3].destination) {
-    RGB3_buffer *rgb = Y420P_to_RGB3(y420p_out);
+    RGB3_buffer *rgb = YUV420P_to_RGB3(y420p_out);
     rgb->c.tv = o511_in->c.tv;
     PostData(rgb, pi->outputs[OUTPUT_RGB3].destination);
   }
@@ -146,7 +146,7 @@ static void O511_handler(Instance *pi, void *data)
   }
 
   if (y420p_out) {
-    Y420P_buffer_discard(y420p_out); y420p_out = 0L;
+    YUV420P_buffer_discard(y420p_out); y420p_out = 0L;
   }
 
   O511_buffer_discard(o511_in);

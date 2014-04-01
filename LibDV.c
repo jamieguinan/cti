@@ -255,7 +255,7 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
   }
 
   if (pi->outputs[OUTPUT_420P].destination) {
-    Y420P_buffer *yuv = Y420P_buffer_new(priv->decoder->width, priv->decoder->height, 0L);
+    YUV420P_buffer *yuv = YUV420P_buffer_new(priv->decoder->width, priv->decoder->height, 0L);
     uint8_t *pixels[3] =  { yuv->y, yuv->cb, yuv->cr };
     int pitches[3] = { yuv->width, yuv->width/4, yuv->width/4};
     dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_yuv, pixels, pitches);

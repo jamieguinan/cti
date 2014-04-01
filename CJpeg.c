@@ -342,12 +342,12 @@ static void y422p_handler(Instance *pi, void *data)
 
 static void y420p_handler(Instance *pi, void *data)
 {
-  Y420P_buffer *y420p_in = data;
+  YUV420P_buffer *y420p_in = data;
   compress_and_post(pi, 
 		    y420p_in->width, y420p_in->height,
 		    y420p_in->y, y420p_in->cb, y420p_in->cr,
 		    COMPRESS_Y420);
-  Y420P_buffer_discard(y420p_in);
+  YUV420P_buffer_discard(y420p_in);
 }
 
 static void CJpeg_tick(Instance *pi)
