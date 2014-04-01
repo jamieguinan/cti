@@ -35,9 +35,9 @@ static Input V4L1Capture_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-enum { OUTPUT_420P, OUTPUT_O511 };
+enum { OUTPUT_YUV420P, OUTPUT_O511 };
 static Output V4L1Capture_outputs[] = {
-  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },  
+  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },  
   [ OUTPUT_O511 ] = {.type_label = "O511_buffer", .destination = 0L },  
 };
 
@@ -335,7 +335,7 @@ static void V4L1Capture_tick(Instance *pi)
     rc = ioctl(v->fd, VIDIOCMCAPTURE, &v->vmmap /* .frame */);  
   }
 
-  if (pi->outputs[OUTPUT_420P].destination) {
+  if (pi->outputs[OUTPUT_YUV420P].destination) {
     YUV420P_buffer *y420p = YUV420P_buffer_new(v->w, v->h, 0L);
     memcpy(y420p->y, 
 	   v->map + v->vmbuf.offsets[current_frame],
@@ -346,7 +346,7 @@ static void V4L1Capture_tick(Instance *pi)
     memcpy(y420p->cb,
 	   v->map + v->vmbuf.offsets[current_frame] + y420p->y_length + y420p->cr_length,
 	   y420p->cb_length);
-    PostData(y420p, pi->outputs[OUTPUT_420P].destination);
+    PostData(y420p, pi->outputs[OUTPUT_YUV420P].destination);
   }
   else if (pi->outputs[OUTPUT_O511].destination) {
     uint8_t *pdata = v->map + v->vmbuf.offsets[current_frame];

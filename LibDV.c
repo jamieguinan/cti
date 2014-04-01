@@ -32,10 +32,10 @@ static Input LibDV_inputs[] = {
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_420P, OUTPUT_RGB3, OUTPUT_WAV };
+enum { OUTPUT_YUV420P, OUTPUT_RGB3, OUTPUT_WAV };
 static Output LibDV_outputs[] = {
   /* FIXME: NTSC output might actually be 4:1:1.  Handle in a good way. */
-  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },
+  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_WAV ] = { .type_label = "Wav_buffer", .destination = 0L },
 };
@@ -254,13 +254,13 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
     PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
   }
 
-  if (pi->outputs[OUTPUT_420P].destination) {
+  if (pi->outputs[OUTPUT_YUV420P].destination) {
     YUV420P_buffer *yuv = YUV420P_buffer_new(priv->decoder->width, priv->decoder->height, 0L);
     uint8_t *pixels[3] =  { yuv->y, yuv->cb, yuv->cr };
     int pitches[3] = { yuv->width, yuv->width/4, yuv->width/4};
     dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_yuv, pixels, pitches);
     priv->decoder->prev_frame_decoded = 1;
-    PostData(yuv, pi->outputs[OUTPUT_420P].destination);
+    PostData(yuv, pi->outputs[OUTPUT_YUV420P].destination);
   }
 
   // FIXME: libdv supports 4-byte {B,G,R,0} format, consider supporting in CTI.

@@ -26,11 +26,11 @@ static Input DJpeg_inputs[] = {
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_420P, OUTPUT_JPEG };
+enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_YUV420P, OUTPUT_JPEG };
 static Output DJpeg_outputs[] = { 
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
-  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },
+  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },
   [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_JPEG ] = {.type_label = "Jpeg_buffer", .destination = 0L }, /* pass-through */
 };

@@ -22,13 +22,13 @@ static void y422p_handler(Instance *pi, void *msg);
 static void y420p_handler(Instance *pi, void *msg);
 
 /* CJpeg Instance and Template implementation. */
-enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_YUV422P, INPUT_420P };
+enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_YUV422P, INPUT_YUV420P };
 static Input CJpeg_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = bgr3_handler },
   [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
-  [ INPUT_420P ] = { .type_label = "420P_buffer", .handler = y420p_handler },
+  [ INPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .handler = y420p_handler },
 };
 
 enum { OUTPUT_JPEG };

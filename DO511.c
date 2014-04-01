@@ -15,9 +15,9 @@ static Input DO511_inputs[] = {
   [ INPUT_O511 ] = { .type_label = "O511_buffer", .handler = O511_handler },
 };
 
-enum { OUTPUT_420P, OUTPUT_RGB3, OUTPUT_GRAY };
+enum { OUTPUT_YUV420P, OUTPUT_RGB3, OUTPUT_GRAY };
 static Output DO511_outputs[] = {
-  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },
+  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
 };
@@ -140,8 +140,8 @@ static void O511_handler(Instance *pi, void *data)
   }
 
   /* Do this one last.  It will release ownership of the y420p_out buffer. */
-  if (pi->outputs[OUTPUT_420P].destination) {
-    PostData(y420p_out, pi->outputs[OUTPUT_420P].destination);
+  if (pi->outputs[OUTPUT_YUV420P].destination) {
+    PostData(y420p_out, pi->outputs[OUTPUT_YUV420P].destination);
     y420p_out = 0L;
   }
 

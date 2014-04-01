@@ -6,5 +6,5 @@ new Null null
 new H264 venc
 config y4min input yuv.fifo
 config y4min enable 1
-connect y4min 420P_buffer venc
+connect y4min YUV420P_buffer venc
 config venc output sat.264

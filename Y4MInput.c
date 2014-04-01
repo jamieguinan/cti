@@ -25,9 +25,9 @@ static Input Y4MInput_inputs[] = {
   [ INPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .handler = Feedback_handler },
 };
 
-enum { OUTPUT_420P };
+enum { OUTPUT_YUV420P };
 static Output Y4MInput_outputs[] = {
-  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },
+  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },
 };
 
 enum { PARSING_HEADER, PARSING_FRAME };
@@ -319,11 +319,11 @@ static void Y4MInput_tick(Instance *pi)
     return;
   }
 
-  if (pi->outputs[OUTPUT_420P].destination) {
+  if (pi->outputs[OUTPUT_YUV420P].destination) {
     /* FIXME: Could preserve the chunk instead of making a copy here. */
     YUV420P_buffer * yuv = YUV420P_buffer_from(priv->chunk->data+eol+1, 
 					   priv->current.width, priv->current.height, NULL);
-    PostData(yuv, pi->outputs[OUTPUT_420P].destination);
+    PostData(yuv, pi->outputs[OUTPUT_YUV420P].destination);
     //if (priv->use_feedback & (1<<2)) {
     //priv->pending_feedback += 1;
     //}
