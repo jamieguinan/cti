@@ -11,14 +11,14 @@
 #include <lqt.h>
 
 static void Config_handler(Instance *pi, void *msg);
-static void Y422P_handler(Instance *pi, void *data);
+static void YUV422P_handler(Instance *pi, void *data);
 static void BGR3_handler(Instance *pi, void *data);
 static void Wav_handler(Instance *pi, void *msg);
 
 enum { INPUT_CONFIG, INPUT_422P, INPUT_BGR3, INPUT_WAV };
 static Input LibQuickTimeOutput_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
+  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = YUV422P_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = BGR3_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
 };
@@ -102,7 +102,7 @@ static Config config_table[] = {
 
 
 #if 0
-static void push_ycc(LibQuickTimeOutput_private *priv, Y422P_buffer *ycc)
+static void push_ycc(LibQuickTimeOutput_private *priv, YUV422P_buffer *ycc)
 {
   int rc;
   
@@ -203,10 +203,10 @@ static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
 }
 
 
-static void Y422P_handler(Instance *pi, void *data)
+static void YUV422P_handler(Instance *pi, void *data)
 {
   static int frame = 0;
-  fprintf(stdout, "\rY422P frame %d", frame);
+  fprintf(stdout, "\rYUV422P frame %d", frame);
   fflush(stdout);
   frame += 1;
 }
@@ -219,15 +219,15 @@ static void BGR3_handler(Instance *pi, void *data)
   BGR3_buffer *bgr = data;
 
 #if 0
-  Y422P_buffer *ycc = 0L;
+  YUV422P_buffer *ycc = 0L;
   static int frame = 0;
 
   
-  ycc = BGR3_toY422P(bgr);
+  ycc = BGR3_toYUV422P(bgr);
   BGR3_buffer_discard(bgr);
 
   if (frame < frame_limit) {
-    fprintf(stdout, "\rY422P frame %d", frame+1);
+    fprintf(stdout, "\rYUV422P frame %d", frame+1);
     fflush(stdout);
     push_ycc(priv, ycc);
   }
@@ -238,7 +238,7 @@ static void BGR3_handler(Instance *pi, void *data)
 
   frame += 1;
 
-  Y422P_buffer_discard(ycc);
+  YUV422P_buffer_discard(ycc);
 #endif
 
 #if 1

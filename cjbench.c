@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
 
   int width = 720;
   int height = 480;
-  Y422P_buffer * y422p = Y422P_buffer_new(width, height);
+  YUV422P_buffer * y422p = YUV422P_buffer_new(width, height);
 
   srandom(12345678);			/* So should yield same result every time. */
   
@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
   for (j=0; j < 100; j++) {
 
-    Y422P_buffer * tmp = Y422P_buffer_new(width, height);
+    YUV422P_buffer * tmp = YUV422P_buffer_new(width, height);
     memcpy(tmp->y, y422p->y, width*height);
     memcpy(tmp->cb, y422p->cb, width*height/2);
     memcpy(tmp->cr, y422p->cr, width*height/2);

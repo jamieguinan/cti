@@ -8,12 +8,12 @@
 #include "Images.h"
 
 static void Config_handler(Instance *pi, void *msg);
-static void Y422P_handler(Instance *pi, void *data);
+static void YUV422P_handler(Instance *pi, void *data);
 
 enum { INPUT_CONFIG, INPUT_422P, INPUT_JPEG };
 static Input ImageOutput_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
+  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = YUV422P_handler },
 };
 
 //enum { /* OUTPUT_... */ };
@@ -37,12 +37,12 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void Y422P_handler(Instance *pi, void *data)
+static void YUV422P_handler(Instance *pi, void *data)
 {
   // ImageOutput_private * priv = (ImageOutput_private*) pi;
-  Y422P_buffer *y422p_in = data;
+  YUV422P_buffer *y422p_in = data;
   
-  Y422P_buffer_discard(y422p_in);
+  YUV422P_buffer_discard(y422p_in);
 }
 
 

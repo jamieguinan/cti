@@ -14,14 +14,14 @@
 
 static void Config_handler(Instance *pi, void *msg);
 static void Y420P_handler(Instance *pi, void *msg);
-static void Y422P_handler(Instance *pi, void *msg);
+static void YUV422P_handler(Instance *pi, void *msg);
 
 /* x264.h says "nothing other than I420 is really supported", so use X264_CSP_I420 */
 enum { INPUT_CONFIG, INPUT_420P, INPUT_422P };
 static Input H264_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_420P ] = { .type_label = "420P_buffer", .handler = Y420P_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
+  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = YUV422P_handler },
 };
 
 enum { OUTPUT_H264, OUTPUT_FEEDBACK };
@@ -158,13 +158,13 @@ static void Y420P_handler(Instance *pi, void *msg)
   Y420P_buffer_discard(y420);
 }
 
-static void Y422P_handler(Instance *pi, void *msg)
+static void YUV422P_handler(Instance *pi, void *msg)
 {
   // int rc;
-  Y422P_buffer *y422 = msg;
-  Y420P_buffer *y420 = Y422P_to_Y420P(y422);
+  YUV422P_buffer *y422 = msg;
+  Y420P_buffer *y420 = YUV422P_to_Y420P(y422);
   Y420P_handler(pi, y420);
-  Y422P_buffer_discard(y422);
+  YUV422P_buffer_discard(y422);
 }
 
 

@@ -1,7 +1,7 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
-enum { LOG_Y422P, LOG_WAV, 
+enum { LOG_YUV422P, LOG_WAV, 
        LOG_NUM_CATEGORIES };
 
 extern void Log(int category, char *fmt, ...);

@@ -153,13 +153,13 @@ static void bgr3_handler(Instance *pi, void *data)
 static void y422p_handler(Instance *pi, void *data)
 {
   VSmoother_private *priv = (VSmoother_private *)pi;
-  Y422P_buffer *y422p_in = data;
+  YUV422P_buffer *y422p_in = data;
   if (pi->outputs[OUTPUT_422P].destination) {
     smooth(priv, &y422p_in->c.tv,pi->pending_messages);
     PostData(y422p_in, pi->outputs[OUTPUT_422P].destination);
   }
   else {
-    Y422P_buffer_discard(y422p_in);
+    YUV422P_buffer_discard(y422p_in);
   }
 }
 

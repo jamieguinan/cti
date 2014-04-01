@@ -9,14 +9,14 @@
 #include "Y4MOutput.h"
 
 static void Config_handler(Instance *pi, void *msg);
-static void Y422P_handler(Instance *pi, void *data);
+static void YUV422P_handler(Instance *pi, void *data);
 static void RGB3_handler(Instance *pi, void *data);
 static void BGR3_handler(Instance *pi, void *data);
 
 enum { INPUT_CONFIG, INPUT_422P, INPUT_RGB3, INPUT_BGR3 };
 static Input Y4MOutput_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = Y422P_handler },
+  [ INPUT_422P ] = { .type_label = "422P_buffer", .handler = YUV422P_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = BGR3_handler },
 };
@@ -69,10 +69,10 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void Y422P_handler(Instance *pi, void *data)
+static void YUV422P_handler(Instance *pi, void *data)
 {
   Y4MOutput_private *priv = (Y4MOutput_private *)pi;
-  Y422P_buffer *y422p_in = data;
+  YUV422P_buffer *y422p_in = data;
   Y420P_buffer *y420p = 0L;
   char header[256];
 
@@ -86,7 +86,7 @@ static void Y422P_handler(Instance *pi, void *data)
   }
 
   if (!priv->use_420) {
-    /* Preferred, Y422P. */
+    /* Preferred, YUV422P. */
     if (priv->state == Y4MOUTPUT_STATE_INIT) {
       priv->width = y422p_in->width;
       priv->height = y422p_in->height;
@@ -109,7 +109,7 @@ static void Y422P_handler(Instance *pi, void *data)
   }
   else {
     /* For downstream that can only handle Y420P. */
-    y420p = Y422P_to_Y420P(y422p_in);
+    y420p = YUV422P_to_Y420P(y422p_in);
 
     if (priv->state == Y4MOUTPUT_STATE_INIT) {
       priv->width = y420p->width;
@@ -132,7 +132,7 @@ static void Y422P_handler(Instance *pi, void *data)
   }
 
  out:
-  Y422P_buffer_discard(y422p_in);
+  YUV422P_buffer_discard(y422p_in);
   if (y420p) {
     Y420P_buffer_discard(y420p);
   }
@@ -141,18 +141,18 @@ static void Y422P_handler(Instance *pi, void *data)
 static void RGB3_handler(Instance *pi, void *data)
 {
   RGB3_buffer *rgb3_in = data;
-  Y422P_buffer *y4m = RGB3_toY422P(rgb3_in);
+  YUV422P_buffer *y4m = RGB3_toYUV422P(rgb3_in);
 
-  Y422P_handler(pi, y4m);
+  YUV422P_handler(pi, y4m);
   RGB3_buffer_discard(rgb3_in);
 }
 
 static void BGR3_handler(Instance *pi, void *data)
 {
   BGR3_buffer *bgr3_in = data;
-  Y422P_buffer *y4m = BGR3_toY422P(bgr3_in);
+  YUV422P_buffer *y4m = BGR3_toYUV422P(bgr3_in);
 
-  Y422P_handler(pi, y4m);
+  YUV422P_handler(pi, y4m);
   BGR3_buffer_discard(bgr3_in);
 }
 

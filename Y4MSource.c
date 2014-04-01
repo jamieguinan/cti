@@ -26,7 +26,7 @@ static Output Y4MSource_outputs[] = {
 
 typedef struct {
   Instance i;
-  Y422P_buffer *y4m;
+  YUV422P_buffer *y4m;
 } Y4MSource_private;
 
 
@@ -50,7 +50,7 @@ static int do_run(Instance *pi, const char *value)
   }
 
   for (i=0; i < count; i++) {
-    Y422P_buffer *tmp = Y422P_copy(priv->y4m, 0, 0, priv->y4m->width, priv->y4m->height);
+    YUV422P_buffer *tmp = YUV422P_copy(priv->y4m, 0, 0, priv->y4m->width, priv->y4m->height);
 
     if (cfg.verbosity) {
       printf("%d/%d (%d)\n", i, count,

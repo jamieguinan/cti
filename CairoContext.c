@@ -318,7 +318,7 @@ static void rgb3_handler(Instance *pi, void *msg)
 static void y422p_handler(Instance *pi, void *msg)
 {
   CairoContext_private *priv = (CairoContext_private *)pi;
-  Y422P_buffer * y422p = msg;
+  YUV422P_buffer * y422p = msg;
   int do_apply = 1;
 
   if (priv->timeout) {
@@ -330,27 +330,27 @@ static void y422p_handler(Instance *pi, void *msg)
   }
 
   if (do_apply) {
-    Y422P_buffer * temp;
+    YUV422P_buffer * temp;
     RGB3_buffer * rgb3;
     /* I could avoid some of the "temp" buffers here by setting up
        in-place structures, if strides are used correctly in the image
        code. */
-    temp = Y422P_copy(y422p, 0, 0, priv->width, priv->height);
-    rgb3 = Y422P_to_RGB3(temp);
+    temp = YUV422P_copy(y422p, 0, 0, priv->width, priv->height);
+    rgb3 = YUV422P_to_RGB3(temp);
     rgb3->c.tv = y422p->c.tv;	/* Preserve timestamp! */
-    Y422P_buffer_discard(temp);
+    YUV422P_buffer_discard(temp);
     apply_commands(priv, rgb3);
-    temp = RGB3_toY422P(rgb3);
+    temp = RGB3_toYUV422P(rgb3);
     RGB3_buffer_discard(rgb3);
-    Y422P_paste(y422p, temp, 0, 0, priv->width, priv->height);
-    Y422P_buffer_discard(temp);
+    YUV422P_paste(y422p, temp, 0, 0, priv->width, priv->height);
+    YUV422P_buffer_discard(temp);
   }
   
   if (pi->outputs[OUTPUT_422P].destination) {
     PostData(y422p, pi->outputs[OUTPUT_422P].destination);
   }
   else {
-    Y422P_buffer_discard(y422p);
+    YUV422P_buffer_discard(y422p);
   }
 }
 
