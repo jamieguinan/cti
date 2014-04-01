@@ -402,6 +402,7 @@ static void Y422P_to_xGx(Y422P_buffer *y422p, RGB3_buffer *rgb, BGR3_buffer *bgr
       if (G > 255) { G = 255; } else if (G < 0) { G = 0; } 
       if (B > 255) { B = 255; } else if (B < 0) { B = 0; } 
 
+      /* FIXME: Should use averaging... */
       if (prgb) {
 	prgb[0] = R;
 	prgb[1] = G;
@@ -807,6 +808,9 @@ ImageType Image_guess_type(uint8_t *data, int len)
       t = IMAGE_TYPE_PPM;
     }
     else if (data[0] == 0xff && data[1] == 0xd8 && data[2] == 0xff && data[3] == 0xe0) {
+      t = IMAGE_TYPE_JPEG;
+    }
+    else if (data[0] == 0xff && data[1] == 0xd8 && data[2] == 0xff && data[3] == 0xe1) {
       t = IMAGE_TYPE_JPEG;
     }
     else if (data[0] == 0x00 && data[1] == 0x00 && data[2] == 0x00 && data[3] == 0x01) {

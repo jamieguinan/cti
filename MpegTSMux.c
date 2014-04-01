@@ -113,7 +113,8 @@ typedef struct _ts_packet {
 typedef struct {
   TSPacket * packets;
   TSPacket * last_packet;
-  uint64_t running_pts;
+  int packet_count;
+  uint64_t pts_value;
   int pts_add;
   uint64_t running_pcr;
   int pcr_add;
@@ -124,6 +125,8 @@ typedef struct {
   uint dts:1;
   uint pcr:1;
 } Stream;
+
+#define MAXIMUM_PAT_INTERVAL_90KHZ (90000/10)
 
 typedef struct {
   Instance i;
@@ -141,9 +144,13 @@ typedef struct {
 #define MAX_STREAMS 2
   Stream streams[MAX_STREAMS];
 
+  int av_packet_count;
+
   struct {
     uint8_t continuity_counter;
   } PAT;
+
+  uint64_t pat_pts_last;
 
   struct {
     uint16_t PCR_PID;
@@ -155,7 +162,6 @@ typedef struct {
     uint8_t continuity_counter;
   } PMT;
 
-  uint32_t continuity_counter;
 } MpegTSMux_private;
 
 
@@ -253,7 +259,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     pts.set = 1;
     flags |= (1<<7);
     peslen += 5;
-    pts.value = stream->running_pts;
+    pts.value = stream->pts_value;
     if (stream->dts) {
       dts.set = 1;
       flags |= (1<<6);
@@ -299,14 +305,14 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 			 ,((pts.value >> 7)&0xff)	   /* bits 14:7 */
 			 ,((pts.value << 1)&0xfe) | 1   /* bits 6:0, 1 */
 			 );
-    stream->running_pts += stream->pts_add;
+    stream->pts_value += stream->pts_add;
 
     {
       /* Special-case handling for test sample. */
-      if (stream->es_id == 224 && stream->running_pts == 1404504) { stream->running_pts += 1; }
+      if (stream->es_id == 224 && stream->pts_value == 1404504) { stream->pts_value += 1; }
       if (stream->es_id == 192 && audiopts_index < table_size(audiopts)) {
 	audiopts_index += 1;
-	stream->running_pts = audiopts[audiopts_index];
+	stream->pts_value = audiopts[audiopts_index];
       } 
     }
 
@@ -436,6 +442,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
       stream->last_packet->next = packet;
       stream->last_packet = packet;
     }
+    stream->packet_count += 1;
   }
 }
 
@@ -580,54 +587,65 @@ static void flush(Instance *pi)
      packets at least every 100ms. */
 
   /* I'll eventually set up m3u8 generation. */
-
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   int i;
-
+  uint64_t pts_now = 0;
+  
   if (access("outpackets", R_OK) != 0) {
     mkdir("outpackets", 0744);
   }
 
-  // printf("%s: priv->video_packets = %p\n", __func__, priv->video_packets);
-
-  if (priv->pktseq == 0) {
-    {
-      TSPacket *pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
-      char fname[256]; sprintf(fname, 
-			       "outpackets/%05d-ts%04d%s%s", 
-			       priv->pktseq++,
-			       0,
-			       pkt->af ? "-AF" : "" ,
-			       pkt->pus ? "-PUS" : ""
-			       );
-      FILE * f = fopen(fname, "wb");
-      if (f) {
-	if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
-	fclose(f);
-      }
-      Mem_free(pkt);
-    }
+  int av_packets = 0;
+  for (i=0; i < MAX_STREAMS; i++) {
+    av_packets += priv->streams[i].packet_count;
+    pts_now = cti_max(pts_now, priv->streams[i].pts_value);
   }
 
-  if (priv->pktseq == 1) {
-    {
-      TSPacket *pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
-      char fname[256]; sprintf(fname, 
-			       "outpackets/%05d-ts%04d%s%s", 
-			       priv->pktseq++,
-			       256,
-			       pkt->af ? "-AF" : "" ,
-			       pkt->pus ? "-PUS" : ""
-			       );
-      FILE * f = fopen(fname, "wb");
-      if (f) {
-	if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
-	fclose(f);
-      }
-      Mem_free(pkt);
+  if (av_packets == 0) {
+    return;
+  }
+  
+  if ( (pts_now - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450)) {
+    /* FIXME: The subtraction test means its actually gone OVER, so
+       it might be better to add some fudge in there. */
+    priv->pat_pts_last = pts_now;
+    TSPacket *pkt;
+    char fname[256];
+    FILE * f;
+    
+    pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
+    sprintf(fname, 
+	    "outpackets/%05d-ts%04d%s%s", 
+	    priv->pktseq++,
+	    0,
+	    pkt->af ? "-AF" : "" ,
+	    pkt->pus ? "-PUS" : ""
+	    );
+    f = fopen(fname, "wb");
+    if (f) {
+      if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
+      fclose(f);
     }
+    Mem_free(pkt);
+    
+    pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
+    sprintf(fname, 
+	    "outpackets/%05d-ts%04d%s%s", 
+	    priv->pktseq++,
+	    256,
+	    pkt->af ? "-AF" : "" ,
+	    pkt->pus ? "-PUS" : ""
+	    );
+    f = fopen(fname, "wb");
+    if (f) {
+      if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
+      fclose(f);
+    }
+    Mem_free(pkt);
   }
 
+  /* FIXME: Could do a better job of interleaving the video and audio frames, rather
+     than bunching them together. */
   for (i=0; i < MAX_STREAMS; i++) {
     Stream * stream = &priv->streams[i];
     while (stream->packets) {
@@ -645,6 +663,7 @@ static void flush(Instance *pi)
 	fclose(f);
       }
       stream->packets = stream->packets->next;
+      stream->packet_count -= 1;
       Mem_free(pkt);
     }
   }
@@ -658,10 +677,8 @@ static void MpegTSMux_tick(Instance *pi)
   hm = GetData(pi, 1);
   if (hm) {
     hm->handler(pi, hm->data);
-    if (hm->handler != Config_handler) {
-      flush(pi);    
-    }
     ReleaseMessage(&hm,pi);
+    flush(pi);    
   }
 
   pi->counter++;
@@ -677,7 +694,7 @@ static void MpegTSMux_instance_init(Instance *pi)
     .dts = 1, 
     .pcr = 1, 
     .es_id = 224,
-    .running_pts = 900000,
+    .pts_value = 900000,
     .pts_add = 6006,
     .running_pcr = 897600,
     .pcr_add = 6006
@@ -689,7 +706,7 @@ static void MpegTSMux_instance_init(Instance *pi)
     .dts = 0,
     .pcr = 0,
     .es_id = 192,
-    .running_pts = 900000,
+    .pts_value = 900000,
     .pts_add = 4180
   };
 }

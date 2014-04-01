@@ -26,10 +26,11 @@ static Input DJpeg_inputs[] = {
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_422P, OUTPUT_JPEG };
+enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_422P, OUTPUT_420P, OUTPUT_JPEG };
 static Output DJpeg_outputs[] = { 
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
+  [ OUTPUT_420P ] = {.type_label = "420P_buffer", .destination = 0L },
   [ OUTPUT_422P ] = {.type_label = "422P_buffer", .destination = 0L },
   [ OUTPUT_JPEG ] = {.type_label = "Jpeg_buffer", .destination = 0L }, /* pass-through */
 };
@@ -136,6 +137,8 @@ static void Jpeg_handler(Instance *pi, void *data)
     goto out;
   }
 
+  printf("%s\n", __func__);
+
   if (priv->max_messages && pi->pending_messages > priv->max_messages) {
     /* Skip without decoding. */
     fprintf(stderr, "DJpeg skipping %d (%d %d)\n", pi->counter,
@@ -241,6 +244,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     jpeg_destroy_decompress(&cinfo);
   }
 
+
   if (pi->outputs[OUTPUT_422P].destination
       || (pi->outputs[OUTPUT_GRAY].destination && !gray_handled)) {
     /* Decompress to YCbCr, and copy Y channel to Gray buffer if needed. */
@@ -295,7 +299,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     cinfo.raw_data_out = TRUE;
     cinfo.do_fancy_upsampling = FALSE;
 
-#if 0
+#if 1
     printf("note: jpeg colorspace is %s\n",
 	   cinfo.jpeg_color_space == JCS_GRAYSCALE ? "JCS_GRAYSCALE" :
 	   cinfo.jpeg_color_space == JCS_RGB ? "JCS_RGB" :
@@ -303,7 +307,23 @@ static void Jpeg_handler(Instance *pi, void *data)
 	   "unknown");
 #endif
 
-    /* Verify sampling factors, can only handle YCbCr 4:2:2 data here. */
+    if (1) {
+      fprintf(stderr, "cinfo.comp_info[0].h_samp_factor=%d\n", cinfo.comp_info[0].h_samp_factor);
+      fprintf(stderr, "cinfo.comp_info[0].v_samp_factor=%d\n", cinfo.comp_info[0].v_samp_factor);
+      fprintf(stderr, "cinfo.comp_info[0].downsampled_width=%d\n", cinfo.comp_info[0].downsampled_width);
+      fprintf(stderr, "cinfo.comp_info[0].downsampled_height=%d\n", cinfo.comp_info[0].downsampled_height);
+      fprintf(stderr, "cinfo.comp_info[1].h_samp_factor=%d\n", cinfo.comp_info[1].h_samp_factor);
+      fprintf(stderr, "cinfo.comp_info[1].v_samp_factor=%d\n", cinfo.comp_info[1].v_samp_factor);
+      fprintf(stderr, "cinfo.comp_info[1].downsampled_width=%d\n", cinfo.comp_info[1].downsampled_width);
+      fprintf(stderr, "cinfo.comp_info[1].downsampled_height=%d\n", cinfo.comp_info[1].downsampled_height);
+      fprintf(stderr, "cinfo.comp_info[2].h_samp_factor=%d\n", cinfo.comp_info[2].h_samp_factor);
+      fprintf(stderr, "cinfo.comp_info[2].v_samp_factor=%d\n", cinfo.comp_info[2].v_samp_factor);
+      fprintf(stderr, "cinfo.comp_info[2].downsampled_width=%d\n", cinfo.comp_info[2].downsampled_width);
+      fprintf(stderr, "cinfo.comp_info[2].downsampled_height=%d\n", cinfo.comp_info[2].downsampled_height);
+    }
+
+    /* Verify sampling factors. I thought it could only handle YCbCr 4:2:2 data here, but 4:2:0 also
+       seems to work.*/
     if (cinfo.jpeg_color_space == JCS_YCbCr &&
 	cinfo.comp_info[0].h_samp_factor == 2 &&
 	cinfo.comp_info[0].v_samp_factor == 2 &&
@@ -316,12 +336,6 @@ static void Jpeg_handler(Instance *pi, void *data)
     else {
       if (!priv->sampling_warned) {
 	fprintf(stderr, "jpeg data is not 4:2:2!  This could be handled, but code is not written for it...\n");
-	fprintf(stderr, "cinfo.comp_info[0].h_samp_factor=%d\n", cinfo.comp_info[0].h_samp_factor);
-	fprintf(stderr, "cinfo.comp_info[0].v_samp_factor=%d\n", cinfo.comp_info[0].v_samp_factor);
-	fprintf(stderr, "cinfo.comp_info[1].h_samp_factor=%d\n", cinfo.comp_info[1].h_samp_factor);
-	fprintf(stderr, "cinfo.comp_info[1].v_samp_factor=%d\n", cinfo.comp_info[1].v_samp_factor);
-	fprintf(stderr, "cinfo.comp_info[2].h_samp_factor=%d\n", cinfo.comp_info[2].h_samp_factor);
-	fprintf(stderr, "cinfo.comp_info[2].v_samp_factor=%d\n", cinfo.comp_info[2].v_samp_factor);
 	priv->sampling_warned = 1;
       }
     }
@@ -342,14 +356,8 @@ static void Jpeg_handler(Instance *pi, void *data)
     }
 	   
     cinfo.dct_method = priv->dct_method;
-
     (void) jpeg_start_decompress(&cinfo);
-
-    /* Note: setting cinfo.dct_method here does not make any differnce, libjpeg 
-       resets it in the jpeg_consume_input()/default_decompress_parms() path. 
-       Solution is to #define JDCT_DEFAULT it to desired value in jconfig.h.
-       Update 2011-Sep-22: Hm, actually it *does* work. */
-    cinfo.dct_method = priv->dct_method;
+    // cinfo.dct_method = priv->dct_method;
 
     uint8_t *buffers[3] = { y422p_out->y, y422p_out->cb, y422p_out->cr};
     // printf("cinfo.output_scanline=%d cinfo.output_height=%d\n", cinfo.output_scanline , cinfo.output_height);

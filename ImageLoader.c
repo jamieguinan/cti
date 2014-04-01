@@ -22,10 +22,11 @@ static Input ImageLoader_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-enum { OUTPUT_GRAY, OUTPUT_422P, OUTPUT_H264, OUTPUT_AAC };
+enum { OUTPUT_GRAY, OUTPUT_422P, OUTPUT_JPEG, OUTPUT_H264, OUTPUT_AAC };
 static Output ImageLoader_outputs[] = {
   [ OUTPUT_GRAY ] = { .type_label = "GRAY_buffer", .destination = 0L },
   [ OUTPUT_422P ] = { .type_label = "422P_buffer", .destination = 0L },
+  [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
   [ OUTPUT_AAC ] = { .type_label = "AAC_buffer", .destination = 0L },
 };
@@ -41,6 +42,7 @@ static int set_file(Instance *pi, const char *value)
   ImageType t;
   Gray_buffer *gray = 0L;
   Y422P_buffer *y422p = 0L;
+  Jpeg_buffer *jpeg = 0L;
   H264_buffer *h264 = 0L;
   AAC_buffer *aac = 0L;
   int result;
@@ -68,13 +70,24 @@ static int set_file(Instance *pi, const char *value)
       if (pi->outputs[OUTPUT_GRAY].destination) {
 	PostDataGetResult(gray, pi->outputs[OUTPUT_GRAY].destination, &result);
       }
+      else {
+	// discard
+      }
     }
     break;
   case IMAGE_TYPE_PPM:
     fprintf(stderr, "%s:%d PPM load not supported yet\n", __FILE__, __LINE__);
     break;
   case IMAGE_TYPE_JPEG:
-    fprintf(stderr, "%s:%d JPEG load not supported yet\n", __FILE__, __LINE__);
+    jpeg = Jpeg_buffer_from(fdata->data, fdata->len, 0L);
+    if (jpeg) {
+      if (pi->outputs[OUTPUT_JPEG].destination) {
+	PostDataGetResult(jpeg, pi->outputs[OUTPUT_JPEG].destination, &result);
+      }
+      else {
+	// discard
+      }
+    }
     break;
   case IMAGE_TYPE_Y422P:
     // y422p = ...
@@ -82,9 +95,13 @@ static int set_file(Instance *pi, const char *value)
       if (pi->outputs[OUTPUT_GRAY].destination) {
 	gray = Gray_buffer_from(y422p->y, y422p->width, y422p->height, 0L);
 	PostDataGetResult(gray, pi->outputs[OUTPUT_GRAY].destination, &result);
+	// Gray_buffer_discard();
       }
       if (pi->outputs[OUTPUT_422P].destination) {
 	PostDataGetResult(y422p, pi->outputs[OUTPUT_422P].destination, &result);
+      }
+      else {
+	// discard
       }
     }
     break;
@@ -105,9 +122,13 @@ static int set_file(Instance *pi, const char *value)
 	PostDataGetResult(aac, pi->outputs[OUTPUT_AAC].destination, &result);
 	// printf("AAC result=%d\n", result);
       }
+      else {
+	// discard
+      }
     }
     break;
   case IMAGE_TYPE_UNKNOWN:
+    printf("Could not not identify file type for %s\n", value);
   default:
     break;
   }
