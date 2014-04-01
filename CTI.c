@@ -193,12 +193,12 @@ void ReleaseMessage(Handler_message **msg, Instance *pi)
 {
   Handler_message *hm = *msg;
   if (hm->reply_sem) {
-    /* Caller is waiting for a reply. */
+    /* Sender is waiting for a reply. */
     if (hm->result) {
-      /* Caller supplied a result destination. */
+      /* Sender supplied a result destination. */
+      /* FIXME: Could also provide a string result, or even a binary (ArrayU8) result. */
       *(hm->result) = pi->result;
     }
-    /* FIXME: Could also provide a string result, or even a binary (ArrayU8) result. */
     Sem_post(hm->reply_sem);
   }
   Mem_free(*msg);

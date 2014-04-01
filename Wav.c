@@ -165,6 +165,7 @@ Wav_buffer *Wav_buffer_from(unsigned char *src_bytes, int src_length)
 
 Wav_buffer * Wav_ref(Wav_buffer * wav)
 {
-  LockedRef_increment(&wav->ref);
+  int count;
+  LockedRef_increment(&wav->ref, &count);
   return wav;
 }

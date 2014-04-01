@@ -151,7 +151,8 @@ RGB3_buffer *RGB3_buffer_clone(RGB3_buffer *rgb_src)
 
 RGB3_buffer *RGB3_buffer_ref(RGB3_buffer *rgb)
 {
-  LockedRef_increment(&rgb->c.ref);
+  int count;
+  LockedRef_increment(&rgb->c.ref, &count);
   return rgb;
 }
 
@@ -281,32 +282,40 @@ void rgb3_to_bgr3(RGB3_buffer **rgb, BGR3_buffer **bgr)
 
 YUV422P_buffer * YUV422P_buffer_new(int width, int height, Image_common *c)
 {
-  YUV422P_buffer * y422p = Mem_calloc(1, sizeof(*y422p));
+  YUV422P_buffer * yuv422p = Mem_calloc(1, sizeof(*yuv422p));
   if (c) {
-    y422p->c = *c;
+    yuv422p->c = *c;
   }
-  y422p->width = width;
-  y422p->height = height;
-  y422p->y_length = width*height;
-  y422p->cr_width = width/2;
-  y422p->cr_height = height;
-  y422p->cr_length = y422p->cr_width*y422p->cr_height;
-  y422p->cb_width = width/2;
-  y422p->cb_height = height;
-  y422p->cb_length = y422p->cb_width*y422p->cb_height;
-  y422p->y = Mem_calloc(1, y422p->y_length+1); y422p->y[y422p->y_length] = 0x55;
-  y422p->cr = Mem_calloc(1, y422p->cr_length+1);  y422p->cr[y422p->cr_length] = 0x55;
-  y422p->cb = Mem_calloc(1, y422p->cb_length+1);  y422p->cb[y422p->cb_length] = 0x55;
-  
-  return y422p;
+  yuv422p->width = width;
+  yuv422p->height = height;
+  yuv422p->y_length = width*height;
+  yuv422p->cr_width = width/2;
+  yuv422p->cr_height = height;
+  yuv422p->cr_length = yuv422p->cr_width*yuv422p->cr_height;
+  yuv422p->cb_width = width/2;
+  yuv422p->cb_height = height;
+  yuv422p->cb_length = yuv422p->cb_width*yuv422p->cb_height;
+  yuv422p->y = Mem_calloc(1, yuv422p->y_length+32); yuv422p->y[yuv422p->y_length] = 0x55;
+  yuv422p->cr = Mem_calloc(1, yuv422p->cr_length+32);  yuv422p->cr[yuv422p->cr_length] = 0x55;
+  yuv422p->cb = Mem_calloc(1, yuv422p->cb_length+32);  yuv422p->cb[yuv422p->cb_length] = 0x55;
+  LockedRef_init(&yuv422p->c.ref);
+  return yuv422p;
 }
+
+YUV422P_buffer *YUV422P_buffer_ref(YUV422P_buffer *yuv422p)
+{
+  int count;
+  LockedRef_increment(&yuv422p->c.ref, &count);
+  return yuv422p;
+}
+
 
 static struct {
   int len;
   int width;
   int height;
 } 
-y422p_known_sizes[] = {
+yuv422p_known_sizes[] = {
   { .len = 691200, .width = 720, .height = 480 },
   { .len = 614400, .width = 640, .height = 480 },
   { .len = 518400, .width = 720, .height = 360 },
@@ -316,52 +325,47 @@ y422p_known_sizes[] = {
 YUV422P_buffer *YUV422P_buffer_from(uint8_t *data, int len, Image_common *c)
 {
   int i;
-  YUV422P_buffer * y422p = 0L;
+  YUV422P_buffer * yuv422p = 0L;
   int width = 0, height;
 
-  for (i=0; i < table_size(y422p_known_sizes); i++) {
-    if (y422p_known_sizes[i].len == len) {
-      width = y422p_known_sizes[i].width;
-      height = y422p_known_sizes[i].height;
+  for (i=0; i < table_size(yuv422p_known_sizes); i++) {
+    if (yuv422p_known_sizes[i].len == len) {
+      width = yuv422p_known_sizes[i].width;
+      height = yuv422p_known_sizes[i].height;
       printf("%d bytes: %dx%d\n", len, width, height);
       break;
     }
   }
 
   if (width) {
-    y422p = YUV422P_buffer_new(width, height, 0L);
-    memcpy(y422p->y,  data+(width*height*0), width*height);
-    memcpy(y422p->cr, data+(width*height*2/2), width*height/2);
-    memcpy(y422p->cb, data+(width*height*3/2), width*height/2);
+    yuv422p = YUV422P_buffer_new(width, height, 0L);
+    memcpy(yuv422p->y,  data+(width*height*0), width*height);
+    memcpy(yuv422p->cr, data+(width*height*2/2), width*height/2);
+    memcpy(yuv422p->cb, data+(width*height*3/2), width*height/2);
   }
 
-  return y422p;
+  return yuv422p;
 }
 
 
-void YUV422P_buffer_discard(YUV422P_buffer *y422p)
+void YUV422P_buffer_discard(YUV422P_buffer *yuv422p)
 {
-  if (y422p->cb[y422p->cb_length] != 0x55) { fprintf(stderr, "cb buffer spilled!\n"); }
-  Mem_free(y422p->cb);
-  if (y422p->cr[y422p->cr_length] != 0x55) { fprintf(stderr, "cr buffer spilled!\n"); }
-  Mem_free(y422p->cr);
-  if (y422p->y[y422p->y_length] != 0x55) { fprintf(stderr, "y buffer spilled!\n"); }
-  Mem_free(y422p->y);
-  memset(y422p, 0, sizeof(*y422p));
-  Mem_free(y422p);
-}
-
-
-void YUV422P_buffer_unref(YUV422P_buffer **y422p)
-{
-  if (Mem_unref(&(*y422p)->mo) == 0) {
-    YUV422P_buffer_discard(*y422p);
+  int count;
+  LockedRef_decrement(&yuv422p->c.ref, &count);
+  if (count == 0) {
+    if (yuv422p->cb[yuv422p->cb_length] != 0x55) { fprintf(stderr, "cb buffer spilled!\n"); }
+    Mem_free(yuv422p->cb);
+    if (yuv422p->cr[yuv422p->cr_length] != 0x55) { fprintf(stderr, "cr buffer spilled!\n"); }
+    Mem_free(yuv422p->cr);
+    if (yuv422p->y[yuv422p->y_length] != 0x55) { fprintf(stderr, "y buffer spilled!\n"); }
+    Mem_free(yuv422p->y);
+    memset(yuv422p, 0, sizeof(*yuv422p));
+    Mem_free(yuv422p);
   }
-  *y422p = NULL;
 }
 
 
-static void YUV422P_to_xGx(YUV422P_buffer *y422p, RGB3_buffer *rgb, BGR3_buffer *bgr)
+static void YUV422P_to_xGx(YUV422P_buffer *yuv422p, RGB3_buffer *rgb, BGR3_buffer *bgr)
 {
   // R = Y + 1.402 (Cr-128)
   // G = Y - 0.34414 (Cb-128) - 0.71414 (Cr-128)
@@ -379,13 +383,13 @@ static void YUV422P_to_xGx(YUV422P_buffer *y422p, RGB3_buffer *rgb, BGR3_buffer 
     pbgr = bgr->data;
   }
 
-  uint8_t *pY = y422p->y;
-  uint8_t *pCr = y422p->cr;
-  uint8_t *pCb = y422p->cb;
+  uint8_t *pY = yuv422p->y;
+  uint8_t *pCr = yuv422p->cr;
+  uint8_t *pCb = yuv422p->cb;
 
-  for (y = 0; y < y422p->height; y++) {
+  for (y = 0; y < yuv422p->height; y++) {
     int R, G, B, Y, Cr = 0, Cb = 0;
-    for (x = 0; x < y422p->width; x+=1) {
+    for (x = 0; x < yuv422p->width; x+=1) {
       if (x % 2 == 0) {
 	pCr++;
 	pCb++;
@@ -422,18 +426,18 @@ static void YUV422P_to_xGx(YUV422P_buffer *y422p, RGB3_buffer *rgb, BGR3_buffer 
 }
 
 
-RGB3_buffer *YUV422P_to_RGB3(YUV422P_buffer *y422p)
+RGB3_buffer *YUV422P_to_RGB3(YUV422P_buffer *yuv422p)
 {
-  RGB3_buffer *rgb = RGB3_buffer_new(y422p->width, y422p->height, &y422p->c);
-  YUV422P_to_xGx(y422p, rgb, 0L);
+  RGB3_buffer *rgb = RGB3_buffer_new(yuv422p->width, yuv422p->height, &yuv422p->c);
+  YUV422P_to_xGx(yuv422p, rgb, 0L);
   return rgb;
 }
 
 
-BGR3_buffer *YUV422P_to_BGR3(YUV422P_buffer *y422p)
+BGR3_buffer *YUV422P_to_BGR3(YUV422P_buffer *yuv422p)
 {
-  BGR3_buffer *bgr = BGR3_buffer_new(y422p->width, y422p->height, &y422p->c);
-  YUV422P_to_xGx(y422p, 0L, bgr);
+  BGR3_buffer *bgr = BGR3_buffer_new(yuv422p->width, yuv422p->height, &yuv422p->c);
+  YUV422P_to_xGx(yuv422p, 0L, bgr);
   return bgr;
 }
 
@@ -445,12 +449,12 @@ YUV422P_buffer *RGB3_toYUV422P(RGB3_buffer *rgb)
   //V'= (R-Y)*0.713
 
   int x, y;
-  YUV422P_buffer *y422p = YUV422P_buffer_new(rgb->width, rgb->height, &rgb->c);
+  YUV422P_buffer *yuv422p = YUV422P_buffer_new(rgb->width, rgb->height, &rgb->c);
 
   uint8_t *p = rgb->data;
-  uint8_t *pY = y422p->y;
-  uint8_t *pCr = y422p->cr;
-  uint8_t *pCb = y422p->cb;
+  uint8_t *pY = yuv422p->y;
+  uint8_t *pCr = yuv422p->cr;
+  uint8_t *pCb = yuv422p->cb;
 
   for (y=0; y < rgb->height; y++) {
     for (x = 0; x < rgb->width; x+=1) {
@@ -475,7 +479,7 @@ YUV422P_buffer *RGB3_toYUV422P(RGB3_buffer *rgb)
 
   }
 
-  return y422p;
+  return yuv422p;
 }
 
 
@@ -486,12 +490,12 @@ YUV422P_buffer *BGR3_toYUV422P(BGR3_buffer *bgr)
   //V'= (R-Y)*0.713
 
   int x, y;
-  YUV422P_buffer *y422p = YUV422P_buffer_new(bgr->width, bgr->height, &bgr->c);
+  YUV422P_buffer *yuv422p = YUV422P_buffer_new(bgr->width, bgr->height, &bgr->c);
 
   uint8_t *p = bgr->data;
-  uint8_t *pY = y422p->y;
-  uint8_t *pCr = y422p->cr;
-  uint8_t *pCb = y422p->cb;
+  uint8_t *pY = yuv422p->y;
+  uint8_t *pCr = yuv422p->cr;
+  uint8_t *pCb = yuv422p->cb;
 
   for (y=0; y < bgr->height; y++) {
     for (x = 0; x < bgr->width; x+=1) {
@@ -516,30 +520,39 @@ YUV422P_buffer *BGR3_toYUV422P(BGR3_buffer *bgr)
 
   }
 
-  return y422p;
+  return yuv422p;
 }
 
 
 YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
 {
-  YUV420P_buffer * y420p = Mem_calloc(1, sizeof(*y420p));
+  YUV420P_buffer * yuv420p = Mem_calloc(1, sizeof(*yuv420p));
   if (c) {
-    y420p->c = *c;
+    yuv420p->c = *c;
   }
-  y420p->width = width;
-  y420p->height = height;
-  y420p->y_length = width*height;
-  y420p->cr_length = width*height/4;
-  y420p->cb_length = width*height/4;
+  yuv420p->width = width;
+  yuv420p->height = height;
+  yuv420p->y_length = width*height;
+  yuv420p->cr_length = width*height/4;
+  yuv420p->cb_length = width*height/4;
 
   /* One data allocation, component pointers are set within it. */
-  y420p->data = Mem_calloc(1, y420p->y_length+y420p->cr_length+y420p->cb_length);
+  yuv420p->data = Mem_calloc(1, yuv420p->y_length+yuv420p->cr_length+yuv420p->cb_length);
 
-  y420p->y = y420p->data;
-  y420p->cr = y420p->data + y420p->y_length;
-  y420p->cb = y420p->data + y420p->y_length + y420p->cr_length;
-  
-  return y420p;
+  yuv420p->y = yuv420p->data;
+  yuv420p->cr = yuv420p->data + yuv420p->y_length;
+  yuv420p->cb = yuv420p->data + yuv420p->y_length + yuv420p->cr_length;
+
+  LockedRef_init(&yuv420p->c.ref);  
+  return yuv420p;
+}
+
+
+YUV420P_buffer *YUV420P_buffer_ref(YUV420P_buffer *yuv420p)
+{
+  int count;
+  LockedRef_increment(&yuv420p->c.ref, &count);
+  return yuv420p;
 }
 
 
@@ -552,52 +565,78 @@ YUV420P_buffer *YUV420P_buffer_from(uint8_t *data, int width, int height, Image_
   return yuv;
 }
 
-void YUV420P_buffer_discard(YUV420P_buffer *y420p)
+void YUV420P_buffer_discard(YUV420P_buffer *yuv420p)
 {
-  Mem_free(y420p->data);
-  memset(y420p, 0, sizeof(*y420p));
-  Mem_free(y420p);
+  int count;
+  LockedRef_decrement(&yuv420p->c.ref, &count);
+  if (count == 0) {
+    Mem_free(yuv420p->data);
+    memset(yuv420p, 0, sizeof(*yuv420p));
+    Mem_free(yuv420p);
+  }
+  
 }
 
-YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *y422p)
+YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *yuv422p)
 {
-  YUV420P_buffer * y420p = YUV420P_buffer_new(y422p->width, y422p->height, &y422p->c);
+  YUV420P_buffer * yuv420p = YUV420P_buffer_new(yuv422p->width, yuv422p->height, &yuv422p->c);
   int x, y;
   int n = 0;
 
-  memcpy(y420p->y, y422p->y, y420p->y_length);
+  memcpy(yuv420p->y, yuv422p->y, yuv420p->y_length);
 
-  for (y = 0; y < y422p->height; y+=2) {
-    for (x = 0; x < y422p->width/2; x+=1) {
-      y420p->cb[n] = (y422p->cb[y*y422p->width/2 + x] + y422p->cb[(y+1)*y422p->width/2 + x])/2;
-      y420p->cr[n] = (y422p->cr[y*y422p->width/2 + x] + y422p->cr[(y+1)*y422p->width/2 + x])/2;
+  for (y = 0; y < yuv422p->height; y+=2) {
+    for (x = 0; x < yuv422p->width/2; x+=1) {
+      yuv420p->cb[n] = (yuv422p->cb[y*yuv422p->width/2 + x] + yuv422p->cb[(y+1)*yuv422p->width/2 + x])/2;
+      yuv420p->cr[n] = (yuv422p->cr[y*yuv422p->width/2 + x] + yuv422p->cr[(y+1)*yuv422p->width/2 + x])/2;
       n++;
     }
   }
 
   // printf("n=%d\n", n);
-  return y420p;
+  return yuv420p;
 }
 
 
-YUV422P_buffer *YUV422P_copy(YUV422P_buffer *y422p, int xoffset, int yoffset, int width, int height)
+YUV422P_buffer *YUV420P_to_YUV422P(YUV422P_buffer *yuv420p)
+{
+  YUV422P_buffer * yuv422p = YUV422P_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
+  int x, y;
+  int n = 0;
+
+  memcpy(yuv422p->y, yuv422p->y, yuv422p->y_length);
+
+  for (y = 0; y < yuv422p->height; y+=2) {
+    //for (x = 0; x < yuv422p->width/2; x+=1) {
+    //  yuv420p->cb[n] = (yuv422p->cb[y*yuv422p->width/2 + x] + yuv422p->cb[(y+1)*yuv422p->width/2 + x])/2;
+    //  yuv420p->cr[n] = (yuv422p->cr[y*yuv422p->width/2 + x] + yuv422p->cr[(y+1)*yuv422p->width/2 + x])/2;
+    //  n++;
+    //}
+  }
+
+  // printf("n=%d\n", n);
+  return yuv422p;
+}
+
+
+YUV422P_buffer *YUV422P_copy(YUV422P_buffer *yuv422p, int xoffset, int yoffset, int width, int height)
 {
   YUV422P_buffer *newbuf = 0L;
   int x, y;
 
-  if (xoffset+width > y422p->width || yoffset+height > y422p->height) {
+  if (xoffset+width > yuv422p->width || yoffset+height > yuv422p->height) {
     fprintf(stderr, "copy outside bounds!\n");
     return 0L;
   }
 
-  newbuf = YUV422P_buffer_new(width, height, &y422p->c);
+  newbuf = YUV422P_buffer_new(width, height, &yuv422p->c);
 
   for (y = 0; y < height; y+=1) {
-    uint8_t *ysrc = y422p->y + ((y + yoffset) * y422p->width) + xoffset;
+    uint8_t *ysrc = yuv422p->y + ((y + yoffset) * yuv422p->width) + xoffset;
     uint8_t *ydst = newbuf->y + (y*newbuf->width);
-    uint8_t *crsrc = y422p->cr + ((y + yoffset) * y422p->width/2) + (xoffset/2);
+    uint8_t *crsrc = yuv422p->cr + ((y + yoffset) * yuv422p->width/2) + (xoffset/2);
     uint8_t *crdst = newbuf->cr + (y*newbuf->width/2);
-    uint8_t *cbsrc = y422p->cb + ((y + yoffset) * y422p->width/2) + (xoffset/2);
+    uint8_t *cbsrc = yuv422p->cb + ((y + yoffset) * yuv422p->width/2) + (xoffset/2);
     uint8_t *cbdst = newbuf->cb + (y*newbuf->width/2);
     for (x = 0; x < width; x+=1) {
       *ydst++ = *ysrc++;
@@ -613,9 +652,9 @@ YUV422P_buffer *YUV422P_copy(YUV422P_buffer *y422p, int xoffset, int yoffset, in
 }
 
 
-YUV422P_buffer *YUV422P_clone(YUV422P_buffer *y422p)
+YUV422P_buffer *YUV422P_clone(YUV422P_buffer *yuv422p)
 {
-  return YUV422P_copy(y422p, 0, 0, y422p->width, y422p->height);
+  return YUV422P_copy(yuv422p, 0, 0, yuv422p->width, yuv422p->height);
 }
 
 
@@ -647,18 +686,18 @@ void YUV422P_paste(YUV422P_buffer *dest, YUV422P_buffer *src, int xoffset, int y
 }
 
 
-RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *y420p)
+RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *yuv420p)
 {
-  RGB3_buffer *rgb = RGB3_buffer_new(y420p->width, y420p->height, &y420p->c);
+  RGB3_buffer *rgb = RGB3_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
 
   int x, y;
   int r, g, b;
   int c, d, e;
 
-  int w = y420p->width;
-  int h = y420p->height;
+  int w = yuv420p->width;
+  int h = yuv420p->height;
   
-  uint8_t *yuvin = y420p->data;
+  uint8_t *yuvin = yuv420p->data;
   uint8_t *rgbout8 = rgb->data;
 
   uint8_t *pY;
@@ -727,7 +766,8 @@ void Jpeg_buffer_discard(Jpeg_buffer *jpeg)
 
 Jpeg_buffer *Jpeg_buffer_ref(Jpeg_buffer *jpeg)
 {
-  LockedRef_increment(&jpeg->c.ref);
+  int count;
+  LockedRef_increment(&jpeg->c.ref, &count);
   return jpeg;
 }
 

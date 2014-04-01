@@ -339,6 +339,7 @@ extern void Feedback_buffer_discard(Feedback_buffer *raw);
 /* Useful macros. */
 #define copy_list(a, b, c, d) do { int n = sizeof(*a)*b; *c = Mem_malloc(n); memcpy(*c, a, n); *d = b;} while (0);
 #define table_size(x) (sizeof(x)/sizeof(x[0]))
+#define cti_table_size(x) (sizeof(x)/sizeof(x[0]))
 #ifndef streq
 #define streq(a, b)  (strcmp(a, b) == 0)
 #endif

@@ -126,10 +126,11 @@ void LockedRef_init(LockedRef *ref)
 }
 
 
-void LockedRef_increment(LockedRef *ref)
+void LockedRef_increment(LockedRef *ref, int *count)
 {
   Lock_acquire(&ref->lock);
   ref->_count += 1;
+  *count = ref->_count;
   Lock_release(&ref->lock);  
 }
 

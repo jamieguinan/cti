@@ -66,7 +66,7 @@ extern void Sem_wait(Sem *sem);
 extern void Sem_destroy(Sem *sem);
 
 extern void LockedRef_init(LockedRef *ref);
-extern void LockedRef_increment(LockedRef *ref);
-extern void LockedRef_decrement(LockedRef *ref, int * ok_to_free);
+extern void LockedRef_increment(LockedRef *ref, int * count);
+extern void LockedRef_decrement(LockedRef *ref, int * count);
 
 #endif
