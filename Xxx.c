@@ -245,7 +245,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     /* Decompress to YCbCr, and copy Y channel to Gray buffer if needed. */
     struct jpeg_decompress_struct cinfo;
     struct jpeg_error_mgr jerr;
-    YUVYUV422P_buffer * y422p_out = 0L;
+    YUV422P_buffer * y422p_out = 0L;
     int error = 0;
     jmp_buf jb;
 
@@ -274,7 +274,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
     (void) jpeg_read_header(&cinfo, TRUE);
 
-    y422p_out = YUVYUV422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
+    y422p_out = YUV422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
 
     save_width = cinfo.image_width;
     save_height = cinfo.image_height;
@@ -388,12 +388,12 @@ static void Jpeg_handler(Instance *pi, void *data)
       }
       else {
 	/* Only wanted gray output, discard the ycrcb buffer */
-	YUVYUV422P_buffer_discard(y422p_out);
+	YUV422P_buffer_discard(y422p_out);
       }
     }
     else {
       if (y422p_out) {
-	YUVYUV422P_buffer_discard(y422p_out);
+	YUV422P_buffer_discard(y422p_out);
       }
     }
     

@@ -41,7 +41,7 @@ static int set_file(Instance *pi, const char *value)
   ArrayU8 *fdata = File_load_data(S((char*) value));
   ImageType t;
   Gray_buffer *gray = 0L;
-  YUVYUV422P_buffer *y422p = 0L;
+  YUV422P_buffer *y422p = 0L;
   Jpeg_buffer *jpeg = 0L;
   H264_buffer *h264 = 0L;
   AAC_buffer *aac = 0L;
@@ -59,7 +59,7 @@ static int set_file(Instance *pi, const char *value)
 
   if (t == IMAGE_TYPE_UNKNOWN) {
     if (strstr(value, ".y422p")) {
-      t = IMAGE_TYPE_YUVYUV422P;
+      t = IMAGE_TYPE_YUV422P;
     }
   }
   
@@ -89,7 +89,7 @@ static int set_file(Instance *pi, const char *value)
       }
     }
     break;
-  case IMAGE_TYPE_YUVYUV422P:
+  case IMAGE_TYPE_YUV422P:
     // y422p = ...
     if (y422p) {
       if (pi->outputs[OUTPUT_GRAY].destination) {

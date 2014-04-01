@@ -40,9 +40,9 @@ static void half_width_scale(uint8_t *indata, int width, int height, uint8_t *ou
 
 static void y422p_handler(Instance *pi, void *data)
 {
-  YUVYUV422P_buffer *y422p_in = data;
+  YUV422P_buffer *y422p_in = data;
   if (pi->outputs[OUTPUT_YUV422P].destination) {
-    YUVYUV422P_buffer *y422p_out = YUVYUV422P_buffer_new(y422p_in->width/2, y422p_in->height, &y422p_in->c);
+    YUV422P_buffer *y422p_out = YUV422P_buffer_new(y422p_in->width/2, y422p_in->height, &y422p_in->c);
     half_width_scale(y422p_in->y, y422p_in->width, y422p_in->height, y422p_out->y);
     half_width_scale(y422p_in->cr, y422p_in->width/2, y422p_in->height, y422p_out->cr);
     half_width_scale(y422p_in->cb, y422p_in->width/2, y422p_in->height, y422p_out->cb);
@@ -50,7 +50,7 @@ static void y422p_handler(Instance *pi, void *data)
     y422p_out->c.tv = y422p_in->c.tv;
     PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
-  YUVYUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_discard(y422p_in);
 }
 
 

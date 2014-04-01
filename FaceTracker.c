@@ -312,7 +312,7 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
 }
 
 
-static void analysis_01(FaceTracker_private *priv, YUVYUV422P_buffer *y422p)
+static void analysis_01(FaceTracker_private *priv, YUV422P_buffer *y422p)
 {
 #if 0
   /* Locate 3 points matching the selected color.  Calculate values to
@@ -371,7 +371,7 @@ static void gray_handler(Instance *pi, void *msg)
 static void y422p_handler(Instance *pi, void *msg)
 {
   FaceTracker_private *priv = (FaceTracker_private *)pi;
-  YUVYUV422P_buffer *y422p = msg;
+  YUV422P_buffer *y422p = msg;
 
   /* Position message will contain 3D coordinate offset and 3D rotation offset. */
 
@@ -381,7 +381,7 @@ static void y422p_handler(Instance *pi, void *msg)
     PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
-    YUVYUV422P_buffer_discard(y422p);
+    YUV422P_buffer_discard(y422p);
   }
 }
 

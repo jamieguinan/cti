@@ -66,7 +66,7 @@ static void N_scale(NScale_private *priv, uint8_t *indata, int in_width, int in_
 static void y422p_handler(Instance *pi, void *data)
 {
   NScale_private *priv = (NScale_private *)pi;
-  YUVYUV422P_buffer *y422p_in = data;
+  YUV422P_buffer *y422p_in = data;
 
   if (pi->outputs[OUTPUT_YUV422P].destination) {
 
@@ -78,7 +78,7 @@ static void y422p_handler(Instance *pi, void *data)
 
     /* else... */
 
-    YUVYUV422P_buffer *y422p_out = YUVYUV422P_buffer_new(y422p_in->width/priv->Nx, y422p_in->height/priv->Ny,
+    YUV422P_buffer *y422p_out = YUV422P_buffer_new(y422p_in->width/priv->Nx, y422p_in->height/priv->Ny,
 					       &y422p_in->c);
     N_scale(priv, y422p_in->y, y422p_in->width, y422p_in->height, 
 	    y422p_out->y, y422p_out->width, y422p_out->height);
@@ -90,7 +90,7 @@ static void y422p_handler(Instance *pi, void *data)
     y422p_out->c.tv = y422p_in->c.tv;
     PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
-  YUVYUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_discard(y422p_in);
 }
 
 

@@ -332,12 +332,12 @@ static void bgr3_handler(Instance *pi, void *data)
 
 static void y422p_handler(Instance *pi, void *data)
 {
-  YUVYUV422P_buffer *y422p_in = data;
+  YUV422P_buffer *y422p_in = data;
   compress_and_post(pi, 
 		    y422p_in->width, y422p_in->height,
 		    y422p_in->y, y422p_in->cb, y422p_in->cr,
 		    COMPRESS_Y422);
-  YUVYUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_discard(y422p_in);
 }
 
 static void y420p_handler(Instance *pi, void *data)

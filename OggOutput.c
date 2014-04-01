@@ -9,14 +9,14 @@
 #include "Wav.h"
 
 static void Config_handler(Instance *pi, void *msg);
-static void YUVYUV422P_handler(Instance *pi, void *data);
+static void YUV422P_handler(Instance *pi, void *data);
 static void BGR3_handler(Instance *pi, void *data);
 static void Wav_handler(Instance *pi, void *msg);
 
 enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_BGR3, INPUT_WAV };
 static Input OggOutput_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = YUVYUV422P_handler },
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = YUV422P_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = BGR3_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
 };
@@ -1945,7 +1945,7 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void YUVYUV422P_handler(Instance *pi, void *data)
+static void YUV422P_handler(Instance *pi, void *data)
 {
 }
 

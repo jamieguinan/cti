@@ -80,7 +80,7 @@ static void Config_handler(Instance *pi, void *data)
 static void Y422p_handler(Instance *pi, void *msg)
 {
   Mpeg2Enc_private *priv = (Mpeg2Enc_private *)pi;
-  YUVYUV422P_buffer *y422p_in = msg;
+  YUV422P_buffer *y422p_in = msg;
   int n = 0;
 
 #if 0    
@@ -134,7 +134,7 @@ static void Y422p_handler(Instance *pi, void *msg)
   }
   
  out:
-  YUVYUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_discard(y422p_in);
 }
 
 

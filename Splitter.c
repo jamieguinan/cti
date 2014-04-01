@@ -56,7 +56,7 @@ static void y422p_handler(Instance *pi, void *data)
   const int outputs[NUM_OUTPUTS] = { OUTPUT_YUV422P_1, OUTPUT_YUV422P_2 };
   int i, j;
   int out_count = 0;
-  YUVYUV422P_buffer *y422p_in = data;
+  YUV422P_buffer *y422p_in = data;
 
   for (i=0; i < NUM_OUTPUTS; i++) {
     j = outputs[i];
@@ -71,7 +71,7 @@ static void y422p_handler(Instance *pi, void *data)
       out_count -= 1;
       if (out_count) {
 	/* Clone and post buffer. */
-	YUVYUV422P_buffer *y422p_tmp = YUVYUV422P_clone(y422p_in);
+	YUV422P_buffer *y422p_tmp = YUV422P_clone(y422p_in);
 	PostData(y422p_tmp, pi->outputs[j].destination); 
 	y422p_tmp = NULL;
       }
@@ -85,7 +85,7 @@ static void y422p_handler(Instance *pi, void *data)
 
   if (y422p_in) {
     /* There were no outputs. */
-    YUVYUV422P_buffer_discard(y422p_in);
+    YUV422P_buffer_discard(y422p_in);
   }
 }
 

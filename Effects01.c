@@ -107,34 +107,34 @@ static void rotate_single_270(uint8_t *src, uint8_t *dst, int src_width, int src
 static void Y422p_handler(Instance *pi, void *data)
 {
   // Effects01_private *priv = (Effects01_private *)pi;
-  YUVYUV422P_buffer *y422p_in = data;
+  YUV422P_buffer *y422p_in = data;
 
   if (!pi->outputs[OUTPUT_YUV422P].destination) {
-    YUVYUV422P_buffer_discard(y422p_in);
+    YUV422P_buffer_discard(y422p_in);
     return;
   }
 
   /* Operate in-place, pass along to output... */
 #if 0
-  YUVYUV422P_buffer *y422p_out = 0L;
-  YUVYUV422P_buffer *y422p_src = 0L;
+  YUV422P_buffer *y422p_out = 0L;
+  YUV422P_buffer *y422p_src = 0L;
 
   if (priv->invert) {
     invert_plane(y422p_in->data, y422p_in->data_length);
   }
-  /* FIXME: this kinda breaks because YUVYUV422P has 2x1 aspect ratio pixels. */
+  /* FIXME: this kinda breaks because YUV422P has 2x1 aspect ratio pixels. */
   if (priv->rotate == 90) {
-    YUVYUV422P_buffer *y422p_new = YUVYUV422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
+    YUV422P_buffer *y422p_new = YUV422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
     rotate_rgb_90(y422p_in->data, y422p_new->data, y422p_in->width, y422p_in->height);
-    YUVYUV422P_buffer_discard(y422p_in);
+    YUV422P_buffer_discard(y422p_in);
     y422p_in = y422p_new;
   }
   if (priv->rotate == 270) {
-    YUVYUV422P_buffer *y422p_new = YUVYUV422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
+    YUV422P_buffer *y422p_new = YUV422P_buffer_new(y422p_in->height, y422p_in->width, &y422p_in->c);
     rotate_single_270(y422p_in->y, y422p_new->y, y422p_in->width, y422p_in->height);
     //rotate_single_270(y422p_in->cb, y422p_new->cb, y422p_in->width/2, y422p_in->height);
     rotate_single_270(y422p_in->cr, y422p_new->cr, y422p_in->width/2, y422p_in->height);
-    YUVYUV422P_buffer_discard(y422p_in);
+    YUV422P_buffer_discard(y422p_in);
     y422p_in = y422p_new;
   }
 #endif
