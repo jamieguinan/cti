@@ -32,13 +32,12 @@ static Output AAC_outputs[] = {
 typedef struct {
   Instance i;
   faacEncHandle fh;
-  unsigned long inputSamples;
+  unsigned long samplesToInput;
   unsigned long maxOutputBytes;
   uint8_t *output_buffer;
   // Audio_buffer *first_audio;	/* Keep this around for comparison with later blocks. */
-  float * samples;
-  int num_samples;
   ArrayU8 * chunk;
+  int num_samples;
 } AAC_private;
 
 static Config config_table[] = {
@@ -56,8 +55,7 @@ static void Audio_handler(Instance *pi, void *msg)
 {
   AAC_private *priv = (AAC_private *)pi;
   Audio_buffer *audio = msg;
-  //float *samples = NULL;
-  //  int first_pass = 0;
+  // int first_pass = 0;
   int rc;
 
   {
@@ -74,7 +72,7 @@ static void Audio_handler(Instance *pi, void *msg)
   if (!priv->fh) {
     priv->fh = faacEncOpen(audio->header.rate,
 			   audio->header.channels,
-			   &priv->inputSamples,
+			   &priv->samplesToInput,
 			   &priv->maxOutputBytes
 			   );  
     if (!priv->fh) {
@@ -85,29 +83,15 @@ static void Audio_handler(Instance *pi, void *msg)
       printf("\n");
       printf("=== header.rate=%d\n", audio->header.rate);
       printf("=== header.channels=%d\n", audio->header.channels);
-      printf("=== inputSamples=%ld\n", priv->inputSamples);
+      printf("=== samplesToInput=%ld\n", priv->samplesToInput);
       printf("=== maxOutputBytes=%ld\n", priv->maxOutputBytes);
       priv->output_buffer = Mem_malloc(priv->maxOutputBytes);
     }
 
     // first_pass = 1;
-
+    
     faacEncConfigurationPtr fc = faacEncGetCurrentConfiguration(priv->fh);
-    // fc->inputFormat = FAAC_INPUT_FLOAT;
-    switch(audio->header.atype) {
-    case CTI_AUDIO_16BIT_SIGNED_LE:
-      //samples = Mem_malloc(sizeof(float) * audio->header.channels * audio->data_length/audio->header.frame_size);
-      fc->inputFormat = FAAC_INPUT_16BIT;
-      break;
-    case CTI_AUDIO_8BIT_SIGNED_LE:
-    case CTI_AUDIO_24BIT_SIGNED_LE:
-      fprintf(stderr, "unsupported audio format\n");
-      return;
-    default:
-      fprintf(stderr, "invalid audio format\n");
-      return;
-    }
-
+    fc->inputFormat = FAAC_INPUT_FLOAT;
     static char * inputFormats[] = {
       [FAAC_INPUT_NULL] = "FAAC_INPUT_NULL",
       [FAAC_INPUT_16BIT] = "FAAC_INPUT_16BIT",
@@ -139,12 +123,26 @@ static void Audio_handler(Instance *pi, void *msg)
     printf("=== inputFormat: %s\n", inputFormats[fc->inputFormat]);
 
 
+    switch(audio->header.atype) {
+    case CTI_AUDIO_16BIT_SIGNED_LE: 
+      fc->inputFormat = FAAC_INPUT_16BIT;
+      break;
+    case CTI_AUDIO_8BIT_SIGNED_LE:
+    case CTI_AUDIO_24BIT_SIGNED_LE:
+      fprintf(stderr, "unsupported audio format\n");
+      return;
+    default:
+      fprintf(stderr, "invalid audio format\n");
+      return;
+    }
+    
+    
     rc = faacEncSetConfiguration(priv->fh, fc);
     printf("=== faacEncSetConfiguration returns %d\n", rc);
     if (rc != 1) {
       printf("=== ERROR!!!!!!!!\n");
     }
-		   
+    
   }
 
 #if 0
@@ -157,20 +155,18 @@ static void Audio_handler(Instance *pi, void *msg)
   }
 #endif
 
-  /* Append data to chunk. */
+  /* Append new samples. */
   ArrayU8_append(priv->chunk, ArrayU8_temp_const(audio->data, audio->data_length));
+  priv->num_samples += audio->data_length/sizeof(int16_t);
 
-  unsigned int samples_available = priv->chunk->len/(audio->header.frame_size);
-
-  if (samples_available < priv->inputSamples) {
-    printf("not enough samples to encode\n");
+  if (priv->num_samples < priv->samplesToInput) {
+    printf("not enough samples (%d) to encode(%ld)\n", priv->num_samples, priv->samplesToInput);
     goto out;
   }
-
   
-  while (samples_available >= priv->inputSamples) {
+  while (priv->num_samples >= priv->samplesToInput) {
     int encoded = faacEncEncode(priv->fh,
-				(int32_t*)(priv->chunk->data), priv->inputSamples,
+				(int32_t*)(priv->chunk->data), priv->samplesToInput,
 				priv->output_buffer, priv->maxOutputBytes);
     
     { 
@@ -183,21 +179,22 @@ static void Audio_handler(Instance *pi, void *msg)
       }
     }
     
-    printf("%s: encoded %d bytes\n", __func__,  encoded);
+    printf("<- encoded %d bytes\n",  encoded);
     if (encoded <= 0) {
       sleep(1);
       continue;
     }
-
+    
     if (pi->outputs[OUTPUT_AAC].destination) {
       AAC_buffer * aac = AAC_buffer_from(priv->output_buffer, encoded);
       PostData(aac, pi->outputs[OUTPUT_AAC].destination);
     }
-
-    ArrayU8_trim_left(priv->chunk, priv->inputSamples*audio->header.frame_size);
-    samples_available = priv->chunk->len/(audio->header.frame_size);
+    
+    priv->num_samples -= priv->samplesToInput;
+    ArrayU8_trim_left(priv->chunk, priv->samplesToInput * sizeof(int16_t));
   }
 
+  printf("leaving 1\n");
  out:
 #if 0
   if (first_pass) {
@@ -209,6 +206,7 @@ static void Audio_handler(Instance *pi, void *msg)
   Audio_buffer_discard(&audio);
 #endif
 
+  printf("leaving 2\n");
 }
 
 

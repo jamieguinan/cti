@@ -111,7 +111,7 @@ static void RawSource_move_data(Instance *pi)
       printf("*** audio channels: %d\n", priv->audio.channels);
       printf("*** audio frame_size: %d\n", priv->audio.frame_size);
       printf("*** audio type: %d\n", priv->audio.atype);
-      ArrayU8_trim_left(chunk, 44);
+      memset(chunk->data, 0, 44); /* Clear the header. */
     }
     if (priv->audio.atype != CTI_AUDIO_UNKNOWN) {
       Audio_buffer *audio = Audio_buffer_new(priv->audio.rate, priv->audio.channels, priv->audio.atype);

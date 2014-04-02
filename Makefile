@@ -14,7 +14,7 @@ endif
 
 CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
 # CFLAGS += -Werror
-# CFLAGS += -O0 -ggdb
+CFLAGS += -O0 -ggdb
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
 CFLAGS += -Wno-unused-result
