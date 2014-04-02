@@ -53,6 +53,12 @@ static void Wav_handler(Instance *pi, void *data)
   Wav_buffer_release(&wav_in);
 }
 
+static void Audio_handler(Instance *pi, void *data)
+{
+  Audio_buffer *audio_in = data;
+  Audio_buffer_discard(&audio_in);
+}
+
 static void H264_handler(Instance *pi, void *data)
 {
   H264_buffer *h264 = data;
@@ -81,7 +87,7 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-enum { INPUT_CONFIG, INPUT_GRAY, INPUT_JPEG, INPUT_YUV422P, INPUT_YUV420P, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_H264, INPUT_AAC, INPUT_RAWDATA };
+enum { INPUT_CONFIG, INPUT_GRAY, INPUT_JPEG, INPUT_YUV422P, INPUT_YUV420P, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_AUDIO, INPUT_H264, INPUT_AAC, INPUT_RAWDATA };
 static Input Null_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = Gray_handler },
@@ -91,6 +97,7 @@ static Input Null_inputs[] = {
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_O511 ] = { .type_label = "O511_buffer", .handler = O511_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer",   .handler = Wav_handler },
+  [ INPUT_AUDIO ] = { .type_label = "Audio_buffer",   .handler = Audio_handler },
   [ INPUT_H264 ] = { .type_label = "H264_buffer", .handler = H264_handler },
   [ INPUT_AAC ] = { .type_label = "AAC_buffer",   .handler = AAC_handler },
   [ INPUT_RAWDATA ] = { .type_label = "RawData_buffer", .handler = RawData_handler },

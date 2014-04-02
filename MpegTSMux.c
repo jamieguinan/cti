@@ -95,10 +95,12 @@ static Input MpegTSMux_inputs[] = {
   [ INPUT_MP3 ] = { .type_label = "MP3_buffer", .handler = MP3_handler },
 };
 
-//enum { /* OUTPUT_... */ };
+enum { OUTPUT_RAWDATA };
 static Output MpegTSMux_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
+  [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
 };
+
+int v = 0;
 
 
 typedef struct _ts_packet {
@@ -162,6 +164,9 @@ typedef struct {
     uint8_t continuity_counter;
   } PMT;
 
+  int seen_audio;
+  int debug_outpackets;
+
 } MpegTSMux_private;
 
 
@@ -219,6 +224,7 @@ static int set_pmt_pcrpid(Instance *pi, const char *value)
 static Config config_table[] = {
   { "pmt_essd", set_pmt_essd, 0L, 0L },
   { "pmt_pcrpid", set_pmt_pcrpid, 0L, 0L },
+  { "debug_outpackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, debug_outpackets) },
   // { "...",    set_..., get_..., get_..._range },
 };
 
@@ -307,7 +313,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 			 );
     stream->pts_value += stream->pts_add;
 
-    {
+    if (0) {
       /* Special-case handling for test sample. */
       if (stream->es_id == 224 && stream->pts_value == 1404504) { stream->pts_value += 1; }
       if (stream->es_id == 192 && audiopts_index < table_size(audiopts)) {
@@ -334,7 +340,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   /* Copy the data. */
   ArrayU8_append(pes, data);
 
-  printf("pes->len=%d, data->len=%d\n", pes->len, data->len);
+  if (v) printf("pes->len=%d, data->len=%d\n", pes->len, data->len);
   
   /* Now pack into TS packets... */
   unsigned int pes_offset = 0;
@@ -348,7 +354,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     unsigned int afAdjust = 1;	/* space for the afLen byte */
 
     pes_remaining = pes->len - pes_offset;
-    printf("pes->len=%d pes_remaining=%d\n", pes->len, pes_remaining);
+    if (v) printf("pes->len=%d pes_remaining=%d\n", pes->len, pes_remaining);
 
     packet->data[0] = 0x47;			/* Sync byte */
 
@@ -451,7 +457,8 @@ static void H264_handler(Instance *pi, void *msg)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
-  printf("h264->encoded_length=%d\n",  h264->encoded_length);
+  if (!priv->seen_audio) { return; }
+  if (1) printf("h264->encoded_length=%d\n",  h264->encoded_length);
   packetize(priv, 258, ArrayU8_temp_const(h264->data, h264->encoded_length) );
   H264_buffer_discard(h264);
 }
@@ -461,6 +468,8 @@ static void AAC_handler(Instance *pi, void *msg)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   AAC_buffer *aac = msg;
+  if (!priv->seen_audio) { priv->seen_audio = 1; }
+  if (1) printf("aac->data_length=%d\n",  aac->data_length);
   packetize(priv, 257, ArrayU8_temp_const(aac->data, aac->data_length) );
   AAC_buffer_discard(&aac);
 }
@@ -543,7 +552,7 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
     /* PMT data. */
     int i;
     packet->data[n] = (0x7<<5);	/* Reserved bits */
-    printf("priv->PMT.PCR_PID=%d\n", priv->PMT.PCR_PID);
+    if (v) printf("priv->PMT.PCR_PID=%d\n", priv->PMT.PCR_PID);
     packet->data[n++] |= (priv->PMT.PCR_PID >> 8) & 0x1f;
     packet->data[n++] = (priv->PMT.PCR_PID) & 0xff;
     packet->data[n] = (0xf<<4); /* reserved bits */
@@ -553,7 +562,7 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
     packet->data[n++] = (program_descriptors_length) & 0xff;
 
     for (i=0; i < ESSD_MAX; i++) {
-      printf("priv->PMT.ESSD[%d].streamType=%d\n", i, priv->PMT.ESSD[i].streamType);
+      if (v) printf("priv->PMT.ESSD[%d].streamType=%d\n", i, priv->PMT.ESSD[i].streamType);
       packet->data[n++] = priv->PMT.ESSD[i].streamType;
       packet->data[n] = (0x7<<5); /* reserved bits */
       packet->data[n++] |= (priv->PMT.ESSD[i].PID >> 8) & 0x1f;
@@ -581,6 +590,16 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
 }
 
 
+static void debug_outputpacket_write(TSPacket * pkt, String * fname)
+{
+  FILE *f = fopen(s(fname), "wb");
+  if (f) {
+    if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
+    fclose(f);
+  }
+}
+
+
 static void flush(Instance *pi)
 {
   /* Write out interleaved video and audio packets, adding PAT and PMT
@@ -591,10 +610,11 @@ static void flush(Instance *pi)
   int i;
   uint64_t pts_now = 0;
   
-  if (access("outpackets", R_OK) != 0) {
+  if (priv->debug_outpackets && access("outpackets", R_OK) != 0) {
     mkdir("outpackets", 0744);
   }
 
+  /* Sum up the pending AV packets. */
   int av_packets = 0;
   for (i=0; i < MAX_STREAMS; i++) {
     av_packets += priv->streams[i].packet_count;
@@ -610,37 +630,39 @@ static void flush(Instance *pi)
        it might be better to add some fudge in there. */
     priv->pat_pts_last = pts_now;
     TSPacket *pkt;
-    char fname[256];
-    FILE * f;
-    
+    String * fname;
+
+    /* PAT, pid 0 */
     pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
-    sprintf(fname, 
-	    "outpackets/%05d-ts%04d%s%s", 
-	    priv->pktseq++,
-	    0,
-	    pkt->af ? "-AF" : "" ,
-	    pkt->pus ? "-PUS" : ""
-	    );
-    f = fopen(fname, "wb");
-    if (f) {
-      if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
-      fclose(f);
+
+    if (priv->debug_outpackets) {
+      fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->pktseq++, 0,
+			     pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+      debug_outputpacket_write(pkt, fname);
+      String_free(&fname);
     }
+
+    if (pi->outputs[OUTPUT_RAWDATA].destination) {
+      
+    }
+
     Mem_free(pkt);
     
+
+    /* PMT, pid 256 */
     pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
-    sprintf(fname, 
-	    "outpackets/%05d-ts%04d%s%s", 
-	    priv->pktseq++,
-	    256,
-	    pkt->af ? "-AF" : "" ,
-	    pkt->pus ? "-PUS" : ""
-	    );
-    f = fopen(fname, "wb");
-    if (f) {
-      if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
-      fclose(f);
+
+    if (priv->debug_outpackets) {
+      fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->pktseq++, 256,
+			     pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+      debug_outputpacket_write(pkt, fname);
+      String_free(&fname);
     }
+
+    if (pi->outputs[OUTPUT_RAWDATA].destination) {
+      
+    }
+
     Mem_free(pkt);
   }
 
@@ -650,18 +672,22 @@ static void flush(Instance *pi)
     Stream * stream = &priv->streams[i];
     while (stream->packets) {
       TSPacket *pkt = stream->packets;
-      char fname[256]; sprintf(fname, 
-			       "outpackets/%05d-ts%04d%s%s", 
-			       priv->pktseq++,
-			       stream->pid,
-			       pkt->af ? "-AF" : "" ,
-			       pkt->pus ? "-PUS" : ""
-			       );
-      FILE * f = fopen(fname, "wb");
-      if (f) {
-	if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
-	fclose(f);
+      
+      if (priv->debug_outpackets) {
+	char fname[256]; sprintf(fname, 
+				 "outpackets/%05d-ts%04d%s%s", 
+				 priv->pktseq++,
+				 stream->pid,
+				 pkt->af ? "-AF" : "" ,
+				 pkt->pus ? "-PUS" : ""
+				 );
+	FILE * f = fopen(fname, "wb");
+	if (f) {
+	  if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
+	  fclose(f);
+	}
       }
+
       stream->packets = stream->packets->next;
       stream->packet_count -= 1;
       Mem_free(pkt);
@@ -709,6 +735,8 @@ static void MpegTSMux_instance_init(Instance *pi)
     .pts_value = 900000,
     .pts_add = 4180
   };
+
+  priv->debug_outpackets = 0;
 }
 
 

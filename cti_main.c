@@ -69,6 +69,7 @@
 #include "SQLite.h"
 #include "SubProc.h"
 #include "XMLMessageServer.h"
+//#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
 
@@ -178,6 +179,7 @@ int cti_main(int argc, char *argv[])
   ImageOutput_init();
   SubProc_init();
   XMLMessageServer_init();
+  //PCMSource_init();
 
   return app_code(argc, argv);
 }

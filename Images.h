@@ -208,6 +208,7 @@ extern void YUV420P_buffer_discard(YUV420P_buffer *y420p);
 extern RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *y420p);
 
 extern YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *y422p);
+extern YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p);
 
 extern YUV422P_buffer *RGB3_toYUV422P(RGB3_buffer *rgb);
 extern YUV422P_buffer *BGR3_toYUV422P(BGR3_buffer *bgr);

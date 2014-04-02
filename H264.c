@@ -30,12 +30,27 @@ static Output H264_outputs[] = {
   [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L  },
 };
 
+
+/* Notes on presets: https://trac.ffmpeg.org/wiki/x264EncodingGuide */
+const char * presets[] = {
+  "ultrafast", 
+  "superfast", 
+  "veryfast", 
+  "faster", 
+  "fast", 
+  "medium", 
+  "slow", 
+  "slower", 
+  "veryslow",
+};
+
 typedef struct {
   Instance i;
   int pts;
   x264_t *encoder;
   String output;			/* Side channel. */
   Sink *output_sink;
+  const char *preset;
 
   /* Similar to as used in x264.c: */
   //cli_output_t cli_output;
@@ -66,9 +81,28 @@ static int set_output(Instance *pi, const char *value)
 }
 
 
+static int set_preset(Instance *pi, const char *value)
+{
+  H264_private *priv = (H264_private *)pi;
+
+  int i;
+  for (i=0; i < cti_table_size(presets); i++) {
+    if (streq(presets[i], value)) {
+      printf("H264: valid preset %s\n", priv->preset);
+      priv->preset = value;
+      return 0;
+    }
+  }
+  
+  printf("H264: invalid preset %s\n", value);
+  return 1;
+}
+
+
 static Config config_table[] = {
   // { "...",    set_..., get_..., get_..._range },
-  { "output",    set_output, 0L, 0L }
+  { "output",    set_output, 0L, 0L },
+  { "preset",    set_preset, 0L, 0L },
 };
 
 
@@ -86,7 +120,10 @@ static void YUV420P_handler(Instance *pi, void *msg)
        during setup, and return available values from
        x264_preset_names[], x264_tune_names[], and
        x264_profile_names[] as defined in "x264.h".  */
-    rc = x264_param_default_preset(&params, "medium", "psnr");
+
+    // rc = x264_param_default_preset(&params, "medium", "psnr");
+    rc = x264_param_default_preset(&params, priv->preset, "psnr");
+
     if (rc != 0) { fprintf(stderr, "x264_param_default_preset failed");  return; }
 
     rc = x264_param_apply_profile(&params, "baseline");
@@ -132,8 +169,8 @@ static void YUV420P_handler(Instance *pi, void *msg)
 
     int frame_size = x264_encoder_encode(priv->encoder, &nal, &pi_nal, &pic_in, &pic_out );
 
-    //dpf
-    printf
+    dpf
+    //printf
       ("frame_size=%d pi_nal=%d nal=%p p_payload=%p i_payload=%d\n", frame_size, pi_nal, nal,
 	nal ? (nal->p_payload) : NULL,
 	nal ? (nal->i_payload) : 0
@@ -189,7 +226,8 @@ static void H264_tick(Instance *pi)
 
 static void H264_instance_init(Instance *pi)
 {
-
+  H264_private *priv = (H264_private *)pi;
+  priv->preset = presets[0];
 }
 
 

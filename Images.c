@@ -598,13 +598,15 @@ YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *yuv422p)
 }
 
 
-YUV422P_buffer *YUV420P_to_YUV422P(YUV422P_buffer *yuv420p)
+YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p)
 {
   YUV422P_buffer * yuv422p = YUV422P_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
   int x, y;
   int n = 0;
 
   memcpy(yuv422p->y, yuv422p->y, yuv422p->y_length);
+
+  fprintf(stderr, "%s: not fully implemented\n", __func__);
 
   for (y = 0; y < yuv422p->height; y+=2) {
     //for (x = 0; x < yuv422p->width/2; x+=1) {

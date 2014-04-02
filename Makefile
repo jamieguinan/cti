@@ -238,7 +238,7 @@ CPPFLAGS+=-DHAVE_H264
 endif
 
 # AAC
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../libfaac.a))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../../include/faac.h))
 OBJS+=$(OBJDIR)/AAC.o
 LDFLAGS+=-lfaac
 CPPFLAGS+=-DHAVE_AAC

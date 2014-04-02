@@ -1,6 +1,6 @@
 /* 
- * Read from a file or socket, and pass raw data to output. 
- * Restart if EOF on source.
+ * Read from a file or socket, and pass raw data to output.  Can also
+ * hard-set certain kinds of input. Restart if EOF on source.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -11,6 +11,7 @@
 #include "CTI.h"
 #include "SourceSink.h"
 #include "RawSource.h"
+#include "Audio.h"
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -19,9 +20,10 @@ static Input RawSource_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-enum { OUTPUT_RAWDATA, OUTPUT_CONFIG };
+enum { OUTPUT_RAWDATA, OUTPUT_AUDIO, OUTPUT_CONFIG };
 static Output RawSource_outputs[] = {
   [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
+  [ OUTPUT_AUDIO ] = { .type_label = "Audio_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
 };
 
@@ -31,6 +33,9 @@ typedef struct {
   Source *source;
   int read_timeout;
   uint64_t bytes_total;
+
+  Audio_params audio;
+
 } RawSource_private;
 
 
@@ -62,6 +67,7 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
+
 static void RawSource_move_data(Instance *pi)
 {
   RawSource_private *priv = (RawSource_private *)pi;
@@ -88,16 +94,32 @@ static void RawSource_move_data(Instance *pi)
     set_input(pi, sl(priv->input));
   }
 
-  dpf("%s: %d bytes priv->source=%p pi->outputs[OUTPUT_RAWDATA].destination=%p\n", 
-      __func__,
-      chunk->len,
-      priv->source,
-      pi->outputs[OUTPUT_RAWDATA].destination);
+  dpf("%s: %d bytes, %" PRIu64 " bytes total (%" PRIu64 "MB)\n", 
+      __func__, chunk->len, priv->bytes_total, (priv->bytes_total/(1024*1024)));
 
-  dpf("%s: %" PRIu64 " bytes total (%dMB)\n", 
-      __func__, priv->bytes_total, (priv->bytes_total/1000000) );
-
-  if (priv->source && pi->outputs[OUTPUT_RAWDATA].destination) {
+  if (chunk->len && pi->outputs[OUTPUT_AUDIO].destination && chunk->len >= 44) {
+    if (!priv->audio.rate) {
+      /* Expect first chunk of data to be in WAV format with 44-byte header. */
+      /* FIXME: Test return value, disable if invalid. */
+      Wav_parse_header_values(chunk->data, chunk->len, 
+			      &priv->audio.rate,
+			      &priv->audio.channels,
+			      &priv->audio.frame_size,
+			      &priv->audio.atype
+			      );
+      printf("*** audio rate: %d\n", priv->audio.rate);
+      printf("*** audio channels: %d\n", priv->audio.channels);
+      printf("*** audio frame_size: %d\n", priv->audio.frame_size);
+      printf("*** audio type: %d\n", priv->audio.atype);
+      ArrayU8_trim_left(chunk, 44);
+    }
+    if (priv->audio.atype != CTI_AUDIO_UNKNOWN) {
+      Audio_buffer *audio = Audio_buffer_new(priv->audio.rate, priv->audio.channels, priv->audio.atype);
+      Audio_buffer_add_samples(audio, chunk->data, chunk->len);
+      PostData(audio, pi->outputs[OUTPUT_AUDIO].destination);
+    }
+  }
+  else if (chunk->len && pi->outputs[OUTPUT_RAWDATA].destination) {
     RawData_buffer *raw = RawData_buffer_new(chunk->len);
     memcpy(raw->data, chunk->data, chunk->len);
     PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
