@@ -179,7 +179,7 @@ static void Audio_handler(Instance *pi, void *msg)
       }
     }
     
-    printf("<- encoded %d bytes\n",  encoded);
+    // printf("<- encoded %d bytes\n",  encoded);
     if (encoded <= 0) {
       sleep(1);
       continue;
@@ -194,7 +194,6 @@ static void Audio_handler(Instance *pi, void *msg)
     ArrayU8_trim_left(priv->chunk, priv->samplesToInput * sizeof(int16_t));
   }
 
-  printf("leaving 1\n");
  out:
 #if 0
   if (first_pass) {
@@ -205,8 +204,6 @@ static void Audio_handler(Instance *pi, void *msg)
 #else
   Audio_buffer_discard(&audio);
 #endif
-
-  printf("leaving 2\n");
 }
 
 

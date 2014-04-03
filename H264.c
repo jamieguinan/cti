@@ -1,4 +1,10 @@
-/* H264 encoder using libx264. */
+/*
+ * H264 encoder using libx264.
+ * Note that libx264 is GPL, but a commercial license is available,
+ *
+ *   http://www.videolan.org/developers/x264.html
+ *
+ */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -133,8 +139,8 @@ static void YUV420P_handler(Instance *pi, void *msg)
     params.i_height = y420->height;
 
     /* FIXME: Set this in cmd file, or via Config messages. */
-    params.i_fps_num = 25;
-    params.i_fps_den = 1;
+    params.i_fps_num = y420->c.fps_numerator * 2;
+    params.i_fps_den = y420->c.fps_denominator;
 
     priv->encoder = x264_encoder_open(&params);
     if (!priv->encoder) { fprintf(stderr, "x264_encoder_open failed");  return; }
@@ -170,7 +176,7 @@ static void YUV420P_handler(Instance *pi, void *msg)
     int frame_size = x264_encoder_encode(priv->encoder, &nal, &pi_nal, &pic_in, &pic_out );
 
     dpf
-    //printf
+      //printf
       ("frame_size=%d pi_nal=%d nal=%p p_payload=%p i_payload=%d\n", frame_size, pi_nal, nal,
 	nal ? (nal->p_payload) : NULL,
 	nal ? (nal->i_payload) : 0

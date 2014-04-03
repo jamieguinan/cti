@@ -1,6 +1,7 @@
 /*
  * Mpeg TS/PES muxer.  
  * This might also handle generating sequential files and indexes.
+ *  See iso13818-1.pdf around p.32 for bit packing.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -8,6 +9,7 @@
 #include <unistd.h>		/* access */
 #include <sys/stat.h>		/* mkdir */
 #include <sys/types.h>		/* mkdir */
+#include <inttypes.h>		/* PRIu64 */
 
 #include "CTI.h"
 #include "MpegTSMux.h"
@@ -15,6 +17,7 @@
 #include "Images.h"
 #include "Audio.h"
 #include "Array.h"
+#include "SourceSink.h"
 
 /* From libavformat/mpegtsenc.c */
 static const uint32_t crc_table[256] = {
@@ -118,7 +121,7 @@ typedef struct {
   int packet_count;
   uint64_t pts_value;
   int pts_add;
-  uint64_t running_pcr;
+  uint64_t pcr_value;
   int pcr_add;
   uint16_t pid;
   uint16_t continuity_counter;
@@ -126,6 +129,7 @@ typedef struct {
   uint pts:1;
   uint dts:1;
   uint pcr:1;
+  const char *typecode;
 } Stream;
 
 #define MAXIMUM_PAT_INTERVAL_90KHZ (90000/10)
@@ -165,7 +169,11 @@ typedef struct {
   } PMT;
 
   int seen_audio;
+  int seen_video;
   int debug_outpackets;
+
+  String output;			/* Side channel. */
+  Sink *output_sink;
 
 } MpegTSMux_private;
 
@@ -221,10 +229,33 @@ static int set_pmt_pcrpid(Instance *pi, const char *value)
 }
 
 
+static int set_output(Instance *pi, const char *value)
+{
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+  if (priv->output_sink) {
+    Sink_free(&priv->output_sink);
+  }
+
+  if (value[0] == '$') {
+    value = getenv(value+1);
+    if (!value) {
+      fprintf(stderr, "env var %s is not set\n", value+1);
+      return 1;
+    }
+  }
+  
+  String_set(&priv->output, value);
+  priv->output_sink = Sink_new(sl(priv->output));
+
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "pmt_essd", set_pmt_essd, 0L, 0L },
   { "pmt_pcrpid", set_pmt_pcrpid, 0L, 0L },
   { "debug_outpackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, debug_outpackets) },
+  { "output", set_output }
   // { "...",    set_..., get_..., get_..._range },
 };
 
@@ -255,17 +286,17 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   }
 
   /* Map timestamp to 33-bit 90KHz units. */
-  tv90k = stream->running_pcr;
+  tv90k = stream->pts_value;
 
   /* Assign to PTS, and same to DTS. */
-  /* FIXME: This might not actually be the right thing to do. */
   uint8_t peslen = 0; /* PES remaining header data length */
   uint8_t flags = 0;
   if (stream->pts) {
     pts.set = 1;
     flags |= (1<<7);
     peslen += 5;
-    pts.value = stream->pts_value;
+    //pts.value = stream->pts_value;
+    pts.value = tv90k;
     if (stream->dts) {
       dts.set = 1;
       flags |= (1<<6);
@@ -304,6 +335,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 
   if (pts.set) {
     /* Pack PTS. */
+    printf("stream %s pts.value=%ld\n", stream->typecode, pts.value);
     ArrayU8_append_bytes(pes, 
 			 (pts.set << 5) | (dts.set << 4) | (((pts.value>>30)&0x7) << 1 ) | 1
 			 ,((pts.value >> 22)&0xff) /* bits 29:22 */
@@ -326,9 +358,9 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   }
 
   if (dts.set) {
-    /* Pack DTS, same format as PTS. */
+    printf("stream %s dts.value=%ld\n", stream->typecode, dts.value);
     ArrayU8_append_bytes(pes,
-			 (dts.set << 4) | (((dts.value>>30)&0x7) << 1 ) | 1
+			 (1 << 4) | (((dts.value>>30)&0x7) << 1 ) | 1
 			 ,((dts.value >> 22)&0xff) /* bits 29:22 */
 			 ,((dts.value >> 14)&0xfe) | 1 /* bits 21:15, 1 */
 			 ,((dts.value >> 7)&0xff)	   /* bits 14:7 */
@@ -392,11 +424,11 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 	  | (0<<0);	/* 9th bit of extension */
 	packet->data[11] = (0x00);	/* bits 8:0 of extension */
 	
-	stream->running_pcr += stream->pcr_add;
+	stream->pcr_value += stream->pcr_add;
 
 	{
 	  /* Special-case handling for test sample. */
-	  if (stream->running_pcr == 1402104) { stream->running_pcr += 1; }
+	  //if (stream->pcr_value == 1402104) { stream->pcr_value += 1; }
 	}
       }
 
@@ -457,8 +489,37 @@ static void H264_handler(Instance *pi, void *msg)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
-  if (!priv->seen_audio) { return; }
-  if (1) printf("h264->encoded_length=%d\n",  h264->encoded_length);
+  if (!priv->seen_video) {
+    priv->streams[0].pts_value = 0;
+    priv->streams[0].pts_add = (int)(90000 * h264->c.nominal_period);
+    priv->streams[0].pcr_value = priv->streams[0].pts_value;
+    priv->streams[0].pcr_add = priv->streams[0].pts_add;
+    priv->seen_video = 1;
+  }
+
+  /* Synchronize audio PTS */
+  priv->streams[1].pts_value = priv->streams[0].pts_value;
+  priv->streams[1].pts_add = 0;
+
+#if 0
+  priv->streams[0].pts_value = 
+    (((h264->c.tv.tv_sec % 95000)  // pts wraps at 95000 seconds, so why not
+      * 1000000 // Convert to microseconds.
+      + h264->c.tv.tv_usec) // Add microseconds
+     * 9 / 100) // Convert to 90KHz units.
+    ;
+  priv->streams[0].pts_add = 0;
+  priv->streams[0].pcr_value = priv->streams[0].pts_value;
+  priv->streams[0].pcr_add = 0;
+
+  priv->streams[1].pts_value = priv->streams[0].pts_value;
+  priv->streams[1].pts_add = 0;
+#endif
+
+  if (0) printf("h264->encoded_length=%d timestamp=%ld.%06ld pts_value=%" PRIu64 "\n",
+		h264->encoded_length, h264->c.tv.tv_sec, h264->c.tv.tv_usec,
+		priv->streams[0].pts_value);
+
   packetize(priv, 258, ArrayU8_temp_const(h264->data, h264->encoded_length) );
   H264_buffer_discard(h264);
 }
@@ -469,7 +530,7 @@ static void AAC_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   AAC_buffer *aac = msg;
   if (!priv->seen_audio) { priv->seen_audio = 1; }
-  if (1) printf("aac->data_length=%d\n",  aac->data_length);
+  //printf("aac->data_length=%d\n",  aac->data_length);
   packetize(priv, 257, ArrayU8_temp_const(aac->data, aac->data_length) );
   AAC_buffer_discard(&aac);
 }
@@ -616,6 +677,17 @@ static void flush(Instance *pi)
 
   /* Sum up the pending AV packets. */
   int av_packets = 0;
+
+  if (priv->streams[0].packet_count == 0) {
+    printf("waiting for V\n");
+    return;
+  }
+
+  if (priv->streams[1].packet_count == 0) {
+    printf("waiting for A\n");
+    return;
+  }
+
   for (i=0; i < MAX_STREAMS; i++) {
     av_packets += priv->streams[i].packet_count;
     pts_now = cti_max(pts_now, priv->streams[i].pts_value);
@@ -624,7 +696,7 @@ static void flush(Instance *pi)
   if (av_packets == 0) {
     return;
   }
-  
+
   if ( (pts_now - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450)) {
     /* FIXME: The subtraction test means its actually gone OVER, so
        it might be better to add some fudge in there. */
@@ -643,7 +715,13 @@ static void flush(Instance *pi)
     }
 
     if (pi->outputs[OUTPUT_RAWDATA].destination) {
-      
+      /* FIXME: Could just assign the packet an avoid another allocation. */
+      RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+      PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+    }
+
+    if (sl(priv->output)) {
+      Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
     }
 
     Mem_free(pkt);
@@ -660,7 +738,12 @@ static void flush(Instance *pi)
     }
 
     if (pi->outputs[OUTPUT_RAWDATA].destination) {
-      
+      RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+      PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+    }
+
+    if (sl(priv->output)) {
+      Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
     }
 
     Mem_free(pkt);
@@ -668,10 +751,24 @@ static void flush(Instance *pi)
 
   /* FIXME: Could do a better job of interleaving the video and audio frames, rather
      than bunching them together. */
-  for (i=0; i < MAX_STREAMS; i++) {
-    Stream * stream = &priv->streams[i];
-    while (stream->packets) {
+  int packet_spread = 0;
+  while (priv->streams[0].packets || priv->streams[1].packets) {
+    if (packet_spread > 100) {
+      printf("packet spread { %d %d }\n", 
+	     priv->streams[0].packet_count, priv->streams[1].packet_count);
+      break;
+    }
+    for (i=0; i < MAX_STREAMS; i++) {
+      Stream * stream = &priv->streams[i];
       TSPacket *pkt = stream->packets;
+
+      if (!pkt) {
+	/* One stream will likely run out before the other. */
+	packet_spread += 1;
+	continue;
+      }
+      
+      printf("%s packet\n", stream->typecode);
       
       if (priv->debug_outpackets) {
 	char fname[256]; sprintf(fname, 
@@ -688,8 +785,18 @@ static void flush(Instance *pi)
 	}
       }
 
+      if (pi->outputs[OUTPUT_RAWDATA].destination) {
+	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+      }
+
+      if (sl(priv->output)) {
+	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+      }
+
       stream->packets = stream->packets->next;
       stream->packet_count -= 1;
+
       Mem_free(pkt);
     }
   }
@@ -722,8 +829,9 @@ static void MpegTSMux_instance_init(Instance *pi)
     .es_id = 224,
     .pts_value = 900000,
     .pts_add = 6006,
-    .running_pcr = 897600,
-    .pcr_add = 6006
+    .pcr_value = 897600,
+    .pcr_add = 6006,
+    .typecode = "V",
   };
 
   priv->streams[1] = (Stream) {
@@ -733,7 +841,8 @@ static void MpegTSMux_instance_init(Instance *pi)
     .pcr = 0,
     .es_id = 192,
     .pts_value = 900000,
-    .pts_add = 4180
+    .pts_add = 4180,
+    .typecode = "A",
   };
 
   priv->debug_outpackets = 0;
@@ -743,8 +852,8 @@ static void MpegTSMux_instance_init(Instance *pi)
 static Template MpegTSMux_template = {
   .label = "MpegTSMux",
   .priv_size = sizeof(MpegTSMux_private),
-  .inputs = MpegTSMux_inputs,
-  .num_inputs = table_size(MpegTSMux_inputs),
+  .inputs = MpegTSMux_inputs, 
+ .num_inputs = table_size(MpegTSMux_inputs),
   .outputs = MpegTSMux_outputs,
   .num_outputs = table_size(MpegTSMux_outputs),
   .tick = MpegTSMux_tick,

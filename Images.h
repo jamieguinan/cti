@@ -35,12 +35,15 @@ enum {
   IMAGE_INTERLACE_BOTTOM_FIRST,
   IMAGE_FIELDSPLIT_TOP_FIRST,
   IMAGE_FIELDSPLIT_BOTTOM_FIRST,
+  IMAGE_INTERLACE_MIXEDMODE,
 };
 
 /* Common metadata fields. */
 typedef struct {
   struct timeval tv;
-  float nominal_period;
+  uint32_t fps_numerator;
+  uint32_t fps_denominator;
+  double nominal_period;
   int interlace_mode;
   int eof;			/* EOF marker. */
   LockedRef ref;

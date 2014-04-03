@@ -51,10 +51,7 @@ typedef struct {
     int height;
   } current;
 
-  struct {
-    double last_timestamp;
-    double nomimal_period;
-  } video;
+  Image_common video_common;
 
   float rate_multiplier;
 
@@ -135,7 +132,6 @@ static int do_seek(Instance *pi, const char *value)
   }
   priv->chunk = ArrayU8_new();
 
-  priv->current.timestamp = 0.0;
   priv->current.width = 0;
   priv->current.height = 0;
   priv->state = PARSING_HEADER;
@@ -264,10 +260,24 @@ static void Y4MInput_tick(Instance *pi)
 	printf("chroma subsampling %s\n", chroma_subsamping);
       }
       else if (sscanf(t->bytes, "I%c", &interlacing) == 1) {
-	printf("interlacing %c\n", interlacing);
+	printf("interlacing I%c\n", interlacing);
+	switch (interlacing) {
+	case 't': priv->video_common.interlace_mode = IMAGE_INTERLACE_TOP_FIRST; break;
+	case 'b': priv->video_common.interlace_mode = IMAGE_INTERLACE_BOTTOM_FIRST; break;
+	case 'm': priv->video_common.interlace_mode = IMAGE_INTERLACE_MIXEDMODE; break;
+	case 'p': 
+	default:
+	  priv->video_common.interlace_mode = IMAGE_INTERLACE_NONE; break;
+	}
       }
       else if (sscanf(t->bytes, "F%d:%d", &frame_numerator, &frame_denominator) == 2) {
-	printf("frame %d:%d\n", frame_numerator, frame_denominator);
+	priv->video_common.nominal_period = (1.0*frame_denominator/frame_numerator);
+	priv->video_common.fps_numerator = frame_numerator;
+	priv->video_common.fps_denominator = frame_denominator;
+	printf("frame rate %d:%d (%.5f period)\n", 
+	       priv->video_common.fps_numerator,
+	       priv->video_common.fps_denominator,
+	       priv->video_common.nominal_period);
       }
       else if (sscanf(t->bytes, "A%d:%d", &aspect_numerator, &aspect_denominator) == 2) {
 	printf("aspect %d:%d\n", aspect_numerator, aspect_denominator);
@@ -321,8 +331,16 @@ static void Y4MInput_tick(Instance *pi)
 
   if (pi->outputs[OUTPUT_YUV420P].destination) {
     /* FIXME: Could preserve the chunk instead of making a copy here. */
+
+    /* Getting time here is REALLY sloppy, downstream should capture
+       the first timestamp and use the nominal period to increment. */
+    gettimeofday(&priv->video_common.tv, NULL);
+
     YUV420P_buffer * yuv = YUV420P_buffer_from(priv->chunk->data+eol+1, 
-					   priv->current.width, priv->current.height, NULL);
+					       priv->current.width, priv->current.height, 
+					       &priv->video_common);
+
+
     PostData(yuv, pi->outputs[OUTPUT_YUV420P].destination);
     //if (priv->use_feedback & (1<<2)) {
     //priv->pending_feedback += 1;

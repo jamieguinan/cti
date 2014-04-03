@@ -1,4 +1,4 @@
-system rm -f outpackets/*-ts*
+system rm -r outpackets
 system rm -vf yuv.fifo
 system mkfifo yuv.fifo
 system rm -vf pcm.fifo
@@ -11,13 +11,22 @@ new H264 venc
 new RawSource pcmin
 new AAC aenc
 new Null null
+new SocketServer ss
 
-new MpegTSMux tsenc
-config tsenc debug_outpackets 1
-config tsenc pmt_pcrpid 258
-config tsenc pmt_essd 0:15:257
-config tsenc pmt_essd 1:27:258
+config ss v4port 6678
+config ss enable 1
 
+config venc output test.264
+
+new MpegTSMux tsm
+#config tsm debug_outpackets 1
+config tsm pmt_pcrpid 258
+config tsm pmt_essd 0:15:257
+config tsm pmt_essd 1:27:258
+
+#connect tsm RawData_buffer ss
+
+config tsm output test.ts
 
 config pcmin input pcm.fifo
 #connect pcmin Audio_buffer null
@@ -26,8 +35,8 @@ connect pcmin Audio_buffer aenc
 config y4min input yuv.fifo
 connect y4min YUV420P_buffer venc
 
-connect venc H264_buffer tsenc
-connect aenc AAC_buffer tsenc
+connect venc H264_buffer tsm
+connect aenc AAC_buffer tsm
 
 config y4min enable 1
 
