@@ -35,7 +35,7 @@ static Input ALSACapture_inputs[] = {
 };
 static Output ALSACapture_outputs[] = {
   [ OUTPUT_WAV ] = { .type_label = "Wav_buffer", .destination = 0L },
-  // [ OUTPUT_AUDIO ] = { .type_label = "Audio_buffer", .destination = 0L },
+  [ OUTPUT_AUDIO ] = { .type_label = "Audio_buffer", .destination = 0L },
 };
 
 
@@ -55,12 +55,13 @@ static int channels[] = {
 static struct {
   const char *label;
   snd_pcm_format_t value;
+  Audio_type atype;
   int bytes;
 } formats[] = {
-  { .label = "signed 8-bit", .value = SND_PCM_FORMAT_S8, .bytes = 1 },
-  { .label = "signed 16-bit little endian", .value = SND_PCM_FORMAT_S16_LE, .bytes = 2 },
-  { .label = "signed 24-bit little endian", .value = SND_PCM_FORMAT_S24_LE, .bytes = 3 },
-  { .label = "signed 32-bit little endian", .value = SND_PCM_FORMAT_S32_LE, .bytes = 4 },
+  { .label = "signed 8-bit", .value = SND_PCM_FORMAT_S8, .atype = CTI_AUDIO_8BIT_SIGNED_LE, .bytes = 1 },
+  { .label = "signed 16-bit little endian", .value = SND_PCM_FORMAT_S16_LE, .atype = CTI_AUDIO_16BIT_SIGNED_LE, .bytes = 2 },
+  { .label = "signed 24-bit little endian", .value = SND_PCM_FORMAT_S24_LE, .atype = CTI_AUDIO_24BIT_SIGNED_LE, .bytes = 3 },
+  { .label = "signed 32-bit little endian", .value = SND_PCM_FORMAT_S32_LE, .atype = CTI_AUDIO_32BIT_SIGNED_LE, .bytes = 4 },
 };
 
 typedef struct {
@@ -74,12 +75,15 @@ typedef struct {
   int rate;
   int channels;   
   snd_pcm_format_t format;	/* can translate to string using formats[] */
+  Audio_type atype;
   int format_bytes;
 
   /* frames_per_io determines the frequency of snd_pcm_readi calls. */
   snd_pcm_uframes_t frames_per_io;
 
   int enable;
+
+  float total_dropped;
 
   struct timespec t0;
   int analyze;
@@ -334,6 +338,7 @@ static int set_format(Instance *pi, const char *value)
       else {
 	fprintf(stderr, "format set to %s\n", value);
 	priv->format = formats[i].value;
+	priv->atype = formats[i].atype;
 	priv->format_bytes = formats[i].bytes;
       }
       break;
@@ -557,9 +562,9 @@ static void ALSAPlayback_tick(Instance *pi)
 	Wav_buffer *wav_in = hm->data;
 	double s = (1.0*wav_in->data_length)/
 	  (priv->rate * priv->channels * priv->format_bytes);
-	printf("dropping %.4fs of audio (%d %d %d)\n", s,
-	       priv->rate, priv->channels, priv->format_bytes
-	       );
+	priv->total_dropped += s;
+	printf("dropping %.4fs of audio (%d %d %d) total %.4f\n",
+	       s, priv->rate, priv->channels, priv->format_bytes, priv->total_dropped);
 	Wav_buffer_release(&wav_in);
       }
       else {
@@ -715,10 +720,21 @@ static void ALSACapture_tick(Instance *pi)
 
   if (n == frames) {
     // fprintf(stderr, "read %d frames\n", (int) n);
+    int buffer_bytes = n * priv->format_bytes * priv->channels;
+    if (pi->outputs[OUTPUT_AUDIO].destination) {
+      Audio_buffer * audio = Audio_buffer_new(priv->rate,
+					      priv->channels, priv->atype);
+      Audio_buffer_add_samples(audio, buffer, buffer_bytes);
+      printf("posting audio buffer %d bytes\n", buffer_bytes);
+      PostData(audio, pi->outputs[OUTPUT_AUDIO].destination);
+      /* TESTING: disable after posting once */
+      //pi->outputs[OUTPUT_AUDIO].destination = NULL;
+    }
+
     if (pi->outputs[OUTPUT_WAV].destination) {
       dpf("%s allocated wav @ %p\n", __func__, wav);
       wav->data = buffer;  buffer = 0L;	/* Assign, do not free below. */
-      wav->data_length = n * priv->format_bytes * priv->channels;
+      wav->data_length = buffer_bytes;
       Wav_buffer_finalize(wav);
 
       if (priv->analyze) {

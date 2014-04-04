@@ -336,7 +336,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 
   if (pts.set) {
     /* Pack PTS. */
-    printf("stream %s pts.value=%ld\n", stream->typecode, pts.value);
+    printf("stream %s pts.value=%" PRIu64 "\n", stream->typecode, pts.value);
     ArrayU8_append_bytes(pes, 
 			 (pts.set << 5) | (dts.set << 4) | (((pts.value>>30)&0x7) << 1 ) | 1
 			 ,((pts.value >> 22)&0xff) /* bits 29:22 */
@@ -359,7 +359,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   }
 
   if (dts.set) {
-    printf("stream %s dts.value=%ld\n", stream->typecode, dts.value);
+    printf("stream %s dts.value=%" PRIu64 "\n", stream->typecode, dts.value);
     ArrayU8_append_bytes(pes,
 			 (1 << 4) | (((dts.value>>30)&0x7) << 1 ) | 1
 			 ,((dts.value >> 22)&0xff) /* bits 29:22 */
@@ -521,7 +521,7 @@ static void AAC_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   AAC_buffer *aac = msg;
   if (!priv->seen_audio) { priv->seen_audio = 1; }
-  //printf("aac->data_length=%d\n",  aac->data_length);
+  //printf("aac->data_length=%d aac->timestamp=%.6f\n",  aac->data_length, aac->timestamp);
   priv->streams[1].pts_value = (uint64_t) 
     (fmod(aac->timestamp, 95000)  // pts wraps at 95000 seconds, so why not
      * 1000000 // Convert to microseconds.
@@ -765,7 +765,7 @@ static void flush(Instance *pi)
 	continue;
       }
       
-      printf("%s packet\n", stream->typecode);
+      //printf("%s packet\n", stream->typecode);
       
       if (priv->debug_outpackets) {
 	char fname[256]; sprintf(fname, 
@@ -807,8 +807,10 @@ static void MpegTSMux_tick(Instance *pi)
   hm = GetData(pi, 1);
   if (hm) {
     hm->handler(pi, hm->data);
+    if (hm->handler != Config_handler) {
+      flush(pi);    
+    }
     ReleaseMessage(&hm,pi);
-    flush(pi);    
   }
 
   pi->counter++;

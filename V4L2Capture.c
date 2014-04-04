@@ -20,6 +20,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include <math.h>
+#include <float.h>
+
 #include <unistd.h>		/* close() and other things. */
 #include <dirent.h>		/* opendir */
 
@@ -89,6 +92,7 @@ typedef struct  {
   // int exposure_value;
   int focus;
   int fps;
+  float nominal_period;	/* calculated from fps */
   int led1;
 
   /* Capture buffers.  For many drivers, it is possible to queue more
@@ -623,8 +627,6 @@ static int set_mute(Instance *pi, const char *value)
 }
 
 /* begin lucview/v4l2uvc.c sample code */
-#include <math.h>
-#include <float.h>
 static int float_to_fraction_recursive(double f, double p, int *num, int *den)
 {
 	int whole = (int)f;
@@ -659,6 +661,9 @@ static int set_fps(Instance *pi, const char *value)
   int n = 0, d = 0;
   int re_enable = 0;
   float fps = atof(value);
+
+  priv->nominal_period = 1.0/fps;
+  priv->fps = round(fps);
 
   float_to_fraction(fps, &n, &d);
   setfps.parm.capture.timeperframe.numerator = d;
@@ -1318,6 +1323,7 @@ static void V4L2Capture_tick(Instance *pi)
       Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
       getdoubletime(&y422p->c.timestamp);
       calc_fps(y422p->c.timestamp);
+      y422p->c.nominal_period = priv->nominal_period;
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y422p->cb, 
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 
@@ -1342,6 +1348,7 @@ static void V4L2Capture_tick(Instance *pi)
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
       getdoubletime(&j->c.timestamp);
       calc_fps(j->c.timestamp);
+      j->c.nominal_period = priv->nominal_period;
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
       j->encoded_length = priv->vbuffer.bytesused;
       if (j->encoded_length < 1000) {

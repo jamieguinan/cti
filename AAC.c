@@ -17,11 +17,13 @@
 
 static void Config_handler(Instance *pi, void *msg);
 static void Audio_handler(Instance *pi, void *msg);
+static void Wav_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_AUDIO };
+enum { INPUT_CONFIG, INPUT_AUDIO, INPUT_WAV };
 static Input AAC_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_AUDIO ] = { .type_label = "Audio_buffer", .handler = Audio_handler },
+  [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
 };
 
 enum { OUTPUT_AAC  };
@@ -57,8 +59,8 @@ static void Audio_handler(Instance *pi, void *msg)
   Audio_buffer *audio = msg;
   // int first_pass = 0;
   int rc;
-
-  {
+  
+  if (1) {
     static FILE *f = NULL;
     if (!f) {
       f = fopen("test.raw", "wb");
@@ -161,7 +163,7 @@ static void Audio_handler(Instance *pi, void *msg)
   priv->num_samples += audio->data_length/sizeof(int16_t);
 
   if (priv->num_samples < priv->samplesToInput) {
-    printf("not enough samples (%d) to encode(%ld)\n", priv->num_samples, priv->samplesToInput);
+    dpf("not enough samples (%d) to encode(%ld)\n", priv->num_samples, priv->samplesToInput);
     goto out;
   }
   
@@ -170,7 +172,7 @@ static void Audio_handler(Instance *pi, void *msg)
 				(int32_t*)(priv->chunk->data), priv->samplesToInput,
 				priv->output_buffer, priv->maxOutputBytes);
     
-    { 
+    if (1) { 
       static FILE *f = NULL;
       if (!f) {
 	f = fopen("test.aac", "wb");
@@ -182,7 +184,7 @@ static void Audio_handler(Instance *pi, void *msg)
     
     // printf("<- encoded %d bytes\n",  encoded);
     if (encoded <= 0) {
-      sleep(1);
+      nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
       continue;
     }
     
@@ -206,6 +208,19 @@ static void Audio_handler(Instance *pi, void *msg)
 #else
   Audio_buffer_discard(&audio);
 #endif
+}
+
+
+static void Wav_handler(Instance *pi, void *msg)
+{
+  Wav_buffer *wav = msg;
+
+  /* Pass along to audio handler. */
+  Audio_buffer *audio = Audio_buffer_new(wav->params.rate, wav->params.channels, wav->params.atype);
+  Audio_buffer_add_samples(audio, wav->data, wav->data_length);
+  audio->timestamp = wav->timestamp;
+  Audio_handler(pi, audio);
+  Wav_buffer_release(&wav);
 }
 
 

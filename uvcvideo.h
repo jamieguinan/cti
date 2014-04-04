@@ -2,6 +2,7 @@
 #define _USB_VIDEO_H_
 
 #include <linux/kernel.h>
+#include <sys/time.h>		/* For "struct timeval" in videodev2.h */
 #include <linux/videodev2.h>
 
 #include "uvc_compat.h"

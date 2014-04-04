@@ -9,6 +9,7 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 #include <inttypes.h>		/* PRIu32 */
+#include <math.h>		/* round */
 
 #ifndef __tune_pentium4__
 
@@ -40,7 +41,7 @@ static Output H264_outputs[] = {
 
 /* Notes on presets: https://trac.ffmpeg.org/wiki/x264EncodingGuide */
 const char * presets[] = {
-  "ultrafast", 
+  [0] = "ultrafast", 
   "superfast", 
   "veryfast", 
   "faster", 
@@ -141,42 +142,48 @@ static void YUV420P_handler(Instance *pi, void *msg)
     /* Set up the encoder and parameters. */
     x264_param_t params;
 
+
     x264_param_default(&params);
+
 
     /* FIXME: Could make preset and profile settings config options
        during setup, and return available values from
        x264_preset_names[], x264_tune_names[], and
        x264_profile_names[] as defined in "x264.h".  */
 
-    // rc = x264_param_default_preset(&params, "medium", "psnr");
     rc = x264_param_default_preset(&params, priv->preset, "psnr");
 
     if (rc != 0) { fprintf(stderr, "x264_param_default_preset failed");  return; }
 
-    rc = x264_param_apply_profile(&params, "baseline");
-    //rc = x264_param_apply_profile(&params, "main");
+    //rc = x264_param_apply_profile(&params, "baseline");
+    rc = x264_param_apply_profile(&params, "main");
     if (rc != 0) { fprintf(stderr, "x264_param_apply_profile failed");  return; }
 
     params.i_width = y420->width;
     params.i_height = y420->height;
 
-    /* FIXME: Set this in cmd file, or via Config messages. */
-    params.i_fps_num = y420->c.fps_numerator;
-    params.i_fps_den = y420->c.fps_denominator;
-
-    /* Testing. Set these to inverse of fps. Has no apparent effect. */
-    //params.i_timebase_num = params.i_fps_den;
-    //params.i_timebase_den = params.i_fps_num;
-
-    /* Testing. No effect.*/
-    // params.b_tff = 0;
+    if (y420->c.fps_denominator) {
+      params.i_fps_num = y420->c.fps_numerator;
+      params.i_fps_den = y420->c.fps_denominator;
+    }
+    else if (y420->c.nominal_period > 0.0001) {
+      params.i_fps_num = 10000;
+      params.i_fps_den = (uint32_t)(round(10000*y420->c.nominal_period));
+    }
+    else {
+      /* Default to 30fps */
+      params.i_fps_num = 30;
+      params.i_fps_den = 10;
+    }
 
     /* Testing.  Aha!  This results in 29.97fps instead of 59.94fps playback in mplayer! */
     params.b_vfr_input = 0;
 
+    show_x264_params(&params);
+    printf("%s:%d\n", __func__, __LINE__);
     priv->encoder = x264_encoder_open(&params);
     if (!priv->encoder) { fprintf(stderr, "x264_encoder_open failed");  return; }
-
+    printf("%s:%d\n", __func__, __LINE__);
     printf("params fps=%d/%d\n", params.i_fps_num, params.i_fps_den);
 
     show_x264_params(&params);
@@ -238,6 +245,8 @@ static void YUV420P_handler(Instance *pi, void *msg)
 static void YUV422P_handler(Instance *pi, void *msg)
 {
   // int rc;
+  /* FIXME:  Try setting "isp" (input color space) in the encoder instead
+     of doing the conversion here. */
   YUV422P_buffer *y422 = msg;
   YUV420P_buffer *y420 = YUV422P_to_YUV420P(y422);
   YUV420P_handler(pi, y420);

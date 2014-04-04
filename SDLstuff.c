@@ -65,15 +65,17 @@ static int SDLtoCTI_Keymap[SDLK_LAST] = {
 
 
 static void Config_handler(Instance *pi, void *data);
+static void YUV420P_handler(Instance *pi, void *data);
 static void YUV422P_handler(Instance *pi, void *data);
 static void RGB3_handler(Instance *pi, void *data);
 static void BGR3_handler(Instance *pi, void *data);
 static void GRAY_handler(Instance *pi, void *data);
 static void Keycode_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_RGB3, INPUT_BGR3, INPUT_GRAY, INPUT_KEYCODE };
+enum { INPUT_CONFIG, INPUT_YUV420P, INPUT_YUV422P, INPUT_RGB3, INPUT_BGR3, INPUT_GRAY, INPUT_KEYCODE };
 static Input SDLstuff_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .handler = YUV420P_handler },
   [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = YUV422P_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = BGR3_handler },
@@ -457,7 +459,8 @@ static void render_frame_gl(SDLstuff_private *priv, RGB3_buffer *rgb3_in)
   SDL_GL_SwapBuffers();
 }
 
-static void render_frame_overlay(SDLstuff_private *priv, YUV422P_buffer *y422p_in)
+
+static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p_in)
 {
   if (!priv->overlay) {
     int i;
@@ -465,7 +468,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV422P_buffer *y422p_i
     /* FIXME: IYUV and other formats are also available!  I might need to 
        set up CJpeg on the encoding end to create something easy to display
        on butterfly's XVideo channel.  */
-    priv->overlay = SDL_CreateYUVOverlay(y422p_in->width, y422p_in->height, 
+    priv->overlay = SDL_CreateYUVOverlay(yuv420p_in->width, yuv420p_in->height, 
 					 SDL_YV12_OVERLAY, 
 					 // SDL_IYUV_OVERLAY, 
 					 priv->surface);
@@ -491,7 +494,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV422P_buffer *y422p_i
     }
 
     fprintf(stderr, "  priv size: %d,%d\n", priv->width, priv->height);
-    fprintf(stderr, "  y422p_in: %d,%d,%d\n", y422p_in->y_length, y422p_in->cb_length, y422p_in->cr_length);
+    fprintf(stderr, "  yuv420p_in: %d,%d,%d\n", yuv420p_in->y_length, yuv420p_in->cb_length, yuv420p_in->cr_length);
     
   }
 
@@ -499,7 +502,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV422P_buffer *y422p_i
   int dy;	   /* Line increment. */
   int n;      /* Number of passes, to allow for rendering 2 fields. */
 
-  switch (y422p_in->c.interlace_mode) {
+  switch (yuv420p_in->c.interlace_mode) {
   case IMAGE_INTERLACE_NONE:
   default:
     iy = 0;
@@ -528,14 +531,14 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV422P_buffer *y422p_i
     /* Copy Y */
     int img_pitch = priv->overlay->w;
     if (0 && priv->overlay->pitches[0] == img_pitch) {
-      memcpy(priv->overlay->pixels[0], y422p_in->y, y422p_in->width*y422p_in->height);
+      memcpy(priv->overlay->pixels[0], yuv420p_in->y, yuv420p_in->width*yuv420p_in->height);
     }
     else {
       /* Pitch may be different if width is not evenly divisible by 4.
 	 So its a bunch of smaller memcpys instead of a single bigger
 	 one. */
       int y;
-      unsigned char *src = y422p_in->y + (iy * img_pitch);
+      unsigned char *src = yuv420p_in->y + (iy * img_pitch);
       unsigned char *dst = priv->overlay->pixels[0] + (iy * priv->overlay->pitches[0]);
       // printf("Copy Y: iy=%d h=%d dy=%d src=%p dst=%p\n", iy, priv->overlay->h, dy, src, dst);
       for (y=iy; y < priv->overlay->h; y += dy) {
@@ -545,27 +548,21 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV422P_buffer *y422p_i
       }
     }
 
-    /* Copy Cr and Cb, while basically doing 422 to 420. */
     if (1) {
-      int x, y, src_index, dst_index, src_width;
+      int x, y, src_index, dst_index, src_width, src_height;
       // printf("Copy Cr, Cb\n");
-      src_width = y422p_in->width/2;
+      src_width = yuv420p_in->width/2;
+      src_height = yuv420p_in->height/2;
       src_index = src_width * iy * 2;
-      for (y=iy; y < (y422p_in->height/2); y+=dy) {
+      for (y=iy; y < src_height; y+=dy) {
 	dst_index = y * priv->overlay->pitches[1];
 	for (x=0; x < src_width; x++) {
-	  priv->overlay->pixels[1][dst_index] = ((y422p_in->cr[src_index]+y422p_in->cr[src_index+src_width])/2);
-	  priv->overlay->pixels[2][dst_index] = ((y422p_in->cb[src_index]+y422p_in->cb[src_index+src_width])/2);
+	  priv->overlay->pixels[1][dst_index] = (yuv420p_in->cr[src_index]);
+	  priv->overlay->pixels[2][dst_index] = (yuv420p_in->cb[src_index]);
 	  //priv->overlay->pixels[1][dst_index] = -63;
 	  //priv->overlay->pixels[2][dst_index] = -63;
 	  dst_index += 1;
 	  src_index += 1;
-	}
-	/* Skip an input line since it was used in the averaging above. */
-	src_index += src_width;
-	if (dy == 2) {
-	  /* Interlaced field, skip 2 more input lines. */
-	  src_index += src_width * 2;
 	}
       }
     }
@@ -694,32 +691,58 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void YUV422P_handler(Instance *pi, void *data)
+static void YUV420P_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = (SDLstuff_private *)pi;
-  YUV422P_buffer *y422p = data;
+  YUV420P_buffer *yuv420p = data;
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
-  Gray_buffer *gray = NULL;
+  //Gray_buffer *gray = NULL;
 
-  pre_render_frame(priv, y422p->width, y422p->height, &y422p->c);
+  {
+    static int first = 1;
+    if (first) {
+      first = 0;
+      FILE *f;
+      f = fopen("y.pgm", "wb");
+      if (f) {
+	fprintf(f, "P5\n%d %d\n255\n", yuv420p->width, yuv420p->height);
+	if (fwrite(yuv420p->y, yuv420p->y_length, 1, f) != 1) { perror("fwrite"); }
+	fclose(f);
+      }
+      f = fopen("cr.pgm", "wb");
+      if (f) {
+	fprintf(f, "P5\n%d %d\n255\n", yuv420p->width/2, yuv420p->height/2);
+	if (fwrite(yuv420p->cr, yuv420p->cr_length, 1, f) != 1) { perror("fwrite"); }
+	fclose(f);
+      }
+      f = fopen("cb.pgm", "wb");
+      if (f) {
+	fprintf(f, "P5\n%d %d\n255\n", yuv420p->width/2, yuv420p->height/2);
+	if (fwrite(yuv420p->cb, yuv420p->cb_length, 1, f) != 1) { perror("fwrite"); }
+	fclose(f);
+      }
+    }
+  }
+
+  pre_render_frame(priv, yuv420p->width, yuv420p->height, &yuv420p->c);
 
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
-      rgb3 = YUV422P_to_RGB3(y422p);
+      rgb3 = YUV420P_to_RGB3(yuv420p);
       render_frame_gl(priv, rgb3);
       RGB3_buffer_discard(rgb3);
     }
     break;
   case RENDER_MODE_OVERLAY: 
     {
-      render_frame_overlay(priv, y422p);
+      render_frame_overlay(priv, yuv420p);
     }
     break;
   case RENDER_MODE_SOFTWARE: 
     {
-      bgr3 = YUV422P_to_BGR3(y422p);
+      bgr3 = YUV420P_to_BGR3(yuv420p);
       render_frame_software(priv, bgr3);
     }
     break;
@@ -732,8 +755,8 @@ static void YUV422P_handler(Instance *pi, void *data)
     RGB3_buffer_discard(rgb3);
   }
 
-  if (y422p) {
-    YUV422P_buffer_discard(y422p);
+  if (yuv420p) {
+    YUV420P_buffer_discard(yuv420p);
   }
 
   if (bgr3) {
@@ -742,13 +765,68 @@ static void YUV422P_handler(Instance *pi, void *data)
 }
 
 
+
+static void YUV422P_handler(Instance *pi, void *data)
+{
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
+  YUV422P_buffer *yuv422p = data;
+  YUV420P_buffer *yuv420p = NULL;
+  BGR3_buffer *bgr3 = NULL;
+  RGB3_buffer *rgb3 = NULL;
+  // Gray_buffer *gray = NULL;
+
+  pre_render_frame(priv, yuv422p->width, yuv422p->height, &yuv422p->c);
+
+  switch (priv->renderMode) {
+  case RENDER_MODE_GL: 
+    {
+      rgb3 = YUV422P_to_RGB3(yuv422p);
+      render_frame_gl(priv, rgb3);
+      RGB3_buffer_discard(rgb3);
+    }
+    break;
+  case RENDER_MODE_OVERLAY: 
+    {
+      yuv420p = YUV422P_to_YUV420P(yuv422p);
+      render_frame_overlay(priv, yuv420p);
+    }
+    break;
+  case RENDER_MODE_SOFTWARE: 
+    {
+      bgr3 = YUV422P_to_BGR3(yuv422p);
+      render_frame_software(priv, bgr3);
+    }
+    break;
+  }
+
+  post_render_frame(pi);
+
+
+  if (bgr3) {
+    BGR3_buffer_discard(bgr3);
+  }
+
+  if (rgb3) {
+    RGB3_buffer_discard(rgb3);
+  }
+
+  if (yuv420p) {
+    YUV420P_buffer_discard(yuv420p);
+  }
+  if (yuv422p) {
+    YUV422P_buffer_discard(yuv422p);
+  }
+
+}
+
+
 static void RGB3_handler(Instance *pi, void *data)
 {
   SDLstuff_private *priv = (SDLstuff_private *)pi;
   RGB3_buffer *rgb3 = data;
-  YUV422P_buffer *y422p = NULL;
+  YUV420P_buffer *yuv420p = NULL;
   BGR3_buffer *bgr3 = NULL;
-  Gray_buffer *gray = NULL;
+  //Gray_buffer *gray = NULL;
 
   if (0) {
     static int n = 0;
@@ -765,7 +843,7 @@ static void RGB3_handler(Instance *pi, void *data)
     }
   }
 
-  pre_render_frame(priv, rgb3->width, rgb3->height, &y422p->c);
+  pre_render_frame(priv, rgb3->width, rgb3->height, &rgb3->c);
 
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
@@ -775,8 +853,8 @@ static void RGB3_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_OVERLAY: 
     {
-      y422p = RGB3_toYUV422P(rgb3);
-      render_frame_overlay(priv, y422p);
+      yuv420p = RGB3_to_YUV420P(rgb3);
+      render_frame_overlay(priv, yuv420p);
     }
     break;
   case RENDER_MODE_SOFTWARE: 
@@ -793,8 +871,8 @@ static void RGB3_handler(Instance *pi, void *data)
     RGB3_buffer_discard(rgb3);
   }
 
-  if (y422p) {
-    YUV422P_buffer_discard(y422p);
+  if (yuv420p) {
+    YUV420P_buffer_discard(yuv420p);
   }
 
   if (bgr3) {
@@ -809,10 +887,10 @@ static void BGR3_handler(Instance *pi, void *data)
   SDLstuff_private *priv = (SDLstuff_private *)pi;
   BGR3_buffer *bgr3 = data;
   RGB3_buffer *rgb3 = NULL;
-  YUV422P_buffer *y422p = NULL;
-  Gray_buffer *gray = NULL;
+  YUV420P_buffer *yuv420p = NULL;
+  //Gray_buffer *gray = NULL;
 
-  pre_render_frame(priv, bgr3->width, bgr3->height, &y422p->c);
+  pre_render_frame(priv, bgr3->width, bgr3->height, &bgr3->c);
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
@@ -824,7 +902,7 @@ static void BGR3_handler(Instance *pi, void *data)
   case RENDER_MODE_OVERLAY: 
     {
       /* FIXME... */
-      // render_frame_overlay(priv, y422p);
+      // render_frame_overlay(priv, yuv420p);
     }
     break;
   case RENDER_MODE_SOFTWARE: 
@@ -839,8 +917,8 @@ static void BGR3_handler(Instance *pi, void *data)
     RGB3_buffer_discard(rgb3);
   }
 
-  if (y422p) {
-    YUV422P_buffer_discard(y422p);
+  if (yuv420p) {
+    YUV420P_buffer_discard(yuv420p);
   }
 
   if (bgr3) {
@@ -855,9 +933,9 @@ static void GRAY_handler(Instance *pi, void *data)
   Gray_buffer *gray = data;
   BGR3_buffer *bgr3 = NULL;
   RGB3_buffer *rgb3 = NULL;
-  YUV422P_buffer *y422p = NULL;
+  YUV420P_buffer *yuv420p = NULL;
 
-  pre_render_frame(priv, gray->width, gray->height, &y422p->c);
+  pre_render_frame(priv, gray->width, gray->height, &gray->c);
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
@@ -874,11 +952,11 @@ static void GRAY_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_OVERLAY: 
     {
-      YUV422P_buffer *y422p = YUV422P_buffer_new(gray->width, gray->height, &gray->c);
-      memcpy(y422p->y, gray->data, gray->data_length);
-      memset(y422p->cb, 128, y422p->cb_length);
-      memset(y422p->cr, 128, y422p->cr_length);
-      render_frame_overlay(priv, y422p);
+      YUV420P_buffer *yuv420p = YUV420P_buffer_new(gray->width, gray->height, &gray->c);
+      memcpy(yuv420p->y, gray->data, gray->data_length);
+      memset(yuv420p->cb, 128, yuv420p->cb_length);
+      memset(yuv420p->cr, 128, yuv420p->cr_length);
+      render_frame_overlay(priv, yuv420p);
     }
     break;
   case RENDER_MODE_SOFTWARE: 
@@ -905,8 +983,8 @@ static void GRAY_handler(Instance *pi, void *data)
     RGB3_buffer_discard(rgb3);
   }
 
-  if (y422p) {
-    YUV422P_buffer_discard(y422p);
+  if (yuv420p) {
+    YUV420P_buffer_discard(yuv420p);
   }
 
   if (bgr3) {

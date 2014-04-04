@@ -15,6 +15,7 @@ typedef enum {
   CTI_AUDIO_8BIT_SIGNED_LE,
   CTI_AUDIO_16BIT_SIGNED_LE,
   CTI_AUDIO_24BIT_SIGNED_LE,
+  CTI_AUDIO_32BIT_SIGNED_LE,
 } Audio_type;
 
 /* Raw audio buffers, header is separate from data, and never passed along in data. */
@@ -47,7 +48,7 @@ extern void Audio_buffer_add_samples(Audio_buffer *audio, uint8_t *data, int dat
  */
 
 typedef struct {
-  int codec_id;
+  int atype;
   uint16_t channels;
   uint32_t rate;
   uint16_t bits_per_sample;
@@ -58,7 +59,7 @@ typedef struct {
   int header_length;
   void *data;
   int data_length;
-  /* timestamp? */
+  double timestamp;
   /* The "params" are somewhat redundant, since they are also in the header,
      but here they are easily accessible and native-endian. */
   Wav_params params;
@@ -66,7 +67,6 @@ typedef struct {
   int no_feedback;
   int eof;			/* EOF marker. */
   LockedRef ref;
-  double timestamp;
 } Wav_buffer;
 
 extern int Wav_parse_header_values(unsigned char *src_bytes, 

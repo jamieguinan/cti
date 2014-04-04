@@ -68,6 +68,7 @@ typedef struct {
     String *content_type;
     int content_length;
     double timestamp;
+    double period;
     int width;
     int height;
   } current;
@@ -188,6 +189,7 @@ static void reset_current(MjpegDemux_private *priv)
 
   priv->current.content_length = 0;
   priv->current.timestamp = 0.0;
+  priv->current.period = 0.0;
   priv->current.width = 0;
   priv->current.height = 0;
   if (priv->current.content_type) {
@@ -447,7 +449,9 @@ static void MjpegDemux_tick(Instance *pi)
 	    priv->use_timestamps = 0;
 	    // priv->use_feedback = 0;
 	  }
-	  // printf("%f [%s]\n", priv->current.timestamp, line->bytes);
+	}
+	else if ((a = String_find(line, 0, "Period:", &b)) != -1) {
+	  String_parse_double(line, b, &priv->current.period);
 	}
 	else if ((a = String_find(line, 0, "Width:", &b)) != -1) {
 	  String_parse_int(line, b, &priv->current.width);
@@ -474,6 +478,9 @@ static void MjpegDemux_tick(Instance *pi)
 
     if (priv->current.content_type &&
 	priv->current.content_length >= 0) {
+      dpf("content type: %s timestamp:%f\n", 
+	  s(priv->current.content_type), 
+	  priv->current.timestamp);
       priv->state = PARSING_DATA;
     }
     else {
@@ -508,6 +515,8 @@ static void MjpegDemux_tick(Instance *pi)
       goto out;
     }
 
+    w->timestamp = priv->current.timestamp;
+
     if (priv->eof_notify && !priv->buffer.wav) {
       /* Save a copy of the first frame. */
       priv->buffer.wav = Wav_buffer_from(priv->chunk->data + priv->current.eoh + 4, priv->current.content_length);
@@ -539,6 +548,7 @@ static void MjpegDemux_tick(Instance *pi)
     Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
 				      priv->current.content_length, 0L);
     j->c.timestamp = priv->current.timestamp;
+    j->c.nominal_period = priv->current.period;
 
     if (priv->eof_notify && !priv->buffer.jpeg) {
       /* Save a copy of the first frame. */
@@ -598,7 +608,6 @@ static void MjpegDemux_tick(Instance *pi)
 	    nanosleep( double_to_timespec(delay), NULL);
 	  }
 	}
-
       }
 
       PostData(j, pi->outputs[OUTPUT_JPEG].destination);

@@ -1,5 +1,6 @@
 #include "Stats.h"
 #include <stdio.h>		/* NULL */
+#include <inttypes.h>		/* PRIu64 */
 
 static int thresholds[3] = { 1000, 3000, 5000 };
 
@@ -24,7 +25,7 @@ void Items_per_sec_update(Items_per_sec *items_per_sec, int add_count)
 
       if (tdiff_milliseconds == 0) { continue; }
       if (tdiff_milliseconds >= thresholds[i]) {
-	if (0) printf("tdiff_milliseconds=%ld, X=%ld %.1f %.1f\n", 
+	if (0) printf("tdiff_milliseconds=%ld, X=%" PRIu64 " %.1f %.1f\n", 
 	       tdiff_milliseconds,
 	       items_per_sec->total_items - items_per_sec->records[i].items_last,
 	       1000.0 * (items_per_sec->total_items - items_per_sec->records[i].items_last),

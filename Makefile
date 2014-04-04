@@ -14,7 +14,7 @@ endif
 
 CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
 # CFLAGS += -Werror
-CFLAGS += -O0 -ggdb
+#CFLAGS += -O0 -ggdb
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
 CFLAGS += -Wno-unused-result
@@ -277,8 +277,8 @@ ifeq ($(ARCH),x86_64-Linux)
 endif
 	@echo Generating map
 	$(NM) $@ | sort > $@.map
-#	@echo STRIP
-#	@$(STRIP) $@
+	@echo STRIP
+	@$(STRIP) $@
 
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))

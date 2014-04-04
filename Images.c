@@ -390,6 +390,7 @@ static void YUV422P_to_xGx(YUV422P_buffer *yuv422p, RGB3_buffer *rgb, BGR3_buffe
   for (y = 0; y < yuv422p->height; y++) {
     int R, G, B, Y, Cr = 0, Cb = 0;
     for (x = 0; x < yuv422p->width; x+=1) {
+      /* FIXME: Should use averaging, or something... */
       if (x % 2 == 0) {
 	pCr++;
 	pCb++;
@@ -406,7 +407,72 @@ static void YUV422P_to_xGx(YUV422P_buffer *yuv422p, RGB3_buffer *rgb, BGR3_buffe
       if (G > 255) { G = 255; } else if (G < 0) { G = 0; } 
       if (B > 255) { B = 255; } else if (B < 0) { B = 0; } 
 
-      /* FIXME: Should use averaging... */
+      if (prgb) {
+	prgb[0] = R;
+	prgb[1] = G;
+	prgb[2] = B;
+	prgb += 3;
+      }
+
+      if (pbgr) {
+	pbgr[0] = B;
+	pbgr[1] = G;
+	pbgr[2] = R;
+	pbgr += 3;
+      }
+      pY++;
+    }
+  }
+}
+
+
+static void YUV420P_to_xGx(YUV420P_buffer *yuv420p, RGB3_buffer *rgb, BGR3_buffer *bgr)
+{
+  // R = Y + 1.402 (Cr-128)
+  // G = Y - 0.34414 (Cb-128) - 0.71414 (Cr-128)
+  // B = Y + 1.772 (Cb-128)
+  
+  int x, y;
+  uint8_t *prgb = 0L;
+  uint8_t *pbgr = 0L;
+
+  if (rgb) {
+    prgb = rgb->data;
+  }
+
+  if (bgr) {
+    pbgr = bgr->data;
+  }
+
+  uint8_t *pY = yuv420p->y;
+  uint8_t *pCr = yuv420p->cr;
+  uint8_t *pCb = yuv420p->cb;
+
+  for (y = 0; y < yuv420p->height; y++) {
+    if (y % 2 == 1) {
+      /* Rewind and re-use for the next row. */
+      pCr -= yuv420p->cr_width;
+      pCb -= yuv420p->cb_width;
+    }
+    int R, G, B, Y, Cr = 0, Cb = 0;
+    for (x = 0; x < yuv420p->width; x+=1) {
+      /* FIXME: Should use averaging, or something... */
+      if (x % 2 == 0) {
+	Cr = *pCr;
+	Cb = *pCb;
+	pCr++;
+	pCb++;
+      }
+
+      Y = *pY;
+      R = Y + 1.402 * (Cr - 128);
+      G = Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128);
+      B = Y + 1.772 * (Cb - 128);
+
+      if (R > 255) { R = 255; } else if (R < 0) { R = 0; } 
+      if (G > 255) { G = 255; } else if (G < 0) { G = 0; } 
+      if (B > 255) { B = 255; } else if (B < 0) { B = 0; } 
+
       if (prgb) {
 	prgb[0] = R;
 	prgb[1] = G;
@@ -433,6 +499,15 @@ RGB3_buffer *YUV422P_to_RGB3(YUV422P_buffer *yuv422p)
   return rgb;
 }
 
+#if 1
+RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *yuv420p)
+{
+  RGB3_buffer *rgb = RGB3_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
+  YUV420P_to_xGx(yuv420p, rgb, 0L);
+  return rgb;
+}
+#endif
+
 
 BGR3_buffer *YUV422P_to_BGR3(YUV422P_buffer *yuv422p)
 {
@@ -442,7 +517,15 @@ BGR3_buffer *YUV422P_to_BGR3(YUV422P_buffer *yuv422p)
 }
 
 
-YUV422P_buffer *RGB3_toYUV422P(RGB3_buffer *rgb)
+BGR3_buffer *YUV420P_to_BGR3(YUV420P_buffer *yuv420p)
+{
+  BGR3_buffer *bgr = BGR3_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
+  YUV420P_to_xGx(yuv420p, 0L, bgr);
+  return bgr;
+}
+
+
+YUV422P_buffer *RGB3_to_YUV422P(RGB3_buffer *rgb)
 {
   //Y = 0.299R + 0.587G + 0.114B
   //U'= (B-Y)*0.565
@@ -480,6 +563,52 @@ YUV422P_buffer *RGB3_toYUV422P(RGB3_buffer *rgb)
   }
 
   return yuv422p;
+}
+
+
+YUV420P_buffer *RGB3_to_YUV420P(RGB3_buffer *rgb)
+{
+  //Y = 0.299R + 0.587G + 0.114B
+  //U'= (B-Y)*0.565
+  //V'= (R-Y)*0.713
+
+  int x, y;
+  YUV420P_buffer *yuv420p = YUV420P_buffer_new(rgb->width, rgb->height, &rgb->c);
+
+  uint8_t *p = rgb->data;
+  uint8_t *pY = yuv420p->y;
+  uint8_t *pCr = yuv420p->cr;
+  uint8_t *pCb = yuv420p->cb;
+
+  for (y=0; y < rgb->height; y++) {
+    for (x = 0; x < rgb->width; x+=1) {
+      uint8_t R = p[0];
+      uint8_t G = p[1];
+      uint8_t B = p[2];
+      uint8_t Y;
+
+      Y = _min(0.299*R + 0.587*G + 0.114*B, 255);
+      *pY = Y;
+
+      if (x % 2 == 0 && y % 2 == 0) {
+	*pCb = _min((B - Y)*0.565 + 128, 255);
+	*pCr = _min((R - Y)*0.713 + 128, 255);
+	pCr++;
+	pCb++;
+      }
+      else {
+	/* FIXME: Store RGB, and average them with the subsequent set
+	   of values in the "if" case above.  Maybe swap the if/else
+	   bodies, too. */
+      }
+
+      p += 3;
+      pY++;
+    }
+
+  }
+
+  return yuv420p;
 }
 
 
@@ -533,7 +662,11 @@ YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
   yuv420p->width = width;
   yuv420p->height = height;
   yuv420p->y_length = width*height;
+  yuv420p->cr_width = width/2;
+  yuv420p->cr_height = height/2;
   yuv420p->cr_length = width*height/4;
+  yuv420p->cb_width = width/2;
+  yuv420p->cb_height = height/2;
   yuv420p->cb_length = width*height/4;
 
   /* One data allocation, component pointers are set within it. */
@@ -602,18 +735,22 @@ YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p)
 {
   YUV422P_buffer * yuv422p = YUV422P_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
   int x, y;
-  int n = 0;
 
+  printf("%s() has been tested\n", __func__);
+
+  /* Copy luma channel directly. */
   memcpy(yuv422p->y, yuv422p->y, yuv422p->y_length);
 
-  fprintf(stderr, "%s: not fully implemented\n", __func__);
-
-  for (y = 0; y < yuv422p->height; y+=2) {
-    //for (x = 0; x < yuv422p->width/2; x+=1) {
-    //  yuv420p->cb[n] = (yuv422p->cb[y*yuv422p->width/2 + x] + yuv422p->cb[(y+1)*yuv422p->width/2 + x])/2;
-    //  yuv420p->cr[n] = (yuv422p->cr[y*yuv422p->width/2 + x] + yuv422p->cr[(y+1)*yuv422p->width/2 + x])/2;
-    //  n++;
-    //}
+  /* Basically just need to stretch the chroma subimages vertically. */
+  for (y = 0; y < yuv422p->height; y++) {
+    uint8_t * srcCb = yuv420p->cb + (y * yuv420p->cb_width)/2;
+    uint8_t * srcCr = yuv420p->cr + (y * yuv420p->cb_width)/2;
+    uint8_t * destCb = yuv422p->cb + (y * yuv422p->cb_width);
+    uint8_t * destCr = yuv422p->cr + (y * yuv422p->cb_width);
+    for (x = 0; x < yuv422p->cb_width; x+=1) {
+      *destCb++ = *srcCb++;
+      *destCr++ = *srcCr++;
+    }
   }
 
   // printf("n=%d\n", n);
@@ -685,57 +822,6 @@ void YUV422P_paste(YUV422P_buffer *dest, YUV422P_buffer *src, int xoffset, int y
       }
     }
   }
-}
-
-
-RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *yuv420p)
-{
-  RGB3_buffer *rgb = RGB3_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
-
-  int x, y;
-  int r, g, b;
-  int c, d, e;
-
-  int w = yuv420p->width;
-  int h = yuv420p->height;
-  
-  uint8_t *yuvin = yuv420p->data;
-  uint8_t *rgbout8 = rgb->data;
-
-  uint8_t *pY;
-  uint8_t *pU;
-  uint8_t *pV;
-
-  for (y=0; y < h; y+=1) {
-    pY = yuvin + (w * y);
-    pU = yuvin + (w * h) + (y/2)*(w/2);
-    pV = yuvin + (w*h*5/4) + (y/2)*(w/2);
-
-    for (x=0; x < w; x++) {
-
-      c = *pY - 16;
-      d = *pU - 128;
-      e = *pV - 128;
-
-#define clamp(x) (x < 0 ? 0 : (x > 255 ? 255 : x))
-
-      r = clamp(( 298 * c +   0 * d + 409 * e + 128) >> 8);
-      g = clamp(( 298 * c - 100 * d - 208 * e + 128) >> 8);
-      b = clamp(( 298 * c + 516 * d +   0 * e + 128) >> 8);
-
-      *rgbout8++ = r;
-      *rgbout8++ = g;
-      *rgbout8++ = b;
-
-      pY += 1;
-      if ((long)pY & 1) {
-	pU++;
-	pV++;
-      }
-    }
-  }
-  
-  return rgb;
 }
 
 

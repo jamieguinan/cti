@@ -337,7 +337,7 @@ static void y422p_handler(Instance *pi, void *msg)
     rgb3->c.timestamp = y422p->c.timestamp;	/* Preserve timestamp! */
     YUV422P_buffer_discard(temp);
     apply_commands(priv, rgb3);
-    temp = RGB3_toYUV422P(rgb3);
+    temp = RGB3_to_YUV422P(rgb3);
     RGB3_buffer_discard(rgb3);
     YUV422P_paste(y422p, temp, 0, 0, priv->width, priv->height);
     YUV422P_buffer_discard(temp);

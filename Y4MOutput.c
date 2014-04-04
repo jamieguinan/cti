@@ -141,7 +141,7 @@ static void YUV422P_handler(Instance *pi, void *data)
 static void RGB3_handler(Instance *pi, void *data)
 {
   RGB3_buffer *rgb3_in = data;
-  YUV422P_buffer *y4m = RGB3_toYUV422P(rgb3_in);
+  YUV422P_buffer *y4m = RGB3_to_YUV422P(rgb3_in);
 
   YUV422P_handler(pi, y4m);
   RGB3_buffer_discard(rgb3_in);

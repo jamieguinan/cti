@@ -14,7 +14,7 @@ static struct {
 } TypeMap[] = {
   [CTI_AUDIO_8BIT_SIGNED_LE] = { .size = 1 },
   [CTI_AUDIO_16BIT_SIGNED_LE] = { .size = 2 },
-  [CTI_AUDIO_24BIT_SIGNED_LE] = { .size = 3 },
+  [CTI_AUDIO_24BIT_SIGNED_LE] = { .size = 3 }, /* FIXME: Would samples be held in 32-bit buffers? */
 };
 
 
@@ -138,10 +138,21 @@ Wav_buffer *Wav_buffer_new(int rate, int channels, int format_bytes)
 
   buffer->header_length = 44;
 
-  // buffer->params.codec_id = ??;
   buffer->params.channels = channels;
   buffer->params.rate = rate;
   buffer->params.bits_per_sample = format_bytes * 8;
+  buffer->params.bits_per_sample = format_bytes * 8;
+  switch (buffer->params.bits_per_sample) {
+  case 8:
+    buffer->params.atype = CTI_AUDIO_8BIT_SIGNED_LE;
+    break;
+  case 16:
+    buffer->params.atype = CTI_AUDIO_16BIT_SIGNED_LE;
+    break;
+  default:
+    printf("%s:%s buffer->params.bits_per_sample %d unhandled\n", __FILE__, __func__, buffer->params.bits_per_sample);
+  }
+
 
   LockedRef_init(&buffer->ref);
   // buffer->data is allocated by caller
@@ -254,6 +265,16 @@ Wav_buffer * Wav_buffer_from(unsigned char *src_bytes, int src_length)
   buffer->params.channels = extract_le16(buffer->header, NUM_CHANNELS_OFFSET);
   buffer->params.rate = extract_le32(buffer->header, SAMPLES_PER_SEC_OFFSET);
   buffer->params.bits_per_sample = extract_le16(buffer->header, BITS_PER_SAMPLE_OFFSET);
+  switch (buffer->params.bits_per_sample) {
+  case 8:
+    buffer->params.atype = CTI_AUDIO_8BIT_SIGNED_LE;
+    break;
+  case 16:
+    buffer->params.atype = CTI_AUDIO_16BIT_SIGNED_LE;
+    break;
+  default:
+    printf("%s:%s buffer->params.bits_per_sample %d unhandled\n", __FILE__, __func__, buffer->params.bits_per_sample);
+  }
 
   return buffer;
 }

@@ -23,6 +23,7 @@ static void Jpeg_handler(Instance *pi, void *data);
 static void O511_handler(Instance *pi, void *data);
 static void Wav_handler(Instance *pi, void *data);
 static void Audio_handler(Instance *pi, void *data);
+static void AAC_handler(Instance *pi, void *data);
 
 enum { INPUT_CONFIG, INPUT_JPEG, INPUT_O511, INPUT_WAV, INPUT_AUDIO };
 static Input MjpegMux_inputs[] = {
@@ -31,6 +32,7 @@ static Input MjpegMux_inputs[] = {
   [ INPUT_O511 ] = { .type_label = "O511_buffer", .handler = O511_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
   [ INPUT_AUDIO ] = { .type_label = "Audio_buffer", .handler = Audio_handler },
+  [ INPUT_AUDIO ] = { .type_label = "AAC_buffer", .handler = AAC_handler },
 };
 
 enum { OUTPUT_RAWDATA };
@@ -103,7 +105,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static const char part_format[] = 
   "%s\r\nContent-Type: %s\r\n"
-  "Timestamp:%.6f\r\n"  	/* very important to use six digits for microseconds! :) */
+  "Timestamp:%.6f\r\n"
   "%s"				/* extra headers... */
   "Content-Length: %d\r\n\r\n";
 
@@ -118,11 +120,19 @@ static void Jpeg_handler(Instance *pi, void *data)
     goto out;
   }
 
+  String *period;
+  if (jpeg_in->c.nominal_period > 0.00001) {
+    period = String_sprintf("Period:%.6f\r\n", jpeg_in->c.nominal_period);
+  }
+  else {
+    period = String_sprintf("");
+  }
+
   String *header = String_sprintf(part_format,
 				  BOUNDARY,
 				  "image/jpeg",
 				  jpeg_in->c.timestamp,
-				  "",
+				  s(period),
 				  jpeg_in->encoded_length);
 
 
@@ -140,6 +150,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
   }
 
+  String_free(&period);
   String_free(&header);
 
  out:
@@ -194,8 +205,6 @@ static void Wav_handler(Instance *pi, void *data)
 				  "",
 				  wav_in->header_length+wav_in->data_length);
 
-  goto xout;
-
   if (priv->sink) {
     Sink_write(priv->sink, header->bytes, header->len);
     Sink_write(priv->sink, wav_in->header, wav_in->header_length);
@@ -211,11 +220,40 @@ static void Wav_handler(Instance *pi, void *data)
     PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
   }
 
- xout:
   String_free(&header);
-  /* Discard wav buffer */
   // printf("%s discarding wav_in @ %p (%d bytes @ %p)\n", __func__, wav_in, wav_in->data_length, wav_in->data);
   Wav_buffer_release(&wav_in);
+}
+
+
+static void AAC_handler(Instance *pi, void *data)
+{
+  MjpegMux_private *priv = (MjpegMux_private *)pi;  
+  AAC_buffer *aac = data;
+
+  /* Format header. */
+  String *header = String_sprintf(part_format,
+				  BOUNDARY,
+				  "audio/aac",
+				  aac->timestamp,
+				  "",
+				  aac->data_length);
+
+  if (priv->sink) {
+    Sink_write(priv->sink, header->bytes, header->len);
+    Sink_write(priv->sink, aac->data, aac->data_length);
+  }
+
+  if (pi->outputs[OUTPUT_RAWDATA].destination) {
+    /* Combine header and data, post. */
+    RawData_buffer *raw = RawData_buffer_new(header->len + aac->data_length);
+    memcpy(raw->data, header->bytes, header->len);
+    memcpy(raw->data+header->len, aac->data, aac->data_length);
+    PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
+  }
+
+  String_free(&header);
+  AAC_buffer_discard(&aac);
 }
 
 
