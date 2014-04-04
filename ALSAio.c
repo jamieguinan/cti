@@ -707,7 +707,7 @@ static void ALSACapture_tick(Instance *pi)
   n = snd_pcm_readi(priv->handle, buffer, frames);
 
   /* Record time at the end of the audio read. */
-  gettimeofday(&wav->tv, NULL);
+  getdoubletime(&wav->timestamp);
 
   if (buffer[size] != 0x55)  {
     fprintf(stderr, "overwrote audio buffer!\n");

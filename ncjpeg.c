@@ -196,19 +196,19 @@ int main(int argc, char *argv[])
 
     Instance_loop_thread(ac);
 
-    struct timeval t1, t2;
+    double t1, t2;
     int num_frames = 30*3;
     vc->tick(vc);		/* First tick does setup, so don't include in timing. */
 
     SetConfig(cj, "quality", "80");
     
-    gettimeofday(&t1, 0L);
+    getdoubletime(&t1);
     for (i=0; i < num_frames; i++) {
       vc->tick(vc);		/* Capture. */
     }
-    gettimeofday(&t2, 0L);
+    getdoubletime(&t2);
 
-    float tdiff =  (t2.tv_sec + t2.tv_usec/1000000.0) - (t1.tv_sec + t1.tv_usec/1000000.0);
+    float tdiff =  (t2 - t1);
     printf("%d frames in %.4f seconds\n", num_frames, tdiff);
   }
 

@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>		/* struct timeval */
 
 #include "uvcvideo.h"
 

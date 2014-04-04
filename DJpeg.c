@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>		/* gettimeofday */
 #include <setjmp.h>
 
 #include "jpeglib.h"
@@ -148,7 +147,7 @@ static FormatInfo known_formats[] = {
 static void Jpeg_handler(Instance *pi, void *data)
 {
   DJpeg_private *priv = (DJpeg_private *)pi;
-  struct timeval t1, t2;
+  double t1, t2;
   int save_width = 0;
   int save_height = 0;
   Jpeg_buffer *jpeg_in = data;
@@ -170,7 +169,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     goto out;
   }
 
-  gettimeofday(&t1, 0L);
+  getdoubletime(&t1);
 
   if (!(pi->outputs[OUTPUT_YUV422P].destination ||
 	pi->outputs[OUTPUT_YUV420P].destination ||
@@ -301,14 +300,14 @@ static void Jpeg_handler(Instance *pi, void *data)
      needed for conversion to an assigned output. */
   if (fmt->imgtype == IMAGE_TYPE_YUV422P) {
     /* FIXME: Pad for DCT block boundaries, see libjpeg.txt */
-    yuv422p = YUV422P_buffer_new(cinfo.image_width, cinfo.image_height, 0L);
+    yuv422p = YUV422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
     buffers[0] = yuv422p->y;
     buffers[1] = yuv422p->cb;
     buffers[2] = yuv422p->cr;
   }
   else if (fmt->imgtype == IMAGE_TYPE_YUV420P) {
     /* FIXME: Pad for DCT block boundaries, see libjpeg.txt */
-    yuv420p = YUV420P_buffer_new(cinfo.image_width, cinfo.image_height, 0L);
+    yuv420p = YUV420P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
     buffers[0] = yuv420p->y;
     buffers[1] = yuv420p->cb;
     buffers[2] = yuv420p->cr;
@@ -449,8 +448,8 @@ static void Jpeg_handler(Instance *pi, void *data)
   pi->counter += 1;
 
   /* Calculate decompress time. */
-  gettimeofday(&t2, 0L);
-  float tdiff =  (t2.tv_sec + t2.tv_usec/1000000.0) - (t1.tv_sec + t1.tv_usec/1000000.0);
+  getdoubletime(&t2);
+  float tdiff = t2 - t1;
 
   dpf("djpeg %.5f (%dx%d)\n", tdiff, save_width, save_height);
 }

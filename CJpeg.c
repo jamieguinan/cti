@@ -1,7 +1,6 @@
 /* Jpeg compression using IJPEG library. */
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>		/* gettimeofday */
 
 #include "jpeglib.h"
 
@@ -119,6 +118,7 @@ enum { COMPRESS_RGB, COMPRESS_Y444, COMPRESS_Y422, COMPRESS_Y420 };
 static void compress_and_post(Instance *pi, 
 			      int width, int height,
 			      uint8_t *c1, uint8_t *c2, uint8_t *c3,
+			      Image_common *c,
 			      int compress_mode)
 {
   /* Compress input buffer.  See "libjpeg.txt" in IJPEG source, and "cjpeg.c". */
@@ -126,10 +126,10 @@ static void compress_and_post(Instance *pi,
   struct jpeg_compress_struct cinfo;
   struct jpeg_error_mgr jerr;
   Jpeg_buffer *jpeg_out = 0L;
-  struct timeval t1, t2;
+  double t1, t2;
   int report_time = 0;
 
-  gettimeofday(&t1, 0L);
+  getdoubletime(&t1);
 
   cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
 					this may cause the program to call exit()! */
@@ -139,8 +139,10 @@ static void compress_and_post(Instance *pi,
   jpeg_out = Jpeg_buffer_new(width*height*3+16384, 0L); 
   jpeg_out->width = width;
   jpeg_out->height = height;
-
-  jpeg_out->c.tv = t1;		/* Store timestamp! */
+  
+  if (c->timestamp == 0.0) {
+    jpeg_out->c.timestamp = t1;	/* Save timestamp. */
+  }
 
   if (compress_mode == COMPRESS_Y422) {
     int w2 = (width/8)*8;
@@ -266,8 +268,8 @@ static void compress_and_post(Instance *pi,
   jpeg_out = 0L;		/* Clear output buffer copy. */
 
   /* Calculate compress time. */
-  gettimeofday(&t2, 0L);
-  float tdiff =  (t2.tv_sec + t2.tv_usec/1000000.0) - (t1.tv_sec + t1.tv_usec/1000000.0);
+  getdoubletime(&t2);
+  double tdiff =  (t2 - t1);
 
   if (cfg.verbosity > 0) {
     if (pi->counter % (30) == 0) {
@@ -314,6 +316,7 @@ static void rgb3_handler(Instance *pi, void *data)
   compress_and_post(pi, 
 		    rgb3_in->width, rgb3_in->height,
 		    rgb3_in->data, 0L, 0L,
+		    &rgb3_in->c,
 		    COMPRESS_RGB);
   RGB3_buffer_discard(rgb3_in);
 }
@@ -326,6 +329,7 @@ static void bgr3_handler(Instance *pi, void *data)
   compress_and_post(pi, 
 		    rgb3_in->width, rgb3_in->height,
 		    rgb3_in->data, 0L, 0L,
+		    &rgb3_in->c,
 		    COMPRESS_RGB);
   RGB3_buffer_discard(rgb3_in);
 }
@@ -336,6 +340,7 @@ static void y422p_handler(Instance *pi, void *data)
   compress_and_post(pi, 
 		    y422p_in->width, y422p_in->height,
 		    y422p_in->y, y422p_in->cb, y422p_in->cr,
+		    &y422p_in->c,
 		    COMPRESS_Y422);
   YUV422P_buffer_discard(y422p_in);
 }
@@ -346,6 +351,7 @@ static void y420p_handler(Instance *pi, void *data)
   compress_and_post(pi, 
 		    y420p_in->width, y420p_in->height,
 		    y420p_in->y, y420p_in->cb, y420p_in->cr,
+		    &y420p_in->c,
 		    COMPRESS_Y420);
   YUV420P_buffer_discard(y420p_in);
 }

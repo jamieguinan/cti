@@ -10,6 +10,7 @@
 #include <sys/stat.h>		/* mkdir */
 #include <sys/types.h>		/* mkdir */
 #include <inttypes.h>		/* PRIu64 */
+#include <math.h>		/* fmod */
 
 #include "CTI.h"
 #include "MpegTSMux.h"
@@ -490,34 +491,24 @@ static void H264_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
   if (!priv->seen_video) {
+    priv->seen_video = 1;
     priv->streams[0].pts_value = 0;
     priv->streams[0].pts_add = (int)(90000 * h264->c.nominal_period);
     priv->streams[0].pcr_value = priv->streams[0].pts_value;
     priv->streams[0].pcr_add = priv->streams[0].pts_add;
-    priv->seen_video = 1;
   }
 
-  /* Synchronize audio PTS */
-  priv->streams[1].pts_value = priv->streams[0].pts_value;
-  priv->streams[1].pts_add = 0;
-
-#if 0
-  priv->streams[0].pts_value = 
-    (((h264->c.tv.tv_sec % 95000)  // pts wraps at 95000 seconds, so why not
-      * 1000000 // Convert to microseconds.
-      + h264->c.tv.tv_usec) // Add microseconds
-     * 9 / 100) // Convert to 90KHz units.
-    ;
+  priv->streams[0].pts_value = (uint64_t) 
+    (fmod(h264->c.timestamp, 95000)  // pts wraps at 95000 seconds, so why not
+     * 1000000 // Convert to microseconds.
+     * 9 / 100 // Convert to 90KHz units.
+     );
   priv->streams[0].pts_add = 0;
   priv->streams[0].pcr_value = priv->streams[0].pts_value;
   priv->streams[0].pcr_add = 0;
 
-  priv->streams[1].pts_value = priv->streams[0].pts_value;
-  priv->streams[1].pts_add = 0;
-#endif
-
-  if (0) printf("h264->encoded_length=%d timestamp=%ld.%06ld pts_value=%" PRIu64 "\n",
-		h264->encoded_length, h264->c.tv.tv_sec, h264->c.tv.tv_usec,
+  if (1) printf("h264->encoded_length=%d timestamp=%.6f pts_value=%" PRIu64 "\n",
+		h264->encoded_length, h264->c.timestamp,
 		priv->streams[0].pts_value);
 
   packetize(priv, 258, ArrayU8_temp_const(h264->data, h264->encoded_length) );
@@ -531,6 +522,12 @@ static void AAC_handler(Instance *pi, void *msg)
   AAC_buffer *aac = msg;
   if (!priv->seen_audio) { priv->seen_audio = 1; }
   //printf("aac->data_length=%d\n",  aac->data_length);
+  priv->streams[1].pts_value = (uint64_t) 
+    (fmod(aac->timestamp, 95000)  // pts wraps at 95000 seconds, so why not
+     * 1000000 // Convert to microseconds.
+     * 9 / 100 // Convert to 90KHz units.
+     );
+  priv->streams[1].pts_add = 0;
   packetize(priv, 257, ArrayU8_temp_const(aac->data, aac->data_length) );
   AAC_buffer_discard(&aac);
 }

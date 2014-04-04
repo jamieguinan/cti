@@ -30,7 +30,7 @@ typedef struct {
   Audio_params header;
   uint64_t data_length;
   uint8_t *data;
-  struct timeval tv;
+  double timestamp;
   int seq;
 } Audio_buffer;
 
@@ -62,11 +62,11 @@ typedef struct {
   /* The "params" are somewhat redundant, since they are also in the header,
      but here they are easily accessible and native-endian. */
   Wav_params params;
-  struct timeval tv;
   int seq;
   int no_feedback;
   int eof;			/* EOF marker. */
   LockedRef ref;
+  double timestamp;
 } Wav_buffer;
 
 extern int Wav_parse_header_values(unsigned char *src_bytes, 
@@ -86,6 +86,7 @@ extern Wav_buffer *Wav_ref(Wav_buffer *wav);
 typedef struct {
   uint8_t *data;
   int data_length;
+  double timestamp;
 } AAC_buffer;
 
 extern AAC_buffer *AAC_buffer_from(uint8_t *data, int data_length);
@@ -96,6 +97,7 @@ extern void AAC_buffer_discard(AAC_buffer **buffer);
 typedef struct {
   uint8_t *data;
   int data_length;
+  double timestamp;
 } MP3_buffer;
 
 extern MP3_buffer *MP3_buffer_from(uint8_t *data, int data_length);

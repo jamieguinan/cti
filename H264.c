@@ -8,6 +8,7 @@
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
+#include <inttypes.h>		/* PRIu32 */
 
 #ifndef __tune_pentium4__
 
@@ -112,6 +113,24 @@ static Config config_table[] = {
 };
 
 
+static void show_x264_params(x264_param_t * params)
+{
+  printf("x264: i_fps_num = %" PRIu32 "\n", params->i_fps_num);
+  printf("x264: i_fps_den = %" PRIu32 "\n", params->i_fps_den);
+  printf("x264: i_timebase_num = %" PRIu32 "\n", params->i_timebase_num);
+  printf("x264: i_timebase_den = %" PRIu32 "\n", params->i_timebase_den);
+  printf("x264: b_vfr_input = %d\n", params->b_vfr_input);
+  printf("x264: b_pulldown = %d\n", params->b_pulldown);
+  printf("x264: b_annexb = %d\n", params->b_annexb);
+  printf("x264: b_tff = %d\n", params->b_tff);
+  printf("x264: b_pic_struct = %d\n", params->b_pic_struct);
+  printf("x264: b_interlaced = %d\n", params->b_interlaced);
+  printf("x264: b_fake_interlaced = %d\n", params->b_fake_interlaced);
+  printf("x264: pf_log = %p\n", params->pf_log);
+  // printf("x264:  = %d\n", params->);
+}
+
+
 static void YUV420P_handler(Instance *pi, void *msg)
 {
   int rc;
@@ -121,6 +140,8 @@ static void YUV420P_handler(Instance *pi, void *msg)
   if (!priv->encoder) {
     /* Set up the encoder and parameters. */
     x264_param_t params;
+
+    x264_param_default(&params);
 
     /* FIXME: Could make preset and profile settings config options
        during setup, and return available values from
@@ -133,19 +154,32 @@ static void YUV420P_handler(Instance *pi, void *msg)
     if (rc != 0) { fprintf(stderr, "x264_param_default_preset failed");  return; }
 
     rc = x264_param_apply_profile(&params, "baseline");
+    //rc = x264_param_apply_profile(&params, "main");
     if (rc != 0) { fprintf(stderr, "x264_param_apply_profile failed");  return; }
 
     params.i_width = y420->width;
     params.i_height = y420->height;
 
     /* FIXME: Set this in cmd file, or via Config messages. */
-    params.i_fps_num = y420->c.fps_numerator * 2;
+    params.i_fps_num = y420->c.fps_numerator;
     params.i_fps_den = y420->c.fps_denominator;
+
+    /* Testing. Set these to inverse of fps. Has no apparent effect. */
+    //params.i_timebase_num = params.i_fps_den;
+    //params.i_timebase_den = params.i_fps_num;
+
+    /* Testing. No effect.*/
+    // params.b_tff = 0;
+
+    /* Testing.  Aha!  This results in 29.97fps instead of 59.94fps playback in mplayer! */
+    params.b_vfr_input = 0;
 
     priv->encoder = x264_encoder_open(&params);
     if (!priv->encoder) { fprintf(stderr, "x264_encoder_open failed");  return; }
 
     printf("params fps=%d/%d\n", params.i_fps_num, params.i_fps_den);
+
+    show_x264_params(&params);
 
     //priv->cli_output = mp4_output;
     //cli_output_opt_t output_opt = {};

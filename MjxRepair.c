@@ -73,7 +73,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static const char part_format[] = 
   "%s\r\nContent-Type: %s\r\n"
-  "Timestamp:%ld.%06ld\r\n"  	/* very important to use six digits for microseconds! :) */
+  "Timestamp:%.6f\r\n"  	/* very important to use six digits for microseconds! :) */
   "%s"				/* extra headers... */
   "Content-Length: %d\r\n\r\n";
 
@@ -85,7 +85,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   String *header = String_sprintf(part_format,
 				  BOUNDARY,
 				  "image/jpeg",
-				  jpeg_in->c.tv.tv_sec, jpeg_in->c.tv.tv_usec,
+				  jpeg_in->c.timestamp,
 				  "",
 				  jpeg_in->encoded_length);
 
@@ -112,7 +112,7 @@ static void Wav_handler(Instance *pi, void *data)
   String *header = String_sprintf(part_format,
 				  BOUNDARY,
 				  "audio/x-wav",
-				  wav_in->tv.tv_sec, wav_in->tv.tv_usec,
+				  wav_in->timestamp,
 				  "",
 				  wav_in->header_length+wav_in->data_length);
 

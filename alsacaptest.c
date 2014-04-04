@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>		/* sleep */
-#include <sys/time.h>
 #include <string.h>
 #define streq(a, b) (strcmp(a, b) == 0 ? 1 : 0)
 //#include "CJpeg.h"

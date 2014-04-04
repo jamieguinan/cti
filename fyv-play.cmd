@@ -3,6 +3,15 @@ new DJpeg dj
 new SDLstuff sdl
 new ALSAPlayback ap
 
+new CairoContext cc
+
+# Basic cairo setup.
+config cc width 100
+config cc height 100
+config cc command set_line_width 2.0
+
+include clock.cmd
+
 connect mjd Wav_buffer ap
 connect mjd Jpeg_buffer dj
 
@@ -11,7 +20,10 @@ connect sdl Feedback_buffer mjd
 connect sdl:Keycode_msg sdl:Keycode_msg
 
 #connect dj RGB3_buffer sdl
-connect dj YUV422P_buffer sdl
+#connect dj YUV422P_buffer sdl
+
+connect dj YUV422P_buffer cc
+connect cc YUV422P_buffer sdl
 
 #config ap device plughw:0
 config ap device Dummy

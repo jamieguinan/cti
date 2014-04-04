@@ -1,7 +1,6 @@
 #include <stdio.h>		/* sprintf */
 #include <stdlib.h>		/* malloc */
 #include <string.h>		/* memset */
-#include <sys/time.h>		/* gettimeofday */
 
 #include "XMixedReplace.h"
 
@@ -9,7 +8,7 @@
 
 static const char part_format[] = 
   "%s\r\nContent-Type: %s\r\n"
-  "Timestamp:%ld.%06ld\r\n"
+  "Timestamp:%.6f\r\n"
   "Content-Length: %d\r\n\r\n";
 
 XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, const char *mime_type)
@@ -19,14 +18,14 @@ XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, cons
 
   XMixedReplace_buffer *buffer = Mem_malloc(sizeof(*buffer));
 
-  gettimeofday(&buffer->tv, NULL);
+  getdoubletime(&buffer->timestamp, NULL);
 
   /* Format header... */
   n = sprintf(header, 
 	      part_format, 
 	      BOUNDARY, 
 	      mime_type,
-	      buffer->tv.tv_sec, buffer->tv.tv_usec,
+	      buffer->tiemstamp,
 	      data_length);
 
   if (n >= sizeof(header)) {

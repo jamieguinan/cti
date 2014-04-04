@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <sys/time.h>		/* gettimeofday */
 #include "CTI.h"
 #include "VSmoother.h"
 #include "Images.h"
@@ -45,7 +44,7 @@ static Config config_table[] = {
 
 
 static void smooth(VSmoother_private *priv, 
-		   struct timeval *frame_timestamp, 
+		   double frame_timestamp, 
 		   int pending_messages)
 {
   /* Compare current frame time and previous frame time, and
@@ -55,12 +54,10 @@ static void smooth(VSmoother_private *priv,
   double tnow;
   double ftime;
   double ftdiff;
-  struct timeval tv;
 
-  gettimeofday(&tv, NULL);
-  tnow = tv.tv_sec + (tv.tv_usec/1000000.0);
+  getdoubletime(&tnow);
 
-  ftime = frame_timestamp->tv_sec + (frame_timestamp->tv_usec/1000000.0);
+  ftime = frame_timestamp;
 
   if (!priv->factor) {
     priv->factor = 1;
@@ -129,7 +126,7 @@ static void rgb3_handler(Instance *pi, void *data)
   VSmoother_private *priv = (VSmoother_private *)pi;
   RGB3_buffer *rgb3_in = data;
   if (pi->outputs[OUTPUT_RGB3].destination) {
-    smooth(priv, &rgb3_in->c.tv, pi->pending_messages);
+    smooth(priv, rgb3_in->c.timestamp, pi->pending_messages);
     PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
   }
   else {
@@ -142,7 +139,7 @@ static void bgr3_handler(Instance *pi, void *data)
   VSmoother_private *priv = (VSmoother_private *)pi;
   BGR3_buffer *bgr3_in = data;
   if (pi->outputs[OUTPUT_BGR3].destination) {
-    smooth(priv, &bgr3_in->c.tv, pi->pending_messages);
+    smooth(priv, bgr3_in->c.timestamp, pi->pending_messages);
     PostData(bgr3_in, pi->outputs[OUTPUT_BGR3].destination);
   }
   else {
@@ -155,7 +152,7 @@ static void y422p_handler(Instance *pi, void *data)
   VSmoother_private *priv = (VSmoother_private *)pi;
   YUV422P_buffer *y422p_in = data;
   if (pi->outputs[OUTPUT_YUV422P].destination) {
-    smooth(priv, &y422p_in->c.tv,pi->pending_messages);
+    smooth(priv, y422p_in->c.timestamp, pi->pending_messages);
     PostData(y422p_in, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {

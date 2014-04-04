@@ -1118,21 +1118,21 @@ static void Keycode_handler(Instance *pi, void *msg)
 
 
 /* FIXME: Could this code be shared?  Maybe include the variables as a
-   substructure, and move calc_fps into a different module. */
+   substructure, and move calc_fps into a different module. 
+   Update: See FPS.c
+*/
 static double period = 0.0;
 static int count = 0;
-static struct timeval tv_last = { };
-static void calc_fps(struct timeval *tv)
+static double timestamp_last = 0.0;
+static void calc_fps(double timestamp)
 {
-  double t1, t2, p;
+  double p;
 
-  if (!tv_last.tv_sec) {
+  if (timestamp_last == 0.0) {
     goto out;
   }
 
-  t1 = tv_last.tv_sec + (tv_last.tv_usec/1000000.0);
-  t2 = tv->tv_sec + (tv->tv_usec/1000000.0);
-  p = t2 - t1;
+  p = timestamp - timestamp_last;
 
   if (period == 0.0) {
     period = p;
@@ -1145,7 +1145,7 @@ static void calc_fps(struct timeval *tv)
   }
 
  out:
-  tv_last = *tv;
+  timestamp_last = timestamp;
 }
 
 
@@ -1316,8 +1316,8 @@ static void V4L2Capture_tick(Instance *pi)
     if (pi->outputs[OUTPUT_YUV422P].destination) {
       YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
       Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
-      gettimeofday(&y422p->c.tv, NULL);
-      calc_fps(&y422p->c.tv);
+      getdoubletime(&y422p->c.timestamp);
+      calc_fps(y422p->c.timestamp);
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y422p->cb, 
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 
@@ -1340,8 +1340,8 @@ static void V4L2Capture_tick(Instance *pi)
 	   streq(sl(priv->format), "MJPG") ) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
-      gettimeofday(&j->c.tv, NULL);
-      calc_fps(&j->c.tv);
+      getdoubletime(&j->c.timestamp);
+      calc_fps(j->c.timestamp);
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
       j->encoded_length = priv->vbuffer.bytesused;
       if (j->encoded_length < 1000) {
@@ -1359,7 +1359,7 @@ static void V4L2Capture_tick(Instance *pi)
   else if (streq(sl(priv->format), "O511")) {
     if (pi->outputs[OUTPUT_O511].destination) {
       O511_buffer *o = O511_buffer_new(priv->width, priv->height, 0L);
-      gettimeofday(&o->c.tv, NULL);
+      getdoubletime(&o->c.timestamp);
       memcpy(o->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
 
       o->encoded_length = priv->vbuffer.bytesused;
@@ -1384,7 +1384,7 @@ static void V4L2Capture_tick(Instance *pi)
       int icb = 0;
       uint8_t *p = priv->buffers[priv->wait_on].data;
       YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
-      gettimeofday(&y422p->c.tv, NULL);
+      getdoubletime(&y422p->c.timestamp);
       for (i=0; i < priv->vbuffer.bytesused/4; i++) {
 	y422p->y[iy++] = *p++;
 	y422p->cb[icb++] = *p++;

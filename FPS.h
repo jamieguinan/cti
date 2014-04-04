@@ -5,7 +5,7 @@
 
 /* FPS */
 typedef struct {
-  struct timeval tv_last;
+  double timestamp_last;
   float period;
   int count;
 } FPS;

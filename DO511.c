@@ -100,12 +100,8 @@ static void O511_handler(Instance *pi, void *data)
   YUV420P_buffer *y420p_out;
   unsigned char *temp;
 
-  struct timeval t1;
-
-  gettimeofday(&t1, 0L);
-
   y420p_out = YUV420P_buffer_new(o511_in->width, o511_in->height, 0L);
-  y420p_out->c.tv = o511_in->c.tv;
+  y420p_out->c.timestamp = o511_in->c.timestamp;
     
   temp = malloc( (o511_in->width * o511_in->height * 3)/ 2);
 
@@ -128,14 +124,14 @@ static void O511_handler(Instance *pi, void *data)
 
   if (pi->outputs[OUTPUT_RGB3].destination) {
     RGB3_buffer *rgb = YUV420P_to_RGB3(y420p_out);
-    rgb->c.tv = o511_in->c.tv;
+    rgb->c.timestamp = o511_in->c.timestamp;
     PostData(rgb, pi->outputs[OUTPUT_RGB3].destination);
   }
 
   if (pi->outputs[OUTPUT_GRAY].destination) {
     Gray_buffer *gray_out = Gray_buffer_new(y420p_out->width, y420p_out->height, 0L);
     memcpy(gray_out->data, y420p_out->y, y420p_out->width * y420p_out->height);
-    gray_out->c.tv = o511_in->c.tv;
+    gray_out->c.timestamp = o511_in->c.timestamp;
     PostData(gray_out, pi->outputs[OUTPUT_GRAY].destination);
   }
 

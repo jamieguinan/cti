@@ -85,6 +85,7 @@ static void Audio_handler(Instance *pi, void *msg)
       printf("=== header.channels=%d\n", audio->header.channels);
       printf("=== samplesToInput=%ld\n", priv->samplesToInput);
       printf("=== maxOutputBytes=%ld\n", priv->maxOutputBytes);
+      printf("=== timestamp=%.6f\n", audio->timestamp);
       priv->output_buffer = Mem_malloc(priv->maxOutputBytes);
     }
 
@@ -187,6 +188,7 @@ static void Audio_handler(Instance *pi, void *msg)
     
     if (pi->outputs[OUTPUT_AAC].destination) {
       AAC_buffer * aac = AAC_buffer_from(priv->output_buffer, encoded);
+      aac->timestamp = audio->timestamp;
       PostData(aac, pi->outputs[OUTPUT_AAC].destination);
     }
     

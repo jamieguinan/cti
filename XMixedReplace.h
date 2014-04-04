@@ -10,7 +10,7 @@
 typedef struct {
   uint8_t *data;
   int data_length;
-  struct timeval tv;
+  double timestamp;
 } XMixedReplace_buffer;
 
 extern XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, const char *mime_type);

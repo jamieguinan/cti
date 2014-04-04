@@ -102,9 +102,9 @@ typedef struct {
   int toggle_fullscreen;
   int fullscreen;
 
-  struct timeval tv_sleep_until;
-  struct timeval tv_last;
-  struct timeval frame_last;
+  double tv_sleep_until;
+  double tv_last;
+  double frame_last;
 
   SDL_Surface *surface;
   int width;
@@ -134,14 +134,16 @@ static void _reset_video(SDLstuff_private *priv, const char *func);
 
 static void tsnapshot()
 {
-  static struct timespec field_times[600];
+  static double field_times[600];
   static int tcount = 0;
   
   if (tcount == 600) {
     return;
   }
 
-  clock_gettime(CLOCK_MONOTONIC_RAW, &field_times[tcount]);
+  struct timespec cnow;
+  clock_gettime(CLOCK_MONOTONIC_RAW, &cnow);
+  field_times[tcount] = cnow.tv_sec + (cnow.tv_nsec/1000000000.0);
 
   tcount++;
 
@@ -150,8 +152,8 @@ static void tsnapshot()
     FILE *f = fopen("tcount.csv", "w");
     if (f) {
       for (i=1; i < 600; i++) {
-	double t0 = field_times[i-1].tv_sec + (field_times[i-1].tv_nsec/1000000000.0);
-	double t1 = field_times[i].tv_sec + (field_times[i].tv_nsec/1000000000.0);
+	double t0 = field_times[i-1];
+	double t1 = field_times[i];
 	fprintf(f, "%.9f, %.9f\n", t0, (t1-t0));
       }
       fclose(f);
@@ -422,9 +424,9 @@ static void render_frame_gl(SDLstuff_private *priv, RGB3_buffer *rgb3_in)
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   if (0) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    printf("sdl %ld.%06ld\n", tv.tv_sec, tv.tv_usec);
+    double tv;
+    getdoubletime(&tv);
+    printf("sdl %.6f\n", tv);
   }
 
   /* In OpenGL coordinates, Y moves "up".  Set raster pos, and use zoom to flip data vertically.  */
@@ -660,14 +662,14 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   }
 
   /* Handle frame delay timing. IN PROGRESS... */
-  struct timeval tv_now;
+  double tnow;
 
   // x(c->tv, priv->frame_last);
   if (c) {
     // priv->frame_last = c->tv;
   }
 
-  gettimeofday(&tv_now, NULL);
+  getdoubletime(&tnow);
   // nanosleep(tv_next - tv_now);
   
   tsnapshot();

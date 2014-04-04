@@ -10,7 +10,6 @@
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
 #include <unistd.h>		/* access */
-#include <sys/time.h>		/* gettimeofday */
 
 #include "CTI.h"
 #include "GdkCapture.h"
@@ -129,7 +128,7 @@ static void check_files(Instance *pi)
       goto out;
     }
     rgb = RGB3_buffer_new(width, height, 0L);
-    gettimeofday(&rgb->c.tv, 0L);
+    getdoubletime(&rgb->c.timestamp);
     size = height*bpl;
     data = Mem_malloc(size);
     if (fread(data, size, 1, f) != 1) {

@@ -5,19 +5,16 @@
 
 void FPS_show(FPS *fps)
 {
-  double t1, t2, p;
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
+  double p;
+  double timestamp;
+  getdoubletime(&timestamp);
 
-  if (!fps->tv_last.tv_sec) {
-    fps->tv_last.tv_sec = tv.tv_sec;
-    fps->tv_last.tv_usec = tv.tv_usec;
+  if (fps->timestamp_last == 0.0) {
+    fps->timestamp_last = timestamp;
     goto out;
   }
 
-  t1 = fps->tv_last.tv_sec + (fps->tv_last.tv_usec/1000000.0);
-  t2 = tv.tv_sec + (tv.tv_usec/1000000.0);
-  p = t2 - t1;
+  p = timestamp - fps->timestamp_last;
 
   if (fps->period == 0.0) {
     fps->period = p;
@@ -30,5 +27,5 @@ void FPS_show(FPS *fps)
   }
 
  out:
-  fps->tv_last = tv;
+  fps->timestamp_last = timestamp;
 }

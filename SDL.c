@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <sys/time.h>
 #include <math.h>
 #include "SDL.h"
 #include <gl.h>

@@ -6,7 +6,6 @@
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
-#include <sys/time.h>		/* gettimeofday */
 
 #include "CTI.h"
 #include "MjpegLocalBuffer.h"
@@ -40,7 +39,7 @@ static Output MjpegLocalBuffer_outputs[] = {
 typedef struct {
   Instance i;
   int forwardbuffer; /* Seconds to keep recording after last trigger */
-  struct timeval record_until;
+  double record_until;
   int recording;
   int md_threshold;
 } MjpegLocalBuffer_private;
@@ -61,12 +60,12 @@ static void Config_handler(Instance *pi, void *data)
 static void check_record_state(MjpegLocalBuffer_private *priv)
 {
   if (priv->recording) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    if (tv.tv_sec > priv->record_until.tv_sec) {
+    double tnow;
+    getdoubletime(&tnow);
+    if (tnow > priv->record_until) {
       priv->recording = 0;
-      fprintf(stderr, "md recording OFF (%lu > %lu)\n", 
-	      (unsigned long)tv.tv_sec, (unsigned long)priv->record_until.tv_sec);
+      fprintf(stderr, "md recording OFF (%.3f > %.3f)\n", 
+	      tnow, priv->record_until);
     }
   }
 }
@@ -85,8 +84,8 @@ static void MotionDetect_handler(Instance *pi, void *data)
   }
 
   if (md->sum > priv->md_threshold) {
-    gettimeofday(&priv->record_until, NULL);
-    priv->record_until.tv_sec += priv->forwardbuffer;
+    getdoubletime(&priv->record_until);
+    priv->record_until += priv->forwardbuffer;
     if (!priv->recording) {
       priv->recording = 1;
       if (pi->outputs[OUTPUT_CONFIG].destination) {

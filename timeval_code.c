@@ -1,3 +1,4 @@
+/* 2014-Apr-03: Why???  Just use doubles... */
 
 static inline double tv_to_double(struct timeval *tv) {
   return (tv->tv_sec + tv->tv_usec/1000000.0);

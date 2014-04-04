@@ -47,7 +47,7 @@ static void y422p_handler(Instance *pi, void *data)
     half_width_scale(y422p_in->cr, y422p_in->width/2, y422p_in->height, y422p_out->cr);
     half_width_scale(y422p_in->cb, y422p_in->width/2, y422p_in->height, y422p_out->cb);
     dpf("posting %dx%d image to output\n", y422p_out->width, y422p_out->height);
-    y422p_out->c.tv = y422p_in->c.tv;
+    y422p_out->c.timestamp = y422p_in->c.timestamp;
     PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
   YUV422P_buffer_discard(y422p_in);

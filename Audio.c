@@ -2,7 +2,6 @@
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* malloc */
 #include <string.h>		/* memset */
-#include <sys/time.h>		/* gettimeofday */
 #include <inttypes.h>
 
 #include "Audio.h"

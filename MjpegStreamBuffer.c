@@ -5,7 +5,6 @@
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
-#include <sys/time.h>		/* gettimeofday */
 
 #include "CTI.h"
 #include "MjpegStreamBuffer.h"
@@ -39,12 +38,12 @@ typedef struct {
   String *basename;
   int backbuffer;		/* Seconds of buffered data to flush when recording turned on */
   int forwardbuffer;		/* Seconds to keep recording after last trigger */
-  struct timeval record_until;
+  double record_until;
   int recording;
   FILE *output;
   struct {
     RawData_buffer *raw;
-    struct timeval tv;
+    double timestamp;
   } store[STORE_SIZE];
   int put;
   int get;
@@ -54,8 +53,8 @@ typedef struct {
 static int do_trigger(Instance *pi, const char *value_unused)
 {
   MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
-  gettimeofday(&priv->record_until, NULL);
-  priv->record_until.tv_sec += priv->forwardbuffer;
+  getdoubletime(&priv->record_until);
+  priv->record_until += priv->forwardbuffer;
   return 0;
 }
 

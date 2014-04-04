@@ -40,7 +40,7 @@ enum {
 
 /* Common metadata fields. */
 typedef struct {
-  struct timeval tv;
+  double timestamp;
   uint32_t fps_numerator;
   uint32_t fps_denominator;
   double nominal_period;

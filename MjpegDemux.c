@@ -538,16 +538,17 @@ static void MjpegDemux_tick(Instance *pi)
   else if (streq(priv->current.content_type->bytes, "image/jpeg")) {
     Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
 				      priv->current.content_length, 0L);
+    j->c.timestamp = priv->current.timestamp;
 
     if (priv->eof_notify && !priv->buffer.jpeg) {
       /* Save a copy of the first frame. */
       priv->buffer.jpeg = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
 					   priv->current.content_length, 0L);
+      priv->buffer.jpeg->c.timestamp = priv->current.timestamp;
     }
 
-    /* Reconstruct timeval timestamp for Jpeg buffer.  Not actually used here, though. */
-    j->c.tv.tv_sec = priv->current.timestamp;
-    j->c.tv.tv_usec = fmod(priv->current.timestamp, 1.0) * 1000000;
+    /* Reconstruct timestamp for Jpeg buffer.  Not actually used here, though. */
+    j->c.timestamp = priv->current.timestamp;
 
     FPS_show(&priv->fps);
 
@@ -580,10 +581,8 @@ static void MjpegDemux_tick(Instance *pi)
 	nanosleep( double_to_timespec(priv->fixed_video_period), NULL);	
       }
       else if (priv->use_timestamps && !priv->seen_audio) {
-	struct timeval tv_now;
 	double tnow;
-	gettimeofday(&tv_now, 0L);
-	tnow = timeval_to_double(tv_now);
+	getdoubletime(&tnow);
 	
 	if (priv->video.stream_t0 < 0.0) {
 	  /* New stream, or seek occurred. */
