@@ -120,6 +120,8 @@ static void show_x264_params(x264_param_t * params)
   printf("x264: i_fps_den = %" PRIu32 "\n", params->i_fps_den);
   printf("x264: i_timebase_num = %" PRIu32 "\n", params->i_timebase_num);
   printf("x264: i_timebase_den = %" PRIu32 "\n", params->i_timebase_den);
+  printf("x264: b_aud = %d\n", params->b_aud);
+  printf("x264: b_cabac = %d\n", params->b_cabac);
   printf("x264: b_vfr_input = %d\n", params->b_vfr_input);
   printf("x264: b_pulldown = %d\n", params->b_pulldown);
   printf("x264: b_annexb = %d\n", params->b_annexb);
@@ -128,6 +130,8 @@ static void show_x264_params(x264_param_t * params)
   printf("x264: b_interlaced = %d\n", params->b_interlaced);
   printf("x264: b_fake_interlaced = %d\n", params->b_fake_interlaced);
   printf("x264: pf_log = %p\n", params->pf_log);
+  printf("x264: analyse.i_me_method = %d\n", params->analyse.i_me_method);
+  //printf("x264: analyze.i_me_method = %d\n", params->analyze.i_me_method);
   // printf("x264:  = %d\n", params->);
 }
 
@@ -142,9 +146,7 @@ static void YUV420P_handler(Instance *pi, void *msg)
     /* Set up the encoder and parameters. */
     x264_param_t params;
 
-
     x264_param_default(&params);
-
 
     /* FIXME: Could make preset and profile settings config options
        during setup, and return available values from
@@ -152,11 +154,9 @@ static void YUV420P_handler(Instance *pi, void *msg)
        x264_profile_names[] as defined in "x264.h".  */
 
     rc = x264_param_default_preset(&params, priv->preset, "psnr");
-
     if (rc != 0) { fprintf(stderr, "x264_param_default_preset failed");  return; }
 
-    //rc = x264_param_apply_profile(&params, "baseline");
-    rc = x264_param_apply_profile(&params, "main");
+    rc = x264_param_apply_profile(&params, "baseline"); /* "baseline" "main" */
     if (rc != 0) { fprintf(stderr, "x264_param_apply_profile failed");  return; }
 
     params.i_width = y420->width;
@@ -179,7 +179,18 @@ static void YUV420P_handler(Instance *pi, void *msg)
     /* Testing.  Aha!  This results in 29.97fps instead of 59.94fps playback in mplayer! */
     params.b_vfr_input = 0;
 
+    /* Additional parameters for iOS playback.  References:
+     *   http://geobray.com/2010/03/26/live-tv-streaming-to-iphone-with-http/ 
+     *   https://trac.ffmpeg.org/wiki/x264EncodingGuide
+     *   http://video.stackexchange.com/questions/6906/how-to-encode-a-video-for-the-iphone-with-handbrake
+     */
+    params.b_aud = 1;
+    params.analyse.i_me_method = X264_ME_UMH;
+    params.b_tff = 1;
+
+    /* Show the parameters. */
     show_x264_params(&params);
+
     printf("%s:%d\n", __func__, __LINE__);
     priv->encoder = x264_encoder_open(&params);
     if (!priv->encoder) { fprintf(stderr, "x264_encoder_open failed");  return; }
@@ -199,6 +210,10 @@ static void YUV420P_handler(Instance *pi, void *msg)
     x264_picture_t pic_out = {};
     x264_nal_t *nal = 0L;
     int pi_nal = 0;
+
+    //if (pi->counter % 30 == 0) {
+    //  pic_in.b_keyframe = 1;
+    //}
 
     x264_picture_init(&pic_in);
     pic_in.img.i_csp = X264_CSP_I420;

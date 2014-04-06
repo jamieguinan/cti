@@ -173,8 +173,10 @@ typedef struct {
   int seen_video;
   int debug_outpackets;
 
-  String output;			/* Side channel. */
+  String output;		/* Side channel name use %d for sequential names. */
   Sink *output_sink;
+  int duration;			/* Seconds between closing and opening output files.*/
+  uint64_t m3u8_pts_start;
 
 } MpegTSMux_private;
 
@@ -246,7 +248,7 @@ static int set_output(Instance *pi, const char *value)
   }
   
   String_set(&priv->output, value);
-  priv->output_sink = Sink_new(sl(priv->output));
+  // priv->output_sink = Sink_new(sl(priv->output));
 
   return 0;
 }
@@ -256,7 +258,8 @@ static Config config_table[] = {
   { "pmt_essd", set_pmt_essd, 0L, 0L },
   { "pmt_pcrpid", set_pmt_pcrpid, 0L, 0L },
   { "debug_outpackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, debug_outpackets) },
-  { "output", set_output }
+  { "output", set_output },
+  { "duration",  0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, duration) },
   // { "...",    set_..., get_..., get_..._range },
 };
 
@@ -264,6 +267,36 @@ static Config config_table[] = {
 static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
+}
+
+
+static void m3u8_record(MpegTSMux_private * priv, TSPacket *pkt, 
+			uint64_t pts_now, int isPAT)
+{
+  /* FIXME: Check for pts wrap. less-than would probably work. */
+
+  int start_new_segment = 0;
+
+  if (priv->m3u8_pts_start == 0) {
+    start_new_segment = 1;
+    priv->m3u8_pts_start = pts_now;
+  }
+  if (isPAT && (pts_now - priv->m3u8_pts_start > (priv->duration*90000))) {
+    start_new_segment = 1;
+  }
+    /* Start a new segment. */
+  if (start_new_segment && 
+      priv->output_sink && 
+      priv->output_sink->io.state == IO_OPEN_FILE) {
+    Sink_close_current(priv->output_sink);
+  }
+
+  if (start_new_segment) {
+    priv->output_sink = Sink_new(sl(priv->output));
+    priv->m3u8_pts_start = pts_now;
+  }
+  
+  Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
 }
 
 
@@ -718,7 +751,8 @@ static void flush(Instance *pi)
     }
 
     if (sl(priv->output)) {
-      Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+      //Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+      m3u8_record(priv, pkt, pts_now, 1);
     }
 
     Mem_free(pkt);
@@ -740,7 +774,8 @@ static void flush(Instance *pi)
     }
 
     if (sl(priv->output)) {
-      Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+      //Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+      m3u8_record(priv, pkt, pts_now, 0);
     }
 
     Mem_free(pkt);
@@ -788,7 +823,8 @@ static void flush(Instance *pi)
       }
 
       if (sl(priv->output)) {
-	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+	//Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+	m3u8_record(priv, pkt, pts_now, 0);
       }
 
       stream->packets = stream->packets->next;

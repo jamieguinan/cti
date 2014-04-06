@@ -69,6 +69,7 @@
 #include "SQLite.h"
 #include "SubProc.h"
 #include "XMLMessageServer.h"
+#include "Mpeg2Dec.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -120,6 +121,10 @@ int cti_main(int argc, char *argv[])
 
 #ifdef HAVE_LIBDV
   LibDV_init();
+#endif
+
+#ifdef HAVE_LIBDV
+  Mpeg2Dec_init();
 #endif
 
 #ifdef HAVE_LIBQUICKTIME

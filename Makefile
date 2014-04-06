@@ -213,6 +213,14 @@ LDFLAGS+=$$(pkg-config libdv --libs)
 CPPFLAGS+=-DHAVE_LIBDV
 endif
 
+# libmpeg2
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libmpeg2.pc))
+OBJS+=	$(OBJDIR)/Mpeg2Dec.o
+CPPFLAGS+=$$(pkg-config libmpeg2 --cflags)
+LDFLAGS+=$$(pkg-config libmpeg2 --libs)
+CPPFLAGS+=-DHAVE_LIBMPEG2
+endif
+
 # Quicktime
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libquicktime.pc))
 OBJS+=$(OBJDIR)/LibQuickTimeOutput.o
