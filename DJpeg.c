@@ -294,10 +294,9 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   uint8_t *buffers[3] = {};
 
-  /* Rather than allocate separate buffers, allocate and use one of
-     the output image buffer types, and fill that in during
-     decompress.  Even if it isn't an assigned output, it will be
-     needed for conversion to an assigned output. */
+  /* Allocate and use one of the output image buffer types, and fill
+     that in during decompress.  Even if it isn't an assigned output,
+     it will be needed for conversion to an assigned output. */
   if (fmt->imgtype == IMAGE_TYPE_YUV422P) {
     /* FIXME: Pad for DCT block boundaries, see libjpeg.txt */
     yuv422p = YUV422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
@@ -317,7 +316,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   while (cinfo.output_scanline < cinfo.output_height) {
     int n;
     /* Setup necessary for raw downsampled data.  Note that depending on the
-       format, each pass may produced 8 lines instead of 16, but the code
+       format, each pass may produce 8 lines instead of 16, but the code
        here will still work since it uses cinfo.output_scanline, which is
        incremented by libjpeg.  */
     JSAMPROW y[16];

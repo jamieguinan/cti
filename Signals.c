@@ -41,7 +41,9 @@ static void shutdown_handler(int signo)
 
 static void usr1_handler(int signo)
 {
+#ifdef USE_STACKDEBUG
   StackDebug();
+#endif
 }
 
 

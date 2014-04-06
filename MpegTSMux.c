@@ -137,11 +137,22 @@ typedef struct {
 
 typedef struct {
   Instance i;
-  // TS file format string.
-  String *chunk_fmt;
-  // TS sequence duration in seconds.
-  int chunk_duration;
-  FILE *chunk_file;
+  /* TS name format string, using '%s' will generate sequential
+     names. */
+  String output;
+  Sink *output_sink;
+
+  /* TS sequence duration in seconds. */
+  int duration;
+
+  /* Number of output files to maintain */
+  int output_count;
+
+  /* PTS timestamp of beginnig of current sequence. */
+  uint64_t m3u8_pts_start;
+
+  /* Names of ts files to go into .m3u8 list. */
+  String_list * m3u8_ts_files;
 
   int pktseq;			/* Output packet counter... */
 
@@ -172,11 +183,6 @@ typedef struct {
   int seen_audio;
   int seen_video;
   int debug_outpackets;
-
-  String output;		/* Side channel name use %d for sequential names. */
-  Sink *output_sink;
-  int duration;			/* Seconds between closing and opening output files.*/
-  uint64_t m3u8_pts_start;
 
 } MpegTSMux_private;
 
@@ -270,6 +276,12 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
+static void m3u8_files_update(MpegTSMux_private * priv)
+{
+  
+}
+
+
 static void m3u8_record(MpegTSMux_private * priv, TSPacket *pkt, 
 			uint64_t pts_now, int isPAT)
 {
@@ -286,14 +298,14 @@ static void m3u8_record(MpegTSMux_private * priv, TSPacket *pkt,
   }
     /* Start a new segment. */
   if (start_new_segment && 
-      priv->output_sink && 
-      priv->output_sink->io.state == IO_OPEN_FILE) {
-    Sink_close_current(priv->output_sink);
+      priv->output_sink) {
+    Sink_free(&priv->output_sink);
   }
 
   if (start_new_segment) {
     priv->output_sink = Sink_new(sl(priv->output));
     priv->m3u8_pts_start = pts_now;
+    m3u8_files_update(priv);
   }
   
   Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
@@ -881,6 +893,9 @@ static void MpegTSMux_instance_init(Instance *pi)
   };
 
   priv->debug_outpackets = 0;
+  priv->output_count = 5;
+  priv->duration = 5;
+  priv->m3u8_ts_files = String_list_new();
 }
 
 
@@ -888,7 +903,7 @@ static Template MpegTSMux_template = {
   .label = "MpegTSMux",
   .priv_size = sizeof(MpegTSMux_private),
   .inputs = MpegTSMux_inputs, 
- .num_inputs = table_size(MpegTSMux_inputs),
+  .num_inputs = table_size(MpegTSMux_inputs),
   .outputs = MpegTSMux_outputs,
   .num_outputs = table_size(MpegTSMux_outputs),
   .tick = MpegTSMux_tick,

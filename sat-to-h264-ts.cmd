@@ -31,7 +31,7 @@ config tsm pmt_essd 1:27:258
 config tsm output sat%s.ts
 config tsm duration 10
 
-config aenc rate_per_channel 20000
+config aenc rate_per_channel 16000
 
 config pcmin input pcm.fifo
 #connect pcmin Audio_buffer null

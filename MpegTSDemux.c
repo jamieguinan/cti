@@ -1,7 +1,8 @@
 /*
- * Unpack data from Mpeg2 Transport Streams.
- * See earlier code "modc/MpegTS.h" for starters.
- * References,
+ * MpegTSDemux:
+ *
+ * Unpack data from Mpeg2 Transport Streams.  See earlier code
+ * "modc/MpegTS.h" for starters.  References,
  * 
  *   https://en.wikipedia.org/wiki/MPEG_transport_stream
  *   https://en.wikipedia.org/wiki/Program_Specific_Information
@@ -9,11 +10,11 @@
  *   https://en.wikipedia.org/wiki/Elementary_stream
  *   file:///home/guinan/projects/video/iso13818-1.pdf
  *   
- * This was mostly written as an exercise and testing tool, so 
- * that MpegTSMux.c (not Demux) could be developed in parallel
- * doing the inverse of what this module does.  But it could
- * be a useful TS demuxer by defining some outputs and passing
- * along the elementary stream data chunks.
+ * This was mostly written as an exercise and testing tool, so that
+ * MpegTSMux.c (not Demux) could be developed in parallel doing the
+ * inverse of what this module does.  But it could be made into a
+ * useful TS demuxer by defining some outputs and passing along the
+ * elementary stream data chunks.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */

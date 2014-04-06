@@ -1,8 +1,8 @@
 default: default1
 
-MAIN=main.o
-
 include ../platforms.make
+
+MAIN=main.o
 
 PKGCONFIGDIR ?= /usr/lib/pkgconfig
 
@@ -29,6 +29,7 @@ LDFLAGS += -ldl -lrt
 endif
 
 # INSTRUMENT = -finstrument-functions
+CPPFLAGS += USE_STACKDEBUG
 
 # "-static" is a problem for alsa, and other things...
 

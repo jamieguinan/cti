@@ -1,4 +1,4 @@
-/* V4L (old API, "1") code.  This is obsolete, but works great for
+/* V4L (old API, "1") code.  The V4L1 API is obsolete, but works great for
    OV511 cameras attached to LPD and NSLU2 boards based on 2.6.x builds.
 
    References,

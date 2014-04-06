@@ -25,6 +25,7 @@ typedef struct {
   IO_state state;
   unsigned int read_timeout_ms;
   ArrayU8 * extra;		/* extra data left over after certain operations */
+  String *generated_name;
 } IO_common;
 
 typedef struct {
