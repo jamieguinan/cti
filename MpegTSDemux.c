@@ -298,36 +298,6 @@ static void show_pes(Stream *s)
   }
 
   printf("    [end completed PES packet]\n");            
-  
-#if 0
-	  /* NOTE: This is peeking down into the PES layer, and is
-	     only written to handle one specific example case. */
-	  if (pid > 256) { 
-	    printf("  [PES] completed payload PTS: %d%d%d%d (%d) %d",
-		   (s->data->data[9] >> 7) & 1,
-		   (s->data->data[9] >> 6) & 1,
-		   (s->data->data[9] >> 5) & 1,
-		   (s->data->data[9] >> 4) & 1,
-		   (s->data->data[9] >> 1) & 7,
-		   (s->data->data[9] >> 0) & 1);
-	    
-	    printf(" %" PRIu64 "", MpegTS_PTS(s->data->data + 9));
-	    printf("\n");
-	  }
-	  
-	  if (pid == 258) { 
-	    printf("  [PES] completed payload DTS: %d%d%d%d (%d) %d",
-		   (s->data->data[14] >> 7) & 1,
-		   (s->data->data[14] >> 6) & 1,
-		   (s->data->data[14] >> 5) & 1,
-		   (s->data->data[14] >> 4) & 1,
-		   (s->data->data[14] >> 1) & 7,
-		   (s->data->data[14] >> 0) & 1);
-	    
-	    printf(" %" PRIu64, MpegTS_PTS(s->data->data + 14));
-	    printf("\n");
-	  }
-#endif
 }
 
 
