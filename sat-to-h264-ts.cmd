@@ -18,7 +18,8 @@ config ss v4port 6678
 config ss enable 1
 
 config venc output test.264
-config venc preset fast
+config venc preset slow
+
 
 new MpegTSMux tsm
 #config tsm debug_outpackets 1
