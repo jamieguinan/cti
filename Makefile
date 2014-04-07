@@ -28,8 +28,8 @@ ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 endif
 
-# INSTRUMENT = -finstrument-functions
-CPPFLAGS += USE_STACKDEBUG
+#INSTRUMENT = -finstrument-functions
+CPPFLAGS += -DUSE_STACKDEBUG
 
 # "-static" is a problem for alsa, and other things...
 

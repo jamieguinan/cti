@@ -110,8 +110,9 @@ int v = 0;
 typedef struct _ts_packet {
   uint8_t data[188];
   struct _ts_packet *next;
-  uint af:1;
-  uint pus:1;
+  int af;
+  int pus;
+  uint64_t pts_value;
 } TSPacket;
 
 #define ESSD_MAX 2
@@ -316,7 +317,6 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 {
   MpegTimeStamp pts = {};
   MpegTimeStamp dts = {};
-  uint64_t tv90k;
   int i;
   Stream *stream = NULL;
   
@@ -332,8 +332,6 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   }
 
   /* Map timestamp to 33-bit 90KHz units. */
-  tv90k = stream->pts_value;
-
   /* Assign to PTS, and same to DTS. */
   uint8_t peslen = 0; /* PES remaining header data length */
   uint8_t flags = 0;
@@ -342,7 +340,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     flags |= (1<<7);
     peslen += 5;
     //pts.value = stream->pts_value;
-    pts.value = tv90k;
+    pts.value = stream->pts_value;
     if (stream->dts) {
       dts.set = 1;
       flags |= (1<<6);
@@ -461,11 +459,11 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 	packet->data[5] |= (1<<4);	/* PCR */
 	/* FIXME: use data[index] if other flag bits are to be set. */
 	/* (notice corresponding unpack code in MpegTSDemux.c for same shifts in other direction) */
-	packet->data[6] = ((tv90k >> 25) & 0xff);
-	packet->data[7] = ((tv90k >> 17) & 0xff);
-	packet->data[8] = ((tv90k >> 9) & 0xff);
-	packet->data[9] = ((tv90k >> 1) & 0xff);
-	packet->data[10] = ((tv90k & 1) << 7) /* low bit of 33 bits */
+	packet->data[6] = ((pts.value >> 25) & 0xff);
+	packet->data[7] = ((pts.value >> 17) & 0xff);
+	packet->data[8] = ((pts.value >> 9) & 0xff);
+	packet->data[9] = ((pts.value >> 1) & 0xff);
+	packet->data[10] = ((pts.value & 1) << 7) /* low bit of 33 bits */
 	  | (0x3f << 1)  /* 6 bits reserved/padding */
 	  | (0<<0);	/* 9th bit of extension */
 	packet->data[11] = (0x00);	/* bits 8:0 of extension */
