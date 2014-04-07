@@ -196,6 +196,9 @@ static void Audio_handler(Instance *pi, void *msg)
     if (pi->outputs[OUTPUT_AAC].destination) {
       AAC_buffer * aac = AAC_buffer_from(priv->output_buffer, encoded);
       aac->timestamp = audio->timestamp;
+      aac->nominal_period = 
+	(1.0*audio->data_length/audio->header.frame_size) /* Number of frames, convert to float. */
+	/audio->header.rate;				  /* Divide by frames/sec */
       PostData(aac, pi->outputs[OUTPUT_AAC].destination);
     }
     

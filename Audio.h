@@ -87,6 +87,7 @@ typedef struct {
   uint8_t *data;
   int data_length;
   double timestamp;
+  double nominal_period;
 } AAC_buffer;
 
 extern AAC_buffer *AAC_buffer_from(uint8_t *data, int data_length);

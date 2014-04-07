@@ -112,7 +112,7 @@ typedef struct _ts_packet {
   struct _ts_packet *next;
   int af;
   int pus;
-  uint64_t pts_value;
+  uint64_t estimated_timestamp;	/* in 90KHz units */
 } TSPacket;
 
 #define ESSD_MAX 2
@@ -123,8 +123,9 @@ typedef struct {
   int packet_count;
   uint64_t pts_value;
   int pts_add;
-  uint64_t pcr_value;
+  uint64_t pcr_value;		/* FIXME: Need this if always same as pts_value? */
   int pcr_add;
+  uint64_t es_duration;		/* nominal elementary packet duration in 90KHz units */
   uint16_t pid;
   uint16_t continuity_counter;
   uint16_t es_id;
@@ -339,7 +340,6 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     pts.set = 1;
     flags |= (1<<7);
     peslen += 5;
-    //pts.value = stream->pts_value;
     pts.value = stream->pts_value;
     if (stream->dts) {
       dts.set = 1;
@@ -424,8 +424,17 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   unsigned int payload_size;
   unsigned int payload_index = 0;
 
+  uint64_t et = stream->pts_value;
+  int et_add = stream->es_duration / ((pes->len/188)+1);
+
   while (pes_offset < pes->len) {
     TSPacket *packet = Mem_calloc(1, sizeof(*packet));
+    packet->estimated_timestamp = et;
+    et += et_add;
+
+    printf("stream %u estimated timestamp: %" PRIu64 " (es_duration=%" PRIu64 " et_add=%d)\n", 
+	   stream->pid, packet->estimated_timestamp, stream->es_duration, et_add);
+
     unsigned int afLen = 0;
     unsigned int afAdjust = 1;	/* space for the afLen byte */
 
@@ -458,7 +467,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 	afLen += 6;
 	packet->data[5] |= (1<<4);	/* PCR */
 	/* FIXME: use data[index] if other flag bits are to be set. */
-	/* (notice corresponding unpack code in MpegTSDemux.c for same shifts in other direction) */
+	/* Notice corresponding unpack code in MpegTSDemux.c for same shifts in other direction. */
 	packet->data[6] = ((pts.value >> 25) & 0xff);
 	packet->data[7] = ((pts.value >> 17) & 0xff);
 	packet->data[8] = ((pts.value >> 9) & 0xff);
@@ -528,12 +537,19 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   }
 }
 
+static uint64_t timestamp_to_90KHz(double timestamp)
+{
+  return (uint64_t)(fmod(timestamp, 95000)  // pts wraps at 95000 seconds, so why not
+		    * 1000000 // Convert to microseconds.
+		    * 9 / 100); // Convert to 90KHz units.
+}
 
 static void H264_handler(Instance *pi, void *msg)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
   if (!priv->seen_video) {
+    /* FIXME: Can probably get rid of this block... */
     priv->seen_video = 1;
     priv->streams[0].pts_value = 0;
     priv->streams[0].pts_add = (int)(90000 * h264->c.nominal_period);
@@ -541,20 +557,20 @@ static void H264_handler(Instance *pi, void *msg)
     priv->streams[0].pcr_add = priv->streams[0].pts_add;
   }
 
-  priv->streams[0].pts_value = (uint64_t) 
-    (fmod(h264->c.timestamp, 95000)  // pts wraps at 95000 seconds, so why not
-     * 1000000 // Convert to microseconds.
-     * 9 / 100 // Convert to 90KHz units.
-     );
+  priv->streams[0].pts_value = timestamp_to_90KHz(h264->c.timestamp);
   priv->streams[0].pts_add = 0;
   priv->streams[0].pcr_value = priv->streams[0].pts_value;
   priv->streams[0].pcr_add = 0;
+  priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
 
-  if (1) printf("h264->encoded_length=%d timestamp=%.6f pts_value=%" PRIu64 "\n",
-		h264->encoded_length, h264->c.timestamp,
+  if (1) printf("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 "\n",
+		h264->encoded_length, 
+		h264->c.timestamp,
+		h264->c.nominal_period,
+		priv->streams[0].es_duration,
 		priv->streams[0].pts_value);
 
-  packetize(priv, 258, ArrayU8_temp_const(h264->data, h264->encoded_length) );
+  packetize(priv, 258, ArrayU8_temp_const(h264->data, h264->encoded_length));
   H264_buffer_discard(h264);
 }
 
@@ -564,13 +580,11 @@ static void AAC_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   AAC_buffer *aac = msg;
   if (!priv->seen_audio) { priv->seen_audio = 1; }
-  //printf("aac->data_length=%d aac->timestamp=%.6f\n",  aac->data_length, aac->timestamp);
-  priv->streams[1].pts_value = (uint64_t) 
-    (fmod(aac->timestamp, 95000)  // pts wraps at 95000 seconds, so why not
-     * 1000000 // Convert to microseconds.
-     * 9 / 100 // Convert to 90KHz units.
-     );
+  printf("aac->data_length=%d aac->timestamp=%.6f aac->nominal_period=%.6f\n",  
+	 aac->data_length, aac->timestamp,  aac->nominal_period);
+  priv->streams[1].pts_value = timestamp_to_90KHz(aac->timestamp);
   priv->streams[1].pts_add = 0;
+  priv->streams[1].es_duration = timestamp_to_90KHz(aac->nominal_period);
   packetize(priv, 257, ArrayU8_temp_const(aac->data, aac->data_length) );
   AAC_buffer_discard(&aac);
 }
@@ -704,7 +718,7 @@ static void debug_outputpacket_write(TSPacket * pkt, String * fname)
 static void flush(Instance *pi)
 {
   /* Write out interleaved video and audio packets, adding PAT and PMT
-     packets at least every 100ms. */
+     packets at least every 100ms or N packets. */
 
   /* I'll eventually set up m3u8 generation. */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
