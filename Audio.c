@@ -17,6 +17,11 @@ static struct {
   [CTI_AUDIO_24BIT_SIGNED_LE] = { .size = 3 }, /* FIXME: Would samples be held in 32-bit buffers? */
 };
 
+int Audio_sample_size(Audio_type t)
+{
+  return TypeMap[t].size;
+}
+
 
 Audio_buffer * Audio_buffer_new(int rate, int channels, Audio_type t)
 {

@@ -15,7 +15,6 @@
 #include "Audio.h"
 #include "SourceSink.h"
 #include "Mem.h"
-#include "Log.h"
 #include "Signals.h"
 
 static void Config_handler(Instance *pi, void *data);
@@ -195,7 +194,8 @@ static void Wav_handler(Instance *pi, void *data)
   MjpegMux_private *priv = (MjpegMux_private *)pi;  
   Wav_buffer *wav_in = data;
 
-  // Log(LOG_WAV, "%s popped wav_in @ %p", __func__, wav_in);
+  dpf("%s wav_in %p, pi->outputs[OUTPUT_RAWDATA].destination=%p\n", __func__, wav_in,
+      pi->outputs[OUTPUT_RAWDATA].destination);
 
   /* Format header. */
   String *header = String_sprintf(part_format,

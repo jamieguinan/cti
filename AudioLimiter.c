@@ -62,11 +62,13 @@ static void Wav_handler(Instance *pi, void *msg)
       return;
   }
 
-  if (priv->limit) {
+  if (priv->limit >= 0 && priv->limit <= 100) {
     int i;
+    int num_samples = wav_in->data_length/Audio_sample_size(wav_in->params.atype);
     int16_t sample;
     int16_t *pi16 = wav_in->data;
-    for (i=0; i < wav_in->data_length; i+= sizeof(int16_t))  {
+
+    for (i=0; i < num_samples; i++) {
       sample = (pi16[i+1] << 8) + pi16[i];
       sample = (sample * priv->limit) / 100;
       pi16[i] = sample & 0xff;
