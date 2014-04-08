@@ -1,7 +1,10 @@
 /*
  * Mpeg TS/PES muxer.  
- * This might also handle generating sequential files and indexes.
- *  See iso13818-1.pdf around p.32 for bit packing.
+ * See iso13818-1.pdf around p.32 for bit packing.
+ * This also supports generating files for HTTP Live Streaming,
+ *   http://tools.ietf.org/html/draft-pantos-http-live-streaming-12
+ *   https://developer.apple.com/library/ios/technotes/tn2288/_index.html
+ *   https://developer.apple.com/library/ios/technotes/tn2224/_index.html
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
