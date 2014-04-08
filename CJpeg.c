@@ -129,6 +129,11 @@ static void compress_and_post(Instance *pi,
   double t1, t2;
   int report_time = 0;
 
+  if (0) printf("%s:%s(width=%d height=%d c1=%p c2=%p c3=%p)\n", 
+	 __FILE__, __func__,
+	 width, height,
+	 c1, c2, c3);
+  
   getdoubletime(&t1);
 
   cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
@@ -144,7 +149,7 @@ static void compress_and_post(Instance *pi,
     jpeg_out->c.timestamp = t1;	/* Save timestamp. */
   }
 
-  if (compress_mode == COMPRESS_Y422) {
+  if (compress_mode == COMPRESS_Y422 || compress_mode == COMPRESS_Y420) {
     int w2 = (width/8)*8;
     int h2 = (height/8)*8;
 
@@ -212,7 +217,7 @@ static void compress_and_post(Instance *pi,
   jpeg_start_compress(&cinfo, TRUE);
 
   while (cinfo.next_scanline < cinfo.image_height) {
-    if (COMPRESS_Y422) {
+    if (compress_mode == COMPRESS_Y422) {
       int n;
       /* Setup necessary for raw downsampled data.  */
       JSAMPROW y[16];
@@ -229,7 +234,8 @@ static void compress_and_post(Instance *pi,
       /* Need to pass enough lines at a time, see "(num_lines < lines_per_iMCU_row)" test in
 	 jcapistd.c */
       jpeg_write_raw_data(&cinfo, image, 16);
-    } else if (COMPRESS_Y420) {
+    }
+    else if (compress_mode == COMPRESS_Y420) {
       int n;
       /* Setup necessary for raw downsampled data.  */
       JSAMPROW y[16];
@@ -281,7 +287,8 @@ static void compress_and_post(Instance *pi,
     /* Compress time went over time limit, call sched_yield(), which
        should prevent starving other threads, most importantly video
        and audio capture.  Frames will back up on this thread, but on
-       "borderline" systems like 1.6GHz P4 it tends to even out. */ 
+       systems like 1.6GHz P4 which can just barely handle
+       640x480@30fps, it tends to even out. */ 
     sched_yield();
 
     /* Turn down quality. */
@@ -299,9 +306,9 @@ static void compress_and_post(Instance *pi,
   }
 
   if (report_time) {
-    fprintf(stderr, "* %.5f (q=%d)\n", 
-	    tdiff, 
-	    priv->adjusted_quality);
+    printf("* %.5f (q=%d)\n", 
+	   tdiff, 
+	   priv->adjusted_quality);
   }
 }
 

@@ -1,3 +1,5 @@
+system rm -vf test010-*.ts
+
 new MjpegDemux mjd
 new DJpeg dj
 new H264 venc
@@ -17,7 +19,7 @@ config tsm output test010-%s.ts
 config tsm duration 10
 
 config venc output test010.264
-config venc preset ultrafast
+config venc preset medium
 config venc tune psnr
 config venc profile baseline
 config venc output test010-output.264
@@ -26,5 +28,6 @@ config mjd input frontyard-20120601-195153.mjx
 config mjd enable 1
 
 system sleep 30
+config mjd enable 0
 system bash test010-production.sh
 exit

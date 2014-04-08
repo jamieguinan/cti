@@ -364,6 +364,18 @@ String * String_unescape(StringConst *str)
 }
 
 
+String * String_basename(String *str)
+{
+  int i;
+  for (i=(str->len-2); i >= 0; i--) {
+    if (str->bytes[i] == '/') {
+      return String_new(&str->bytes[i]+1);
+    }
+  }
+  return String_new(str->bytes);
+}
+
+
 String_list * String_list_new(void)
 {
   String_list *slst = Mem_calloc(1, sizeof(*slst));
@@ -507,4 +519,46 @@ void String_list_free(String_list **slst)
   }
   
   *slst = String_list_value_none();
+}
+
+
+String * String_list_pull_at(String_list * slst, int i)
+{
+  int i0 = i;
+
+  if (String_list_is_none(slst)) {
+    fprintf(stderr, "%s: string list is none!\n", __func__);
+    return String_value_none();
+  }
+  
+  if (slst->len == 0) {
+    fprintf(stderr, "%s: string list is empty!\n", __func__);
+    return String_value_none();
+  }
+
+  if (i < 0) {
+    i = slst->len - i;
+  }
+
+  if (i < 0 || i >= slst->len) {
+    fprintf(stderr, "%s: index %d out of range!\n", __func__, i0);
+    return String_value_none();
+  }  
+
+  String * tmp = slst->_strings[i];
+
+  int move_count = slst->len-i;
+  memmove(&slst->_strings[i], &slst->_strings[i+1], sizeof(String *) * move_count);
+  slst->len -= 1;
+
+  return tmp;
+}
+
+
+void String_list_del_at(String_list * slst, int i)
+{
+  String * tmp = String_list_pull_at(slst, i);
+  if (!String_is_none(tmp)) {
+    String_free(&tmp);
+  }
 }

@@ -28,12 +28,16 @@ config sdl mode OVERLAY
 #connect dj RGB3_buffer vs
 #connect vs RGB3_buffer sdl
 #connect dj RGB3_buffer sdl
+
 connect dj YUV422P_buffer vf
 connect vf YUV422P_buffer sdl
+
 connect do511 RGB3_buffer sdl
 
 #config mjd input ./rcv
+# Port 6667 is full speed, port 6668 is every-other.
 config mjd input 192.168.2.22:6667
+#config mjd input 192.168.2.22:6668
 #config mjd input 127.0.0.1:5000:L
 
 #config ap device plughw:2

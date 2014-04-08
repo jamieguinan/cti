@@ -187,7 +187,7 @@ static void Audio_handler(Instance *pi, void *msg)
       }
     }
     
-    printf("AAC encoded %d bytes\n",  encoded);
+    dpf("AAC encoded %d bytes\n",  encoded);
     if (encoded <= 0) {
       nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
       continue;

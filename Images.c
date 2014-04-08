@@ -670,7 +670,7 @@ YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
   yuv420p->cb_length = width*height/4;
 
   /* One data allocation, component pointers are set within it. */
-  yuv420p->data = Mem_calloc(1, yuv420p->y_length+yuv420p->cr_length+yuv420p->cb_length);
+  yuv420p->data = Mem_calloc(1, yuv420p->y_length + yuv420p->cr_length + yuv420p->cb_length);
 
   yuv420p->y = yuv420p->data;
   yuv420p->cr = yuv420p->data + yuv420p->y_length;
@@ -736,7 +736,7 @@ YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p)
   YUV422P_buffer * yuv422p = YUV422P_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
   int x, y;
 
-  printf("%s() has been tested\n", __func__);
+  printf("%s() has not been tested\n", __func__);
 
   /* Copy luma channel directly. */
   memcpy(yuv422p->y, yuv422p->y, yuv422p->y_length);

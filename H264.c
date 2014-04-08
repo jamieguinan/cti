@@ -199,8 +199,8 @@ static void YUV420P_handler(Instance *pi, void *msg)
     }
     else {
       /* Default to 30fps */
-      params.i_fps_num = 30;
-      params.i_fps_den = 10;
+      params.i_fps_num = 30000;
+      params.i_fps_den = 1000;
     }
 
     /* Testing.  Aha!  This results in 29.97fps instead of 59.94fps playback in mplayer! */

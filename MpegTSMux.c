@@ -154,12 +154,11 @@ typedef struct {
   uint64_t m3u8_pts_start;
 
   /* Names of ts files to go into .m3u8 list. */
+  String index_dir;
   String_list * m3u8_ts_files;
+  int media_sequence;
 
   int pktseq;			/* Output packet counter... */
-
-  // Index file format string.
-  String *index_fmt;
   
 #define MAX_STREAMS 2
   Stream streams[MAX_STREAMS];
@@ -262,11 +261,22 @@ static int set_output(Instance *pi, const char *value)
 }
 
 
+static int set_index_dir(Instance *pi, const char *value)
+{
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+
+  String_set(&priv->index_dir, value);
+
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "pmt_essd", set_pmt_essd, 0L, 0L },
   { "pmt_pcrpid", set_pmt_pcrpid, 0L, 0L },
   { "debug_outpackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, debug_outpackets) },
   { "output", set_output },
+  { "index_dir", set_index_dir },
   { "duration",  0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, duration) },
   // { "...",    set_..., get_..., get_..._range },
 };
@@ -280,7 +290,58 @@ static void Config_handler(Instance *pi, void *data)
 
 static void m3u8_files_update(MpegTSMux_private * priv)
 {
-  
+  if (String_list_len(priv->m3u8_ts_files) <= 1) {
+    /* The last file is "being generated" so don't make a list if
+       only a single file. */
+    return;
+  }
+
+  String * file_to_delete = String_value_none();
+  if (String_list_len(priv->m3u8_ts_files) > 6) {
+    file_to_delete = String_list_pull_at(priv->m3u8_ts_files, 0);
+  }
+
+  String * tmpname = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
+  FILE * fpi = fopen(s(tmpname), "w");
+  if (!fpi) {
+    printf("%s: failed to open %s\n", __func__, s(tmpname));
+    goto out;
+  }
+
+  /* FIXME: Consider,
+       #EXTINF:1, no desc
+  */
+
+  fprintf(fpi, "#EXTM3U\n");
+  fprintf(fpi, "#EXT-X-TARGETDURATION:%d\n", priv->duration);
+  fprintf(fpi, "#EXT-X-VERSION:3\n");
+  fprintf(fpi, "#EXT-X-MEDIA-SEQUENCE:%d\n", priv->media_sequence);
+  priv->media_sequence += 1;
+
+  printf("========\n");
+  int i;
+  for (i=0; 
+       i < String_list_len(priv->m3u8_ts_files)
+	 - 1; 			/* Don't include the latest, it is still being generated. */
+       i++) {
+    String * fstr = String_list_get(priv->m3u8_ts_files, i);
+    printf(":: %s\n", s(fstr));
+    fprintf(fpi, "#EXTINF:%d,\n", priv->duration);
+    String * bname = String_basename(fstr);
+    fprintf(fpi, "%s\n", s(bname));
+    String_free(&bname);
+  }
+
+  //fprintf(fpi, "#EXT-X-ENDLIST\n");  /* ONLY for VODs, not live... */
+  fclose(fpi);
+
+ out:
+  if (!String_is_none(file_to_delete)) {
+    unlink(s(file_to_delete));
+    String_free(&file_to_delete);
+  }
+
+  String_free(&tmpname);
 }
 
 
@@ -306,8 +367,10 @@ static void m3u8_record(MpegTSMux_private * priv, TSPacket *pkt,
 
   if (start_new_segment) {
     priv->output_sink = Sink_new(sl(priv->output));
-    priv->m3u8_pts_start = pts_now;
+    String *tmp = String_new(sl(priv->output_sink->io.generated_name));
+    String_list_add(priv->m3u8_ts_files, &tmp);
     m3u8_files_update(priv);
+    priv->m3u8_pts_start = pts_now;
   }
   
   Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
@@ -379,7 +442,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 
   if (pts.set) {
     /* Pack PTS. */
-    printf("stream %s pts.value=%" PRIu64 "\n", stream->typecode, pts.value);
+    dpf("stream %s pts.value=%" PRIu64 "\n", stream->typecode, pts.value);
     ArrayU8_append_bytes(pes, 
 			 (pts.set << 5) | (dts.set << 4) | (((pts.value>>30)&0x7) << 1 ) | 1
 			 ,((pts.value >> 22)&0xff) /* bits 29:22 */
@@ -402,7 +465,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   }
 
   if (dts.set) {
-    printf("stream %s dts.value=%" PRIu64 "\n", stream->typecode, dts.value);
+    dpf("stream %s dts.value=%" PRIu64 "\n", stream->typecode, dts.value);
     ArrayU8_append_bytes(pes,
 			 (1 << 4) | (((dts.value>>30)&0x7) << 1 ) | 1
 			 ,((dts.value >> 22)&0xff) /* bits 29:22 */
@@ -563,7 +626,7 @@ static void H264_handler(Instance *pi, void *msg)
   priv->streams[0].pcr_add = 0;
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
 
-  if (1) printf("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 "\n",
+  dpf("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 "\n",
 		h264->encoded_length, 
 		h264->c.timestamp,
 		h264->c.nominal_period,
@@ -583,7 +646,7 @@ static void AAC_handler(Instance *pi, void *msg)
   priv->streams[1].pts_value = timestamp_to_90KHz(aac->timestamp);
   priv->streams[1].pts_add = 0;
   priv->streams[1].es_duration = timestamp_to_90KHz(aac->nominal_period);
-  printf("aac->data_length=%d aac->timestamp=%.6f aac->nominal_period=%.6f es_duration=%" PRIu64"\n",
+  dpf("aac->data_length=%d aac->timestamp=%.6f aac->nominal_period=%.6f es_duration=%" PRIu64"\n",
 	 aac->data_length, aac->timestamp,  aac->nominal_period, priv->streams[1].es_duration );
   packetize(priv, 257, ArrayU8_temp_const(aac->data, aac->data_length) );
   AAC_buffer_discard(&aac);
@@ -733,12 +796,12 @@ static void flush(Instance *pi)
   int av_packets = 0;
 
   if (priv->streams[0].packet_count == 0) {
-    printf("waiting for V\n");
+    //printf("waiting for V\n");
     return;
   }
 
   if (priv->streams[1].packet_count == 0) {
-    printf("waiting for A\n");
+    //printf("waiting for A\n");
     return;
   }
 
@@ -775,7 +838,6 @@ static void flush(Instance *pi)
     }
 
     if (sl(priv->output)) {
-      //Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
       m3u8_record(priv, pkt, pts_now, 1);
     }
 
@@ -798,15 +860,17 @@ static void flush(Instance *pi)
     }
 
     if (sl(priv->output)) {
-      //Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
       m3u8_record(priv, pkt, pts_now, 0);
     }
 
     Mem_free(pkt);
   }
 
+  /* Loop as long as both A and V have some number of packets prepared. */
   while (priv->streams[0].packets && priv->streams[1].packets) {
+    /* Find stream with older packet. */
     Stream * stream = &priv->streams[0];
+
     for (i=1; i < MAX_STREAMS; i++) {
       if (priv->streams[i].packets->estimated_timestamp <
 	  priv->streams[i-1].packets->estimated_timestamp){
@@ -818,7 +882,7 @@ static void flush(Instance *pi)
     if (1) {
       TSPacket *pkt = stream->packets;
 
-      printf("flush: et=%" PRIu64 " pid=%d\n", pkt->estimated_timestamp, stream->pid);
+      dpf("flush: et=%" PRIu64 " pid=%d\n", pkt->estimated_timestamp, stream->pid);
 
       if (priv->debug_outpackets) {
 	char fname[256]; sprintf(fname, 
@@ -841,7 +905,6 @@ static void flush(Instance *pi)
       }
 
       if (sl(priv->output)) {
-	//Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
 	m3u8_record(priv, pkt, pts_now, 0);
       }
 
@@ -902,6 +965,8 @@ static void MpegTSMux_instance_init(Instance *pi)
   priv->output_count = 5;
   priv->duration = 5;
   priv->m3u8_ts_files = String_list_new();
+  priv->media_sequence = 0;
+  String_set(&priv->index_dir, ".");
 }
 
 

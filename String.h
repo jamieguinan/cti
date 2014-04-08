@@ -67,6 +67,7 @@ extern int String_is_none(String *str);
 extern String * String_value_none(void);
 extern int String_get_char(String *str, int index);
 extern String * String_unescape(StringConst *str);
+extern String * String_basename(String *str);
 
 
 /* List of strings. */
@@ -88,6 +89,8 @@ extern String * String_list_find_val(String_list *slst, String *key, int skip);
 extern void String_list_add(String_list *slst, String **add);
 extern String * String_list_find(String_list *slst, String *target);
 extern void String_list_free(String_list **slst);
+extern String * String_list_pull_at(String_list * slst, int i);
+extern void String_list_del_at(String_list * slst, int i);
 
 #ifndef streq
 #define streq(a,b) (strcmp((a),(b))==0)
