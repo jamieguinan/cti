@@ -3,6 +3,8 @@
  * Note that libx264 is GPL, but a commercial license is available,
  *
  *   http://www.videolan.org/developers/x264.html
+ * 
+ * Notes on presets: https://trac.ffmpeg.org/wiki/x264EncodingGuide
  *
  */
 #include <stdio.h>		/* fprintf */
@@ -10,6 +12,7 @@
 #include <string.h>		/* memcpy */
 #include <inttypes.h>		/* PRIu32 */
 #include <math.h>		/* round */
+#include <unistd.h>		/* sleep */
 
 #ifndef __tune_pentium4__
 
@@ -39,26 +42,17 @@ static Output H264_outputs[] = {
 };
 
 
-/* Notes on presets: https://trac.ffmpeg.org/wiki/x264EncodingGuide */
-const char * presets[] = {
-  [0] = "ultrafast", 
-  "superfast", 
-  "veryfast", 
-  "faster", 
-  "fast", 
-  "medium", 
-  "slow", 
-  "slower", 
-  "veryslow",
-};
-
 typedef struct {
   Instance i;
   int pts;
   x264_t *encoder;
   String output;			/* Side channel. */
   Sink *output_sink;
-  const char *preset;
+
+  /* These next few values should point to x264_preset_*[] from x264.h */
+  const char * preset;
+  const char * tune;
+  const char * profile;
 
   /* Similar to as used in x264.c: */
   //cli_output_t cli_output;
@@ -94,10 +88,10 @@ static int set_preset(Instance *pi, const char *value)
   H264_private *priv = (H264_private *)pi;
 
   int i;
-  for (i=0; i < cti_table_size(presets); i++) {
-    if (streq(presets[i], value)) {
-      printf("H264: valid preset %s\n", priv->preset);
-      priv->preset = value;
+  for (i=0; x264_preset_names[i]; i++) {
+    if (streq(x264_preset_names[i], value)) {
+      printf("H264: valid preset %s\n", x264_preset_names[i]);
+      priv->preset = x264_preset_names[i];
       return 0;
     }
   }
@@ -107,10 +101,48 @@ static int set_preset(Instance *pi, const char *value)
 }
 
 
+static int set_tune(Instance *pi, const char *value)
+{
+  H264_private *priv = (H264_private *)pi;
+
+  int i;
+  for (i=0; x264_tune_names[i]; i++) {
+    if (streq(x264_tune_names[i], value)) {
+      printf("H264: valid tune %s\n", x264_tune_names[i]);
+      priv->tune = x264_tune_names[i];
+      return 0;
+    }
+  }
+  
+  printf("H264: invalid tune %s\n", value);
+  return 1;
+}
+
+
+static int set_profile(Instance *pi, const char *value)
+{
+  H264_private *priv = (H264_private *)pi;
+
+  int i;
+  for (i=0; x264_profile_names[i]; i++) {
+    if (streq(x264_profile_names[i], value)) {
+      printf("H264: valid profile %s\n", x264_profile_names[i]);
+      priv->profile = x264_profile_names[i];
+      return 0;
+    }
+  }
+  
+  printf("H264: invalid profile %s\n", value);
+  return 1;
+}
+
+
 static Config config_table[] = {
   // { "...",    set_..., get_..., get_..._range },
   { "output",    set_output, 0L, 0L },
   { "preset",    set_preset, 0L, 0L },
+  { "tune",      set_tune, 0L, 0L },
+  { "profile",   set_profile, 0L, 0L },
 };
 
 
@@ -148,16 +180,11 @@ static void YUV420P_handler(Instance *pi, void *msg)
 
     x264_param_default(&params);
 
-    /* FIXME: Could make preset and profile settings config options
-       during setup, and return available values from
-       x264_preset_names[], x264_tune_names[], and
-       x264_profile_names[] as defined in "x264.h".  */
+    rc = x264_param_default_preset(&params, priv->preset, priv->tune);
+    if (rc != 0) { fprintf(stderr, "x264_param_default_preset failed"); sleep(1); return; }
 
-    rc = x264_param_default_preset(&params, priv->preset, "psnr");
-    if (rc != 0) { fprintf(stderr, "x264_param_default_preset failed");  return; }
-
-    rc = x264_param_apply_profile(&params, "baseline"); /* "baseline" "main" */
-    if (rc != 0) { fprintf(stderr, "x264_param_apply_profile failed");  return; }
+    rc = x264_param_apply_profile(&params, priv->profile); 
+    if (rc != 0) { fprintf(stderr, "x264_param_apply_profile failed");  sleep(1); return; }
 
     params.i_width = y420->width;
     params.i_height = y420->height;
@@ -191,10 +218,8 @@ static void YUV420P_handler(Instance *pi, void *msg)
     /* Show the parameters. */
     show_x264_params(&params);
 
-    printf("%s:%d\n", __func__, __LINE__);
     priv->encoder = x264_encoder_open(&params);
     if (!priv->encoder) { fprintf(stderr, "x264_encoder_open failed");  return; }
-    printf("%s:%d\n", __func__, __LINE__);
     printf("params fps=%d/%d\n", params.i_fps_num, params.i_fps_den);
 
     show_x264_params(&params);
@@ -290,8 +315,10 @@ static void H264_tick(Instance *pi)
 
 static void H264_instance_init(Instance *pi)
 {
-  H264_private *priv = (H264_private *)pi;
-  priv->preset = presets[0];
+  // H264_private *priv = (H264_private *)pi;
+  set_preset(pi, "medium");
+  set_tune(pi, "psnr");
+  set_profile(pi, "baseline");
 }
 
 

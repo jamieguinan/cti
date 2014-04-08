@@ -146,6 +146,9 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       cti_debug_printf_toggle(index);
     }
   }
+  else {
+    printf("%s: unhandled input line:%s\n", __func__, line->bytes);
+  }
   
 }
 

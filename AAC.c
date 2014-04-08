@@ -187,7 +187,7 @@ static void Audio_handler(Instance *pi, void *msg)
       }
     }
     
-    // printf("<- encoded %d bytes\n",  encoded);
+    printf("AAC encoded %d bytes\n",  encoded);
     if (encoded <= 0) {
       nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
       continue;
@@ -197,8 +197,10 @@ static void Audio_handler(Instance *pi, void *msg)
       AAC_buffer * aac = AAC_buffer_from(priv->output_buffer, encoded);
       aac->timestamp = audio->timestamp;
       aac->nominal_period = 
-	(1.0*audio->data_length/audio->header.frame_size) /* Number of frames, convert to float. */
-	/audio->header.rate;				  /* Divide by frames/sec */
+	priv->samplesToInput	   /* Total samples. */
+	* 1.0			   /* Convert to float */
+	// /audio->header.frame_size) /* Number of frames */
+	/audio->header.rate;	   /* frames/sec */
       PostData(aac, pi->outputs[OUTPUT_AAC].destination);
     }
     

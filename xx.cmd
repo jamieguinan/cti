@@ -1,13 +1,6 @@
-system rm -vf sat1*.ts
-
-new MjpegDemux mjd
-new DJpeg dj
-new Effects01 ef
+new Y4MInput y4min
 new H264 venc
 new AAC aenc
-new Null null
-new SocketServer ss
-new MjpegMux mjm
 
 config venc output test.264
 

@@ -1,5 +1,6 @@
 /*
- * YUV4MPEG[2] input.
+ * YUV4MPEG[2] input.  Reads a file or network stream and feeds
+ # the output to other instances.
  */
 #include <string.h>		/* memcpy */
 #include <stdio.h>		/* fprintf */
@@ -59,7 +60,9 @@ typedef struct {
   int pending_feedback;
   int feedback_threshold;
 
+  int exit_on_eof;
   int retry;
+  int synchronous;
 
 } Y4MInput_private;
 
@@ -144,7 +147,7 @@ static Config config_table[] = {
   { "input", set_input, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
   { "use_feedback", set_use_feedback, 0L, 0L },
-  /* The following are more "controls" than "configs", but maybe they are essentially the same anyway. */
+  { "exit_on_eof", 0L, 0L, 0L, cti_set_int, offsetof(Y4MInput_private, exit_on_eof) },
   //{ "rate", set_rate, 0L, 0L},
   { "seek", do_seek, 0L, 0L},
   //{ "position", set_position, 0L, 0L},
@@ -195,7 +198,9 @@ static void Y4MInput_tick(Instance *pi)
 
   if (priv->needData) {
     Source_acquire_data(priv->source, priv->chunk, &priv->needData);
-    //printf("read %d bytes\n", priv->chunk->len);
+    if (priv->source->eof && priv->exit_on_eof) {
+      exit(0);
+    }
   }
 
   if (priv->state == PARSING_HEADER) {
@@ -340,8 +345,13 @@ static void Y4MInput_tick(Instance *pi)
 					       priv->current.width, priv->current.height, 
 					       &priv->video_common);
 
-
-    PostData(yuv, pi->outputs[OUTPUT_YUV420P].destination);
+    if (priv->synchronous) {
+      int result;
+      PostDataGetResult(yuv, pi->outputs[OUTPUT_YUV420P].destination, &result);
+    }
+    else {
+      PostData(yuv, pi->outputs[OUTPUT_YUV420P].destination);
+    }
     //if (priv->use_feedback & (1<<2)) {
     //priv->pending_feedback += 1;
     //}
@@ -362,7 +372,8 @@ static void Y4MInput_instance_init(Instance *pi)
   priv->retry = 0;
   priv->use_feedback = 0;
   priv->feedback_threshold = 20;
-  
+  priv->synchronous = 1;
+  priv->exit_on_eof = 1;
 }
 
 static Template Y4MInput_template = {

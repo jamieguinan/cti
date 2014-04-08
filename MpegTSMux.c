@@ -432,8 +432,8 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     packet->estimated_timestamp = et;
     et += et_add;
 
-    printf("stream %u estimated timestamp: %" PRIu64 " (es_duration=%" PRIu64 " et_add=%d)\n", 
-	   stream->pid, packet->estimated_timestamp, stream->es_duration, et_add);
+    //printf("stream %u estimated timestamp: %" PRIu64 " (es_duration=%" PRIu64 " et_add=%d)\n", 
+    //   stream->pid, packet->estimated_timestamp, stream->es_duration, et_add);
 
     unsigned int afLen = 0;
     unsigned int afAdjust = 1;	/* space for the afLen byte */
@@ -580,11 +580,11 @@ static void AAC_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   AAC_buffer *aac = msg;
   if (!priv->seen_audio) { priv->seen_audio = 1; }
-  printf("aac->data_length=%d aac->timestamp=%.6f aac->nominal_period=%.6f\n",  
-	 aac->data_length, aac->timestamp,  aac->nominal_period);
   priv->streams[1].pts_value = timestamp_to_90KHz(aac->timestamp);
   priv->streams[1].pts_add = 0;
   priv->streams[1].es_duration = timestamp_to_90KHz(aac->nominal_period);
+  printf("aac->data_length=%d aac->timestamp=%.6f aac->nominal_period=%.6f es_duration=%" PRIu64"\n",
+	 aac->data_length, aac->timestamp,  aac->nominal_period, priv->streams[1].es_duration );
   packetize(priv, 257, ArrayU8_temp_const(aac->data, aac->data_length) );
   AAC_buffer_discard(&aac);
 }
@@ -805,27 +805,21 @@ static void flush(Instance *pi)
     Mem_free(pkt);
   }
 
-  /* FIXME: Could do a better job of interleaving the video and audio frames, rather
-     than bunching them together. */
-  int packet_spread = 0;
-  while (priv->streams[0].packets || priv->streams[1].packets) {
-    if (packet_spread > 100) {
-      printf("packet spread { %d %d }\n", 
-	     priv->streams[0].packet_count, priv->streams[1].packet_count);
-      break;
+  while (priv->streams[0].packets && priv->streams[1].packets) {
+    Stream * stream = &priv->streams[0];
+    for (i=1; i < MAX_STREAMS; i++) {
+      if (priv->streams[i].packets->estimated_timestamp <
+	  priv->streams[i-1].packets->estimated_timestamp){
+	/* Want older timestamps first. */
+	stream = &priv->streams[i];
+      }
     }
-    for (i=0; i < MAX_STREAMS; i++) {
-      Stream * stream = &priv->streams[i];
+
+    if (1) {
       TSPacket *pkt = stream->packets;
 
-      if (!pkt) {
-	/* One stream will likely run out before the other. */
-	packet_spread += 1;
-	continue;
-      }
-      
-      //printf("%s packet\n", stream->typecode);
-      
+      printf("flush: %d et=%" PRIu64 "\n", stream->pid, pkt->estimated_timestamp);
+
       if (priv->debug_outpackets) {
 	char fname[256]; sprintf(fname, 
 				 "outpackets/%05d-ts%04d%s%s", 
