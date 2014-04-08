@@ -1,4 +1,4 @@
-new MjpegDemux mjx
+new MjpegDemux mjd
 new DJpeg dj
 new H264 venc
 new AAC aenc
@@ -22,5 +22,9 @@ config venc tune psnr
 config venc profile baseline
 config venc output test010-output.264
 
-config mjd input frontyard-20120716-112614.mjx
+config mjd input frontyard-20120601-195153.mjx
 config mjd enable 1
+
+system sleep 30
+system bash test010-production.sh
+exit

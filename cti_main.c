@@ -123,7 +123,7 @@ int cti_main(int argc, char *argv[])
   LibDV_init();
 #endif
 
-#ifdef HAVE_LIBDV
+#ifdef HAVE_LIBMPEG2
   Mpeg2Dec_init();
 #endif
 

@@ -302,7 +302,22 @@ static void SocketServer_tick(Instance *pi)
   FD_SET(priv->lsc.fd, &rfds);
   maxfd = cti_max(priv->lsc.fd, maxfd);
 
-  tv.tv_sec = 0; tv.tv_usec = 1000  * 10;		/* 10ms */
+  /* The select() timeout here has been tuned for CTI apps that have
+     multiple SocketServers receiving data from a Splitter.  If the
+     value is too long, and only one of the SocketServers is active,
+     the inputs to the other SocketServer will back up over several
+     seconds, and then the whole chain will back up like this,
+
+       CJpeg(cj) <- Splitter(s) <- MjpegMux(mjm2) <- SocketServer(ss2)
+
+     On the other hand, the SocketServers tend to eat CPU, so setting
+     it to 1ms can be expensive.  If CTI were a "pull" design instead
+     of "push", this might not have become a concern, but for now CTI
+     is "push" and that works well enough for my purposes.
+  */
+  tv.tv_sec = 0;
+  tv.tv_usec = 1000  * 3;	/* ms */
+
   sn = select(maxfd+1, &rfds, &wfds, 0L, &tv);
 
   if (sn == 0) {

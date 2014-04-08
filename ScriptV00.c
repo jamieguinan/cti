@@ -147,7 +147,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     }
   }
   else {
-    printf("%s: unhandled input line:%s\n", __func__, line->bytes);
+    /* No match. */
   }
   
 }

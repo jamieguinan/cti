@@ -179,13 +179,13 @@ static void compress_and_post(Instance *pi,
     cinfo.do_fancy_downsampling = FALSE;  // http://www.lavrsen.dk/svn/motion/trunk/picture.c
 
     cinfo.comp_info[0].h_samp_factor = 2;
-    cinfo.comp_info[0].v_samp_factor = 2;
+    cinfo.comp_info[0].v_samp_factor = 1;
 
     cinfo.comp_info[1].h_samp_factor = 1;
-    cinfo.comp_info[1].v_samp_factor = 2;
+    cinfo.comp_info[1].v_samp_factor = 1;
 
     cinfo.comp_info[2].h_samp_factor = 1;
-    cinfo.comp_info[2].v_samp_factor = 2;
+    cinfo.comp_info[2].v_samp_factor = 1;
   }
   else if (compress_mode == COMPRESS_Y420) {
     cinfo.raw_data_in = TRUE;

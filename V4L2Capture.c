@@ -1393,6 +1393,9 @@ static void V4L2Capture_tick(Instance *pi)
       YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
       getdoubletime(&y422p->c.timestamp);
       for (i=0; i < priv->vbuffer.bytesused/4; i++) {
+	/* YUYV is packed-pixels, need to sort to planes for YUV422p.
+	 * Current SSE versions don't support scatter/gather, so
+	 * there's no easy way to acclerate this. */
 	y422p->y[iy++] = *p++;
 	y422p->cb[icb++] = *p++;
 	y422p->y[iy++] = *p++;

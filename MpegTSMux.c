@@ -818,7 +818,7 @@ static void flush(Instance *pi)
     if (1) {
       TSPacket *pkt = stream->packets;
 
-      printf("flush: %d et=%" PRIu64 "\n", stream->pid, pkt->estimated_timestamp);
+      printf("flush: et=%" PRIu64 " pid=%d\n", pkt->estimated_timestamp, stream->pid);
 
       if (priv->debug_outpackets) {
 	char fname[256]; sprintf(fname, 
