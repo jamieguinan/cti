@@ -241,14 +241,19 @@ BGR3_buffer *BGR3_buffer_new(int width, int height, Image_common *c)
   bgr->height = height;
   bgr->data_length = width * height * 3;
   bgr->data = Mem_calloc(1, bgr->data_length); 	/* Caller must fill in data! */
+  LockedRef_init(&bgr->c.ref);
   return bgr;
 }
 
 void BGR3_buffer_discard(BGR3_buffer *bgr)
 {
-  Mem_free(bgr->data);
-  memset(bgr, 0, sizeof(*bgr));
-  Mem_free(bgr);
+  int count;
+  LockedRef_decrement(&bgr->c.ref, &count);
+  if (count == 0) {
+    Mem_free(bgr->data);
+    memset(bgr, 0, sizeof(*bgr));
+    Mem_free(bgr);
+  }
 }
 
 
@@ -264,7 +269,7 @@ static void swap_0_2(uint8_t *buffer, int length)
 }
 
 
-/* Dirty hack... */
+/* Dirty hacks... */
 void bgr3_to_rgb3(BGR3_buffer **bgr, RGB3_buffer **rgb)
 {
   *rgb = (RGB3_buffer*)*bgr;
@@ -718,10 +723,17 @@ YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *yuv422p)
 
   memcpy(yuv420p->y, yuv422p->y, yuv420p->y_length);
 
+  /* Average the chroma samples from adjacent rows. */
   for (y = 0; y < yuv422p->height; y+=2) {
+    /* Using pointers in the horizontal loop yields about a 2x 
+       speed improvment over looking up every time. */
+    uint8_t * pcb1 = & (yuv422p->cb[y*yuv422p->width/2]);
+    uint8_t * pcb2 = & (yuv422p->cb[(y+1)*yuv422p->width/2]);
+    uint8_t * pcr1 = & (yuv422p->cr[y*yuv422p->width/2]);
+    uint8_t * pcr2 = & (yuv422p->cr[(y+1)*yuv422p->width/2]);
     for (x = 0; x < yuv422p->width/2; x+=1) {
-      yuv420p->cb[n] = (yuv422p->cb[y*yuv422p->width/2 + x] + yuv422p->cb[(y+1)*yuv422p->width/2 + x])/2;
-      yuv420p->cr[n] = (yuv422p->cr[y*yuv422p->width/2 + x] + yuv422p->cr[(y+1)*yuv422p->width/2 + x])/2;
+      yuv420p->cb[n] = (*pcb1++ + *pcb2++)/2;
+      yuv420p->cr[n] = (*pcr1++ + *pcr2++)/2;
       n++;
     }
   }

@@ -504,7 +504,8 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
   int error = 0;
 
   cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
-					this may cause the program to call exit()! */
+					this may cause the program to call 
+					exit()! */
   jerr.error_exit = jerr_error_handler;
 
   jpeg_create_decompress(&cinfo);
@@ -512,8 +513,9 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
   cinfo.client_data = &jb;
   error = setjmp(jb);
   if (error) {
-    printf("%s:%d\n", __func__, __LINE__);
-    save_error_jpeg(data, data_length);
+    if (0) {
+      save_error_jpeg(data, data_length);
+    }
     goto out;
   }
 

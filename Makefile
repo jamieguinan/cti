@@ -14,7 +14,7 @@ endif
 
 CFLAGS += -O2 -Wall $(CMDLINE_CFLAGS)
 # CFLAGS += -Werror
-#CFLAGS += -O0 -ggdb
+CFLAGS += -O0 -ggdb
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
 CFLAGS += -Wno-unused-result
@@ -143,12 +143,14 @@ ifneq ($(ARCH),lpd)
 OBJS+=\
 	$(OBJDIR)/V4L2Capture.o \
 	$(OBJDIR)/ALSAio.o \
-	$(OBJDIR)/ALSAMixer.o \
-	$(OBJDIR)/SonyPTZ.o
-LDFLAGS+=-lvisca
+	$(OBJDIR)/ALSAMixer.o
 LDFLAGS+=-lasound 
 CPPFLAGS+=-DHAVE_PRCTL
 endif
+
+#OBJS+=$(OBJDIR)/SonyPTZ.o
+#CPPFLAGS+=-DHAVE_VISCA
+#LDFLAGS+=-lvisca
 
 ifeq ($(ARCH),lpd)
 OBJS+=$(OBJDIR)/V4L1Capture.o
@@ -156,6 +158,7 @@ LDFLAGS+=-lm
 endif
 
 ifeq ($(ARCH),armeb)
+CPPFLAGS+=-DHAVE_V4L1
 OBJS+=$(OBJDIR)/V4L1Capture.o
 endif
 
@@ -286,8 +289,8 @@ ifeq ($(ARCH),x86_64-Linux)
 endif
 	@echo Generating map
 	$(NM) $@ | sort > $@.map
-	@echo STRIP
-	@$(STRIP) $@
+#	@echo STRIP
+#	@$(STRIP) $@
 
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))

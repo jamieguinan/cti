@@ -7,11 +7,13 @@
 #include "Cfg.h"
 #include "ov511_decomp.h"
 
-enum { INPUT_O511 };
+enum { INPUT_CONFIG, INPUT_O511 };
 
+static void Config_handler(Instance *pi, void *data);
 static void O511_handler(Instance *pi, void *data);
 
 static Input DO511_inputs[] = {
+  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_O511 ] = { .type_label = "O511_buffer", .handler = O511_handler },
 };
 
@@ -24,11 +26,17 @@ static Output DO511_outputs[] = {
 
 typedef struct {
   Instance i;
+  int gspca_mode;
 } DO511_private;
 
-//static Config config_table[] = {
-// { "...",    set_..., get_..., get_..._range },
-//};
+static Config config_table[] = {
+  { "gspca_mode", 0L, 0L, 0L, cti_set_int, offsetof(DO511_private, gspca_mode) },
+};
+
+static void Config_handler(Instance *pi, void *data)
+{
+  Generic_config_handler(pi, data, config_table, table_size(config_table));
+}
 
 
 #if 0
@@ -96,25 +104,29 @@ static void remove0blocks(unsigned char *pIn, int *inSize)
 
 static void O511_handler(Instance *pi, void *data)
 {
+  DO511_private * priv = (DO511_private *)pi;
   O511_buffer *o511_in = data;
   YUV420P_buffer *y420p_out;
   unsigned char *temp;
+  int magic_offset;
 
   y420p_out = YUV420P_buffer_new(o511_in->width, o511_in->height, 0L);
   y420p_out->c.timestamp = o511_in->c.timestamp;
     
   temp = malloc( (o511_in->width * o511_in->height * 3)/ 2);
 
-#if 0  
-  /* I think this was necessary for the GSPCA build. */
-  remove0blocks(o511_in->data, &o511_in->data_length);
-#define MAGIC_OFFSET 9
-#else
-  /* But this works for the older V4L1 build. */
-#define MAGIC_OFFSET 0
-#endif
+  if (priv->gspca_mode) {
+    /* I think this was necessary for the GSPCA build. */
+    remove0blocks(o511_in->data, &o511_in->data_length);
+    magic_offset = 9;
+  }
+  else {
+    /* But this works for the older V4L1 build. */
+    magic_offset = 0;
+  }
+
   // printf("o511_in->data_length=%d\n", o511_in->data_length);
-  ov511_decomp_420(o511_in->data+MAGIC_OFFSET, 
+  ov511_decomp_420(o511_in->data+magic_offset, 
 		   y420p_out->data, 
 		   temp, 
 		   o511_in->width, 
@@ -148,6 +160,7 @@ static void O511_handler(Instance *pi, void *data)
   O511_buffer_discard(o511_in);
 }
 
+
 static void DO511_tick(Instance *pi)
 {
   Handler_message *hm;
@@ -160,8 +173,11 @@ static void DO511_tick(Instance *pi)
   }
 }
 
+
 static void DO511_instance_init(Instance *pi)
 {
+  DO511_private * priv = (DO511_private *)pi;
+  priv->gspca_mode = 0;
 }
 
 

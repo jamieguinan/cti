@@ -85,18 +85,20 @@ int cti_main(int argc, char *argv[])
   gig = InstanceGroup_new();
   instance_key_init();
 
-#ifdef __linux__
-#if defined(__ARMEL__) || defined (__ARMEB__)
+#ifdef HAVE_V4L1
   V4L1Capture_init();
 #endif
-#ifndef __ARMEL__ 		/* no LPD support */
+
+#ifdef __linux__
   ALSAio_init();
   ALSAMixer_init();
   V4L2Capture_init();
-  SonyPTZ_init();
-#endif
   Signals_init();
   Spawn_init();
+#endif
+
+#ifdef HAVE_VISCA
+  SonyPTZ_init();
 #endif
 
 #ifdef HAVE_SDL

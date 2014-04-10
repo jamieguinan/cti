@@ -1370,7 +1370,10 @@ static void V4L2Capture_tick(Instance *pi)
       getdoubletime(&o->c.timestamp);
       memcpy(o->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
 
+      dpf("O511 bytesused=%d\n", priv->vbuffer.bytesused);
+
       o->encoded_length = priv->vbuffer.bytesused;
+
       if (o->encoded_length < 1000) {
 	printf("encoded_length=%d, probably isochronous error!\n", o->encoded_length);
 	O511_buffer_discard(o);
