@@ -1319,7 +1319,7 @@ static void V4L2Capture_tick(Instance *pi)
       PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
     }
   }
-  else if (streq(sl(priv->format), "YUV422P")) {
+  else if (streq(sl(priv->format), "422P")) {
     if (pi->outputs[OUTPUT_YUV422P].destination) {
       YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
       Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
@@ -1335,6 +1335,30 @@ static void V4L2Capture_tick(Instance *pi)
 	     priv->width*priv->height/2);
       Log(LOG_YUV422P, "%s posting y422p @ %p", __func__, y422p);
       PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
+    }
+
+    if (pi->outputs[OUTPUT_GRAY].destination) {
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
+      memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);      
+      PostData(g, pi->outputs[OUTPUT_GRAY].destination);
+    }
+  }
+  else if (streq(sl(priv->format), "YU12")) {
+    if (pi->outputs[OUTPUT_YUV420P].destination) {
+      YUV420P_buffer *y420p = YUV420P_buffer_new(priv->width, priv->height, 0L);
+      dpf("%s allocated y420p @ %p", __func__, y420p);
+      getdoubletime(&y420p->c.timestamp);
+      calc_fps(y420p->c.timestamp);
+      y420p->c.nominal_period = priv->nominal_period;
+      memcpy(y420p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
+      memcpy(y420p->cb, 
+	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 
+	     y420p->cr_width*y420p->cr_height);
+      memcpy(y420p->cr, 
+	     priv->buffers[priv->wait_on].data + priv->width*priv->height + y420p->cr_width*y420p->cr_height,
+	     y420p->cb_width*y420p->cb_height);
+      dpf("%s posting y420p @ %p", __func__, y420p);
+      PostData(y420p, pi->outputs[OUTPUT_YUV420P].destination);
     }
 
     if (pi->outputs[OUTPUT_GRAY].destination) {

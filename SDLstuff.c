@@ -465,9 +465,9 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
   if (!priv->overlay) {
     int i;
 
-    /* FIXME: IYUV and other formats are also available!  I might need to 
-       set up CJpeg on the encoding end to create something easy to display
-       on butterfly's XVideo channel.  */
+    /* FIXME: different video cards have many different overlay formats, some conversions
+       (like 422->420) might be avoidable. */
+
     priv->overlay = SDL_CreateYUVOverlay(yuv420p_in->width, yuv420p_in->height, 
 					 SDL_YV12_OVERLAY, 
 					 // SDL_IYUV_OVERLAY, 
@@ -549,21 +549,16 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     }
 
     if (1) {
-      int x, y, src_index, dst_index, src_width, src_height;
+      int y, src_index, dst_index, src_width, src_height;
       // printf("Copy Cr, Cb\n");
       src_width = yuv420p_in->width/2;
       src_height = yuv420p_in->height/2;
       src_index = src_width * iy * 2;
       for (y=iy; y < src_height; y+=dy) {
 	dst_index = y * priv->overlay->pitches[1];
-	for (x=0; x < src_width; x++) {
-	  priv->overlay->pixels[1][dst_index] = (yuv420p_in->cr[src_index]);
-	  priv->overlay->pixels[2][dst_index] = (yuv420p_in->cb[src_index]);
-	  //priv->overlay->pixels[1][dst_index] = -63;
-	  //priv->overlay->pixels[2][dst_index] = -63;
-	  dst_index += 1;
-	  src_index += 1;
-	}
+	memcpy(&priv->overlay->pixels[1][dst_index], &yuv420p_in->cr[src_index], src_width);
+	memcpy(&priv->overlay->pixels[2][dst_index], &yuv420p_in->cb[src_index], src_width);
+	src_index += src_width;
       }
     }
   
