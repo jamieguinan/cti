@@ -2,7 +2,6 @@ new Y4MInput y4min
 new H264 venc
 
 config venc preset faster
-config venc tune psnr
 config venc tune zerolatency
 config venc profile baseline
 config venc output test011-output.264

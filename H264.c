@@ -342,18 +342,20 @@ static void YUV420P_handler(Instance *pi, void *msg)
     pic_in.img.plane[2] = y420->cr;
 
     /* FIXME: Set pts and dts correctly. */
-    pic_in.i_pts = priv->pts;
-    priv->pts += 1;
+    //pic_in.i_pts = priv->pts;
+    //priv->pts += 1;
 
     int frame_size = x264_encoder_encode(priv->encoder, &nal, &pi_nal, &pic_in, &pic_out );
 
     //dpf
     printf
-      ("counter=%d, frame_size=%d, %d nal units, pic.b_keyframe=%d,\n"
+      ("counter=%d, frame_size=%d, %d nal units, pic.b_keyframe=%d, i_pts=%" PRIi64 " i_dts=%" PRIi64 "\n"
        , pi->counter
        , frame_size
        , pi_nal
        , pic_out.b_keyframe
+       , pic_out.i_pts
+       , pic_out.i_dts
        );
 
     for (i=0; i < pi_nal; i++) {
@@ -441,8 +443,8 @@ static void H264_tick(Instance *pi)
 static void H264_instance_init(Instance *pi)
 {
   // H264_private *priv = (H264_private *)pi;
-  set_preset(pi, "medium");
-  set_tune(pi, "psnr");
+  set_preset(pi, "faster");
+  set_tune(pi, "zerolatency");
   set_profile(pi, "baseline");
 }
 
