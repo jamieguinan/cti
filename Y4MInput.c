@@ -64,6 +64,7 @@ typedef struct {
   int retry;
   int synchronous;
 
+  int max_frames;		/* Stop after max_frames if set. */
 } Y4MInput_private;
 
 

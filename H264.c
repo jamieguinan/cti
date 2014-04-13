@@ -6,6 +6,9 @@
  * 
  * Notes on presets: https://trac.ffmpeg.org/wiki/x264EncodingGuide
  *
+ * Additional references,
+ *   http://mewiki.project357.com/wiki/X264_Settings
+ *
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -57,8 +60,43 @@ typedef struct {
   /* Similar to as used in x264.c: */
   //cli_output_t cli_output;
   //hnd_t hout;
+  int rc_method;
 
+  // huehuehuehuehuehue nobody fucking stops the hue
+
+  int cqp;
+  int crf;
+  int keyint_max;
+
+  int processed_frames;
+  int max_frames;		/* exit after this many frames if set */
 } H264_private;
+
+
+const char * nal_unit_type_e_strs[] = {
+  [NAL_UNKNOWN] = "NAL_UNKNOWN",
+  [NAL_SLICE] = "NAL_SLICE",
+  [NAL_SLICE_DPA] = "NAL_SLICE_DPA",
+  [NAL_SLICE_DPB] = "NAL_SLICE_DPB",
+  [NAL_SLICE_DPC] = "NAL_SLICE_DPC",
+  [NAL_SLICE_IDR] = "NAL_SLICE_IDR",
+  [NAL_SEI] = "NAL_SEI",
+  [NAL_SPS] = "NAL_SPS",
+  [NAL_PPS] = "NAL_PPS",
+  [NAL_AUD] = "NAL_AUD",
+  [NAL_FILLER] = "NAL_FILLER",
+};
+
+#define nal_unit_type_e_str(i) ( i < 0 || i > NAL_FILLER ? "out-of-range" : nal_unit_type_e_strs[i])
+
+const char * nal_priority_e_strs[] = {
+  [NAL_PRIORITY_DISPOSABLE] = "NAL_PRIORITY_DISPOSABLE",
+  [NAL_PRIORITY_LOW] = "NAL_PRIORITY_LOW",
+  [NAL_PRIORITY_HIGH] = "NAL_PRIORITY_HIGH",
+  [NAL_PRIORITY_HIGHEST] = "NAL_PRIORITY_HIGHEST",
+};
+
+#define nal_priority_e_str(i) (  i < 0 || i > NAL_PRIORITY_HIGHEST ? "out-of-range" : nal_priority_e_strs[i])
 
 
 static int set_output(Instance *pi, const char *value)
@@ -137,12 +175,34 @@ static int set_profile(Instance *pi, const char *value)
 }
 
 
+static int set_cqp(Instance *pi, const char *value)
+{
+  H264_private *priv = (H264_private *)pi;
+  priv->cqp = atoi(value);
+  priv->crf = 0;
+  return 0;
+}
+
+
+static int set_crf(Instance *pi, const char *value)
+{
+  H264_private *priv = (H264_private *)pi;
+  priv->crf = atoi(value);
+  priv->cqp = 0;
+  return 0;
+}
+
+
 static Config config_table[] = {
   // { "...",    set_..., get_..., get_..._range },
   { "output",    set_output, 0L, 0L },
   { "preset",    set_preset, 0L, 0L },
   { "tune",      set_tune, 0L, 0L },
   { "profile",   set_profile, 0L, 0L },
+  { "cqp",       set_cqp, 0L, 0L },
+  { "crf",       set_crf, 0L, 0L },
+  { "max_frames",0L, 0L, 0L, cti_set_int, offsetof(H264_private, max_frames) },
+  { "keyint_max",0L, 0L, 0L, cti_set_int, offsetof(H264_private, keyint_max) },
 };
 
 
@@ -171,6 +231,7 @@ static void show_x264_params(x264_param_t * params)
 static void YUV420P_handler(Instance *pi, void *msg)
 {
   int rc;
+  int i;
   H264_private *priv = (H264_private *)pi;
   YUV420P_buffer *y420 = msg;
 
@@ -206,14 +267,44 @@ static void YUV420P_handler(Instance *pi, void *msg)
     /* Testing.  Aha!  This results in 29.97fps instead of 59.94fps playback in mplayer! */
     params.b_vfr_input = 0;
 
-    /* Additional parameters for iOS playback.  References:
-     *   http://geobray.com/2010/03/26/live-tv-streaming-to-iphone-with-http/ 
-     *   https://trac.ffmpeg.org/wiki/x264EncodingGuide
-     *   http://video.stackexchange.com/questions/6906/how-to-encode-a-video-for-the-iphone-with-handbrake
-     */
-    params.b_aud = 1;
-    params.analyse.i_me_method = X264_ME_UMH;
-    params.b_tff = 1;
+    /* Only enable this if needed for iOS playback. */
+    //params.b_aud = 1;
+
+    /* Default motion estimation method is X264_ME_HEX, leave it at that. */
+    //  params.analyse.i_me_method = X264_ME_UMH;
+    /* FIXME: Enable this for satellite stream transcoding... */
+    // params.b_tff = 1;
+
+    /* Define keyframe interval, which will generate IDR frames and thus
+     * allow propagation to MpegTSMux segmentation.  */
+    if (priv->keyint_max) {
+      params.i_keyint_max = priv->keyint_max;
+    }
+    else {
+      /* 1/sec. */
+      params.i_keyint_max = params.i_fps_num/params.i_fps_den;
+    }
+
+    /* b_intra_refresh disables IDR frames, so I don't want to set it. */
+    //params.b_intra_refresh = 1;
+    /* These don't seem to make much difference for my application... */
+    //params.b_repeat_headers = 1;
+    //params.b_annexb = 1;
+
+    /* Which ever of cqp or crf is last set will be active. */
+    if (priv->cqp) {
+      params.rc.i_rc_method = X264_RC_CQP;
+      params.rc.i_qp_constant = priv->cqp;
+      //params.rc.i_qp_max = 0;
+    }
+    else if (priv->crf)  {
+      params.rc.i_rc_method = X264_RC_CRF;
+      params.rc.f_rf_constant = priv->crf;
+    }
+    else if (0)  {
+      params.rc.i_rc_method = X264_RC_ABR;
+      params.rc.i_bitrate = 1000000;
+    }
 
     /* Show the parameters. */
     show_x264_params(&params);
@@ -230,7 +321,7 @@ static void YUV420P_handler(Instance *pi, void *msg)
     //printf("cli_output.open_file returns %d\n", rc);
   }
 
-  {
+  if (1) {
     x264_picture_t pic_in = {};
     x264_picture_t pic_out = {};
     x264_nal_t *nal = 0L;
@@ -244,8 +335,8 @@ static void YUV420P_handler(Instance *pi, void *msg)
     pic_in.img.i_csp = X264_CSP_I420;
     pic_in.img.i_plane = 3;
     pic_in.img.i_stride[0] = y420->width;
-    pic_in.img.i_stride[1] = y420->width/2;
-    pic_in.img.i_stride[2] = y420->width/2;
+    pic_in.img.i_stride[1] = y420->cb_width;
+    pic_in.img.i_stride[2] = y420->cr_width;
     pic_in.img.plane[0] = y420->y;
     pic_in.img.plane[1] = y420->cb;
     pic_in.img.plane[2] = y420->cr;
@@ -256,15 +347,44 @@ static void YUV420P_handler(Instance *pi, void *msg)
 
     int frame_size = x264_encoder_encode(priv->encoder, &nal, &pi_nal, &pic_in, &pic_out );
 
-    dpf
-      //printf
-      ("frame_size=%d pi_nal=%d nal=%p p_payload=%p i_payload=%d\n", frame_size, pi_nal, nal,
-	nal ? (nal->p_payload) : NULL,
-	nal ? (nal->i_payload) : 0
-	);
+    //dpf
+    printf
+      ("counter=%d, frame_size=%d, %d nal units, pic.b_keyframe=%d,\n"
+       , pi->counter
+       , frame_size
+       , pi_nal
+       , pic_out.b_keyframe
+       );
+
+    for (i=0; i < pi_nal; i++) {
+      printf("  nal[%d]: priority %s, type %s, startcode=%d, payloadsize=%d,\n",
+	     i,
+	     nal_priority_e_str(nal[i].i_ref_idc),
+	     nal_unit_type_e_str(nal[i].i_type),
+	     nal[i].b_long_startcode,
+	     nal[i].i_payload);
+    }
+    
+    printf("\n");
+
+    // "p_payload=%p i_payload=%d"
+    // nal ? (nal->p_payload) : NULL,
+    // nal ? (nal->i_payload) : 0
+    
+    if (0) {
+      for (i=0; i < frame_size && i < 64;) {
+	printf(" %02x", nal[0].p_payload[i]);
+	i++;
+	if (i % 16 == 0) {
+	  printf("\n");
+	}
+      }
+      printf("\n");
+    }
 
     if (frame_size > 0 && pi->outputs[OUTPUT_H264].destination) {
       H264_buffer *hout = H264_buffer_from(nal[0].p_payload, frame_size, y420->width, y420->height, &y420->c);
+      hout->keyframe = pic_out.b_keyframe;
       PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
 
@@ -277,6 +397,11 @@ static void YUV420P_handler(Instance *pi, void *msg)
       // *last_dts = pic_out.i_dts;
     }
 
+  }
+
+  priv->processed_frames += 1;
+  if (priv->max_frames && priv->max_frames == priv->processed_frames) {
+    exit(0);
   }
 
   YUV420P_buffer_discard(y420);

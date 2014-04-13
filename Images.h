@@ -170,9 +170,11 @@ typedef struct {
   MemObject mo;
   int width;
   int height;
-  uint8_t *data;
+  uint8_t *data;		/* NAL unit data (may include several) */
   int data_length;		/* Provisional. */
   int encoded_length;		/* Actual encoded size. */
+
+  int keyframe;			/* IDR keyframe present */
 
   Image_common c;
 } H264_buffer;
