@@ -92,6 +92,8 @@ typedef struct {
   uint64_t total_encoded_next;
   uint64_t total_encoded_delta;
 
+  double running_timestamp;
+
 } ALSAio_private;
 
 
@@ -680,6 +682,9 @@ static void ALSACapture_tick(Instance *pi)
     rc = snd_pcm_prepare(priv->handle);
     state = snd_pcm_state(priv->handle);
     printf("%s: state=%d\n", __func__, state);
+
+    /* Initialize running_timestamp. */
+    getdoubletime(&priv->running_timestamp);
   }
 
   snd_pcm_hw_params_get_period_size(priv->hwparams, &frames, &dir);
@@ -706,25 +711,50 @@ static void ALSACapture_tick(Instance *pi)
 
   //int val = hwparams->rate;
   //snd_pcm_hw_params_get_period_time(params, &val, &dir);
-  Wav_buffer *wav = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
 
-  /* Read the data, the main point of ALSACapture. */
+  /* Read the data. */
   n = snd_pcm_readi(priv->handle, buffer, frames);
-
-  /* Record time at the end of the audio read. */
-  getdoubletime(&wav->timestamp);
 
   if (buffer[size] != 0x55)  {
     fprintf(stderr, "overwrote audio buffer!\n");
   }
 
-  if (n == frames) {
+  if (n != frames) {
+    fprintf(stderr, "snd_pcm_readi %s: %s\n", sl(priv->device), snd_strerror((int)n));
+    fprintf(stderr, "attempting snd_pcm_prepare() to correct...\n");
+    snd_pcm_prepare(priv->handle);
+  }
+  else {
     // fprintf(stderr, "read %d frames\n", (int) n);
+
+    double calculated_period = frames*1.0/(priv->rate);
+
+    priv->running_timestamp += calculated_period;
+    
+    /* Adjust running timestamp if it slips too far either way. */
+    double tnow;
+    getdoubletime(&tnow);
+
+    if (priv->running_timestamp - tnow > calculated_period) {
+      priv->running_timestamp -= (calculated_period/2.0);      
+      printf("- running timestamp\n");
+      printf("priv->rate=%d,  %.3f - %.3f > %.5f : + running timestamp\n", 
+	     priv->rate, 
+	     priv->running_timestamp , tnow , calculated_period);
+    }
+    else if (tnow - priv->running_timestamp > calculated_period) {
+      priv->running_timestamp += (calculated_period/2.0);
+      printf("priv->rate=%d, %.3f - %.3f > %.5f : + running timestamp\n",
+	     priv->rate, 
+	     tnow , priv->running_timestamp , calculated_period);
+    }
+
     int buffer_bytes = n * priv->format_bytes * priv->channels;
     if (pi->outputs[OUTPUT_AUDIO].destination) {
       Audio_buffer * audio = Audio_buffer_new(priv->rate,
 					      priv->channels, priv->atype);
       Audio_buffer_add_samples(audio, buffer, buffer_bytes);
+      audio->timestamp = priv->running_timestamp;
       printf("posting audio buffer %d bytes\n", buffer_bytes);
       PostData(audio, pi->outputs[OUTPUT_AUDIO].destination);
       /* TESTING: disable after posting once */
@@ -732,6 +762,9 @@ static void ALSACapture_tick(Instance *pi)
     }
 
     if (pi->outputs[OUTPUT_WAV].destination) {
+      Wav_buffer *wav = Wav_buffer_new(priv->rate, priv->channels, priv->format_bytes);
+      wav->timestamp = priv->running_timestamp;
+
       dpf("%s allocated wav @ %p\n", __func__, wav);
       wav->data = buffer;  buffer = 0L;	/* Assign, do not free below. */
       wav->data_length = buffer_bytes;
@@ -746,14 +779,6 @@ static void ALSACapture_tick(Instance *pi)
       wav->seq = x++;
       wav = 0L;
     }
-    else {
-      Wav_buffer_release(&wav);
-    }
-  }
-  else {
-    fprintf(stderr, "snd_pcm_readi %s: %s\n", sl(priv->device), snd_strerror((int)n));
-    fprintf(stderr, "attempting snd_pcm_prepare() to correct...\n");
-    snd_pcm_prepare(priv->handle);
   }
   
   if (buffer) {

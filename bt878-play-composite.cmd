@@ -3,6 +3,7 @@ new SDLstuff sdl
 
 config sdl mode OVERLAY
 connect sdl:Keycode_msg sdl:Keycode_msg
+connect sdl:Keycode_msg_2 vc:Keycode_msg
 
 config vc device BT878
 

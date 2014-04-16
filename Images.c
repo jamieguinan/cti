@@ -837,6 +837,45 @@ void YUV422P_paste(YUV422P_buffer *dest, YUV422P_buffer *src, int xoffset, int y
 }
 
 
+YUV420P_buffer *YUV420P_copy(YUV420P_buffer *yuv420p, int xoffset, int yoffset, int width, int height)
+{
+  YUV420P_buffer *newbuf = 0L;
+  int x, y;
+
+  if (xoffset+width > yuv420p->width || yoffset+height > yuv420p->height) {
+    fprintf(stderr, "copy outside bounds!\n");
+    return 0L;
+  }
+
+  newbuf = YUV420P_buffer_new(width, height, &yuv420p->c);
+
+  for (y = 0; y < height; y+=1) {
+    uint8_t *ysrc = yuv420p->y + ((y + yoffset) * yuv420p->width) + xoffset;
+    uint8_t *ydst = newbuf->y + (y*newbuf->width);
+    uint8_t *crsrc = yuv420p->cr + ((y + yoffset) * yuv420p->width/2) + (xoffset/2);
+    uint8_t *crdst = newbuf->cr + (y*newbuf->width/4);
+    uint8_t *cbsrc = yuv420p->cb + ((y + yoffset) * yuv420p->width/2) + (xoffset/2);
+    uint8_t *cbdst = newbuf->cb + (y*newbuf->width/4);
+    for (x = 0; x < width; x+=1) {
+      *ydst++ = *ysrc++;
+
+      if (y % 2 == 0 && x % 2 == 0) {
+	*crdst++ = *crsrc++;
+	*cbdst++ = *cbsrc++;
+      }
+    }
+  }
+  
+  return newbuf;
+}
+
+
+YUV420P_buffer *YUV420P_clone(YUV420P_buffer *yuv420p)
+{
+  return YUV420P_copy(yuv420p, 0, 0, yuv420p->width, yuv420p->height);
+}
+
+
 Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c)
 {
   Jpeg_buffer *jpeg = Mem_calloc(1, sizeof(Jpeg_buffer));

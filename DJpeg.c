@@ -142,6 +142,10 @@ static FormatInfo known_formats[] = {
   { .imgtype = IMAGE_TYPE_YUV422P, .label = "YUV422P", 
     .libjpeg_colorspace = JCS_YCbCr, .libjpeg_colorspace_label = "JCS_YCbCr",
     .factors = { 2, 1, 1, 1, 1, 1}, .crcb_width_divisor = 2, .crcb_height_divisor = 1},
+
+  { .imgtype = IMAGE_TYPE_YUV422P, .label = "YUV422P", 
+    .libjpeg_colorspace = JCS_YCbCr, .libjpeg_colorspace_label = "JCS_YCbCr",
+    .factors = { 2, 2, 1, 2, 1, 2}, .crcb_width_divisor = 2, .crcb_height_divisor = 1},
 };
 
 static void Jpeg_handler(Instance *pi, void *data)
@@ -221,7 +225,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   FormatInfo *fmt = NULL;
   for (i=0; i < cti_table_size(known_formats); i++) {
     if (memcmp(samp_factors, known_formats[i].factors, sizeof(samp_factors)) == 0) {
-      // printf("Jpeg subsampling: %s\n", known_formats[i].label);
+      dpf("Jpeg subsampling: %s\n", known_formats[i].label);
       fmt = &(known_formats[i]);
       break;
     }

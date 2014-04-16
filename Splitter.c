@@ -12,22 +12,28 @@
 
 static void Config_handler(Instance *pi, void *msg);
 static void y422p_handler(Instance *pi, void *msg);
+static void y420p_handler(Instance *pi, void *msg);
 static void Wav_handler(Instance *pi, void *data);
 static void Jpeg_handler(Instance *pi, void *data);
 
 #define NUM_OUTPUTS 2
 
-enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_JPEG, INPUT_WAV };
+enum { INPUT_CONFIG, INPUT_YUV420P, INPUT_YUV422P, INPUT_JPEG, INPUT_WAV };
 static Input Splitter_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
+  [ INPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .handler = y420p_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
 };
 
-enum { OUTPUT_YUV422P_1, OUTPUT_YUV422P_2, OUTPUT_JPEG_1, OUTPUT_JPEG_2,
+enum { OUTPUT_YUV420P_1, OUTPUT_YUV420P_2, 
+       OUTPUT_YUV422P_1, OUTPUT_YUV422P_2, 
+       OUTPUT_JPEG_1, OUTPUT_JPEG_2,
        OUTPUT_WAV_1, OUTPUT_WAV_2 };
 static Output Splitter_outputs[] = {
+  [ OUTPUT_YUV420P_1 ] = {.type_label = "YUV420P_buffer.1", .destination = 0L },
+  [ OUTPUT_YUV420P_2 ] = {.type_label = "YUV420P_buffer.2", .destination = 0L },
   [ OUTPUT_YUV422P_1 ] = {.type_label = "YUV422P_buffer.1", .destination = 0L },
   [ OUTPUT_YUV422P_2 ] = {.type_label = "YUV422P_buffer.2", .destination = 0L },
   [ OUTPUT_JPEG_1 ] = {.type_label = "Jpeg_buffer.1", .destination = 0L },
@@ -50,6 +56,46 @@ static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
+
+
+static void y420p_handler(Instance *pi, void *data)
+{
+  const int outputs[NUM_OUTPUTS] = { OUTPUT_YUV420P_1, OUTPUT_YUV420P_2 };
+  int i, j;
+  int out_count = 0;
+  YUV420P_buffer *y420p_in = data;
+
+  for (i=0; i < NUM_OUTPUTS; i++) {
+    j = outputs[i];
+    if (pi->outputs[j].destination) {
+      out_count += 1;
+    }
+  }
+
+  for (i=0; out_count && i < NUM_OUTPUTS; i++) {
+    j = outputs[i];
+    if (pi->outputs[j].destination) {
+      out_count -= 1;
+      if (out_count) {
+	/* Clone and post buffer. */
+	YUV420P_buffer *y420p_tmp = YUV420P_clone(y420p_in);
+	PostData(y420p_tmp, pi->outputs[j].destination); 
+	y420p_tmp = NULL;
+      }
+      else {
+	/* Post buffer. */
+	PostData(y420p_in, pi->outputs[j].destination); 
+	y420p_in = 0L;
+      }
+    }
+  }
+
+  if (y420p_in) {
+    /* There were no outputs. */
+    YUV420P_buffer_discard(y420p_in);
+  }
+}
+
 
 static void y422p_handler(Instance *pi, void *data)
 {

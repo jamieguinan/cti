@@ -314,9 +314,13 @@ static void SocketServer_tick(Instance *pi)
      it to 1ms can be expensive.  If CTI were a "pull" design instead
      of "push", this might not have become a concern, but for now CTI
      is "push" and that works well enough for my purposes.
+     
+     Update: reduced from 3ms to 1ms, because the large number of
+     short audio samples was backing up the queues on the birdcam
+     installation.
   */
   tv.tv_sec = 0;
-  tv.tv_usec = 1000  * 3;	/* ms */
+  tv.tv_usec = 1000  * 1;	/* ms */
 
   sn = select(maxfd+1, &rfds, &wfds, 0L, &tv);
 

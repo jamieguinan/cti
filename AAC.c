@@ -62,7 +62,6 @@ static void Audio_handler(Instance *pi, void *msg)
 {
   AAC_private *priv = (AAC_private *)pi;
   Audio_buffer *audio = msg;
-  // int first_pass = 0;
   int rc;
   
   if (1) {
@@ -96,8 +95,6 @@ static void Audio_handler(Instance *pi, void *msg)
       priv->output_buffer = Mem_malloc(priv->maxOutputBytes);
     }
 
-    // first_pass = 1;
-    
     faacEncConfigurationPtr fc = faacEncGetCurrentConfiguration(priv->fh);
     fc->inputFormat = FAAC_INPUT_FLOAT;
     static char * inputFormats[] = {
@@ -171,6 +168,13 @@ static void Audio_handler(Instance *pi, void *msg)
     dpf("not enough samples (%d) to encode(%ld)\n", priv->num_samples, priv->samplesToInput);
     goto out;
   }
+
+  double nominal_period = 
+	priv->samplesToInput	   /* Total samples. */
+	* 1.0			   /* Convert to float */
+	// /audio->header.frame_size) /* Number of frames */
+	/audio->header.rate;	   /* frames/sec */
+  double timestamp = audio->timestamp;
   
   while (priv->num_samples >= priv->samplesToInput) {
     int encoded = faacEncEncode(priv->fh,
@@ -187,7 +191,7 @@ static void Audio_handler(Instance *pi, void *msg)
       }
     }
     
-    dpf("AAC encoded %d bytes\n",  encoded);
+    printf("AAC encoded %d bytes, timestamp=%.3f\n",  encoded, timestamp);
     if (encoded <= 0) {
       nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
       continue;
@@ -195,29 +199,22 @@ static void Audio_handler(Instance *pi, void *msg)
     
     if (pi->outputs[OUTPUT_AAC].destination) {
       AAC_buffer * aac = AAC_buffer_from(priv->output_buffer, encoded);
-      aac->timestamp = audio->timestamp;
-      aac->nominal_period = 
-	priv->samplesToInput	   /* Total samples. */
-	* 1.0			   /* Convert to float */
-	// /audio->header.frame_size) /* Number of frames */
-	/audio->header.rate;	   /* frames/sec */
+      aac->timestamp = timestamp;
+      aac->nominal_period = nominal_period;
       PostData(aac, pi->outputs[OUTPUT_AAC].destination);
     }
     
     priv->num_samples -= priv->samplesToInput;
+
+    timestamp += nominal_period;
+
     ArrayU8_trim_left(priv->chunk, priv->samplesToInput * sizeof(int16_t));
   }
 
+  printf("AAC done with audio buffer\n");
+
  out:
-#if 0
-  if (first_pass) {
-    priv->first_audio = audio;
-  }
-  else {
-  }
-#else
   Audio_buffer_discard(&audio);
-#endif
 }
 
 

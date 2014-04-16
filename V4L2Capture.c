@@ -1115,7 +1115,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 {
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   Keycode_message *km = msg;
-  
+
   if (km->keycode == CTI__KEY_S) {
     priv->snapshot += 1;
   }
@@ -1202,7 +1202,28 @@ static void bgr3_snapshot(Instance *pi, BGR3_buffer *bgr3)
 }
 
 
-static void y422p_snapshot(Instance *pi, YUV422P_buffer *y422p)
+static void yuv420p_snapshot(Instance *pi, YUV420P_buffer *yuv420p)
+{
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  FILE *f;
+  char filename[64];
+  sprintf(filename, "/dev/shm/snap%04d.yuv420p", pi->counter);
+  fprintf(stderr, "%s\n", filename);
+  f = fopen(filename, "wb");
+  if (f) {
+    if (fwrite(yuv420p->y, yuv420p->y_length, 1, f) != 1) { perror("fwrite"); }
+    if (fwrite(yuv420p->cr, yuv420p->cr_length, 1, f) != 1) { perror("fwrite"); }
+    if (fwrite(yuv420p->cb, yuv420p->cb_length, 1, f) != 1) { perror("fwrite"); }
+    fclose(f);
+  }
+  else {
+    perror(filename);
+  }
+  priv->snapshot -= 1;	  
+}
+
+
+static void yuv422p_snapshot(Instance *pi, YUV422P_buffer *y422p)
 {
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   FILE *f;
@@ -1215,6 +1236,9 @@ static void y422p_snapshot(Instance *pi, YUV422P_buffer *y422p)
     if (fwrite(y422p->cr, y422p->cr_length, 1, f) != 1) { perror("fwrite"); }
     if (fwrite(y422p->cb, y422p->cb_length, 1, f) != 1) { perror("fwrite"); }
     fclose(f);
+  }
+  else {
+    perror(filename);
   }
   priv->snapshot -= 1;	  
 }
@@ -1334,6 +1358,9 @@ static void V4L2Capture_tick(Instance *pi)
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height + priv->width*priv->height/2,
 	     priv->width*priv->height/2);
       Log(LOG_YUV422P, "%s posting y422p @ %p", __func__, y422p);
+      if (priv->snapshot > 0) {
+	yuv422p_snapshot(pi, y422p);
+      }
       PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
     }
 
@@ -1357,6 +1384,9 @@ static void V4L2Capture_tick(Instance *pi)
       memcpy(y420p->cr, 
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height + y420p->cr_width*y420p->cr_height,
 	     y420p->cb_width*y420p->cb_height);
+      if (priv->snapshot > 0) {
+	yuv420p_snapshot(pi, y420p);
+      }
       dpf("%s posting y420p @ %p", __func__, y420p);
       PostData(y420p, pi->outputs[OUTPUT_YUV420P].destination);
     }
@@ -1364,6 +1394,44 @@ static void V4L2Capture_tick(Instance *pi)
     if (pi->outputs[OUTPUT_GRAY].destination) {
       Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
       memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);      
+      PostData(g, pi->outputs[OUTPUT_GRAY].destination);
+    }
+  }
+  else if (streq(sl(priv->format), "YUYV")) {
+    if (priv->vbuffer.bytesused != priv->width*priv->height*2) {
+      fprintf(stderr, "%s: YUYV buffer is not the expected size!\n", __func__);
+    }
+    if (pi->outputs[OUTPUT_YUV422P].destination) {
+      int i;
+      int iy = 0;
+      int icr = 0;
+      int icb = 0;
+      uint8_t *p = priv->buffers[priv->wait_on].data;
+      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
+      getdoubletime(&y422p->c.timestamp);
+      for (i=0; i < priv->vbuffer.bytesused/4; i++) {
+	/* YUYV is packed-pixels, need to sort to planes for YUV422p.
+	 * Current SSE versions don't support scatter/gather, so
+	 * there's no easy way to acclerate this.  Well, I could try
+	 * doing it in 3 passes using SSE shuffle instructions. */
+	y422p->y[iy++] = *p++;
+	y422p->cb[icb++] = *p++;
+	y422p->y[iy++] = *p++;
+	y422p->cr[icr++] = *p++;
+      }
+      if (priv->snapshot > 0) {
+	yuv422p_snapshot(pi, y422p);
+      }
+      PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
+    }
+
+    if (pi->outputs[OUTPUT_GRAY].destination) {
+      int i = 0;
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
+      /* Every 2nd pixel will be a gray value. */
+      for (i=0; i < priv->vbuffer.bytesused/2; i++) {
+	g->data[i] = priv->buffers[priv->wait_on].data[i*2];
+      }
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
@@ -1405,44 +1473,6 @@ static void V4L2Capture_tick(Instance *pi)
       else {
 	PostData(o, pi->outputs[OUTPUT_O511].destination);
       }
-    }
-  }
-  else if (streq(sl(priv->format), "YUYV")) {
-    if (priv->vbuffer.bytesused != priv->width*priv->height*2) {
-      fprintf(stderr, "%s: YUYV buffer is not the expected size!\n", __func__);
-    }
-    if (pi->outputs[OUTPUT_YUV422P].destination) {
-      int i;
-      int iy = 0;
-      int icr = 0;
-      int icb = 0;
-      uint8_t *p = priv->buffers[priv->wait_on].data;
-      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
-      getdoubletime(&y422p->c.timestamp);
-      for (i=0; i < priv->vbuffer.bytesused/4; i++) {
-	/* YUYV is packed-pixels, need to sort to planes for YUV422p.
-	 * Current SSE versions don't support scatter/gather, so
-	 * there's no easy way to acclerate this.  Well, I could try
-	 * doing it in 3 passes using SSE shuffle instructions. */
-	y422p->y[iy++] = *p++;
-	y422p->cb[icb++] = *p++;
-	y422p->y[iy++] = *p++;
-	y422p->cr[icr++] = *p++;
-      }
-      if (priv->snapshot > 0) {
-	y422p_snapshot(pi, y422p);
-      }
-      PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
-    }
-
-    if (pi->outputs[OUTPUT_GRAY].destination) {
-      int i = 0;
-      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
-      /* Every 2nd pixel will be a gray value. */
-      for (i=0; i < priv->vbuffer.bytesused/2; i++) {
-	g->data[i] = priv->buffers[priv->wait_on].data[i*2];
-      }
-      PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
   else {

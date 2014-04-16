@@ -12,9 +12,10 @@ ifeq ($(ARCH),$(HOSTARCH))
 LDFLAGS+=-Wl,-rpath,$(shell pwd)/../../platform/$(ARCH)/lib
 endif
 
-CFLAGS += -O2 -Wall $(CMDLINE_CFLAGS)
-# CFLAGS += -Werror
-CFLAGS += -O0 -ggdb
+CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
+#CFLAGS += -Werror
+#CFLAGS += -O0 -ggdb
+#CFLAGS += -Os -ggdb
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
 CFLAGS += -Wno-unused-result

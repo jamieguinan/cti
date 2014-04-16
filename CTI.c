@@ -17,6 +17,7 @@
 
 pthread_key_t instance_key;
 int instance_key_initialized;
+int g_synchronous = 0;		/* TESTING ONLY. */
 
 void instance_key_init(void)
 {
@@ -130,7 +131,13 @@ void PostDataGetResult(void *data, Input *input, int * result)
 
 void PostData(void *data, Input *input)
 {
-  PostDataGetResult(data, input, NULL);
+  if (!g_synchronous) {
+    PostDataGetResult(data, input, NULL);
+  }
+  else {
+    int throwaway;
+    PostDataGetResult(data, input, &throwaway);
+  }
 }
 
 

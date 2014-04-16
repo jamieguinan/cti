@@ -1,5 +1,6 @@
 new Y4MInput y4min
 new H264 venc
+new AAC aenc
 
 config venc preset faster
 config venc tune zerolatency

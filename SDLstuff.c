@@ -134,7 +134,7 @@ typedef struct {
 static void _reset_video(SDLstuff_private *priv, const char *func);
 #define reset_video(priv) _reset_video(priv, __func__);
 
-static void tsnapshot()
+static void update_display_times()
 {
   static double field_times[600];
   static int tcount = 0;
@@ -199,7 +199,7 @@ static void Keycode_handler(Instance *pi, void *msg)
     handled = 1;
     exit(0);
   }
-  
+
   if (!handled && pi->outputs[OUTPUT_KEYCODE_2].destination) {
     /* Pass along... */
     PostData(km, pi->outputs[OUTPUT_KEYCODE_2].destination);
@@ -664,7 +664,7 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   getdoubletime(&tnow);
   // nanosleep(tv_next - tv_now);
   
-  tsnapshot();
+  update_display_times();
 }
 
 static void post_render_frame(Instance *pi)
