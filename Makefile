@@ -121,6 +121,7 @@ OBJS= \
 	$(OBJDIR)/RawSource.o \
 	$(OBJDIR)/ImageOutput.o \
 	$(OBJDIR)/SubProc.o \
+	$(OBJDIR)/ExecProc.o \
 	$(OBJDIR)/dpf.o \
 	$(OBJDIR)/XMLMessageServer.o \
 	$(OBJDIR)/socket_common.o \

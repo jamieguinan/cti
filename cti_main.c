@@ -68,6 +68,7 @@
 #include "ImageOutput.h"
 #include "SQLite.h"
 #include "SubProc.h"
+#include "ExecProc.h"
 #include "XMLMessageServer.h"
 #include "Mpeg2Dec.h"
 //#include "PCMSource.h"
@@ -187,6 +188,7 @@ int cti_main(int argc, char *argv[])
   RawSource_init();
   ImageOutput_init();
   SubProc_init();
+  ExecProc_init();
   XMLMessageServer_init();
   //PCMSource_init();
 
