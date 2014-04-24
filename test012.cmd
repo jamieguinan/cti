@@ -6,8 +6,8 @@ new AAC aenc
 new Null null
 
 connect mjd Wav_buffer aenc
-#connect mjd Jpeg_buffer dj
-connect mjd Jpeg_buffer null
+connect mjd Jpeg_buffer dj
+#connect mjd Jpeg_buffer null
 
 connect dj YUV420P_buffer ef
 connect ef YUV420P_buffer venc

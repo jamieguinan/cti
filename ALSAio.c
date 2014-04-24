@@ -3,6 +3,7 @@
 #include <string.h>		/* memcpy */
 #include <dirent.h>		/* readdir */
 #include <alsa/asoundlib.h>	/* ALSA library */
+#include <math.h>		/* fabs */
 
 #include "CTI.h"
 #include "ALSAio.h"
@@ -731,22 +732,30 @@ static void ALSACapture_tick(Instance *pi)
 
     priv->running_timestamp += calculated_period;
     
-    /* Adjust running timestamp if it slips too far either way. */
     double tnow;
     getdoubletime(&tnow);
 
+    /* Do coarse adjustment if necessary, this can happen after a
+       system date change via ntp or htpdate. */
+    if (fabs(priv->running_timestamp - tnow) > 5.0) {
+      printf("coarse timestamp adjustment, %.3f -> %.3f\n",
+	     priv->running_timestamp, tnow);
+      priv->running_timestamp = tnow;
+    }
+
+    /* Adjust running timestamp if it slips too far either way. */
     if (priv->running_timestamp - tnow > calculated_period) {
-      priv->running_timestamp -= (calculated_period/2.0);      
       printf("- running timestamp\n");
-      printf("priv->rate=%d,  %.3f - %.3f > %.5f : + running timestamp\n", 
+      printf("priv->rate=%d,  %.3f - %.3f > %.5f : - running timestamp\n", 
 	     priv->rate, 
 	     priv->running_timestamp , tnow , calculated_period);
+      priv->running_timestamp -= (calculated_period/2.0);      
     }
     else if (tnow - priv->running_timestamp > calculated_period) {
-      priv->running_timestamp += (calculated_period/2.0);
       printf("priv->rate=%d, %.3f - %.3f > %.5f : + running timestamp\n",
 	     priv->rate, 
 	     tnow , priv->running_timestamp , calculated_period);
+      priv->running_timestamp += (calculated_period/2.0);
     }
 
     int buffer_bytes = n * priv->format_bytes * priv->channels;

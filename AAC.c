@@ -191,7 +191,7 @@ static void Audio_handler(Instance *pi, void *msg)
       }
     }
     
-    printf("AAC encoded %d bytes, timestamp=%.3f\n",  encoded, timestamp);
+    //printf("AAC encoded %d bytes, timestamp=%.3f\n",  encoded, timestamp);
     if (encoded <= 0) {
       nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
       continue;
@@ -211,7 +211,7 @@ static void Audio_handler(Instance *pi, void *msg)
     ArrayU8_trim_left(priv->chunk, priv->samplesToInput * sizeof(int16_t));
   }
 
-  printf("AAC done with audio buffer\n");
+  //printf("AAC done with audio buffer\n");
 
  out:
   Audio_buffer_discard(&audio);

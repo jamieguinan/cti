@@ -347,8 +347,8 @@ static void YUV420P_handler(Instance *pi, void *msg)
 
     int frame_size = x264_encoder_encode(priv->encoder, &nal, &pi_nal, &pic_in, &pic_out );
 
-    //dpf
-    printf
+    dpf
+    //printf
       ("counter=%d, frame_size=%d, %d nal units, pic.b_keyframe=%d, i_pts=%" PRIi64 " i_dts=%" PRIi64 "\n"
        , pi->counter
        , frame_size
@@ -359,7 +359,9 @@ static void YUV420P_handler(Instance *pi, void *msg)
        );
 
     for (i=0; i < pi_nal; i++) {
-      printf("  nal[%d]: priority %s, type %s, startcode=%d, payloadsize=%d,\n",
+      //printf
+      dpf
+	("  nal[%d]: priority %s, type %s, startcode=%d, payloadsize=%d,\n",
 	     i,
 	     nal_priority_e_str(nal[i].i_ref_idc),
 	     nal_unit_type_e_str(nal[i].i_type),
@@ -367,7 +369,7 @@ static void YUV420P_handler(Instance *pi, void *msg)
 	     nal[i].i_payload);
     }
     
-    printf("\n");
+    //printf("\n");
 
     // "p_payload=%p i_payload=%d"
     // nal ? (nal->p_payload) : NULL,

@@ -83,8 +83,6 @@ int cti_main(int argc, char *argv[])
 {
   argv0 = argv[0];
 
-  printf("cti_main @ %p\n", cti_main);
-
   gig = InstanceGroup_new();
   instance_key_init();
 

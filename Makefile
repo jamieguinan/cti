@@ -18,7 +18,9 @@ CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
 #CFLAGS += -Os -ggdb
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
+ifneq ($(ARCH),pentium3-Linux)
 CFLAGS += -Wno-unused-result
+endif
 endif
 endif
 # -std=c99 
@@ -236,19 +238,23 @@ CPPFLAGS+=-DHAVE_LIBQUICKTIME
 endif
 
 # Ogg
+ifneq ($(ARCH),pentium3-Linux)
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/vorbisenc.pc))
 OBJS+=$(OBJDIR)/OggOutput.o
 CPPFLAGS+=$$(pkg-config vorbisenc theoraenc --cflags)
 LDFLAGS+=$$(pkg-config vorbisenc theoraenc --libs)
 CPPFLAGS+=-DHAVE_OGGOUTPUT
 endif
+endif
 
 # H264
+ifneq ($(ARCH),pentium3-Linux)
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc))
 OBJS+=$(OBJDIR)/H264.o
 CPPFLAGS+=$$(pkg-config x264 --cflags)
 LDFLAGS+=$$(pkg-config x264 --libs)
 CPPFLAGS+=-DHAVE_H264
+endif
 endif
 
 # AAC

@@ -61,6 +61,7 @@ static int SDLtoCTI_Keymap[SDLK_LAST] = {
   [SDLK_PLUS] = CTI__KEY_PLUS,
   [SDLK_MINUS] = CTI__KEY_MINUS,
   [SDLK_EQUALS] = CTI__KEY_EQUALS,
+  [SDLK_CARET] = CTI__KEY_CARET,
 };
 
 
@@ -136,6 +137,8 @@ static void _reset_video(SDLstuff_private *priv, const char *func);
 
 static void update_display_times()
 {
+#ifdef CLOCK_MONOTONIC_RAW
+  /* CLOCK_MONOTONIC_RAW is only present in linux-2.6.28+ */
   static double field_times[600];
   static int tcount = 0;
   
@@ -162,7 +165,7 @@ static void update_display_times()
       printf("field times saved\n");
     }
   }
-
+#endif
 }
 
 static void Keycode_handler(Instance *pi, void *msg)

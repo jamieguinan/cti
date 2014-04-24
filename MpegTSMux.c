@@ -166,8 +166,6 @@ typedef struct {
 #define MAX_STREAMS 2
   Stream streams[MAX_STREAMS];
 
-  int av_packet_count;
-
   struct {
     uint8_t continuity_counter;
   } PAT;
@@ -482,7 +480,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   /* Copy the data. */
   ArrayU8_append(pes, data);
 
-  if (v) printf("pes->len=%d, data->len=%d\n", pes->len, data->len);
+  if (v) printf("pid=%d pes->len=%d, data->len=%d\n", pid, pes->len, data->len);
   
   /* Now pack into TS packets... */
   unsigned int pes_offset = 0;
@@ -809,6 +807,7 @@ static void flush(Instance *pi)
   }
 
   for (i=0; i < MAX_STREAMS; i++) {
+    //printf("priv->streams[%d].packet_count = %d\n", i, priv->streams[i].packet_count);
     av_packets += priv->streams[i].packet_count;
     pts_now = cti_max(pts_now, priv->streams[i].pts_value);
   }
@@ -869,12 +868,21 @@ static void flush(Instance *pi)
     Mem_free(pkt);
   }
 
-  /* Loop as long as both A and V have some number of packets prepared. */
+  /* Loop as long as both A and V have some number of packets
+     prepared.  Push out one packet with each pass through the
+     loop. */
   while (priv->streams[0].packets && priv->streams[1].packets) {
+
+    if (0) printf("priv->streams[0].packets = %p (%d) et=%" PRIu64 " , priv->streams[1].packets = %p (%d) et=%" PRIu64 "\n",
+	   priv->streams[0].packets, priv->streams[0].packet_count, priv->streams[0].packets->estimated_timestamp,
+	   priv->streams[1].packets, priv->streams[1].packet_count, priv->streams[1].packets->estimated_timestamp);
+
+
     /* Find stream with older packet. */
     Stream * stream = &priv->streams[0];
 
     for (i=1; i < MAX_STREAMS; i++) {
+
       if (priv->streams[i].packets->estimated_timestamp <
 	  priv->streams[i-1].packets->estimated_timestamp){
 	/* Want older timestamps first. */

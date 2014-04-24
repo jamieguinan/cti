@@ -23,4 +23,20 @@ do { \
   } \
  } while(0)
 
+#define dpf1(fmt, ...) \
+do { \
+  static int enabled=1; \
+  static int registered; \
+  if (enabled) { \
+    if (!registered) { \
+      registered = 1; \
+      enabled = 1; \
+      cti_debug_printf_register(__FILE__, __LINE__, &enabled, fmt); \
+    } \
+    else { \
+      cti_debug_printf(fmt, __VA_ARGS__); \
+    } \
+  } \
+ } while(0)
+
 #endif

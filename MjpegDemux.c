@@ -99,6 +99,8 @@ typedef struct {
     Jpeg_buffer *jpeg;
     Wav_buffer *wav;
   } buffer;
+
+  int show_offset;		/* Display a file offset suitable for editing. */
 } MjpegDemux_private;
 
 
@@ -281,6 +283,17 @@ static void Keycode_handler(Instance *pi, void *msg)
     if (priv->source) {
       priv->snapshot = 1;
     }
+  }
+
+  else if (km->keycode == CTI__KEY_X) {
+    /* Show approximate file offset. */
+    long n = Source_tell(priv->source);
+    printf("offset %ld, %ld @ 1000\n", n, n/1000);
+  }
+
+  else {
+    /* Show approximate file offset. */
+    printf("%s: unhandled keycode %d\n", __func__, km->keycode);
   }
 
   Keycode_message_cleanup(&km);
@@ -659,7 +672,7 @@ static void MjpegDemux_tick(Instance *pi)
   if (priv->output_sink) {
     Sink_write(priv->output_sink, priv->chunk->data, priv->current.eoh + 4 + priv->current.content_length);
   }
-  
+
   ArrayU8_trim_left(priv->chunk, priv->current.eoh + 4 + priv->current.content_length);
 
   /* Reset "current" variables */
