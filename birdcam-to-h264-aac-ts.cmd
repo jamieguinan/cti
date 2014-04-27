@@ -1,4 +1,4 @@
-system rm -vf birdcam-*.ts
+#system rm -vf birdcam-*.ts
 
 new MjpegDemux mjd
 new DJpeg dj
@@ -11,8 +11,13 @@ new AAC aenc
 config venc output test.264
 # faster fast medium
 config venc preset faster
-config venc tune psnr
-config venc profile baseline
+#config venc tune psnr
+config venc tune zerolatency
+#config venc profile baseline
+#config venc cqp 25
+config venc crf 20
+# Assuming 15fps, generate a keyframe every 5 seconds.
+config venc keyint_max 75
 
 new MpegTSMux tsm
 #config tsm debug_outpackets 1
@@ -22,6 +27,7 @@ config tsm pmt_essd 1:27:258
 
 #connect tsm RawData_buffer ss
 config tsm index_dir /home/guinan/tmp/birdcam
+system mkdir -pv /home/guinan/tmp/birdcam
 system rm -vf  /home/guinan/tmp/birdcam/birdcam-*.ts
 config tsm output /home/guinan/tmp/birdcam/birdcam-%s.ts
 config tsm duration 5

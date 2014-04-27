@@ -101,6 +101,7 @@ void String_set(String *s, const char *init)
 {
   if (!init) {
     fprintf(stderr, "String_set needs an initial string, even if \"\"...\n");
+    StackDebug();
     exit(1);
   }
 

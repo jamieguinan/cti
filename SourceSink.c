@@ -86,7 +86,6 @@ static void io_open(IO_common *io, char *name, const char *mode)
       /* Open as pipe, only for output. */
       strftime(out_name, sizeof(out_name), name, lt);
       io->p = popen(out_name+1, "w");
-      fprintf(stderr, "io->p=%p\n", io->p);
       if (io->p) {
 	io->state = IO_OPEN_PIPE;
 	String_set(&io->generated_name, out_name);
@@ -148,6 +147,8 @@ static void io_write(IO_common *io, void *data, int length)
 Sink *Sink_new(char *name)
 {
   Sink *sink = Mem_calloc(1, sizeof(*sink));
+
+  printf("%s(%s)\n", __func__, name);
 
   sink->io.s = -1;			/* Default to invalid socket value. */
   sink->io.state = IO_CLOSED;

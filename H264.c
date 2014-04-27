@@ -66,7 +66,7 @@ typedef struct {
 
   int cqp;
   int crf;
-  int keyint_max;
+  int keyint_max;		/* Generate a keyframe after this many input frames. */
 
   int processed_frames;
   int max_frames;		/* exit after this many frames if set */
@@ -268,7 +268,7 @@ static void YUV420P_handler(Instance *pi, void *msg)
     params.b_vfr_input = 0;
 
     /* Only enable this if needed for iOS playback. */
-    //params.b_aud = 1;
+    params.b_aud = 1;
 
     /* Default motion estimation method is X264_ME_HEX, leave it at that. */
     //  params.analyse.i_me_method = X264_ME_UMH;

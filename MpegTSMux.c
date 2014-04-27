@@ -564,15 +564,17 @@ static void H264_handler(Instance *pi, void *msg)
   priv->streams[0].pcr_add = 0;
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
 
-  dpf("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 "\n",
-		h264->encoded_length, 
-		h264->c.timestamp,
-		h264->c.nominal_period,
-		priv->streams[0].es_duration,
-		priv->streams[0].pts_value);
+  dpf1("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 " keyframe:%s\n",
+      h264->encoded_length, 
+      h264->c.timestamp,
+      h264->c.nominal_period,
+      priv->streams[0].es_duration,
+      priv->streams[0].pts_value,
+      h264->keyframe?"Y":"N"
+      );
 
   if (h264->keyframe) {
-    /* Note, flush BEFORE packetize. */
+    /* Note, flush BEFORE packetize, so that next batch begins with keyframe. */
     flush(pi);
   }
 
@@ -765,7 +767,7 @@ static void flush(Instance *pi)
   while (priv->streams[0].packets || priv->streams[1].packets) {
     /* Find stream with oldest packet. */
     Stream * stream = NULL;
-    for (i=0; i < MAX_STREAMS && priv->streams[i].packets; i++) {
+    for (i=0; i < MAX_STREAMS; i++) {
       if (!priv->streams[i].packets) {
 	continue;
       }
@@ -874,9 +876,6 @@ static void MpegTSMux_tick(Instance *pi)
   hm = GetData(pi, 1);
   if (hm) {
     hm->handler(pi, hm->data);
-    if (hm->handler != Config_handler) {
-      flush(pi);    
-    }
     ReleaseMessage(&hm,pi);
   }
 

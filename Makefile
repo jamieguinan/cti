@@ -31,7 +31,7 @@ ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 endif
 
-#INSTRUMENT = -finstrument-functions
+#CPPFLAGS += -finstrument-functions
 CPPFLAGS += -DUSE_STACKDEBUG
 
 # "-static" is a problem for alsa, and other things...
@@ -326,7 +326,7 @@ $(OBJDIR)/ctest$(EXEEXT): \
 $(OBJDIR)/%.o: %.c Makefile
 	@echo CC $<
 #	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-	@$(CC) $(CPPFLAGS) $(INSTRUMENT) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/StackDebug.o: StackDebug.c Makefile
 	@echo CC $<
