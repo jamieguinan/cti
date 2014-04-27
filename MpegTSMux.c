@@ -82,17 +82,11 @@ unsigned int mpegts_crc32(const uint8_t *data, int len)
 }
 
 
-/* I can't figure out an algorithm to emulate the varying audio PTS values,
-   so I am temporarily hacking in the observed values. */
-static uint64_t audiopts[] = {
-#include "audiopts.c"
-};
-static int audiopts_index = 0;
-
 static void Config_handler(Instance *pi, void *msg);
 static void H264_handler(Instance *pi, void *msg);
 static void AAC_handler(Instance *pi, void *msg);
 static void MP3_handler(Instance *pi, void *msg);
+static void flush(Instance *pi);
 
 enum { INPUT_CONFIG, INPUT_H264, INPUT_AAC, INPUT_MP3 };
 static Input MpegTSMux_inputs[] = {
@@ -125,7 +119,6 @@ typedef struct {
   TSPacket * last_packet;
   int packet_count;
   uint64_t pts_value;
-  int pts_add;
   uint64_t pcr_value;		/* FIXME: Need this if always same as pts_value? */
   int pcr_add;
   uint64_t es_duration;		/* nominal elementary packet duration in 90KHz units */
@@ -138,6 +131,7 @@ typedef struct {
   const char *typecode;
 } Stream;
 
+/* Maximum PAT interval is 100ms */
 #define MAXIMUM_PAT_INTERVAL_90KHZ (90000/10)
 
 typedef struct {
@@ -161,16 +155,12 @@ typedef struct {
   String_list * m3u8_ts_files;
   int media_sequence;
 
-  int pktseq;			/* Output packet counter... */
-  
 #define MAX_STREAMS 2
   Stream streams[MAX_STREAMS];
 
   struct {
     uint8_t continuity_counter;
   } PAT;
-
-  uint64_t pat_pts_last;
 
   struct {
     uint16_t PCR_PID;
@@ -183,8 +173,8 @@ typedef struct {
   } PMT;
 
   int seen_audio;
-  int seen_video;
   int debug_outpackets;
+  int debug_pktseq; 
 
 } MpegTSMux_private;
 
@@ -346,38 +336,6 @@ static void m3u8_files_update(MpegTSMux_private * priv)
 }
 
 
-static void m3u8_record(MpegTSMux_private * priv, TSPacket *pkt, 
-			uint64_t pts_now, int isPAT)
-{
-  /* FIXME: Check for pts wrap. less-than would probably work. */
-
-  int start_new_segment = 0;
-
-  if (priv->m3u8_pts_start == 0) {
-    start_new_segment = 1;
-    priv->m3u8_pts_start = pts_now;
-  }
-  if (isPAT && (pts_now - priv->m3u8_pts_start > (priv->duration*90000))) {
-    start_new_segment = 1;
-  }
-    /* Start a new segment. */
-  if (start_new_segment && 
-      priv->output_sink) {
-    Sink_free(&priv->output_sink);
-  }
-
-  if (start_new_segment) {
-    priv->output_sink = Sink_new(sl(priv->output));
-    String *tmp = String_new(sl(priv->output_sink->io.generated_name));
-    String_list_add(priv->m3u8_ts_files, &tmp);
-    m3u8_files_update(priv);
-    priv->m3u8_pts_start = pts_now;
-  }
-  
-  Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
-}
-
-
 static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 {
   MpegTimeStamp pts = {};
@@ -451,18 +409,6 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 			 ,((pts.value >> 7)&0xff)	   /* bits 14:7 */
 			 ,((pts.value << 1)&0xfe) | 1   /* bits 6:0, 1 */
 			 );
-    stream->pts_value += stream->pts_add;
-
-    if (0) {
-      /* Special-case handling for test sample. */
-      if (stream->es_id == 224 && stream->pts_value == 1404504) { stream->pts_value += 1; }
-      if (stream->es_id == 192 && audiopts_index < table_size(audiopts)) {
-	audiopts_index += 1;
-	stream->pts_value = audiopts[audiopts_index];
-      } 
-    }
-
-
   }
 
   if (dts.set) {
@@ -612,17 +558,8 @@ static void H264_handler(Instance *pi, void *msg)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
-  if (!priv->seen_video) {
-    /* FIXME: Can probably get rid of this block... */
-    priv->seen_video = 1;
-    priv->streams[0].pts_value = 0;
-    priv->streams[0].pts_add = (int)(90000 * h264->c.nominal_period);
-    priv->streams[0].pcr_value = priv->streams[0].pts_value;
-    priv->streams[0].pcr_add = priv->streams[0].pts_add;
-  }
 
   priv->streams[0].pts_value = timestamp_to_90KHz(h264->c.timestamp);
-  priv->streams[0].pts_add = 0;
   priv->streams[0].pcr_value = priv->streams[0].pts_value;
   priv->streams[0].pcr_add = 0;
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
@@ -634,7 +571,13 @@ static void H264_handler(Instance *pi, void *msg)
 		priv->streams[0].es_duration,
 		priv->streams[0].pts_value);
 
+  if (h264->keyframe) {
+    /* Note, flush BEFORE packetize. */
+    flush(pi);
+  }
+
   packetize(priv, 258, ArrayU8_temp_const(h264->data, h264->encoded_length));
+
   H264_buffer_discard(h264);
 }
 
@@ -645,7 +588,6 @@ static void AAC_handler(Instance *pi, void *msg)
   AAC_buffer *aac = msg;
   if (!priv->seen_audio) { priv->seen_audio = 1; }
   priv->streams[1].pts_value = timestamp_to_90KHz(aac->timestamp);
-  priv->streams[1].pts_add = 0;
   priv->streams[1].es_duration = timestamp_to_90KHz(aac->nominal_period);
   dpf("aac->data_length=%d aac->timestamp=%.6f aac->nominal_period=%.6f es_duration=%" PRIu64"\n",
 	 aac->data_length, aac->timestamp,  aac->nominal_period, priv->streams[1].es_duration );
@@ -783,11 +725,10 @@ static void flush(Instance *pi)
 {
   /* Write out interleaved video and audio packets, adding PAT and PMT
      packets at least every 100ms or N packets. */
-
-  /* I'll eventually set up m3u8 generation. */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   int i;
   uint64_t pts_now = 0;
+  uint64_t pat_pts_last = 0;
   
   if (priv->debug_outpackets && access("outpackets", R_OK) != 0) {
     mkdir("outpackets", 0744);
@@ -796,118 +737,94 @@ static void flush(Instance *pi)
   /* Sum up the pending AV packets. */
   int av_packets = 0;
 
-  if (priv->streams[0].packet_count == 0) {
-    //printf("waiting for V\n");
-    return;
-  }
-
-  if (priv->streams[1].packet_count == 0) {
-    //printf("waiting for A\n");
-    return;
-  }
-
   for (i=0; i < MAX_STREAMS; i++) {
-    //printf("priv->streams[%d].packet_count = %d\n", i, priv->streams[i].packet_count);
     av_packets += priv->streams[i].packet_count;
-    pts_now = cti_max(pts_now, priv->streams[i].pts_value);
   }
+
+  printf("av_packets = %d\n", av_packets);
 
   if (av_packets == 0) {
     return;
   }
 
-  if ( (pts_now - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450)) {
-    /* FIXME: The subtraction test means its actually gone OVER, so
-       it might be better to add some fudge in there. */
-    priv->pat_pts_last = pts_now;
-    TSPacket *pkt;
-    String * fname;
-
-    /* PAT, pid 0 */
-    pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
-
-    if (priv->debug_outpackets) {
-      fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->pktseq++, 0,
-			     pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
-      debug_outputpacket_write(pkt, fname);
-      String_free(&fname);
+  if (sl(priv->output)) {
+    /* flush() always starts a new output segment. */
+    if (priv->output_sink) {
+      Sink_free(&priv->output_sink);
     }
-
-    if (pi->outputs[OUTPUT_RAWDATA].destination) {
-      /* FIXME: Could just assign the packet an avoid another allocation. */
-      RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
-      PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
-    }
-
-    if (sl(priv->output)) {
-      m3u8_record(priv, pkt, pts_now, 1);
-    }
-
-    Mem_free(pkt);
     
-
-    /* PMT, pid 256 */
-    pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
-
-    if (priv->debug_outpackets) {
-      fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->pktseq++, 256,
-			     pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
-      debug_outputpacket_write(pkt, fname);
-      String_free(&fname);
-    }
-
-    if (pi->outputs[OUTPUT_RAWDATA].destination) {
-      RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
-      PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
-    }
-
-    if (sl(priv->output)) {
-      m3u8_record(priv, pkt, pts_now, 0);
-    }
-
-    Mem_free(pkt);
+    priv->output_sink = Sink_new(sl(priv->output));
+    String *tmp = String_new(sl(priv->output_sink->io.generated_name));
+    String_list_add(priv->m3u8_ts_files, &tmp);
+    m3u8_files_update(priv);
+    priv->m3u8_pts_start = pts_now;
   }
 
   /* Loop as long as both A and V have some number of packets
-     prepared.  Push out one packet with each pass through the
-     loop. */
-  while (priv->streams[0].packets && priv->streams[1].packets) {
-
-    if (0) printf("priv->streams[0].packets = %p (%d) et=%" PRIu64 " , priv->streams[1].packets = %p (%d) et=%" PRIu64 "\n",
-	   priv->streams[0].packets, priv->streams[0].packet_count, priv->streams[0].packets->estimated_timestamp,
-	   priv->streams[1].packets, priv->streams[1].packet_count, priv->streams[1].packets->estimated_timestamp);
-
-
-    /* Find stream with older packet. */
-    Stream * stream = &priv->streams[0];
-
-    for (i=1; i < MAX_STREAMS; i++) {
-
-      if (priv->streams[i].packets->estimated_timestamp <
-	  priv->streams[i-1].packets->estimated_timestamp){
-	/* Want older timestamps first. */
+     prepared.  Push out one packet with each pass through the loop. */
+  while (priv->streams[0].packets || priv->streams[1].packets) {
+    /* Find stream with oldest packet. */
+    Stream * stream = NULL;
+    for (i=0; i < MAX_STREAMS && priv->streams[i].packets; i++) {
+      if (!priv->streams[i].packets) {
+	continue;
+      }
+      if (!stream) {
+	stream = &priv->streams[i];
+      }
+      else if (priv->streams[i].packets->estimated_timestamp < stream->packets->estimated_timestamp) {
 	stream = &priv->streams[i];
       }
     }
 
-    if (1) {
-      TSPacket *pkt = stream->packets;
+    if (!stream) {
+      fprintf(stderr, "%s:%d sanity check fail, no stream\n", __func__, __LINE__);
+      return;
+    }
 
-      dpf("flush: et=%" PRIu64 " pid=%d\n", pkt->estimated_timestamp, stream->pid);
+    TSPacket *pkt = stream->packets;
+
+    /* PAT+PMT should get generated once at the start of a flush,
+       which should happen because pat_pts_last is initially zero,
+       then regularly during the flush loop.  FIXME:  There is still
+       the problem of PTS wrap, because the 33-bit counter can only
+       hold ~26 hours at 90KHz, and I'm using a modulo value of the
+       real timestamp. */
+    if ( (pkt->estimated_timestamp - pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
+      pat_pts_last = pkt->estimated_timestamp;
+      TSPacket *pkt;
+      String * fname;
+
+      /* PAT, pid 0 */
+      pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
 
       if (priv->debug_outpackets) {
-	char fname[256]; sprintf(fname, 
-				 "outpackets/%05d-ts%04d%s%s", 
-				 priv->pktseq++,
-				 stream->pid,
-				 pkt->af ? "-AF" : "" ,
-				 pkt->pus ? "-PUS" : ""
-				 );
-	FILE * f = fopen(fname, "wb");
-	if (f) {
-	  if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
-	  fclose(f);
-	}
+	fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 0,
+			       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+	debug_outputpacket_write(pkt, fname);
+	String_free(&fname);
+      }
+
+      if (pi->outputs[OUTPUT_RAWDATA].destination) {
+	/* FIXME: Could just assign the packet an avoid another allocation. */
+	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+      }
+
+      if (sl(priv->output)) {
+	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+      }
+
+      Mem_free(pkt);
+    
+      /* PMT, pid 256 */
+      pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
+
+      if (priv->debug_outpackets) {
+	fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 256,
+			       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+	debug_outputpacket_write(pkt, fname);
+	String_free(&fname);
       }
 
       if (pi->outputs[OUTPUT_RAWDATA].destination) {
@@ -916,14 +833,36 @@ static void flush(Instance *pi)
       }
 
       if (sl(priv->output)) {
-	m3u8_record(priv, pkt, pts_now, 0);
+	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
       }
 
-      stream->packets = stream->packets->next;
-      stream->packet_count -= 1;
-
       Mem_free(pkt);
+    } /* end PAT+PMT generation */
+
+
+    dpf("flush: et=%" PRIu64 " pid=%d\n", pkt->estimated_timestamp, stream->pid);
+
+    if (priv->debug_outpackets) {
+      String * fname;
+      fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, stream->pid,
+			       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+      debug_outputpacket_write(pkt, fname);
+      String_free(&fname);
     }
+
+    if (pi->outputs[OUTPUT_RAWDATA].destination) {
+      RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+      PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+    }
+
+    if (sl(priv->output)) {
+      Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+    }
+
+    stream->packets = stream->packets->next;
+    stream->packet_count -= 1;
+
+    Mem_free(pkt);
   }
 }
 
@@ -955,7 +894,6 @@ static void MpegTSMux_instance_init(Instance *pi)
     .pcr = 1, 
     .es_id = 224,
     .pts_value = 900000,
-    .pts_add = 6006,
     .pcr_value = 897600,
     .pcr_add = 6006,
     .typecode = "V",
@@ -968,7 +906,6 @@ static void MpegTSMux_instance_init(Instance *pi)
     .pcr = 0,
     .es_id = 192,
     .pts_value = 900000,
-    .pts_add = 4180,
     .typecode = "A",
   };
 

@@ -743,7 +743,7 @@ static void ALSACapture_tick(Instance *pi)
       priv->running_timestamp = tnow;
     }
 
-    /* Adjust running timestamp if it slips too far either way. */
+    /* Adjust running timestamp if it slips too far either way.  Smoothing, I guess. */
     if (priv->running_timestamp - tnow > calculated_period) {
       printf("- running timestamp\n");
       printf("priv->rate=%d,  %.3f - %.3f > %.5f : - running timestamp\n", 
