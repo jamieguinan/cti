@@ -100,6 +100,8 @@ typedef struct {
     Wav_buffer *wav;
   } buffer;
 
+  int exit_on_eof;
+
   int show_offset;		/* Display a file offset suitable for editing. */
 } MjpegDemux_private;
 
@@ -230,6 +232,7 @@ static Config config_table[] = {
   { "seek", do_seek, 0L, 0L},
   //{ "position", set_position, 0L, 0L},
   { "eof_notify", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, eof_notify) },
+  { "exit_on_eof", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, exit_on_eof) },
   { "stop_source_at", 0L, 0L, 0L, cti_set_long, offsetof(MjpegDemux_private, stop_source_at) },
 };
 
@@ -385,7 +388,12 @@ static void MjpegDemux_tick(Instance *pi)
 	priv->source = Source_new(sl(priv->input));
       }
       sleep_and_return = 1;
+
+      if (priv->exit_on_eof) {
+	exit(0);
+      }
     }
+
   }
 
   if (sleep_and_return) {

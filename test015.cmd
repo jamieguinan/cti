@@ -46,14 +46,9 @@ connect aenc AAC_buffer tsm
 
 #config mjm output test.mjx
 #connect dj Jpeg_buffer mjm
-
+g_synchronous
 mt
-
-config mjd input 192.168.2.77:6666
-config mjd retry 1
+config mjd input test015.mjx
+config mjd retry 0
 config mjd enable 1
-
-#system sleep 60
-#config mjd enable 0
-#system bash birdcam-production.sh
-#exit
+config mjd exit_on_eof 1

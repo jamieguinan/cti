@@ -102,6 +102,9 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   else if ((strstr(line->bytes, "tl") == line->bytes)) {
     Template_list(0);
   }
+  else if ((strstr(line->bytes, "g_synchronous") == line->bytes)) {
+    g_synchronous = !g_synchronous;
+  }
   else if ((strstr(line->bytes, "abort") == line->bytes)) {
     puts("");			/* Wrap line on console. */
     abort();

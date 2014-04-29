@@ -52,7 +52,7 @@ void *_Mem_calloc(int count, int size, const char *func, int line)
     ((uint8_t*)ptr)[count*size] = 0xFA;
     mem_seq += 1;
     memcpy(ptr+size+1, &mem_seq, sizeof(mem_seq));
-    fprintf(stderr, "calloc, %s:%d, %p, %" PRIu64 "\n", func, line, ptr, mem_seq);
+    fprintf(stderr, "calloc,%s:%d,%p, %" PRIu64 "\n", func, line, ptr, mem_seq);
   }
   pthread_mutex_unlock(&mem_lock);
   return ptr;
@@ -66,7 +66,7 @@ void *_Mem_malloc(int size, const char *func, int line)
     ((uint8_t*)ptr)[size] = 0xFA;
     mem_seq += 1;
     memcpy(ptr+size+1, &mem_seq, sizeof(mem_seq));
-    fprintf(stderr, "malloc, %s:%d, %p, %" PRIu64 "\n", func, line, ptr, mem_seq);
+    fprintf(stderr, "malloc,%s:%d,%p, %" PRIu64 "\n", func, line, ptr, mem_seq);
   }
   pthread_mutex_unlock(&mem_lock);
   return ptr;
@@ -76,14 +76,14 @@ void *_Mem_realloc(void *ptr, int newsize, const char *func, int line)
 {
   pthread_mutex_lock(&mem_lock);
   if (cfg.mem_tracking) {
-    fprintf(stderr, "rfree, %s:%d, %p\n", func, line, ptr);
+    fprintf(stderr, "rfree,%s:%d,%p\n", func, line, ptr);
   }
   void *newptr = realloc(ptr, newsize+1+sizeof(mem_seq));
   if (cfg.mem_tracking) {
     ((uint8_t*)newptr)[newsize] = 0xFA;
     mem_seq += 1;
     memcpy(newptr+newsize+1, &mem_seq, sizeof(mem_seq));
-    fprintf(stderr, "realloc, %s:%d, %p, %" PRIu64 "\n", func, line, newptr, mem_seq);
+    fprintf(stderr, "realloc,%s:%d,%p, %" PRIu64 "\n", func, line, newptr, mem_seq);
   }
   pthread_mutex_unlock(&mem_lock);
   return newptr;
@@ -94,7 +94,7 @@ void _Mem_free(void *ptr, const char *func, int line)
 {
   pthread_mutex_lock(&mem_lock);
   if (cfg.mem_tracking) {
-    fprintf(stderr, "free, %s:%d, %p\n", func, line, ptr);
+    fprintf(stderr, "free,%s:%d,%p\n", func, line, ptr);
   }
   free(ptr);
   pthread_mutex_unlock(&mem_lock);

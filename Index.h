@@ -25,6 +25,8 @@ enum {
 /* New/experimental API. */
 extern Index * Index_new(void);
 extern void Index_clear(Index **_idx);
+extern void Index_analyze(Index *idx);
+extern void Index_walk(Index *idx, void (*callback)(void *value));
 
 extern void Index_add_string(Index *idx, String * stringKey, void *item, int * err);
 extern void * Index_find_string(Index *idx, String * stringKey, int * err);

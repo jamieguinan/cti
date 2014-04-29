@@ -20,6 +20,7 @@
 extern pthread_key_t instance_key;
 extern int instance_key_initialized;
 extern void instance_key_init(void); /* Call once at startup. */
+extern int g_synchronous;	     /* Make all message passing synchronous. */
 
 /* 
  * The ISet() macro is for declaring structures compatible with the

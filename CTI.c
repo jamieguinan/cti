@@ -8,7 +8,9 @@
 #include <stdarg.h>		/* vprintf */
 #include <sys/prctl.h>	/* prctl */
 
+#ifndef streq
 #define streq(a, b)  (strcmp(a, b) == 0)
+#endif
 
 #include "CTI.h"
 #include "Mem.h"

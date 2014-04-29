@@ -281,6 +281,7 @@ Wav_buffer * Wav_buffer_from(unsigned char *src_bytes, int src_length)
     printf("%s:%s buffer->params.bits_per_sample %d unhandled\n", __FILE__, __func__, buffer->params.bits_per_sample);
   }
 
+  LockedRef_init(&buffer->ref);
   return buffer;
 }
 

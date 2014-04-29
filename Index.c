@@ -2,9 +2,10 @@
  * Index module, see Index.h for description.
  * 
  * This is 2nd year Computer Science stuff, but as a professional
- * programmer I've been spoiled by Python, C++ STL, and others, so I
- * haven't written code like this since ~1992.  Writing this evokes
- * memories of Dr. Cohn drawing nodes on the whiteboard.
+ * programmer I've been spoiled by Python, C++ STL, and other
+ * containerss, so I haven't written code like this since ~1992.
+ * Writing this evokes memories of my compsci professors drawing nodes
+ * on the whiteboard...
  */
 
 #include "Index.h"
@@ -73,23 +74,23 @@ static uint32_t key_from_bytes(char * bytes, int len)
   uint32_t key = 0x90a4ae8c;	/* Random number from a Python session the day I wrote this. */
   char *p = bytes;
   int i;
-  printf("%d bytes[", len);
+  //printf("%d bytes[", len);
   for (i=0; i < len; i++) {
     uint8_t b = p[i];
-    printf(" %02x", b);
+    //printf(" %02x", b);
     uint8_t rotate = b & 0x1f;		/* Rotate up to 5 bits. */
     key = (key << rotate) | (key >> (32 - rotate));
     key ^= ((b << 23) | (b << 14) | (b << 6) | (b << 0));
-    // key ^= ((b << 24) | (b << 16) | (b << 8) | (b << 0));
+    /* key ^= ((b << 24) | (b << 16) | (b << 8) | (b << 0)); */
   }
-  printf(" ], key=%" PRIu32 "\n", key);
+  //printf(" ], key=%" PRIu32 "\n", key);
   return key;
 }
 
 
 uint32_t key_from_string(String *stringKey)
 {
-  printf("stringKey=%s, ", s(stringKey));
+  //printf("stringKey=%s, ", s(stringKey));
   return key_from_bytes(s(stringKey), String_len(stringKey));
 }
 
@@ -100,7 +101,7 @@ uint32_t key_from_ptr(void * voidKey)
 }
 
 
-static void Index_analyze_1(Index_node *p, int depth, int *maxDepth,
+static void Index_analyze_2(Index_node *p, int depth, int *maxDepth,
 			   int *leftNodes, int *rightNodes) 
 {
   if (depth > *maxDepth) {
@@ -109,12 +110,12 @@ static void Index_analyze_1(Index_node *p, int depth, int *maxDepth,
 
   if (p->left) {
     *leftNodes += 1;
-    Index_analyze_1(p->left, depth+1, maxDepth, leftNodes, rightNodes);
+    Index_analyze_2(p->left, depth+1, maxDepth, leftNodes, rightNodes);
   }
 
   if (p->right) {
     *rightNodes += 1;
-    Index_analyze_1(p->right, depth+1, maxDepth, leftNodes, rightNodes);
+    Index_analyze_2(p->right, depth+1, maxDepth, leftNodes, rightNodes);
   }
 }
 
@@ -126,11 +127,30 @@ void Index_analyze(Index *idx)
   int rightNodes = 0;
 
   if (p) {
-    Index_analyze_1(p, 0, &maxDepth, &leftNodes, &rightNodes);
+    Index_analyze_2(p, 0, &maxDepth, &leftNodes, &rightNodes);
   }
 
   printf("max depth=%d, %d left nodes, %d right nodes\n", 
 	 maxDepth, leftNodes, rightNodes);
+}
+
+
+void Index_walk_2(Index_node *node, void (*callback)(void *value))
+{
+  if (node->left) {
+    Index_walk_2(node->left, callback);
+  }
+  if (node->right) {
+    Index_walk_2(node->right, callback);
+  }
+  callback(node->value);
+}
+
+void Index_walk(Index *idx, void (*callback)(void *value))
+{
+  if (idx->_nodes) {
+    Index_walk_2(idx->_nodes, callback);
+  }
 }
 
 static void clear_nodes(Index_node *p)
