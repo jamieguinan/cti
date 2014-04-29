@@ -545,6 +545,8 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     }
     stream->packet_count += 1;
   }
+
+  ArrayU8_cleanup(&pes);
 }
 
 static uint64_t timestamp_to_90KHz(double timestamp)
@@ -564,7 +566,7 @@ static void H264_handler(Instance *pi, void *msg)
   priv->streams[0].pcr_add = 0;
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
 
-  dpf1("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 " keyframe:%s\n",
+  dpf("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 " keyframe:%s\n",
       h264->encoded_length, 
       h264->c.timestamp,
       h264->c.nominal_period,

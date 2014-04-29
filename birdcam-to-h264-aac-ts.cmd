@@ -14,8 +14,8 @@ config venc preset faster
 #config venc tune psnr
 config venc tune zerolatency
 #config venc profile baseline
-#config venc cqp 25
-config venc crf 20
+config venc cqp 25
+#config venc crf 20
 # Assuming 15fps, generate a keyframe every 5 seconds.
 config venc keyint_max 75
 

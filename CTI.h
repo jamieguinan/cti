@@ -264,9 +264,10 @@ extern InstanceGroup *gig;		/* global instance group */
   iset.count += 1; \
 }
 
-#define ISet_add_keyed(iset, key, pitem) {	\
+#define ISet_add_keyed(iset, key, pitem, err) {	\
   ISet_add(iset, pitem); \
-  Index_update(&iset.index, key, pitem); \
+  if (!iset.index) iset.index = Index_new(); \
+  Index_add_string(iset.index, key, pitem, err);	\
 }
 
 #define ISet_pop(iset, pitem) {  \

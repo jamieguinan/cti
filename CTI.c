@@ -597,7 +597,8 @@ void InstanceGroup_add(InstanceGroup *g, const char *typeLabel, String *instance
 
   /* Add pi to g's set of instances. */
   /* Pass "instanceLabel" as "key" parameter, for later lookup. */
-  ISet_add_keyed(g->instances, instanceLabel, pi);
+  int err;
+  ISet_add_keyed(g->instances, instanceLabel, pi, &err);
 }
 
 
@@ -606,7 +607,7 @@ Instance *InstanceGroup_find(InstanceGroup *g, String *ilabel)
   if (g->instances.index) {
     /* Look up using hash index. */
     int found = 0;
-    Instance *pi = Index_find(g->instances.index, ilabel, &found);
+    Instance *pi = Index_find_string(g->instances.index, ilabel, &found);
     return pi;
   }
   else {
