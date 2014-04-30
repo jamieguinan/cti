@@ -19,7 +19,7 @@
 
 pthread_key_t instance_key;
 int instance_key_initialized;
-int g_synchronous = 0;		/* TESTING ONLY. */
+int g_synchronous = 0;		/* Can be toggled in ScriptV00.c */
 
 void instance_key_init(void)
 {

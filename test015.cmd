@@ -1,4 +1,4 @@
-#system rm -vf birdcam-*.ts
+# birdcam TS generation with fixed test015.mjx input.
 
 new MjpegDemux mjd
 new DJpeg dj

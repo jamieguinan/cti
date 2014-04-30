@@ -626,11 +626,9 @@ static void MpegTSDemux_tick(Instance *pi)
     ArrayU8 *newChunk;
     newChunk = Source_read(priv->source);
 
-    //int vsave = cfg.verbosity; cfg.verbosity = 1;
     if (newChunk && cfg.verbosity) { 
       fprintf(stderr, "got %d bytes\n", newChunk->len);
     }
-    //cfg.verbosity = vsave;
 
     if (!newChunk) {
       /* FIXME: EOF on a local file should be restartable.  Maybe
@@ -657,6 +655,7 @@ static void MpegTSDemux_tick(Instance *pi)
     parse_chunk(priv);
     // if (cfg.verbosity) { fprintf(stderr, "needData = 0\n"); }
     // priv->needData = 0;
+
   }
 
   /* trim consumed data from chunk, reset "current" variables. */
@@ -669,7 +668,7 @@ static void MpegTSDemux_instance_init(Instance *pi)
 {
   MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
   priv->filter_pid = -1;
-  
+  cfg.verbosity = 1;
 }
 
 

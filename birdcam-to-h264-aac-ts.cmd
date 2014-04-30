@@ -47,8 +47,6 @@ connect aenc AAC_buffer tsm
 #config mjm output test.mjx
 #connect dj Jpeg_buffer mjm
 
-mt
-
 config mjd input 192.168.2.77:6666
 config mjd retry 1
 config mjd enable 1

@@ -86,7 +86,7 @@ static void Config_handler(Instance *pi, void *msg);
 static void H264_handler(Instance *pi, void *msg);
 static void AAC_handler(Instance *pi, void *msg);
 static void MP3_handler(Instance *pi, void *msg);
-static void flush(Instance *pi);
+static void flush(Instance *pi, uint64_t flush_timestamp);
 
 enum { INPUT_CONFIG, INPUT_H264, INPUT_AAC, INPUT_MP3 };
 static Input MpegTSMux_inputs[] = {
@@ -561,11 +561,15 @@ static void H264_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
 
+  if (h264->keyframe) {
+    /* Note, flush BEFORE packetize, so that next batch begins with keyframe. */
+    flush(pi, timestamp_to_90KHz(h264->c.timestamp));
+  }
+
   priv->streams[0].pts_value = timestamp_to_90KHz(h264->c.timestamp);
   priv->streams[0].pcr_value = priv->streams[0].pts_value;
   priv->streams[0].pcr_add = 0;
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
-
   dpf("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 " keyframe:%s\n",
       h264->encoded_length, 
       h264->c.timestamp,
@@ -574,12 +578,6 @@ static void H264_handler(Instance *pi, void *msg)
       priv->streams[0].pts_value,
       h264->keyframe?"Y":"N"
       );
-
-  if (h264->keyframe) {
-    /* Note, flush BEFORE packetize, so that next batch begins with keyframe. */
-    flush(pi);
-  }
-
   packetize(priv, 258, ArrayU8_temp_const(h264->data, h264->encoded_length));
 
   H264_buffer_discard(h264);
@@ -725,7 +723,7 @@ static void debug_outputpacket_write(TSPacket * pkt, String * fname)
 }
 
 
-static void flush(Instance *pi)
+static void flush(Instance *pi, uint64_t flush_timestamp)
 {
   /* Write out interleaved video and audio packets, adding PAT and PMT
      packets at least every 100ms or N packets. */
@@ -787,6 +785,11 @@ static void flush(Instance *pi)
     }
 
     TSPacket *pkt = stream->packets;
+
+    if (pkt->estimated_timestamp > flush_timestamp) {
+      printf("audio packet(s) will wait for next flush\n");
+      return;
+    }
 
     /* PAT+PMT should get generated once at the start of a flush,
        which should happen because pat_pts_last is initially zero,
