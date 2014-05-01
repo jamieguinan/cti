@@ -119,8 +119,6 @@ typedef struct {
   TSPacket * last_packet;
   int packet_count;
   uint64_t pts_value;
-  uint64_t pcr_value;		/* FIXME: Need this if always same as pts_value? */
-  int pcr_add;
   uint64_t es_duration;		/* nominal elementary packet duration in 90KHz units */
   uint16_t pid;
   uint16_t continuity_counter;
@@ -474,25 +472,19 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
       afLen = 1;
 
       if (stream->pcr) {
+	uint64_t pcr_value = pts.value - (9000 * 2); /* 2/10th of a second lag behind PTS. */
 	afLen += 6;
 	packet->data[5] |= (1<<4);	/* PCR */
 	/* FIXME: use data[index] if other flag bits are to be set. */
 	/* Notice corresponding unpack code in MpegTSDemux.c for same shifts in other direction. */
-	packet->data[6] = ((pts.value >> 25) & 0xff);
-	packet->data[7] = ((pts.value >> 17) & 0xff);
-	packet->data[8] = ((pts.value >> 9) & 0xff);
-	packet->data[9] = ((pts.value >> 1) & 0xff);
-	packet->data[10] = ((pts.value & 1) << 7) /* low bit of 33 bits */
+	packet->data[6] = ((pcr_value >> 25) & 0xff);
+	packet->data[7] = ((pcr_value >> 17) & 0xff);
+	packet->data[8] = ((pcr_value >> 9) & 0xff);
+	packet->data[9] = ((pcr_value >> 1) & 0xff);
+	packet->data[10] = ((pcr_value & 1) << 7) /* low bit of 33 bits */
 	  | (0x3f << 1)  /* 6 bits reserved/padding */
 	  | (0<<0);	/* 9th bit of extension */
 	packet->data[11] = (0x00);	/* bits 8:0 of extension */
-	
-	stream->pcr_value += stream->pcr_add;
-
-	{
-	  /* Special-case handling for test sample. */
-	  //if (stream->pcr_value == 1402104) { stream->pcr_value += 1; }
-	}
       }
 
       int available_payload_size = (188 - 4 - 1 - afLen);
@@ -567,8 +559,6 @@ static void H264_handler(Instance *pi, void *msg)
   }
 
   priv->streams[0].pts_value = timestamp_to_90KHz(h264->c.timestamp);
-  priv->streams[0].pcr_value = priv->streams[0].pts_value;
-  priv->streams[0].pcr_add = 0;
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
   dpf("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 " keyframe:%s\n",
       h264->encoded_length, 
@@ -898,8 +888,6 @@ static void MpegTSMux_instance_init(Instance *pi)
     .pcr = 1, 
     .es_id = 224,
     .pts_value = 900000,
-    .pcr_value = 897600,
-    .pcr_add = 6006,
     .typecode = "V",
   };
 
