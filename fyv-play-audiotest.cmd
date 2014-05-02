@@ -2,6 +2,7 @@ new MjpegDemux mjd
 new DJpeg dj
 new SDLstuff sdl
 new ALSAPlayback ap
+new AudioFilter af
 
 new CairoContext cc
 
@@ -12,7 +13,8 @@ config cc command set_line_width 2.0
 
 include clock.cmd
 
-connect mjd Wav_buffer ap
+connect mjd Wav_buffer af
+connect af Wav_buffer ap
 connect mjd Jpeg_buffer dj
 
 connect sdl Feedback_buffer mjd
@@ -45,6 +47,7 @@ config sdl mode OVERLAY
 #config sdl height 720
 
 
+config mjd wavout fyv.wav
 config mjd input 192.168.2.75:6666
 config mjd retry 1
 config mjd enable 1

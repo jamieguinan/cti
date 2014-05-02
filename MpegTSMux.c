@@ -148,6 +148,11 @@ typedef struct {
   /* PTS timestamp of beginnig of current sequence. */
   uint64_t m3u8_pts_start;
 
+  /* PCR should be "behind" PTS so that the decoder has time to decompress and possibly
+     even reorder video frames.  200ms seems to work well, but it is a config item for
+     experimentation. */
+  unsigned int pcr_lag_ms;
+
   /* Names of ts files to go into .m3u8 list. */
   String index_dir;
   String_list * m3u8_ts_files;
@@ -267,6 +272,7 @@ static Config config_table[] = {
   { "output", set_output },
   { "index_dir", set_index_dir },
   { "duration",  0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, duration) },
+  { "pcr_lag_ms",  0L, 0L, 0L, cti_set_uint, offsetof(MpegTSMux_private, pcr_lag_ms) },
   // { "...",    set_..., get_..., get_..._range },
 };
 
@@ -472,7 +478,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
       afLen = 1;
 
       if (stream->pcr) {
-	uint64_t pcr_value = pts.value - (9000 * 2); /* 2/10th of a second lag behind PTS. */
+	uint64_t pcr_value = pts.value - (priv->pcr_lag_ms * 90);
 	afLen += 6;
 	packet->data[5] |= (1<<4);	/* PCR */
 	/* FIXME: use data[index] if other flag bits are to be set. */
@@ -906,6 +912,7 @@ static void MpegTSMux_instance_init(Instance *pi)
   priv->duration = 5;
   priv->m3u8_ts_files = String_list_new();
   priv->media_sequence = 0;
+  priv->pcr_lag_ms = 200;
   String_set(&priv->index_dir, ".");
 }
 

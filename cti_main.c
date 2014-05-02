@@ -29,6 +29,7 @@
 #include "String.h"
 #include "VFilter.h"
 #include "AudioLimiter.h"
+#include "AudioFilter.h"
 #include "ScriptV00.h"
 #include "Null.h"
 #include "Effects01.h"
@@ -169,6 +170,7 @@ int cti_main(int argc, char *argv[])
   MpegTSDemux_init();
   VFilter_init();
   AudioLimiter_init();
+  AudioFilter_init();
   Tap_init();
   ResourceMonitor_init();
   TV_init();

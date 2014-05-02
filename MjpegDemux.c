@@ -61,6 +61,9 @@ typedef struct {
   String output;			/* Side channel. */
   Sink *output_sink;
 
+  String wavout;			/* Side channel. */
+  Sink *wavout_sink;
+
   long stop_source_at;			/* Stop and close source once it passes this offset. */
 
   struct {
@@ -158,6 +161,28 @@ static int set_output(Instance *pi, const char *value)
 }
 
 
+static int set_wavout(Instance *pi, const char *value)
+{
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
+  if (priv->wavout_sink) {
+    Sink_free(&priv->wavout_sink);
+  }
+
+  if (value[0] == '$') {
+    value = getenv(value+1);
+    if (!value) {
+      fprintf(stderr, "env var %s is not set\n", value+1);
+      return 1;
+    }
+  }
+
+  String_set(&priv->wavout, value);
+  priv->wavout_sink = Sink_new(sl(priv->wavout));
+
+  return 0;
+}
+
+
 static int set_enable(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = (MjpegDemux_private *)pi;
@@ -223,6 +248,7 @@ static int do_seek(Instance *pi, const char *value)
 static Config config_table[] = {
   { "input", set_input, 0L, 0L },
   { "output", set_output, 0L, 0L },
+  { "wavout", set_wavout, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
   { "retry", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, retry) },
   { "fixed_video_period", set_fixed_video_period, 0L, 0L },
@@ -541,6 +567,15 @@ static void MjpegDemux_tick(Instance *pi)
     if (priv->eof_notify && !priv->buffer.wav) {
       /* Save a copy of the first frame. */
       priv->buffer.wav = Wav_buffer_from(priv->chunk->data + priv->current.eoh + 4, priv->current.content_length);
+    }
+
+    if (priv->wavout_sink) {
+      if (!priv->seen_audio) {
+	Sink_write(priv->wavout_sink, priv->chunk->data + priv->current.eoh + 4, (priv->current.content_length));
+      }
+      else {
+	Sink_write(priv->wavout_sink, priv->chunk->data + priv->current.eoh + 4 + 44, (priv->current.content_length-44));
+      }
     }
 
     if (!priv->seen_audio) {

@@ -433,7 +433,7 @@ void cti_set_int(void *addr, const char *value)
 
 void cti_set_uint(void *addr, const char *value)
 {
-  *( (int *)addr) = (unsigned int) strtoul(value, NULL, 0);
+  *( (unsigned int *)addr) = (unsigned int) strtoul(value, NULL, 0);
 }
 
 
