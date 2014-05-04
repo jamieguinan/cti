@@ -1,10 +1,10 @@
 /* 
  * V4L2 capture.  This has been tested with:
- *   BTTV (RGB, YCrCb), PCI
- *   Logitech (MJPEG, YUV), c310, USB
- *   pcHDTV, PCI
- *   ov511, USB
- *   vimicro, USB
+ *   WinTV (BTTV)
+ *   pcHDTV
+ *   Logitech 9000, C310
+ *   ov511
+ *   vimicro
  */
 
 #include <stdio.h>
