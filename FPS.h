@@ -9,6 +9,8 @@ typedef struct {
   float period;
   int count;
 } FPS;
-extern void FPS_show(FPS *fps);
+
+extern void FPS_update(FPS *fps);
+extern void FPS_update_timestamp(FPS *fps, double timestamp);
 
 #endif

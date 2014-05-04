@@ -697,7 +697,7 @@ static void YUV420P_handler(Instance *pi, void *data)
   RGB3_buffer *rgb3 = NULL;
   //Gray_buffer *gray = NULL;
 
-  {
+  if (0) {
     static int first = 1;
     if (first) {
       first = 0;

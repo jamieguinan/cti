@@ -3,14 +3,11 @@
 #include "Cfg.h"
 #include "CTI.h"
 
-void FPS_show(FPS *fps)
+void FPS_update_timestamp(FPS *fps, double timestamp)
 {
   double p;
-  double timestamp;
-  getdoubletime(&timestamp);
 
   if (fps->timestamp_last == 0.0) {
-    fps->timestamp_last = timestamp;
     goto out;
   }
 
@@ -28,4 +25,13 @@ void FPS_show(FPS *fps)
 
  out:
   fps->timestamp_last = timestamp;
+}
+
+
+void FPS_update(FPS *fps)
+{
+  double timestamp;
+  getdoubletime(&timestamp);
+  FPS_update_timestamp(fps, timestamp);
+  
 }

@@ -70,10 +70,10 @@ static const uint32_t crc_table[256] = {
 	0xbcb4666d, 0xb8757bda, 0xb5365d03, 0xb1f740b4
 };
 
-unsigned int mpegts_crc32(const uint8_t *data, int len)
+uint32_t mpegts_crc32(const uint8_t *data, int len)
 {
     register int i;
-    unsigned int crc = 0xffffffff;
+    uint32_t crc = 0xffffffff;
     
     for (i=0; i<len; i++)
         crc = (crc << 8) ^ crc_table[((crc >> 24) ^ *data++) & 0xff];

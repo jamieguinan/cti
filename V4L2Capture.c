@@ -39,6 +39,7 @@
 #include "Cfg.h"
 #include "Uvc.h"		/* Special code for UVC devices. */
 #include "Keycodes.h"
+#include "FPS.h"
 
 static void Config_handler(Instance *pi, void *data);
 static void Keycode_handler(Instance *pi, void *data);
@@ -96,6 +97,8 @@ typedef struct  {
   int fps;
   float nominal_period;	/* calculated from fps */
   int led1;
+
+  FPS calculated_fps;
 
   /* Capture buffers.  For many drivers, it is possible to queue more
      than 2 buffers, but I don't see much point.  If the system is too
@@ -1134,38 +1137,6 @@ static void Keycode_handler(Instance *pi, void *msg)
 }
 
 
-/* FIXME: Could this code be shared?  Maybe include the variables as a
-   substructure, and move calc_fps into a different module. 
-   Update: See FPS.c
-*/
-static double period = 0.0;
-static int count = 0;
-static double timestamp_last = 0.0;
-static void calc_fps(double timestamp)
-{
-  double p;
-
-  if (timestamp_last == 0.0) {
-    goto out;
-  }
-
-  p = timestamp - timestamp_last;
-
-  if (period == 0.0) {
-    period = p;
-  }
-  else {
-    period = ((period * 19) + (p))/20;
-    if (++count % 10 == 0 && cfg.verbosity) {
-      printf("p=%.3f %.3f fps\n", p, (1.0/period));
-    }
-  }
-
- out:
-  timestamp_last = timestamp;
-}
-
-
 static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
 {
   /* NOTE: These typically don't include the default huffman tables. */
@@ -1358,7 +1329,7 @@ static void V4L2Capture_tick(Instance *pi)
       YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
       Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
       getdoubletime(&y422p->c.timestamp);
-      calc_fps(y422p->c.timestamp);
+      FPS_update_timestamp(&priv->calculated_fps, y422p->c.timestamp);
       y422p->c.nominal_period = priv->nominal_period;
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y422p->cb, 
@@ -1385,7 +1356,7 @@ static void V4L2Capture_tick(Instance *pi)
       YUV420P_buffer *y420p = YUV420P_buffer_new(priv->width, priv->height, 0L);
       dpf("%s allocated y420p @ %p", __func__, y420p);
       getdoubletime(&y420p->c.timestamp);
-      calc_fps(y420p->c.timestamp);
+      FPS_update_timestamp(&priv->calculated_fps, y420p->c.timestamp);
       y420p->c.nominal_period = priv->nominal_period;
       memcpy(y420p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y420p->cb, 
@@ -1450,7 +1421,7 @@ static void V4L2Capture_tick(Instance *pi)
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
       getdoubletime(&j->c.timestamp);
-      calc_fps(j->c.timestamp);
+      FPS_update_timestamp(&priv->calculated_fps, j->c.timestamp);
       j->c.nominal_period = priv->nominal_period;
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
       j->encoded_length = priv->vbuffer.bytesused;

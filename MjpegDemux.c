@@ -616,7 +616,7 @@ static void MjpegDemux_tick(Instance *pi)
     /* Reconstruct timestamp for Jpeg buffer.  Not actually used here, though. */
     j->c.timestamp = priv->current.timestamp;
 
-    FPS_show(&priv->fps);
+    FPS_update(&priv->fps);
 
     /* FIXME: This is a hack for testing TV streams, even though it should work transparently
        for progressive sources, with some overhead. */
