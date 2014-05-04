@@ -10,7 +10,7 @@
  *   https://en.wikipedia.org/wiki/Elementary_stream
  *   file:///home/guinan/projects/video/iso13818-1.pdf
  *   
- * This was mostly written as an exercise and testing tool, so that
+ * This was written as an exercise and testing tool, so that
  * MpegTSMux.c (not Demux) could be developed in parallel doing the
  * inverse of what this module does.  But it could be made into a
  * useful TS demuxer by defining some outputs and passing along the
@@ -117,11 +117,13 @@ typedef struct {
     int cc;
     int PAT;
     int PMT;
+    int miscbits;
   } v;
 
   /* Debug */
   struct {
     int tspackets;
+    int espackets;
   } d;
   
 } MpegTSDemux_private;
@@ -226,24 +228,28 @@ static void print_packet(uint8_t * packet)
 }
 
 
-static void show_pes(Stream *s)
+static void handle_pes(MpegTSDemux_private *priv, Stream *s)
 {
   uint8_t *edata = s->data->data;
   int i;
 
-  printf("    [completed PES packet from earlier TS packets]\n");
+
+  if (priv->v.show_pes) { printf("    [completed PES packet from earlier TS packets]\n"); }
   if (!(edata[0]==0 && edata[1]==0 && edata[2]==1)) {
     printf("    *** bad prefix [%02x %02x %02x]\n",
 	   edata[0], edata[1], edata[2]);
     return;
   }
 
-  printf("    Prefix 000001 OK\n");
-
-  printf("    Final PES unit length %d\n", s->data->len);
-  printf("    Stream id %d\n", edata[3]);
   int ppl = (edata[4]<<8)|(edata[5]);
-  printf("    PES Packet length %d%s\n", ppl, (ppl?"":" (unspecified)"));
+
+  if (priv->v.show_pes) {
+    printf("    Prefix 000001 OK\n");
+    printf("    Final PES unit length %d\n", s->data->len);
+    printf("    Stream id %d\n", edata[3]);
+    printf("    PES Packet length %d%s\n", ppl, (ppl?"":" (unspecified)"));
+  }
+
   if (ppl) {
     /* Note, ppl can be 0 for video streams */
     if (ppl != s->data->len) {
@@ -251,34 +257,43 @@ static void show_pes(Stream *s)
     }
   }
   
-  printf("    Marker bits: %d\n", ((edata[6]>>6)&0x3));
-  printf("    Scramblig control: %d\n", ((edata[6]>>4)&0x3));
-  printf("    Priority: %d\n", ((edata[6]>>3)&0x1));
-  printf("    Data alignment indicator: %d\n", ((edata[6]>>2)&0x1));
-  printf("    Copyright: %d\n", ((edata[6]>>1)&0x1));
-  printf("    Original: %d\n", ((edata[6]>>0)&0x1));
+  if (priv->v.show_pes) {
+    printf("    Marker bits: %d\n", ((edata[6]>>6)&0x3));
+    printf("    Scramblig control: %d\n", ((edata[6]>>4)&0x3));
+    printf("    Priority: %d\n", ((edata[6]>>3)&0x1));
+    printf("    Data alignment indicator: %d\n", ((edata[6]>>2)&0x1));
+    printf("    Copyright: %d\n", ((edata[6]>>1)&0x1));
+    printf("    Original: %d\n", ((edata[6]>>0)&0x1));
+  }
+
   int pts = ((edata[7]>>6)&0x2);
   int dts = ((edata[7]>>6)&0x1);
   if (!pts && dts) {
     printf("    *** bad PTS DTS value 1\n");
   }
   if (pts) {
-    printf("    PTS present\n");    
+    if (priv->v.show_pes) { printf("    PTS present\n"); }
   }
   if (dts) {
-    printf("    DTS present\n");    
+    if (priv->v.show_pes) { printf("    DTS present\n"); }
   }
-  printf("    ESCR: %d\n", ((edata[7]>>5)&0x1));
-  printf("    ES rate: %d\n", ((edata[7]>>4)&0x1));
-  printf("    DSM trick: %d\n", ((edata[7]>>3)&0x1));
-  printf("    Addl copy info: %d\n", ((edata[7]>>2)&0x1));
-  printf("    CRC: %d\n", ((edata[7]>>1)&0x1));
-  printf("    extension: %d\n", ((edata[7]>>0)&0x1));
-  printf("    remaining header: %d\n", edata[8]);
+
+  if (priv->v.show_pes) { 
+    printf("    ESCR: %d\n", ((edata[7]>>5)&0x1));
+    printf("    ES rate: %d\n", ((edata[7]>>4)&0x1));
+    printf("    DSM trick: %d\n", ((edata[7]>>3)&0x1));
+    printf("    Addl copy info: %d\n", ((edata[7]>>2)&0x1));
+    printf("    CRC: %d\n", ((edata[7]>>1)&0x1));
+    printf("    extension: %d\n", ((edata[7]>>0)&0x1));
+    printf("    remaining header: %d\n", edata[8]);
+  }
+
   int n = 9;
   if (pts) {
-    printf("    PTS bytes %02x %02x %02x %02x %02x\n",
-	   edata[n], edata[n+1], edata[n+2], edata[n+3],edata[n+4]);
+    if (priv->v.show_pes) {
+      printf("    PTS bytes %02x %02x %02x %02x %02x\n",
+	     edata[n], edata[n+1], edata[n+2], edata[n+3],edata[n+4]);
+    }
     uint64_t value = 0;
     /* 00[01][01]NNN[1] */
     value = (edata[n]>>1)&0x7;
@@ -287,30 +302,34 @@ static void show_pes(Stream *s)
     value |= ((uint64_t)(edata[n+2]>>1) << 15);
     value |= ((uint64_t)edata[n+3] << 7);
     value |= ((uint64_t)edata[n+4] >> 1);
-    printf("    PTS value: %" PRIu64 "\n", value);
+    if (priv->v.show_pes) { printf("    PTS value: %" PRIu64 "\n", value); }
     n += 5;
 
     if (dts) {
-      printf("    DTS bytes %02x %02x %02x %02x %02x\n",
-	     edata[n],edata[n+1], edata[n+2], edata[n+3],edata[n+4]);
+      if (priv->v.show_pes) {
+	printf("    DTS bytes %02x %02x %02x %02x %02x\n",
+	       edata[n],edata[n+1], edata[n+2], edata[n+3],edata[n+4]);
+      }
       value = (edata[n]>>5)&0x7;
       value <<= 30;
       value |= ((uint64_t)edata[n+1] << 22);
       value |= ((uint64_t)(edata[n+2]>>1) << 15);
       value |= ((uint64_t)edata[n+3] << 7);
       value |= ((uint64_t)edata[n+4] >> 1);
-      printf("    DTS value: %" PRIu64 "\n", value);
+      if (priv->v.show_pes) { printf("    DTS value: %" PRIu64 "\n", value); }
       n += 5;
     }
   }
 
   int elementary_payload_bytes = (s->data->len - n);
-  printf("    remaining bytes: %d\n", elementary_payload_bytes);
-  for (i=0; i < 4 && i < elementary_payload_bytes; i++) {
-    printf("      [%02x]\n", edata[n+i]);
+  if (priv->v.show_pes) {
+    printf("    remaining bytes: %d\n", elementary_payload_bytes);
+    for (i=0; i < 4 && i < elementary_payload_bytes; i++) {
+      printf("      [%02x]\n", edata[n+i]);
+    }
   }
 
-  {
+  if (priv->d.espackets) {
     char name[64];
     sprintf(name, "%05d-es-%04d-%04d", packetCounter, s->pid, s->seq);
     FILE *f = fopen(name, "wb");
@@ -322,7 +341,7 @@ static void show_pes(Stream *s)
     }
   }
 
-  printf("    [end completed PES packet]\n");            
+  if (priv->v.show_pes) { printf("    [end completed PES packet]\n"); }
 }
 
 
@@ -389,8 +408,8 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	  f = NULL;
 	}
 	
-	if (priv->v.show_pes && pid != 0 && pid != priv->pmt_id) { 
-	  show_pes(s);
+	if (pid != 0 && pid != priv->pmt_id) { 
+	  handle_pes(priv, s);
 	}
 	
       } /* if (s->data->len) */
@@ -401,12 +420,12 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
   }
   
   if (MpegTS_TP(packet)) {
-    if (cfg.verbosity) printf("  transport priority bit set\n");
+    if (priv->v.miscbits) { printf("  transport priority bit set\n"); }
   }
   
   if (MpegTS_SC(packet)) {
     int bits = MpegTS_SC(packet);
-    if (cfg.verbosity) printf("  scrambling control enabled (bits %d%d)\n",
+    if (priv->v.miscbits) printf("  scrambling control enabled (bits %d%d)\n",
 			      (bits>>1), (bits&1));
   }
   
