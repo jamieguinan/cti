@@ -655,19 +655,14 @@ static void float_to_fraction(float f, int *num, int *den)
 /* end lucview/v4l2uvc.c sample code */
 
 
-static int set_fps(Instance *pi, const char *value)
+static int set_fps_priv(V4L2Capture_private *priv)
 {
-  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   struct v4l2_streamparm setfps = { .type = V4L2_BUF_TYPE_VIDEO_CAPTURE };
   int rc;
   int n = 0, d = 0;
   int re_enable = 0;
-  float fps = atof(value);
 
-  priv->nominal_period = 1.0/fps;
-  priv->fps = round(fps);
-
-  float_to_fraction(fps, &n, &d);
+  float_to_fraction(priv->fps, &n, &d);
   setfps.parm.capture.timeperframe.numerator = d;
   setfps.parm.capture.timeperframe.denominator = n;
 
@@ -697,6 +692,17 @@ static int set_fps(Instance *pi, const char *value)
 
   return rc;
 }
+
+
+static int set_fps(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  float fps = atof(value);
+  priv->fps = round(fps);
+  priv->nominal_period = 1.0/fps;
+  return set_fps_priv(priv);
+}
+
 
 static int set_size(Instance *pi, const char *value)
 {
@@ -743,6 +749,10 @@ static int set_size(Instance *pi, const char *value)
  out:
   if (re_enable) {
     stream_enable(priv);
+  }
+
+  if (priv->fps > 0.01) {
+    set_fps_priv(priv);
   }
 
   return rc;

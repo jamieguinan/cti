@@ -1,4 +1,6 @@
 new V4L2Capture vc
+new ALSACapture ac
+new ALSAPlayback ap
 new DJpeg dj
 new SDLstuff sdl
 new UI001 ui
@@ -32,6 +34,25 @@ config vc autoexpose 3
 #config vc autoexpose 1
 #config vc exposure 300
 
-connect sdl:Keycode_msg vc:Keycode_msg
+connect sdl:Keycode_msg sdl:Keycode_msg
+connect sdl:Keycode_msg_2 vc:Keycode_msg
+
+config ac device U0x46d0x81b
+config ac rate 16000
+config ac channels 1
+config ac format signed.16-bit.little.endian
+# Bad performance at 64, 128.  256 seems Ok.
+config ac frames_per_io 256
+
+connect ac Wav_buffer ap
+
+config ap device default
+config ap useplug 1
+config ap rate 16000
+config ap channels 1
+config ap format signed.16-bit.little.endian
+config ap frames_per_io 256
 
 config vc enable 1
+config ac enable 1
+config ap enable 1

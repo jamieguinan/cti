@@ -1,6 +1,5 @@
 new MjpegDemux mjd
 new DJpeg dj
-#new Effects01 ef
 new H264 venc
 new AudioLimiter al
 new AAC aenc
@@ -10,8 +9,13 @@ new AAC aenc
 config venc output test.264
 # faster fast medium
 config venc preset faster
-config venc tune psnr
-config venc profile baseline
+#config venc tune psnr
+config venc tune zerolatency
+#config venc profile baseline
+config venc cqp 25
+#config venc crf 20
+# Assuming 15fps, generate a keyframe every 5 seconds.
+config venc keyint_max 75
 
 new MpegTSMux tsm
 #config tsm debug_outpackets 1
@@ -25,19 +29,15 @@ system mkdir -pv /home/guinan/tmp/frontyard
 system rm -vf  /home/guinan/tmp/frontyard/frontyard-*.ts
 config tsm output /home/guinan/tmp/frontyard/frontyard-%s.ts
 config tsm duration 5
+config tsm pcr_lag_ms 200
 
-#connect mjd Wav_buffer aenc
+connect mjd Wav_buffer aenc
 
-connect mjd Wav_buffer al
-connect al Wav_buffer aenc
-config al limit 0
+#connect mjd Wav_buffer al
+#connect al Wav_buffer aenc
+#config al limit 0
 
-#connect mjd Jpeg_buffer dj
 connect mjd Jpeg_buffer dj
-
-#connect dj YUV420P_buffer ef
-#config ef rotate 270
-#connect ef YUV420P_buffer venc
 
 connect dj YUV420P_buffer venc
 

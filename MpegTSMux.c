@@ -342,6 +342,10 @@ static void m3u8_files_update(MpegTSMux_private * priv)
 
 static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 {
+  /* Wrap a unit of encoded data into a elementary stream packet, then
+     divide and wrap that into a series of 188-byte transport stream
+     packets and leave them in a list for later multiplexing.  Larger
+     TS packet types are not currently supported. */
   MpegTimeStamp pts = {};
   MpegTimeStamp dts = {};
   int i;

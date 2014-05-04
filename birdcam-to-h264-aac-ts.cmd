@@ -31,10 +31,9 @@ system mkdir -pv /home/guinan/tmp/birdcam
 system rm -vf  /home/guinan/tmp/birdcam/birdcam-*.ts
 config tsm output /home/guinan/tmp/birdcam/birdcam-%s.ts
 config tsm duration 5
-config tsm pcr_lag_ms 0
+config tsm pcr_lag_ms 200
 
 connect mjd Wav_buffer aenc
-#connect mjd Jpeg_buffer dj
 connect mjd Jpeg_buffer dj
 connect dj YUV420P_buffer ef
 config ef rotate 270
