@@ -25,6 +25,9 @@ connect sdl:Keycode_msg sdl:Keycode_msg
 connect dj YUV422P_buffer cc
 connect cc YUV422P_buffer sdl
 
+# ifast works best on sully.
+config dj dct_method ifast
+
 config ap useplug 1
 #config ap device plughw:0
 #config ap device Dummy

@@ -143,11 +143,11 @@ static int set_device(Instance *pi, const char *value)
   
   rc = snd_pcm_open(&priv->handle, sl(priv->device), priv->mode, 0);
   if (rc < 0) {
-    fprintf(stderr, "snd_pcm_open %s: %s\n", sl(priv->device), snd_strerror(rc));
+    fprintf(stderr, "*** snd_pcm_open %s: %s\n", sl(priv->device), snd_strerror(rc));
     goto out;
   }
   
-  fprintf(stderr, "ALSA device %s opened, handle=%p\n", sl(priv->device), priv->handle);
+  printf("ALSA device %s opened, handle=%p\n", sl(priv->device), priv->handle);
 
   /* Allocate hardware parameter structure, and call "any", and use
      the resulting hwparams in subsequent calls.  I had tried calling
@@ -160,7 +160,7 @@ static int set_device(Instance *pi, const char *value)
   rc = snd_pcm_hw_params_set_access(priv->handle, priv->hwparams,
 				    SND_PCM_ACCESS_RW_INTERLEAVED);
   if (rc != 0) {
-    fprintf(stderr, "snd_pcm_hw_params_set_access %s: %s\n", sl(priv->device), snd_strerror(rc));
+    fprintf(stderr, "*** snd_pcm_hw_params_set_access %s: %s\n", sl(priv->device), snd_strerror(rc));
   }
 
  out:
@@ -219,7 +219,7 @@ static int set_rate(Instance *pi, const char *value)
   ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
-    fprintf(stderr, "device is not open!\n");
+    fprintf(stderr, "*** device is not open!\n");
     return 1;
   }
 
@@ -232,7 +232,7 @@ static int set_rate(Instance *pi, const char *value)
     priv->rate = rate;
   }
   else {
-    fprintf(stderr, "error setting rate %d (%s)\n", rate, snd_strerror(rc));
+    fprintf(stderr, "*** error setting rate %d (%s)\n", rate, snd_strerror(rc));
     
   }
 
@@ -249,7 +249,7 @@ static void get_rate_range(Instance *pi, Range *range)
   ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
-    fprintf(stderr, "device is not open!\n");
+    fprintf(stderr, "*** device is not open!\n");
     return;
   }
 
@@ -270,7 +270,7 @@ static int set_channels(Instance *pi, const char *value)
   ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
-    fprintf(stderr, "device is not open!\n");
+    fprintf(stderr, "*** device is not open!\n");
     return 1;
   }
 
@@ -283,7 +283,7 @@ static int set_channels(Instance *pi, const char *value)
     priv->channels = channels;
   }
   else {
-    fprintf(stderr, "error setting %d channels\n", channels);
+    fprintf(stderr, "*** error setting %d channels\n", channels);
   }
 
   return rc;
@@ -298,7 +298,7 @@ static void get_channels_range(Instance *pi, Range *range)
   ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
-    fprintf(stderr, "device is not open!\n");
+    fprintf(stderr, "*** device is not open!\n");
     return;
   }
 
@@ -321,7 +321,7 @@ static int set_format(Instance *pi, const char *value)
   int j;
 
   if (!priv->handle) {
-    fprintf(stderr, "device is not open!\n");
+    fprintf(stderr, "*** device is not open!\n");
     return 1;
   }
   
@@ -336,10 +336,10 @@ static int set_format(Instance *pi, const char *value)
     if (streq(formats[i].label, tmp)) {
       rc = snd_pcm_hw_params_set_format(priv->handle, priv->hwparams, formats[i].value);
       if (rc < 0) {
-	fprintf(stderr, "snd_pcm_hw_params_set_format %s: %s\n", sl(priv->device), snd_strerror(rc));
+	fprintf(stderr, "*** snd_pcm_hw_params_set_format %s: %s\n", sl(priv->device), snd_strerror(rc));
       }
       else {
-	fprintf(stderr, "format set to %s\n", value);
+	printf("format set to %s\n", value);
 	priv->format = formats[i].value;
 	priv->atype = formats[i].atype;
 	priv->format_bytes = formats[i].bytes;
@@ -360,7 +360,7 @@ static void get_format_range(Instance *pi, Range *range)
   ALSAio_private *priv = (ALSAio_private *)pi;
 
   if (!priv->handle) {
-    fprintf(stderr, "device is not open!\n");
+    fprintf(stderr, "*** device is not open!\n");
     return;
   }
 
@@ -377,7 +377,7 @@ static int set_frames_per_io(Instance *pi, const char *value)
 {
   ALSAio_private *priv = (ALSAio_private *)pi;
   if (!priv->handle) {
-    fprintf(stderr, "device is not open!\n");
+    fprintf(stderr, "*** device is not open!\n");
     priv->enable = 0;
   }
   else {
@@ -394,7 +394,7 @@ static int set_enable(Instance *pi, const char *value)
 {
   ALSAio_private *priv = (ALSAio_private *)pi;
   if (!priv->handle) {
-    fprintf(stderr, "device is not open!\n");
+    fprintf(stderr, "*** device is not open!\n");
     priv->enable = 0;
   }
   else {
@@ -453,7 +453,7 @@ static void Wav_handler(Instance *pi, void *data)
 	priv->format = formats[i].value;
 	rc = snd_pcm_hw_params_set_format(priv->handle, priv->hwparams, priv->format);
 	if (rc < 0) {
-	  fprintf(stderr, "%s: snd_pcm_hw_params_set_format %s: %s\n", __func__,
+	  fprintf(stderr, "*** %s: snd_pcm_hw_params_set_format %s: %s\n", __func__,
 		  sl(priv->device), snd_strerror(rc));
 	}
 	break;
@@ -461,7 +461,7 @@ static void Wav_handler(Instance *pi, void *data)
     }
     
     if (i == table_size(formats)) {
-      fprintf(stderr, "format for %d bits-per-sample not found!\n",
+      fprintf(stderr, "*** format for %d bits-per-sample not found!\n",
 	      wav_in->params.bits_per_sample);
     }
 
@@ -486,12 +486,12 @@ static void Wav_handler(Instance *pi, void *data)
 
     rc = snd_pcm_hw_params_set_periods(priv->handle, priv->hwparams, periods, 0);
     if (rc < 0) {
-      fprintf(stderr, "snd_pcm_hw_params_set_periods %s: %s\n", sl(priv->device), snd_strerror(rc));      
+      fprintf(stderr, "*** snd_pcm_hw_params_set_periods %s: %s\n", sl(priv->device), snd_strerror(rc));      
     }
       
     rc = snd_pcm_hw_params(priv->handle, priv->hwparams);
     if (rc < 0) {
-      fprintf(stderr, "snd_pcm_hw_params %s: %s\n", sl(priv->device), snd_strerror(rc));      
+      fprintf(stderr, "*** snd_pcm_hw_params %s: %s\n", sl(priv->device), snd_strerror(rc));      
     }
 
     state = snd_pcm_state(priv->handle);
@@ -517,8 +517,8 @@ static void Wav_handler(Instance *pi, void *data)
   }
 
   if (n < 0) {
-    fprintf(stderr, "snd_pcm_writei %s: %s\n", sl(priv->device), snd_strerror((int)n));
-    fprintf(stderr, "attempting snd_pcm_prepare() to correct...\n");
+    fprintf(stderr, "*** snd_pcm_writei %s: %s\n", sl(priv->device), snd_strerror((int)n));
+    fprintf(stderr, "*** attempting snd_pcm_prepare() to correct...\n");
     snd_pcm_prepare(priv->handle);
   }
 
@@ -674,7 +674,7 @@ static void ALSACapture_tick(Instance *pi)
 
     rc = snd_pcm_hw_params(priv->handle, priv->hwparams);
     if (rc < 0) {
-      fprintf(stderr, "snd_pcm_hw_params %s: %s\n", sl(priv->device), snd_strerror(rc));      
+      fprintf(stderr, "*** snd_pcm_hw_params %s: %s\n", sl(priv->device), snd_strerror(rc));      
     }
 
     state = snd_pcm_state(priv->handle);
@@ -717,16 +717,16 @@ static void ALSACapture_tick(Instance *pi)
   n = snd_pcm_readi(priv->handle, buffer, frames);
 
   if (buffer[size] != 0x55)  {
-    fprintf(stderr, "overwrote audio buffer!\n");
+    fprintf(stderr, "*** overwrote audio buffer!\n");
   }
 
   if (n != frames) {
-    fprintf(stderr, "snd_pcm_readi %s: %s\n", sl(priv->device), snd_strerror((int)n));
-    fprintf(stderr, "attempting snd_pcm_prepare() to correct...\n");
+    fprintf(stderr, "*** snd_pcm_readi %s: %s\n", sl(priv->device), snd_strerror((int)n));
+    fprintf(stderr, "*** attempting snd_pcm_prepare() to correct...\n");
     snd_pcm_prepare(priv->handle);
   }
   else {
-    // fprintf(stderr, "read %d frames\n", (int) n);
+    // fprintf(stderr, "*** read %d frames\n", (int) n);
 
     double calculated_period = frames*1.0/(priv->rate);
 

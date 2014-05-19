@@ -21,6 +21,8 @@ connect sdl Feedback_buffer mjd
 connect sdl:Keycode_msg sdl:Keycode_msg
 connect sdl:Keycode_msg_2 mjd:Keycode_msg
 
+config sdl label DVR
+
 config sdl mode OVERLAY
 #config sdl width 1440
 #config sdl height 960
