@@ -148,7 +148,7 @@ Sink *Sink_new(char *name)
 {
   Sink *sink = Mem_calloc(1, sizeof(*sink));
 
-  printf("%s(%s)\n", __func__, name);
+  dpf("%s(%s)\n", __func__, name);
 
   sink->io.s = -1;			/* Default to invalid socket value. */
   sink->io.state = IO_CLOSED;

@@ -264,6 +264,19 @@ void Template_list(int verbose)
   }
 }
 
+
+static void Instance_print(void *vpi)
+{
+  /* FIXME: Would like to be passed string key as well as instance pointer. */
+  Instance * pi = vpi;
+}
+
+void Instance_list(int verbose)
+{
+  /* List instances in global instance group. */
+  Index_walk(gig->instances.index, Instance_print);
+}
+
 static Instance * _Instantiate_local(const char *label, int run)
 {
   int i;

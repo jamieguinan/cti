@@ -179,6 +179,8 @@ typedef struct {
   int debug_outpackets;
   int debug_pktseq; 
 
+  int verbose;			/* For certain printfs. */
+
 } MpegTSMux_private;
 
 
@@ -296,7 +298,7 @@ static void m3u8_files_update(MpegTSMux_private * priv)
     file_to_delete = String_list_pull_at(priv->m3u8_ts_files, 0);
   }
 
-  String * tmpname = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
+  String * tmpname = String_sprintf("%s/prog_index.m3u8.tmp", sl(priv->index_dir));
   FILE * fpi = fopen(s(tmpname), "w");
   if (!fpi) {
     printf("%s: failed to open %s\n", __func__, s(tmpname));
@@ -313,14 +315,14 @@ static void m3u8_files_update(MpegTSMux_private * priv)
   fprintf(fpi, "#EXT-X-MEDIA-SEQUENCE:%d\n", priv->media_sequence);
   priv->media_sequence += 1;
 
-  printf("========\n");
+  if (priv->verbose) { printf("========\n"); }
   int i;
   for (i=0; 
        i < String_list_len(priv->m3u8_ts_files)
 	 - 1; 			/* Don't include the latest, it is still being generated. */
        i++) {
     String * fstr = String_list_get(priv->m3u8_ts_files, i);
-    printf(":: %s\n", s(fstr));
+    if (priv->verbose) { printf(":: %s\n", s(fstr)); }
     fprintf(fpi, "#EXTINF:%d,\n", priv->duration);
     String * bname = String_basename(fstr);
     fprintf(fpi, "%s\n", s(bname));
@@ -330,12 +332,16 @@ static void m3u8_files_update(MpegTSMux_private * priv)
   //fprintf(fpi, "#EXT-X-ENDLIST\n");  /* ONLY for VODs, not live... */
   fclose(fpi);
 
+  String * m3u8name = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
+  rename(s(tmpname), s(m3u8name));
+
  out:
   if (!String_is_none(file_to_delete)) {
     unlink(s(file_to_delete));
     String_free(&file_to_delete);
   }
 
+  String_free(&m3u8name);
   String_free(&tmpname);
 }
 
@@ -743,7 +749,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     av_packets += priv->streams[i].packet_count;
   }
 
-  printf("av_packets = %d\n", av_packets);
+  if (priv->verbose) { printf("av_packets = %d\n", av_packets); }
 
   if (av_packets == 0) {
     return;
@@ -787,7 +793,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     TSPacket *pkt = stream->packets;
 
     if (pkt->estimated_timestamp > flush_timestamp) {
-      printf("audio packet(s) will wait for next flush\n");
+      if (priv->verbose) { printf("audio packet(s) will wait for next flush\n"); }
       return;
     }
 

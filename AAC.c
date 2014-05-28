@@ -64,7 +64,7 @@ static void Audio_handler(Instance *pi, void *msg)
   Audio_buffer *audio = msg;
   int rc;
   
-  if (1) {
+  if (0) {
     static FILE *f = NULL;
     if (!f) {
       f = fopen("test.raw", "wb");

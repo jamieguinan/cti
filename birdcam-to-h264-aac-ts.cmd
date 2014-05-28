@@ -26,10 +26,22 @@ config tsm pmt_essd 0:15:257
 config tsm pmt_essd 1:27:258
 
 #connect tsm RawData_buffer ss
-config tsm index_dir /home/guinan/tmp/birdcam
 system mkdir -pv /home/guinan/tmp/birdcam
+system cp -uv hls-stream.html /home/guinan/tmp/birdcam/stream.html
+system cp -uv hls-stream.m3u8 /home/guinan/tmp/birdcam/stream.m3u8
 system rm -vf  /home/guinan/tmp/birdcam/birdcam-*.ts
+config tsm index_dir /home/guinan/tmp/birdcam
 config tsm output /home/guinan/tmp/birdcam/birdcam-%s.ts
+
+#system x.mount /home/guinan/ssh/bluebutton.com
+#system mkdir -pv /home/guinan/ssh/bluebutton.com/var/www/bluebutton/htdocs/vid/birdcam
+#system cp -uv hls-stream.html /home/guinan/ssh/bluebutton.com/var/www/bluebutton/htdocs/vid/birdc#am/stream.html
+#system cp -uv hls-stream.m3u8 /home/guinan/ssh/bluebutton.com/var/www/bluebutton/htdocs/vid/birdc#am/stream.m3u8
+#system rm -vf  /home/guinan/ssh/bluebutton.com/var/www/bluebutton/htdocs/vid/birdcam/birdcam-*.ts
+#config tsm index_dir /home/guinan/ssh/bluebutton.com/var/www/bluebutton/htdocs/vid/birdcam
+#config tsm output /home/guinan/ssh/bluebutton.com/var/www/bluebutton/htdocs/vid/birdcam/birdcam-%s.ts
+
+
 config tsm duration 5
 config tsm pcr_lag_ms 200
 
