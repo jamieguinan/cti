@@ -15,22 +15,6 @@
 #include <string.h>		/* memset */
 #include <inttypes.h>		/* PRIu32 */
 
-typedef struct _index_node {
-  struct _index_node * left;
-  struct _index_node * right;
-
-  /* Key types. */
-  String * stringKey;
-  void * voidKey;
-
-  uint32_t key;			/* hash-generated numeric key for searching */
-
-  void * value;
-
-  int count;			/* if count > 1, verify and maybe go down left */
-} Index_node;
-
-
 static Index_node * Index_node_new(uint32_t key, String *stringKey, void * voidKey, void *value)
 {
   Index_node *node = Mem_malloc(sizeof(*node));
@@ -135,7 +119,7 @@ void Index_analyze(Index *idx)
 }
 
 
-void Index_walk_2(Index_node *node, void (*callback)(void *value))
+void Index_walk_2(Index_node *node, void (*callback)(Index_node *node))
 {
   if (node->left) {
     Index_walk_2(node->left, callback);
@@ -143,10 +127,12 @@ void Index_walk_2(Index_node *node, void (*callback)(void *value))
   if (node->right) {
     Index_walk_2(node->right, callback);
   }
-  callback(node->value);
+  if (callback) {
+    callback(node);
+  }
 }
 
-void Index_walk(Index *idx, void (*callback)(void *value))
+void Index_walk(Index *idx, void (*callback)(Index_node *node))
 {
   if (idx->_nodes) {
     Index_walk_2(idx->_nodes, callback);

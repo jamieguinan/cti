@@ -265,10 +265,11 @@ void Template_list(int verbose)
 }
 
 
-static void Instance_print(void *vpi)
+static void Instance_print(Index_node *node)
 {
   /* FIXME: Would like to be passed string key as well as instance pointer. */
-  Instance * pi = vpi;
+  Instance * pi = node->value;
+  printf("  %s %s\n", s(node->stringKey), pi->label);
 }
 
 void Instance_list(int verbose)
@@ -464,7 +465,7 @@ void cti_set_ulong(void *addr, const char *value)
 
 void cti_set_string(void *addr, const char *value)
 {
-  String_set((String *)addr, value);
+  String_set_local((String *)addr, value);
 }
 
 

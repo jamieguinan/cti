@@ -45,7 +45,7 @@ static int set_input(Instance *pi, const char *value)
   if (priv->source) {
     Source_free(&priv->source);
   }
-  String_set(&priv->input, value);
+  String_set_local(&priv->input, value);
   priv->source = Source_new(sl(priv->input));
 
   if (priv->source && pi->outputs[OUTPUT_CONFIG].destination) {

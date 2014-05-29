@@ -57,7 +57,7 @@ static int set_output(Instance *pi, const char *value)
 
   fprintf(stderr, "set_output(%s)\n", value);
 
-  String_set(&priv->output, value);
+  String_set_local(&priv->output, value);
   priv->sink = Sink_new(sl(priv->output));
   priv->every = 1;
 
@@ -70,7 +70,7 @@ static int do_restart(Instance *pi, const char *value)
   MjpegMux_private *priv = (MjpegMux_private *)pi;
   if (sl(priv->output)) {
     /* Use a copy of the string, because priv->output.bytes will get 
-       deleted in String_set()  */
+       deleted in String_set_local()  */
     char output[strlen(sl(priv->output))+1];
     strcpy(output, sl(priv->output));
     set_output(pi, output);

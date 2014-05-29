@@ -217,7 +217,7 @@ static int set_label(Instance *pi, const char *value)
 {
   SDLstuff_private *priv = (SDLstuff_private *)pi;
 
-  String_set(&priv->label, value);
+  String_set_local(&priv->label, value);
   printf("*** label set to %s\n", sl(priv->label));
   priv->label_set = 0;
   return 0;

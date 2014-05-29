@@ -117,7 +117,7 @@ static int set_device(Instance *pi, const char *value)
   int rc = 0;
   int i;
 
-  String_set(&priv->device, value);
+  String_set_local(&priv->device, value);
 
   if (priv->handle) {
     snd_pcm_close(priv->handle);
@@ -129,7 +129,7 @@ static int set_device(Instance *pi, const char *value)
   for (i=0; i < available_alsa_devices.descriptions.count; i++) {
     if (strstr(available_alsa_devices.descriptions.items[i]->bytes, value)) {
       puts("found it!");
-      String_set(&priv->device, available_alsa_devices.strings.items[i]->bytes);
+      String_set_local(&priv->device, available_alsa_devices.strings.items[i]->bytes);
       break;
     }
   }
@@ -138,7 +138,7 @@ static int set_device(Instance *pi, const char *value)
 
   if (!sl(priv->device)) {
     /* Not found, try value as supplied. */
-    String_set(&priv->device, value);
+    String_set_local(&priv->device, value);
   }
   
   rc = snd_pcm_open(&priv->handle, sl(priv->device), priv->mode, 0);
@@ -557,7 +557,7 @@ static void ALSAPlayback_tick(Instance *pi)
   if (hm) {
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm,pi);
-    while (pi->pending_messages > 4) {
+    while (pi->pending_messages > 8) {
       /* This happens when capture clock is faster than playback
 	 clock.  In cx88play.cmd, it drops a block every ~2s. */
       hm = GetData(pi, wait_flag);

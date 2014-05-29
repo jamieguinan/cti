@@ -5,13 +5,32 @@
  * always "void *".  Values are treated as opaque, never accessed or
  * freed. 
  */
+#include <stdint.h>		/* uint32_t */
 
 #include "String.h"
 
-struct _index_node;		/* Incomplete type, defined internally. */
+/* I had original made _index_node an incomplete type, which is legal
+ * in C as long as one only uses pointers, but I decided it was worth
+ * it to expose the internals.
+ */
+typedef struct _index_node {
+  struct _index_node * left;
+  struct _index_node * right;
+
+  /* Key types. */
+  String * stringKey;
+  void * voidKey;
+
+  uint32_t key;			/* hash-generated numeric key for searching */
+
+  void * value;
+
+  int count;			/* if count > 1, verify and maybe go down left */
+} Index_node;
+
 
 typedef struct {
-  struct _index_node * _nodes;			/* internal storage for key/value pairs */
+  struct _index_node * _nodes;			/* storage for key/value pairs */
 } Index;
 
 enum { 
@@ -26,7 +45,7 @@ enum {
 extern Index * Index_new(void);
 extern void Index_clear(Index **_idx);
 extern void Index_analyze(Index *idx);
-extern void Index_walk(Index *idx, void (*callback)(void *value));
+extern void Index_walk(Index *idx, void (*callback)(Index_node *node));
 
 extern void Index_add_string(Index *idx, String * stringKey, void *item, int * err);
 extern void * Index_find_string(Index *idx, String * stringKey, int * err);

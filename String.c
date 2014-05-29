@@ -97,7 +97,7 @@ void String_cat3(String *s, const char *s1, const char *s2, const char *s3)
 }
 
 
-void String_set(String *s, const char *init)
+void String_set_local(String *s, const char *init)
 {
   if (!init) {
     fprintf(stderr, "String_set needs an initial string, even if \"\"...\n");
@@ -120,7 +120,7 @@ void String_set(String *s, const char *init)
 String *String_new(const char *init)
 {
   String *s = Mem_calloc(1, sizeof(*s));
-  String_set(s, init);
+  String_set_local(s, init);
   return s;
 }
 
@@ -131,7 +131,7 @@ String * String_value_none(void)
 }
 
 
-void String_clear(String *s)
+void String_clear_local(String *s)
 {
   Mem_free(s->bytes);
   s->bytes = 0L;
@@ -144,7 +144,7 @@ void String_free(String **s)
     fprintf(stderr, "%s: cannot free special NONE string!\n", __func__);
     return;
   }
-  String_clear(*s);
+  String_clear_local(*s);
   Mem_free(*s);
   *s = 0L;
 }

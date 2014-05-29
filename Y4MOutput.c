@@ -49,7 +49,7 @@ static int set_output(Instance *pi, const char *value)
     Sink_free(&priv->sink);
   }
 
-  String_set(&priv->output, value);
+  String_set_local(&priv->output, value);
   priv->sink = Sink_new(sl(priv->output));
 
   return 0;
@@ -183,7 +183,7 @@ static void Y4MOutput_tick(Instance *pi)
 static void Y4MOutput_instance_init(Instance *pi)
 {
   Y4MOutput_private *priv = (Y4MOutput_private *)pi;
-  String_set(&priv->interlace, "p");
+  String_set_local(&priv->interlace, "p");
 }
 
 

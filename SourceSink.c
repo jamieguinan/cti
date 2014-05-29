@@ -88,7 +88,7 @@ static void io_open(IO_common *io, char *name, const char *mode)
       io->p = popen(out_name+1, "w");
       if (io->p) {
 	io->state = IO_OPEN_PIPE;
-	String_set(&io->generated_name, out_name);
+	String_set_local(&io->generated_name, out_name);
       }
     }
     else {
@@ -97,7 +97,7 @@ static void io_open(IO_common *io, char *name, const char *mode)
       io->f = fopen(out_name, mode);
       if (io->f) {
 	io->state = IO_OPEN_FILE;
-	String_set(&io->generated_name, out_name);
+	String_set_local(&io->generated_name, out_name);
       }
     }
   }

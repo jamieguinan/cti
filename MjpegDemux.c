@@ -125,7 +125,7 @@ static int set_input(Instance *pi, const char *value)
     }
   }
 
-  String_set(&priv->input, value);
+  String_set_local(&priv->input, value);
   priv->source = Source_new(sl(priv->input));
 
   if (priv->chunk) {
@@ -154,7 +154,7 @@ static int set_output(Instance *pi, const char *value)
     }
   }
 
-  String_set(&priv->output, value);
+  String_set_local(&priv->output, value);
   priv->output_sink = Sink_new(sl(priv->output));
 
   return 0;
@@ -176,7 +176,7 @@ static int set_wavout(Instance *pi, const char *value)
     }
   }
 
-  String_set(&priv->wavout, value);
+  String_set_local(&priv->wavout, value);
   priv->wavout_sink = Sink_new(sl(priv->wavout));
 
   return 0;

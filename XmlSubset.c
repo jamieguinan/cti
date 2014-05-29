@@ -78,7 +78,7 @@ Node * xml_string_to_nodetree(String *str)
 	  }
 	}
 	/* Clear the tag buffer. */
-	String_set(tag_buffer, "");
+	String_set_local(tag_buffer, "");
       }
       else {
 	String_append_bytes(tag_buffer, &ch, 1);
@@ -100,7 +100,7 @@ Node * xml_string_to_nodetree(String *str)
       if (ch == '<') {
 	node_add(current, Text(s(text_buffer)));
 	if (debug) printf("  %s\n", s(text_buffer));
-	String_set(text_buffer, "");
+	String_set_local(text_buffer, "");
 	state = IN_TAG;
       }
       else {

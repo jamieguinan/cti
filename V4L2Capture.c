@@ -135,7 +135,7 @@ static int set_device(Instance *pi, const char *value)
   struct v4l2_tuner tuner = {};
   int i;
 
-  String_clear(&priv->devpath);
+  String_clear_local(&priv->devpath);
 
   if (priv->fd != -1) {
     close(priv->fd);
@@ -148,7 +148,7 @@ static int set_device(Instance *pi, const char *value)
   for (i=0; i < available_v4l_devices.descriptions.count; i++) {
     if (strstr(available_v4l_devices.descriptions.items[i]->bytes, value)) {
       puts("found it!");
-      String_set(&priv->devpath, available_v4l_devices.strings.items[i]->bytes);
+      String_set_local(&priv->devpath, available_v4l_devices.strings.items[i]->bytes);
       break;
     }
   }
@@ -157,7 +157,7 @@ static int set_device(Instance *pi, const char *value)
   
   if (!sl(priv->devpath)) {
     /* Not found, try value. */
-    String_set(&priv->devpath, value);
+    String_set_local(&priv->devpath, value);
   }
 
   priv->fd = open(sl(priv->devpath), O_RDWR);
@@ -286,7 +286,7 @@ static int set_input(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  String_set(&priv->input, value);
+  String_set_local(&priv->input, value);
 
  out:
   return rc;
@@ -346,7 +346,7 @@ static int set_format(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  String_set(&priv->format, value);
+  String_set_local(&priv->format, value);
 
  out:
   return rc;
@@ -468,7 +468,7 @@ static int set_std(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  String_set(&priv->std, value);
+  String_set_local(&priv->std, value);
 
  out:
   return rc;
@@ -562,7 +562,7 @@ static int set_brightness(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_BRIGHTNESS, atoi(value));
   if (rc == 0) {
-    String_set(&priv->brightness, value);
+    String_set_local(&priv->brightness, value);
     printf("brightness set to %s\n", sl(priv->brightness));
   }
   return rc;
@@ -574,7 +574,7 @@ static int set_contrast(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_CONTRAST, atoi(value));
   if (rc == 0) {
-    String_set(&priv->contrast, value);
+    String_set_local(&priv->contrast, value);
     printf("contrast set to %s\n", sl(priv->contrast));
   }
   return rc;
@@ -591,7 +591,7 @@ static int set_autoexpose(Instance *pi, const char *value)
 
   rc = generic_v4l2_set(priv, V4L2_CID_EXPOSURE_AUTO, atoi(value));
   if (rc == 0) {
-    String_set(&priv->autoexpose, value);
+    String_set_local(&priv->autoexpose, value);
     printf("autoexpose set to %s\n", sl(priv->autoexpose));
   }
   return rc;
@@ -607,7 +607,7 @@ static int set_exposure(Instance *pi, const char *value)
 #endif
   rc = generic_v4l2_set(priv, V4L2_CID_EXPOSURE_ABSOLUTE, atoi(value));
   if (rc == 0) {
-    String_set(&priv->exposure, value);
+    String_set_local(&priv->exposure, value);
     printf("exposure set to %s\n", sl(priv->exposure));
   }
   return rc;
@@ -619,7 +619,7 @@ static int set_saturation(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_SATURATION, atoi(value));
   if (rc == 0) {
-    String_set(&priv->saturation, value);
+    String_set_local(&priv->saturation, value);
     printf("saturation set to %s\n", sl(priv->saturation));
   }
   return rc;
@@ -927,7 +927,7 @@ static int set_snapshot(Instance *pi, const char *value)
 static int set_drivermatch(Instance *pi, const char *value)
 {
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
-  String_set(&priv->drivermatch, value);
+  String_set_local(&priv->drivermatch, value);
   return 0;
 }
 

@@ -114,7 +114,7 @@ static int set_output(Instance *pi, const char *value)
     }
   }
   
-  String_set(&priv->output, value);
+  String_set_local(&priv->output, value);
   priv->output_sink = Sink_new(sl(priv->output));
 
   return 0;

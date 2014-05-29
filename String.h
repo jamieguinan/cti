@@ -35,13 +35,21 @@ extern String * String_new(const char *init);
 extern void String_free(String **s);
 
 /*
- * _set, _set_sprintf, and _clear are for static variables, stack
- * variables, and structure members.  The _set functions free s->bytes
- * if already set.
+ * These are for static variables, stack variables, and structure
+ * members.  s->bytes is freed if already set.
  */
-extern void String_set(String *s, const char *init);
-extern void String_clear(String *s);
-extern void String_set_sprintf(String *s, const char *fmt, ...);
+extern void String_set_local(String *s, const char *init);
+extern void String_clear_local(String *s);
+//extern void String_sprintf_local(String *s, const char *fmt, ...);
+
+/*
+ * These are similar but for pointer variables.
+ * s->bytes is freed if already set.
+ * The String is created if not already allocated.
+ */
+extern void String_set(String **s, const char *init);
+extern void String_clear(String **s);
+extern void String_set_sprintf(String **s, const char *fmt, ...);
 
 /* These return new strings. */
 extern String * String_sprintf(const char *fmt, ...);

@@ -250,7 +250,7 @@ static int set_output(Instance *pi, const char *value)
     }
   }
   
-  String_set(&priv->output, value);
+  String_set_local(&priv->output, value);
   // priv->output_sink = Sink_new(sl(priv->output));
 
   return 0;
@@ -261,7 +261,7 @@ static int set_index_dir(Instance *pi, const char *value)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
 
-  String_set(&priv->index_dir, value);
+  String_set_local(&priv->index_dir, value);
 
   return 0;
 }
@@ -923,7 +923,7 @@ static void MpegTSMux_instance_init(Instance *pi)
   priv->m3u8_ts_files = String_list_new();
   priv->media_sequence = 0;
   priv->pcr_lag_ms = 200;
-  String_set(&priv->index_dir, ".");
+  String_set_local(&priv->index_dir, ".");
 }
 
 

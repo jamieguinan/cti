@@ -62,7 +62,7 @@ static void ImageOutput_tick(Instance *pi)
 static void ImageOutput_instance_init(Instance *pi)
 {
   ImageOutput_private *priv = (ImageOutput_private *)pi;
-  String_set(&priv->output_base, "./");
+  String_set_local(&priv->output_base, "./");
 }
 
 

@@ -34,6 +34,7 @@
 #include "Null.h"
 #include "Effects01.h"
 #include "SocketServer.h"
+#include "SocketRelay.h"
 #include "VSmoother.h"
 #include "Y4MInput.h"
 #include "Y4MOutput.h"
@@ -159,6 +160,7 @@ int cti_main(int argc, char *argv[])
   DO511_init();
   Effects01_init();
   SocketServer_init();
+  SocketRelay_init();
   VSmoother_init();
   Y4MInput_init();
   Y4MOutput_init();
