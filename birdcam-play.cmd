@@ -44,7 +44,7 @@ config sdl mode OVERLAY
 
 config sdl label BIRDCAM
 
-config mjd input 192.168.2.77:6666
+config mjd input 127.0.0.1:7130
 config mjd retry 1
 config mjd enable 1
 

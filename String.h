@@ -43,9 +43,10 @@ extern void String_clear_local(String *s);
 //extern void String_sprintf_local(String *s, const char *fmt, ...);
 
 /*
- * These are similar but for pointer variables.
- * s->bytes is freed if already set.
- * The String is created if not already allocated.
+ * These are similar but for pointer variables.  The String is created
+ * if not already allocated.  s->bytes is freed if already set.
+ * These are mostly to avoid having to do "if (not string) ..."
+ * when I want to set the string regardless of current value.
  */
 extern void String_set(String **s, const char *init);
 extern void String_clear(String **s);
