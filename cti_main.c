@@ -73,6 +73,8 @@
 #include "ExecProc.h"
 #include "XMLMessageServer.h"
 #include "Mpeg2Dec.h"
+#include "HTTPServer.h"
+#include "VirtualStorage.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -192,6 +194,8 @@ int cti_main(int argc, char *argv[])
   SubProc_init();
   ExecProc_init();
   XMLMessageServer_init();
+  HTTPServer_init();
+  VirtualStorage_init();
   //PCMSource_init();
 
   return app_code(argc, argv);

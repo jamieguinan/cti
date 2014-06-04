@@ -133,6 +133,8 @@ OBJS= \
 	$(OBJDIR)/Stats.o \
 	$(OBJDIR)/StackDebug.o \
 	$(OBJDIR)/AudioFilter.o \
+	$(OBJDIR)/HTTPServer.o \
+	$(OBJDIR)/VirtualStorage.o \
 	$(OBJDIR)/crc.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
