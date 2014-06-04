@@ -59,6 +59,8 @@ GdkCapture.c
 GdkCapture.h
 H264.c
 H264.h
+HTTPServer.c
+HTTPServer.h
 HalfWidth.c
 HalfWidth.h
 ImageLoader.c
@@ -69,6 +71,7 @@ Images.c
 Images.h
 Index.c
 Index.h
+Index_test_01.c
 JpegFiler.c
 JpegFiler.h
 JpegSource.c
@@ -184,6 +187,8 @@ VFilter.c
 VFilter.h
 VSmoother.c
 VSmoother.h
+VirtualStorage.c
+VirtualStorage.h
 Wav.c
 Wav.h
 WavOutput.c

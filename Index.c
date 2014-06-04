@@ -25,7 +25,6 @@ static Index_node * Index_node_new(uint32_t key, String *stringKey, void * voidK
     .voidKey = voidKey,
     .value = value,
     .key = key,
-    .count = 1,
   };
   return node;
 }
@@ -72,16 +71,36 @@ static uint32_t key_from_bytes(char * bytes, int len)
 }
 
 
-uint32_t key_from_string(String *stringKey)
+static inline uint32_t key_from_string(String *stringKey)
 {
   //printf("stringKey=%s, ", s(stringKey));
   return key_from_bytes(s(stringKey), String_len(stringKey));
 }
 
 
-uint32_t key_from_ptr(void * voidKey)
+static inline uint32_t key_from_ptr(void * voidKey)
 {
   return key_from_bytes((char*)voidKey, sizeof(voidKey));
+}
+
+
+static inline void key_from_either(String * stringKey, void * voidKey, 
+				   uint32_t * key,
+				   int * err)
+{
+  *key = 0;			/* keep compiler happy */
+  if (stringKey) {
+    *key = key_from_string(stringKey);
+    *err = INDEX_NO_ERROR;
+  }
+  else if (voidKey) {
+    *key = key_from_ptr(voidKey);
+    *err = INDEX_NO_ERROR;
+  }
+  else {
+    fprintf(stderr, "%s: neither stringKey nor voidKey provided!\n", __func__);
+    *err = INDEX_NO_KEY;
+  }
 }
 
 
@@ -163,26 +182,6 @@ void Index_clear(Index **_idx)
   *_idx = NULL;
 }
 
-/* 2014-Apr-29 Experiments... */
-static inline void key_from_either(String * stringKey, void * voidKey, 
-				   uint32_t * key,
-				   int * err)
-{
-  *key = 0;			/* keep compiler happy */
-  if (stringKey) {
-    *key = key_from_string(stringKey);
-    *err = INDEX_NO_ERROR;
-  }
-  else if (voidKey) {
-    *key = key_from_ptr(voidKey);
-    *err = INDEX_NO_ERROR;
-  }
-  else {
-    fprintf(stderr, "%s: neither stringKey nor voidKey provided!\n", __func__);
-    *err = INDEX_NO_KEY;
-  }
-}
-
 
 static void insert_node(Index_node * node, uint32_t key, Index_node * new_node)
 {
@@ -194,26 +193,32 @@ static void insert_node(Index_node * node, uint32_t key, Index_node * new_node)
       node = node->left;
       if (!node) {
 	parent->left = new_node;
+	return;
       }
     }
     else if (key > node->key) {
       node = node->right;
       if (!node) {
 	parent->right = new_node;
+	return;
       }
     }
     else if (key == node->key) {
-      /* In case of key collision, just push down the left side. */
-      node = node->left;
-      if (!node) {
-	parent->left = new_node;
+      /* FIXME: Test for actual key collisiion */
+      {
+	/* Hash collision but different keys, continue down the left side. */
+	node = node->left;
+	if (!node) {
+	  parent->left = new_node;
+	  return;
+	}
       }
     }
   }
 }
 
 
-static void _Index_add(Index * idx, String * stringKey, void * voidKey, void * value, int * err)
+static void _Index_add(Index * idx, String * stringKey, void * voidKey, void * value, void **oldvalue, int * err)
 {
   uint32_t key;
 
@@ -230,38 +235,17 @@ static void _Index_add(Index * idx, String * stringKey, void * voidKey, void * v
 
   Index_node * new_node = Index_node_new(key, stringKey, voidKey, value);
 
-  Index_node *node = idx->_nodes;
-
-  if (!node) {
+  if (!idx->_nodes) {
     /* Create top node in tree. */
     idx->_nodes = new_node;
-    goto out;
+  }
+  else {
+    insert_node(idx->_nodes, key, new_node);
   }
 
-  insert_node(node, key, new_node);
-
- out:
   *err = INDEX_NO_ERROR;
   return;
 }
-
-
-void Index_add_string(Index * idx, String * stringKey, void * value, int * err)
-{
-  _Index_add(idx, 
-	      stringKey, NULL,
-	      value,
-	      err);
-}
-
-void Index_add_ptrkey(Index * idx, void * voidKey, void * value, int * err)
-{
-  _Index_add(idx, 
-	     NULL, voidKey,
-	     value,
-	     err);
-}
-
 
 static void * _Index_find(Index *idx, String *stringKey, void * voidKey, int del, int * err)
 {
@@ -336,6 +320,156 @@ static void * _Index_find(Index *idx, String *stringKey, void * voidKey, int del
   }
 
   return value;
+}
+
+enum {
+  INDEX_OP_ADD,
+  INDEX_OP_FIND,
+};
+
+
+/*
+ * 2014-Jun-03: New experiments. 
+ * Single function to walk the tree and set up for add or find, with
+ * flags for delete.
+ */
+static void _Index_op(Index *idx, 
+		      String *stringKey, void * voidKey, 
+		      void *new_value, void ** existing_value, 
+		      int op, 
+		      int del, 
+		      int * err)
+{
+  uint32_t key;
+
+  if (!idx) {
+    fprintf(stderr, "%s: idx not set!\n", __func__);
+    *err = INDEX_NO_IDX;
+    return;
+  }
+
+  key_from_either(stringKey, voidKey, &key, err);
+  if (*err == INDEX_NO_KEY) {
+    return;
+  }
+ 
+  Index_node *node = idx->_nodes;
+  Index_node **pnode = &(idx->_nodes);
+
+  while (node) {
+    if (key < node->key) {
+      pnode = &(node->left);
+      node = node->left;
+    }
+    else if (key > node->key) {
+      pnode = &(node->right);
+      node = node->right;
+    }
+    else if (key == node->key) {
+      if ( (stringKey && String_cmp(stringKey, node->stringKey) == 0) 
+		|| (voidKey && voidKey == node->voidKey) ) {
+	/* Matching node found. */
+	break;
+      }
+      else {
+	/* Keep searching down left tree... */
+	pnode = &(node->left);
+	node = node->left;
+      }
+    }
+  }
+
+  /* 
+   * If "node" is set, then above loop has found existing node with matching key.
+   * Either way, "pnode" points at the location where a new node would go, or the 
+   * location to update if a node is to be removed.
+   */
+  if (op == INDEX_OP_FIND) {
+    if (!node) {
+      *err = INDEX_KEY_NOT_FOUND;
+    }
+    else {
+      if (!existing_value) {
+	*err = INDEX_NO_DEST;
+	return;
+      }
+      *existing_value = node->value;
+      if (del) {
+	/* Delete this node.  4 cases to handle. */
+	if (node->left && node->right) {
+	  /* Node has both subtrees.  Move left subtree under right. */
+	  insert_node(node->right, node->left->key, node->left);
+	  *pnode = node->right;
+	}
+	else if (node->left) {
+	  /* Only left subtree. */
+	  *pnode = node->left;
+	}
+	else if (node->right) {
+	  /* Only right subtree. */
+	  *pnode = node->right;
+	}
+	else {
+	  /* No subtrees. */
+	  *pnode = NULL;
+	}
+	Index_node_free(&node);
+	idx->count -= 1;
+      }
+    }
+  }
+  else if (op == INDEX_OP_ADD) {
+    if (node) {
+      if (del) {
+	if (existing_value) {
+	  *existing_value = node->value;
+	}
+	node->value = new_value;
+	*err = INDEX_NO_ERROR;
+      }
+      else {
+	*err = INDEX_DUPLICATE_KEY;
+      }
+    }
+    else {
+      /* create new node, assign to pnode */
+      *pnode = Index_node_new(key, stringKey, voidKey, new_value);
+      *err = INDEX_NO_ERROR;
+      idx->count += 1;
+    }
+  }
+}
+
+
+
+/* public API functions: */
+void Index_add_string(Index * idx, String * stringKey, void * value, int * err)
+{
+  _Index_add(idx, 
+	     stringKey, NULL,
+	     value,
+	     NULL,
+	     err);
+}
+
+
+void Index_replace_string(Index * idx, String * stringKey, void * value, void **oldvalue, int * err)
+{
+  _Index_add(idx, 
+	     stringKey, NULL,
+	     value,
+	     oldvalue,
+	     err);
+}
+
+
+void Index_add_ptrkey(Index * idx, void * voidKey, void * value, int * err)
+{
+  _Index_add(idx, 
+	     NULL, voidKey,
+	     value,
+	     NULL,
+	     err);
 }
 
 
