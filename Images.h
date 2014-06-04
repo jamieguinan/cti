@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include "Mem.h"
+#include "String.h"
 #include "locks.h"
 
 /* http://en.wikipedia.org/wiki/Layers_%28digital_image_editing%29 */
@@ -47,6 +48,7 @@ typedef struct {
   int interlace_mode;
   int eof;			/* EOF marker. */
   LockedRef ref;
+  String * label;		/* Optional source label. */
 } Image_common;
 
 
