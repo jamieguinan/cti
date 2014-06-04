@@ -1,0 +1,368 @@
+2013-Apr-30 13:01:37
+
+Fix .priv_size on a few templates.
+
+DJpeg.c:
+  Add a dpf for size.
+
+VFilter.c:
+  New y3blend filter.
+
+New PGMFiler module.
+
+
+2013-Apr-25 15:33:15
+
+Add .priv_size member to all template declarations.
+
+Get rid of .data pointer in Instance structure!
+
+
+2013-Apr-25 13:57:33
+
+Convert all modules to include Instance struct, instead of filling in pi->data.
+
+
+2013-Apr-25 04:09:13
+
+CTI.c:
+CTI.h:
+  Handle new-style templates, where priv structure includes Instance member. 
+
+DJpeg.c:
+CJpeg.c:
+  Use new-style templates.
+
+Rename example.[ch] to Example.[ch].
+
+ImageLoader.c:
+  Support loading .y422p files, as captured by V4L2Capture.
+
+Images.c:
+  Y422P_buffer_from(), using heuristics for dimensions.
+
+Keycodes.h:
+  PLUS, MINUS, EQUALS.
+
+SDLstuff.c:
+  Resize using +/- keys.
+
+V4L2Capture.c:
+  Fix .y422p write, use the converted data.
+
+
+2013-Apr-18 14:11:15
+
+Various:
+  "char *" -> String
+  Comment fixes.
+
+V4L2Capture.c:
+  y422p_snapshot()
+
+
+2013-Apr-17 18:42:40
+
+String.c:
+String.h:
+  Fill in unimplemented code.
+
+V4L2Capture.c:
+  Use String instead of "char *" for private data structures.
+
+
+2013-Apr-17 16:48:41
+
+MjpegDemux.c:
+  Always do timestamp check.
+  Use String_begins_with().
+  Dump some extra text when did not get all headers.
+
+SDLstuff.c:
+  Set default case for interlace handling.
+  Fix comments about threading.
+
+String.c:
+String.h:
+  String_begins_with()
+
+VFilter.c
+  top_crop
+
+RawSource.c:
+RawSource.h:
+  New module, still in progress.
+
+*.cmd:
+  Renames, changes, new files.
+
+
+aria-play.cmd
+
+
+2013-Apr-10 01:47:36
+
+Use calloc() for image objects.
+
+Implement Sink_close_current().
+
+
+2013-Apr-09 17:43:00
+
+Create images using Image_common structure from source image, if present.
+
+
+2013-Apr-09 17:03:35
+
+DJpeg.c:
+  Copy common data.
+  Throttle outputs.
+Images.h:
+Wav.h:
+  EOF marker.
+cti_main.c:
+Makefile:
+  RawSource template.
+MjpegDemux.c:
+  Buffer first frames, send with EOF flag when source EOF.
+  Throttle outputs.
+SourceSink.c:
+SourceSink.h:
+  New function Source_poll_read().
+WavOutput.c:
+  Close output on EOF.
+Y4MOutput.c:
+  Close output on EOF.
+
+
+2013-Mar-29 11:18:10
+
+H264.c:
+  Configurable Sink output.
+
+Images.c:
+Mem.h:
+Mem.c:  
+  Provisional Mem_unref() code.
+
+
+2013-Mar-28 15:47:37
+
+H264.c:
+  Use dpf instead of printf.
+  Fix memory leaks.
+
+Images.h:
+  Add MemObjects to all types.
+
+Makefile:
+  Enable H264 module.
+  Typo fix.
+
+Mem.h:
+  New MemObject type, preparing for refcounting.
+
+MjpegDemux.c:
+  a/b looping.
+
+SDLstuff.c:
+  reset_video after width change.
+
+cti_main.c:
+  Call H264_init().
+
+Rename manifest -> .svmanifest.
+
+
+2013-Mar-14 10:42:02
+
+SDLstuff.c:
+  Set "hard dimesions" if size explicitly set.
+  Rework and fix overlay rendering.
+
+
+2013-Mar-07 13:37:28
+
+CTI.c:
+  Change queued messages conditional printf to a dpf().
+
+Djpeg.c:
+  Whitespace cleanups.
+
+ScriptV00.c:
+  Make dpt wait for newline.
+
+SocketServer.c:
+SocketServer.h:
+  dpt() for bytes sent per second.
+
+SourceSink.c:
+SourceSink.h:
+  dpt() for bytes read per second.
+
+
+2013-Mar-06 12:50:11
+
+Change a bunch of modules to use generic cti_set_int instead of private functions.
+
+
+2013-Feb-25 15:15:55
+
+CTI.c:
+CTI.h:
+  Generic config mesaage handling with .vset.
+  cti_set_int generic config handler.
+
+SDLstuff.c:
+  Time snapshot debugging code.
+
+V4L2Capture.c:
+  Comment fixes.
+
+VFilter.c:
+  field_split option.
+
+WavOutput.c:
+  Fill in data length when creating output.
+
+fyv-audio-forward.cmd:
+logitech-live-record.cmd:
+  New files.
+
+
+2013-Jan-16 13:02:52
+
+Images.h:
+  Put common image fields into a substructure.
+
+MjpegDemux.c:
+  's' for snapshot.
+  Test code for interlaced mode.
+
+SDLstuff.c:
+  Two-pass rendering for interlaced fields.
+
+
+2012-Dec-03 11:31:51
+
+CSV.c:
+CSV.h:
+  New module.
+
+AVIDemux.c:
+  Make this roughly functional.
+
+CTI.h:
+  Comment reformatting.
+
+DTV.c:
+DTV.h:
+  New module.
+
+Makefile:
+  Reference new modules.
+
+SourceSink.c:
+  Various reworks.
+
+
+2012-Sep-12 21:34:12
+
+AVIDemux.c:
+  Fill in with a simple implementation that ignores headers.
+
+cti_main.c:
+  Call AVIDemux_init().
+
+Array.c:
+Array.h: 
+  New function ArrayU8_extract_uint32le().
+
+SourceSink.c:
+  New functinon Source_acquire_data().
+
+LibDV.c:
+Y4MInput.c:
+  Use Source_acquire_data().
+
+
+
+2012-Sep-11 12:28:39
+
+Add OUTPUT_FEEDBACK outputs to all encoders.
+
+
+2012-Sep-11 12:18:33
+
+Eliminate several nanosleep calls, by checking instance state and
+setting GetData() wait flag accordingly.
+
+V4L2Capture.c: Better BGR3 handling.
+
+
+2012-Sep-11 10:52:20
+
+Make Wav_buffer.data be a void pointer, require casting to operate on data,
+since data isn't always 16-bit.
+
+
+2012-Sep-10 13:41:23
+
+Initial working DV support.
+
+
+2012-Sep-05 16:04:23
+
+Minor cleanups in new Callback API.
+Add command-line key=value API, set up in cti_app.c, initially used in ScriptV00.c.
+Start filling in LibDV support.
+
+
+2012-Sep-02 15:06:47
+
+Cleaned things up a bit, the main application loop waits for
+a UI callback function using new Callback_*() API.  SDL fills 
+it in.  This might actually work on OSX now.
+
+
+2012-Sep-02 14:14:57
+
+This snapshot builds, but the ui_loop business is actually broken, I
+just wanted to capture it before I fix it.
+
+
+2012-Jul-31 14:02:40
+
+ CTI.c: 
+ CTI.h:
+  Remove obsoelte _PostMessage, CheckMessage, PopMessage.
+  Add Instantiate_and_run() function.
+  Move RawData_node from SocketServer.c to CTI.h.
+
+ SocketServer.c:
+  Move RawData_node from SocketServer.c to CTI.h.
+
+ SDLstuff.c:
+ cti_app.c:
+  Refactoring in consideration of OSX SDL support.
+
+ ScriptV00.c:
+  Add RawData handler in preparation for socket support 
+  (via SocketServer).
+
+
+ FileInput.c:
+ FileInput.h:
+  Deleted.
+
+ ScriptSession.c:
+ ScriptSession.h:
+  Deleted.
+
+ TCPOutput.c:
+ TCPOutput.h:
+  Deleted.
+
+ cti_main.c:
+  Remove obsolete includes.
+
