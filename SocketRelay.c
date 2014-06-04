@@ -1,3 +1,10 @@
+/*
+ * This is a simple relay between remote sockets and usually a local
+ * SocketServer instance.  It can be enabled by a SocketServer
+ * instance when client count is non-zero, and disabled when client
+ * count transitions to zero.
+ */
+
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */

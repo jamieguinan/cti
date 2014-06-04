@@ -45,6 +45,7 @@ typedef struct {
   Sink *sink;
   int seq;
   int every;
+  int no_header;
 } MjpegMux_private;
 
 
@@ -80,30 +81,24 @@ static int do_restart(Instance *pi, const char *value)
 }
 
 
-static int set_every(Instance *pi, const char *value)
-{
-  MjpegMux_private *priv = (MjpegMux_private *)pi;
-  priv->every = atoi(value);
-  return 0;
-}
-
-
 static Config config_table[] = {
   { "output", set_output, 0L, 0L },
   { "restart", do_restart, 0L, 0L },
-  { "every", set_every, 0L, 0L },
+  { "every", 0L, 0L, 0L, cti_set_int, offsetof(MjpegMux_private, every) },
+  { "no_header", 0L, 0L, 0L, cti_set_int, offsetof(MjpegMux_private, no_header) },
 };
 
 
 static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
+  MjpegMux_private *priv = (MjpegMux_private *)pi;
 }
 
-#define BOUNDARY "--0123456789NEXT"
+#define BOUNDARY "--0123456789NEXT\r\n"
 
 static const char part_format[] = 
-  "%s\r\nContent-Type: %s\r\n"
+  "%sContent-Type: %s\r\n"
   "Timestamp:%.6f\r\n"
   "%s"				/* extra headers... */
   "Content-Length: %d\r\n\r\n";
@@ -142,11 +137,18 @@ static void Jpeg_handler(Instance *pi, void *data)
   }
   
   if (pi->outputs[OUTPUT_RAWDATA].destination) {
-    /* Combine header and data, post. */
-    RawData_buffer *raw = RawData_buffer_new(header->len + jpeg_in->encoded_length);
-    memcpy(raw->data, header->bytes, header->len);
-    memcpy(raw->data+header->len, jpeg_in->data, jpeg_in->encoded_length);
-    PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
+    if (priv->no_header) {
+      RawData_buffer *raw = RawData_buffer_new(jpeg_in->encoded_length);
+      memcpy(raw->data, jpeg_in->data, jpeg_in->encoded_length);
+      PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
+    }
+    else {
+      /* Combine header and data, post. */
+      RawData_buffer *raw = RawData_buffer_new(header->len + jpeg_in->encoded_length);
+      memcpy(raw->data, header->bytes, header->len);
+      memcpy(raw->data+header->len, jpeg_in->data, jpeg_in->encoded_length);
+      PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
+    }
   }
 
   String_free(&period);

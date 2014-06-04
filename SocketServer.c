@@ -82,6 +82,9 @@ typedef struct {
   RawData_node *raw_last;
   int raw_seq;
   ISet(Instance) notify_instances; 
+
+  int single_serve;		/* Option to send a single rawdata buffer to client
+				   then close. */
 } SocketServer_private;
 
 
@@ -135,13 +138,24 @@ static int set_notify(Instance *pi, const char *value)
 }
 
 
+static int set_single_serve(Instance *pi, const char *value)
+{
+  SocketServer_private *priv = (SocketServer_private *)pi;
+  priv->single_serve = atoi(value);
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "max_total_buffered_data", set_max_total_buffered_data, 0L, 0L },
+
+  /* v4 ports only, maybe add v6 later... */
   { "v4addr", set_v4addr, 0L, 0L },
   { "v4port", set_v4port, 0L, 0L },
+
   { "enable", set_enable, 0L, 0L },
   { "notify", set_notify, 0L, 0L},
-  /* Maybe add v6 later... */
+  { "single_serve", set_single_serve, 0L, 0L},
 };
 
 static void Config_handler(Instance *pi, void *data)
@@ -383,7 +397,7 @@ static void SocketServer_tick(Instance *pi)
       fprintf(stderr, "Whoa, to_send is %d (cc->raw_node->buffer->data_length=%d cc->raw_offset=%d)\n", 
 	      to_send, cc->raw_node->buffer->data_length, cc->raw_offset);
       n = 0;
-      goto oops;
+      goto nextraw;
     }
 
     n = send(cc->fd, cc->raw_node->buffer->data + cc->raw_offset, to_send, MSG_NOSIGNAL);
@@ -399,11 +413,16 @@ static void SocketServer_tick(Instance *pi)
 
     cc->bytes_sent += n;
 
-  oops:
+  nextraw:
+
     cc->raw_offset += n;
     if (cc->raw_offset == cc->raw_node->buffer->data_length) {
-      /* Move on to next node... */
-      if (cc->raw_node->next) {
+      /* Finished sending current raw node. */
+      if (priv->single_serve) {
+	cc->state = CC_CLOSEME;
+      }
+      else if (cc->raw_node->next) {
+	/* Move on to next node... */
 	cc->raw_node = cc->raw_node->next;
 	cc->raw_seq = cc->raw_node->seq;
 	cc->raw_offset = 0;

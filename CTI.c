@@ -316,13 +316,16 @@ static Instance * _Instantiate_local(const char *label, int run)
 	t->instance_init(pi);
       }
 
-      if (run) {
-	/* Run instance main loop, blocking the caller. */
-	Instance_thread_main(pi);
-      }
-      else {
-	/* Start a new thread. */
-	Instance_loop_thread(pi);
+      /* Run or start thread, only if tick function is defined. */
+      if (pi->tick) {
+	if (run) {
+	  /* Run instance main loop, blocking the caller. */
+	  Instance_thread_main(pi);
+	}
+	else {
+	  /* Start a new thread. */
+	  Instance_loop_thread(pi);
+	}
       }
       return pi;
     }
