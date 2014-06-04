@@ -185,7 +185,7 @@ void Index_clear(Index **_idx)
 
 static void insert_node(Index_node * node, uint32_t key, Index_node * new_node)
 {
-  /* Common insertion code. */
+  /* I broke this out of Index_op() to keep it cleaner. */
   while (node) {
     Index_node *parent = node;
 
@@ -217,110 +217,6 @@ static void insert_node(Index_node * node, uint32_t key, Index_node * new_node)
   }
 }
 
-
-static void _Index_add(Index * idx, String * stringKey, void * voidKey, void * value, void **oldvalue, int * err)
-{
-  uint32_t key;
-
-  key_from_either(stringKey, voidKey, &key, err);
-  if (*err == INDEX_NO_KEY) {
-    return;
-  }
-
-  if (!idx) {
-    fprintf(stderr, "%s: idx not set!\n", __func__);
-    *err = INDEX_NO_IDX;
-    return;
-  }
-
-  Index_node * new_node = Index_node_new(key, stringKey, voidKey, value);
-
-  if (!idx->_nodes) {
-    /* Create top node in tree. */
-    idx->_nodes = new_node;
-  }
-  else {
-    insert_node(idx->_nodes, key, new_node);
-  }
-
-  *err = INDEX_NO_ERROR;
-  return;
-}
-
-static void * _Index_find(Index *idx, String *stringKey, void * voidKey, int del, int * err)
-{
-  void *value = 0L;
-  uint32_t key;
-
-  key_from_either(stringKey, voidKey, &key, err);
-  if (*err == INDEX_NO_KEY) {
-    return value;
-  }
-
-  if (!idx) {
-    fprintf(stderr, "%s: idx not set!\n", __func__);
-    *err = INDEX_NO_IDX;
-    return value;
-  }
-
-  Index_node *node = idx->_nodes;
-  Index_node **parent_ptr = &(idx->_nodes);
-
-  while (node) {
-    if (key < node->key) {
-      parent_ptr = &(node->left);
-      node = node->left;
-    }
-    else if (key > node->key) {
-      parent_ptr = &(node->right);
-      node = node->right;
-    }
-    else if (key == node->key) {
-      /* Duplicate hash keys are allowed, so verify that value matches. */
-      if ( (stringKey && String_cmp(stringKey, node->stringKey) == 0) 
-		|| (voidKey && voidKey == node->voidKey) ) {
-	value = node->value;
-	*err = INDEX_NO_ERROR;
-	break;
-      }
-      else {
-	/* Keep searching down left tree... */
-	parent_ptr = &(node->left);
-	node = node->left;
-      }
-    }
-  }
-
-  if (node) {
-    *err = INDEX_NO_ERROR;
-    if (del) {
-      /* Delete this node.  4 cases to handle. */
-      if (node->left && node->right) {
-	/* Both subtrees.  Move left subtree under right. */
-	insert_node(node->right, node->left->key, node->left);
-	*parent_ptr = node->right;
-      }
-      else if (node->left) {
-	/* Only left subtree. */
-	*parent_ptr = node->left;
-      }
-      else if (node->right) {
-	/* Only right subtree. */
-	*parent_ptr = node->right;
-      }
-      else {
-	/* No subtrees. */
-	*parent_ptr = NULL;
-      }
-      Index_node_free(&node);
-    }
-  }
-  else {
-    *err = INDEX_KEY_NOT_FOUND;
-  }
-
-  return value;
-}
 
 enum {
   INDEX_OP_ADD,
@@ -445,87 +341,110 @@ static void _Index_op(Index *idx,
 /* public API functions: */
 void Index_add_string(Index * idx, String * stringKey, void * value, int * err)
 {
-  _Index_add(idx, 
-	     stringKey, NULL,
-	     value,
-	     NULL,
-	     err);
+  _Index_op(idx, 
+	    stringKey, NULL,
+	    value, NULL,
+	    INDEX_OP_ADD,
+	    0,
+	    err);
 }
 
 
 void Index_replace_string(Index * idx, String * stringKey, void * value, void **oldvalue, int * err)
 {
-  _Index_add(idx, 
-	     stringKey, NULL,
-	     value,
-	     oldvalue,
-	     err);
+  _Index_op(idx, 
+	    stringKey, NULL,
+	    value, oldvalue,
+	    INDEX_OP_ADD,
+	    1,
+	    err);
 }
 
 
 void Index_add_ptrkey(Index * idx, void * voidKey, void * value, int * err)
 {
-  _Index_add(idx, 
-	     NULL, voidKey,
-	     value,
-	     NULL,
-	     err);
+  _Index_op(idx, 
+	    NULL, voidKey,
+	    value, NULL,
+	    INDEX_OP_ADD,
+	    0,
+	    err);
 }
 
 
 void * Index_find_string(Index * idx, String * stringKey, int * err)
 {
-  return _Index_find(idx, 
-		     stringKey, NULL,
-		     0,
-		     err);
+  void *oldvalue = NULL;
+  _Index_op(idx, 
+	    stringKey, NULL,
+	    NULL, &oldvalue,
+	    INDEX_OP_FIND,
+	    0,
+	    err);
+  return oldvalue;
 }
 
 
 void * Index_find_ptrkey(Index * idx, void * voidKey, int * err)
 {
-  return _Index_find(idx, 
-		     NULL, voidKey,
-		     0,
-		     err);
+  void *oldvalue = NULL;
+  _Index_op(idx, 
+	    NULL, voidKey,
+	    NULL, &oldvalue,
+	    INDEX_OP_FIND,
+	    0,
+	    err);
+  return oldvalue;
 }
 
 
 void Index_del_string(Index * idx, String * stringKey, int * err)
 {
   /* Find and delete, ignore return value. */
-  _Index_find(idx, 
-	      stringKey, NULL,
-	      1,
-	      err);
+  _Index_op(idx, 
+	    stringKey, NULL,
+	    NULL, NULL,
+	    INDEX_OP_FIND,
+	    1,
+	    err);
 }
 
 
 void Index_del_ptrkey(Index * idx, void * voidKey, int * err)
 {
   /* Find and delete, ignore return value. */
-  _Index_find(idx, 
-	     NULL, voidKey,
-	     1,
-	     err);
+  _Index_op(idx, 
+	    NULL, voidKey,
+	    NULL, NULL,
+	    INDEX_OP_FIND,
+	    1,
+	    err);
 }
 
 
 void * Index_pull_string(Index * idx, String * stringKey, int * err)
 {
   /* Find and delete, returning value. */
-  return _Index_find(idx, 
-		     stringKey, NULL,
-		     1,
-		     err);
+  void *oldvalue = NULL;
+  _Index_op(idx, 
+	    stringKey, NULL,
+	    NULL, &oldvalue,
+	    INDEX_OP_FIND,
+	    1,
+	    err);
+  return oldvalue;
 }
 
 
 void * Index_pull_ptrkey(Index * idx, void * voidKey, int * err)
 {
   /* Find and delete, returning value. */
-  return _Index_find(idx, 
-		     NULL, voidKey,
-		     1,
-		     err);
+  void *oldvalue = NULL;
+  _Index_op(idx, 
+	    NULL, voidKey,
+	    NULL, &oldvalue,
+	    INDEX_OP_FIND,
+	    1,
+	    err);
+  return oldvalue;
 }
