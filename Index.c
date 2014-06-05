@@ -262,6 +262,9 @@ static void _Index_op(Index *idx,
       node = node->right;
     }
     else if (key == node->key) {
+      /* Duplicate hash keys are allowed.  After all, 1 in 4 billion isn't
+	 that rare if working on GHz CPUs with sets of thousands or millions
+	 of nodes.  So, verify source key. */
       if ( (stringKey && String_cmp(stringKey, node->stringKey) == 0) 
 		|| (voidKey && voidKey == node->voidKey) ) {
 	/* Matching node found. */
@@ -294,8 +297,14 @@ static void _Index_op(Index *idx,
 	/* Delete this node.  4 cases to handle. */
 	if (node->left && node->right) {
 	  /* Node has both subtrees.  Move left subtree under right. */
-	  insert_node(node->right, node->left->key, node->left);
-	  *pnode = node->right;
+	  if (node->key & 1) {
+	    insert_node(node->right, node->left->key, node->left);
+	    *pnode = node->right;
+	  }
+	  else {
+	    insert_node(node->left, node->right->key, node->right);
+	    *pnode = node->left;
+	  }
 	}
 	else if (node->left) {
 	  /* Only left subtree. */
