@@ -326,6 +326,7 @@ h264test01.cmd
 h264test02.cmd
 hls-stream.html
 hls-stream.m3u8
+http01.cmd
 il.cmd
 jamiespc-fwd.cmd
 jmemdst.c

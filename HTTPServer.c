@@ -8,6 +8,7 @@
 
 #include "CTI.h"
 #include "HTTPServer.h"
+#include "SourceSink.h"
 #include "socket_common.h"
 
 static void Config_handler(Instance *pi, void *msg);
@@ -68,11 +69,28 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void handle_client(int fd)
+static void * http_thread(void *data)
 {
+  int fd = (long)data;
+  // Comm comm = { .io.s = fd };
+
+  /* Read request... */
+  /* Try to find resource. */
+  /* If found, return 20x code and data. */
+  /* Else if not found, return 404 code. */
+  /* Use Comm_read and Comm_write, fill in that code as necessary. */
+
   const char *msg = "fuck off\n";
   write(fd, msg, strlen(msg));
   close(fd);
+  return NULL;
+}
+
+static void handle_client(int fd)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, http_thread, (void*)(long)fd);
+  pthread_detach(thread);
 }
 
 static void HTTPServer_tick(Instance *pi)
@@ -123,7 +141,7 @@ static void HTTPServer_tick(Instance *pi)
       goto out;
     }
 
-    fprintf(stderr, "accepted connection on port %d\n", priv->lsc.port);
+    // fprintf(stderr, "accepted connection on port %d\n", priv->lsc.port);
     handle_client(fd);
   }
 
