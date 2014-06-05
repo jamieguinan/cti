@@ -82,9 +82,6 @@ typedef struct {
   RawData_node *raw_last;
   int raw_seq;
   ISet(Instance) notify_instances; 
-
-  int single_serve;		/* Option to send a single rawdata buffer to client
-				   then close. */
 } SocketServer_private;
 
 
@@ -138,13 +135,6 @@ static int set_notify(Instance *pi, const char *value)
 }
 
 
-static int set_single_serve(Instance *pi, const char *value)
-{
-  SocketServer_private *priv = (SocketServer_private *)pi;
-  priv->single_serve = atoi(value);
-  return 0;
-}
-
 
 static Config config_table[] = {
   { "max_total_buffered_data", set_max_total_buffered_data, 0L, 0L },
@@ -155,7 +145,6 @@ static Config config_table[] = {
 
   { "enable", set_enable, 0L, 0L },
   { "notify", set_notify, 0L, 0L},
-  { "single_serve", set_single_serve, 0L, 0L},
 };
 
 static void Config_handler(Instance *pi, void *data)
@@ -418,10 +407,7 @@ static void SocketServer_tick(Instance *pi)
     cc->raw_offset += n;
     if (cc->raw_offset == cc->raw_node->buffer->data_length) {
       /* Finished sending current raw node. */
-      if (priv->single_serve) {
-	cc->state = CC_CLOSEME;
-      }
-      else if (cc->raw_node->next) {
+      if (cc->raw_node->next) {
 	/* Move on to next node... */
 	cc->raw_node = cc->raw_node->next;
 	cc->raw_seq = cc->raw_node->seq;

@@ -20,6 +20,40 @@ static void check(int val, int expected)
   }
 }
 
+FILE *gvf;
+
+void gvout1(Index_node *node)
+{
+  fprintf(gvf, "node%ld[label = \"<f0> |<f1> %" PRIu32 "|<f2> \"];\n", node->key, node->key);
+}
+
+void gvout2(Index_node *node)
+{
+  if (node->left) {
+    fprintf(gvf, "\"node%ld\":f0 -> \"node%ld\":f1;\n", node->key, node->left->key);
+  }
+  if (node->right) {
+    fprintf(gvf, "\"node%ld\":f2 -> \"node%ld\":f1;\n", node->key, node->right->key);
+  }
+}
+
+void make_gv(Index *idx, const char *filename)
+{
+  gvf = fopen(filename, "w");
+  if (!gvf) {
+    perror(filename);
+    return;
+  }
+  fprintf(gvf, "digraph g {\n");
+  fprintf(gvf, "node [shape = record,height=.1];\n");
+
+  Index_walk(idx, gvout1);
+  Index_walk(idx, gvout2);
+  
+  fprintf(gvf, "}\n");
+  fclose(gvf);
+}
+
 int main()
 {
   {
@@ -91,7 +125,7 @@ int main()
 
   {
     const char * text = "\
-I'm wondering if I can avoid the shift by using different fixed-valuey \
+I am wondering if I can avoid the shift by using different fixed-valuey \
 mask operations depending on the current bit offset into a 32 or 64 \
 bit source word.  There would be a similar block of code repeated for \
 each possible bit offset, with a switch statement at the top.  It \
@@ -105,21 +139,21 @@ sparse output.  Then that output could be translated to the final \
 output values, again using arithmetic operations.  Avoid conditionals \
 and lookup tables.  Pre-generate intermediate factors, as long as they \
 are constant.  If all this works, then it might be possible to use \
-planar hardware operators to decompress an entire frame's worth of \
+planar hardware operators to decompress an entire frame worth of \
 DCT blocks in parallel.  Or, if the DCTs are hard to separate, \
-several frames' worth in parallel. \
+several frames worth in parallel. \
 I was considering using Unix epoch times with millisecond resolution, \
 stored in a uint64_t.  This would last 6 million times the current \
-\"date +%s\" value.  But for 30fps video, even 1ms error per frame could \
+date value.  But for 30fps video, even 1ms error per frame could \
 accumulate and throw off the video by one frame in only a single \
-second!  And MpegTS wants 90KHz resolution.  I'll stick with timevals \
+second.  And MpegTS wants 90KHz resolution.  I will stick with timevals \
 for now.  Or why not double-precision floats? \
 TS playback on iOS is a little choppy, for both birdcam and satellite \
 input sources.  I think this might be because of the ordering of the \
 TS packets.  If the video and audio input objects (elementary packets) \
 have timestamps and known duration, then I could spread the period \
 over the packets and assign an estimated timestamp to each packet, \
-even those that don't include PTS{/DTS}.  Then it should be relatively \
+even those that do not include PTS/DTS.  Then it should be relatively \
 easy to sort the packets for writeout, and more accurately insert PAT \
 and PMT packets.";
   
@@ -138,6 +172,8 @@ and PMT packets.";
       printf("err=%d oldvalue=%ld\n", err, (long)oldvalue);
     }
     printf("count=%d\n", idx->count);
+    Index_analyze(idx);
+    make_gv(idx, "one.gv");
 
     for (i=0; i < String_list_len(strs); i+=2) {
       void *oldvalue = NULL;
@@ -148,6 +184,8 @@ and PMT packets.";
       printf("err=%d oldvalue=%ld\n", err, (long)oldvalue);
     }
     printf("count=%d\n", idx->count);
+    Index_analyze(idx);
+    make_gv(idx, "two.gv");
 
     for (i=1; i < String_list_len(strs); i+=2) {
       void *oldvalue = NULL;
@@ -158,6 +196,7 @@ and PMT packets.";
       printf("err=%d oldvalue=%ld\n", err, (long)oldvalue);
     }
     printf("count=%d\n", idx->count);
+    Index_analyze(idx);
 
   }
   
