@@ -3,7 +3,6 @@
 
 extern void VirtualStorage_init(void);
 
-
 typedef struct _VirtualStorage VirtualStorage; /* Opaque type. */
 
 extern VirtualStorage * VirtualStorage_from_instance(Instance *pi);

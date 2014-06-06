@@ -91,7 +91,7 @@ String * ArrayU8_extract_string(ArrayU8 *a, int i1, int i2)
 int ArrayU8_search(ArrayU8 *a, int offset, const ArrayU8 *target)
 {
   int i, j;
-  for (i = offset; i < (a->len - target->len); i++) {
+  for (i = offset; i <= (a->len - target->len); i++) {
     for (j = 0; j < target->len; j++) {
       if (a->data[i+j] != target->data[j]) {
 	break;

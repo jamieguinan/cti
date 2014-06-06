@@ -627,21 +627,25 @@ void Comm_close(Comm * comm)
 }
 
 
-
-#if 0
-
-void Comm_read_append_array(Comm * comm, Array_u8 * array)
+void Comm_read_append_array(Comm * comm, ArrayU8 * array)
 {
+  /* FIXME: This would be more efficient if io_read read straight into
+     the array, rather than allocate/append/free. */
+  ArrayU8 * chunk = io_read(&comm->io);
+  if (chunk) {
+    ArrayU8_append(array, chunk);
+    ArrayU8_free(&chunk);
+  }
 }
 
-
-void Comm_write_from_array(Comm * comm,  Array_u8 * array, unsigned int * offset)
+#if 0
+void Comm_write_from_array(Comm * comm,  ArrayU8 * array, unsigned int * offset)
 {
 }
 
 
 // write up to 32000 bytes, maybe less, starting from offset, offset is updated
-void Comm_write_from_array_complete(Comm * comm,  Array_u8 * array)
+void Comm_write_from_array_complete(Comm * comm,  ArrayU8 * array)
 {
 }
 #endif
