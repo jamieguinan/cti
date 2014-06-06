@@ -638,17 +638,16 @@ void Comm_read_append_array(Comm * comm, ArrayU8 * array)
   }
 }
 
-#if 0
-void Comm_write_from_array(Comm * comm,  ArrayU8 * array, unsigned int * offset)
+void Comm_write_from_array(Comm * comm,  ArrayU8 * array, unsigned long * offset)
 {
+  // write up to 32000 bytes, maybe less, starting from offset, offset is updated
+  fprintf(stderr, "unimplemented: %s:%d\n", __FILE__, __LINE__);  exit(1);
 }
 
-
-// write up to 32000 bytes, maybe less, starting from offset, offset is updated
 void Comm_write_from_array_complete(Comm * comm,  ArrayU8 * array)
 {
+  fprintf(stderr, "unimplemented: %s:%d\n", __FILE__, __LINE__);  exit(1);
 }
-#endif
 
 
 void Comm_free(Comm **comm)

@@ -84,6 +84,8 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 typedef struct {
+  /* This small structure is used to pass storage and file descriptor
+     to HTTP handler thread. */
   VirtualStorage *vs;
   int fd;
 } VirtualStorage_and_FD;
@@ -94,6 +96,15 @@ static void * http_thread(void *data)
   VirtualStorage_and_FD *vsfd = data;
   VirtualStorage *vs = vsfd->vs;
   Mem_free(vsfd); vsfd = NULL;
+
+  /* NOTE: This could handle HTTP/1.1 multiple items per connection by
+     wrapping everything in a loop from "Comm ..." below and not
+     breaking until any of,
+     (1) the client closes its end
+     (2) the client sends invalid protocol
+     (3) there are too many threads
+     (4) N number of passes
+  */
 
   Comm comm = { .io.s = vsfd->fd, .io.state = IO_OPEN_SOCKET };
   ArrayU8 * request = ArrayU8_new();
@@ -150,17 +161,92 @@ static void * http_thread(void *data)
   }
 
   printf("path: %s\n", s(path));
+
   /* Try to find resource. */
+  Resource * resource = NULL;
   if (vs) {
-    void * resource = VirtualStorage_get(vs, path);
+    resource = VirtualStorage_get(vs, path);
+  }
+
+  /* Examples...
+
+    HTTP/1.1 200 OK
+    Date: Fri, 06 Jun 2014 20:34:32 GMT
+    Server: Apache
+    Last-Modified: Fri, 06 Jun 2014 20:34:15 GMT
+    ETag: "be1dba-1500-4fb30c8efbfc0"
+    Accept-Ranges: bytes
+    Content-Length: 5376
+    Content-Type: image/jpeg
+
+    [data...]
+
+
+    HTTP/1.1 400 Bad Request
+    Date: Fri, 06 Jun 2014 20:38:03 GMT
+    Server: Apache
+    Content-Length: 285
+    Connection: close
+    Content-Type: text/html; charset=iso-8859-1
+
+    <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+    <html><head>
+    <title>400 Bad Request</title>
+    </head><body>
+    <h1>Bad Request</h1>
+    <p>Your browser sent a request that this server could not understand.<br />
+    </p>
+    <hr>
+    <address>Apache Server at localhost Port 80</address>
+    </body></html>
+
+
+    HTTP/1.1 404 Not Found
+    Date: Fri, 06 Jun 2014 20:36:44 GMT
+    Server: Apache
+    Content-Length: 267
+    Content-Type: text/html; charset=iso-8859-1
+
+    <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+    <html><head>
+    <title>404 Not Found</title>
+    </head><body>
+    <h1>Not Found</h1>
+    <p>The requested URL /nosuch.jpg was not found on this server.</p>
+    <hr>
+    <address>Apache Server at localhost Port 80</address>
+    </body></html>
+
+  */
+
+  if (resource) {
+    /* Return 20x code, try sending. */
+    do {
+      String *hdr = String_sprintf("HTTP/1.1 200 OK\r\n"
+				   // Date:
+				   // Server:
+				   // Last-modified:
+				   // Etag:
+				   // Accept-Ranges:
+				   "Content-length: %ld\r\n"
+				   "Content-type: %s\r\n"
+				   "\r\n",
+				   resource->size,
+				   resource->mime_type
+				   );
+      ArrayU8 *ahdr = ArrayU8_temp_const(s(hdr), String_len(hdr));
+      Comm_write_from_array_complete(&comm, ahdr);
+      String_free(&hdr);
+      if (comm.io.state == IO_CLOSED) { break; }
+      ArrayU8 *ar = ArrayU8_temp_const(resource->data, resource->size);
+      Comm_write_from_array_complete(&comm, ar);
+      if (comm.io.state == IO_CLOSED) { break; }
+    } while (0);
+  }
+  else {
+    /* Return 40x code. */
   }
   
-  /* If found, return 20x code and data. */
-  /* Else return 40x code. */
-  
-  const char *msg = "fuck off\n";
-  write(comm.io.s, msg, strlen(msg));
-
  out:
   Comm_close(&comm);
 

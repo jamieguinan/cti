@@ -45,6 +45,23 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
+static void cleanup(void *old_data)
+{
+  /* Clean up any Resource that was allocated elsewhere in this module. 
+     A Resource should have its mime type set, which allows to figure out
+     the cleanup function. */
+  Resource * r = old_data;
+  if (streq(r->mime_type, "image/jpeg")) {
+    Jpeg_buffer * old_jpeg = r->container;
+    Jpeg_buffer_discard(old_jpeg);
+  }
+  else {
+    fprintf(stderr, "cleanup: can't handle type %s\n", r->mime_type);
+  }
+  Mem_free(r);
+}
+
+
 static void Jpeg_handler(Instance *pi, void *data)
 {
   VirtualStorage_private *priv = (VirtualStorage_private *)pi;
@@ -56,16 +73,23 @@ static void Jpeg_handler(Instance *pi, void *data)
     return;
   }
 
+  /* Prepare */
+  Resource * r = Mem_malloc(sizeof(*r));
+  Jpeg_fix(jpeg);
+  r->container = jpeg;
+  r->data = jpeg->data;
+  r->size = jpeg->data_length;
+  r->mime_type = "image/jpeg";
+
   /* Lock */
   Lock_acquire(&priv->idx_lock);
 
   /* Operate */
   int err;
   void * old_data = NULL;
-  Index_replace_string(priv->idx, jpeg->c.label, jpeg, &old_data, &err);
+  Index_replace_string(priv->idx, jpeg->c.label, r, &old_data, &err);
   if (old_data) {
-    Jpeg_buffer * old_jpeg = old_data;
-    Jpeg_buffer_discard(old_jpeg);
+    cleanup(old_data);
   }
 
   /* Unlock */

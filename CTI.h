@@ -301,6 +301,8 @@ extern void InstanceGroup_connect2(InstanceGroup *g,
 				   String * instanceLabel2,
 				   const char *ioLabel2);
 
+extern void Instance_list(int verbose);
+
 
 /* Callback function, with one parameter. */
 typedef struct {

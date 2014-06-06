@@ -47,7 +47,7 @@ static int set_file(Instance *pi, const char *value)
   AAC_buffer *aac = 0L;
   int result;
 
-  printf("fdata->len=%d\n", fdata->len);
+  printf("fdata->len=%ld\n", fdata->len);
 
   if (!fdata) {
     fprintf(stderr, "failed to load %s\n", value);

@@ -6,8 +6,8 @@
 
 typedef struct {
   uint8_t *data;
-  int len;
-  int available;
+  unsigned long len;
+  unsigned long int available;
 } ArrayU8;
 
 extern ArrayU8 * ArrayU8_new(void);
