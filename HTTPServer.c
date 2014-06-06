@@ -8,7 +8,10 @@
 
 #include "CTI.h"
 #include "HTTPServer.h"
+#include "SourceSink.h"
 #include "socket_common.h"
+#include "VirtualStorage.h"
+//#include "Array.h"
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -25,6 +28,7 @@ static Output HTTPServer_outputs[] = {
 typedef struct {
   Instance i;
   listen_common lsc;		/* listen socket_common */
+  VirtualStorage *vs;		/* virtual storage object */
 } HTTPServer_private;
 
 
@@ -52,6 +56,17 @@ static int set_enable(Instance *pi, const char *value)
 }
 
 
+static int set_virtual_storage(Instance *pi, const char *value)
+{
+  HTTPServer_private *priv = (HTTPServer_private *)pi;
+  Instance * i = InstanceGroup_find(gig, S((char*)value));
+  if (i) {
+    priv->vs = VirtualStorage_from_instance(pi);
+  }
+  return 0;
+}
+
+
 
 static Config config_table[] = {
   /* v4 ports only, maybe add v6 later... */
@@ -59,6 +74,7 @@ static Config config_table[] = {
   { "v4port", set_v4port, 0L, 0L },
 
   { "enable", set_enable, 0L, 0L },
+  { "virtual_storage",  set_virtual_storage, 0L, 0L },
 };
 
 
@@ -67,12 +83,111 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
+typedef struct {
+  VirtualStorage *vs;
+  int fd;
+} VirtualStorage_and_FD;
 
-static void handle_client(int fd)
+
+static void * http_thread(void *data)
 {
+  VirtualStorage_and_FD *vsfd = data;
+  VirtualStorage *vs = vsfd->vs;
+  Mem_free(vsfd); vsfd = NULL;
+
+  Comm comm = { .io.s = vsfd->fd, .io.state = IO_OPEN_SOCKET };
+  ArrayU8 * request = ArrayU8_new();
+  int n = 0;
+
+  /* Strings that should be checked and freed on exit. */
+  String * srq = String_value_none();
+  String_list * request_lines = String_list_value_none();
+  String_list * operation = String_list_value_none();
+
+  /* Strings that are only references to other strings. */
+  String * op = NULL;
+  String * path = NULL;
+
+  /* Read request... */
+  while (1) {
+    Comm_read_append_array(&comm, request);
+    if (comm.io.state == IO_CLOSED) {
+      fprintf(stderr, "%s: unexpected close\n", __func__);
+      goto out;
+    }
+    n = ArrayU8_search(request, 0, ArrayU8_temp_string("\r\n\r\n"));
+    if (n == -1) {
+      /* Allow newlines without carriage returns, too. */
+      n = ArrayU8_search(request, 0, ArrayU8_temp_string("\n\n"));
+    }
+    if (n > 0) {
+      fprintf(stderr, "%s: found double newline at %d\n", __func__, n);
+      break;
+    }
+  }
+
+  /* Request should be a block of several lines of text. */
+  srq = ArrayU8_to_string(&request);
+  request_lines = String_split(srq, "\n");
+  if (String_list_len(request_lines) > 0) {
+    operation = String_split(String_list_get(request_lines, 0), " ");
+    /* NOTE: Ignoring the remaining request lines for now. */
+    if (String_list_len(operation) >= 2) {
+      op = String_list_get(operation, 0);
+      if (String_eq(op, S("GET"))) {
+	printf("Looks like a GET request\n");
+	path = String_list_get(operation, 1);      
+      }
+      else if (String_eq(op, S("POST"))) {
+	printf("Looks like a POST request (not handled)\n");
+      }
+    }
+  }
+
+  if (!path) {
+    /* FIXME: 400 Bad Request */
+    goto out;
+  }
+
+  printf("path: %s\n", s(path));
+  /* Try to find resource. */
+  if (vs) {
+    void * resource = VirtualStorage_get(vs, path);
+  }
+  
+  /* If found, return 20x code and data. */
+  /* Else return 40x code. */
+  
   const char *msg = "fuck off\n";
-  write(fd, msg, strlen(msg));
-  close(fd);
+  write(comm.io.s, msg, strlen(msg));
+
+ out:
+  Comm_close(&comm);
+
+  if (!String_list_is_none(operation)) {
+    String_list_free(&operation);
+  }
+
+
+  if (!String_list_is_none(request_lines)) {
+    String_list_free(&request_lines);
+  }
+
+  if (!String_is_none(srq)) {
+    String_free(&srq);
+  }
+
+  return NULL;
+}
+
+static void handle_client(VirtualStorage * vs, int fd)
+{
+  pthread_t thread;
+  VirtualStorage_and_FD * vsfd = Mem_malloc(sizeof(*vsfd));
+  vsfd->vs = vs;
+  vsfd->fd = fd;
+  pthread_create(&thread, NULL, http_thread, vsfd);
+  pthread_detach(thread);
 }
 
 static void HTTPServer_tick(Instance *pi)
@@ -123,8 +238,8 @@ static void HTTPServer_tick(Instance *pi)
       goto out;
     }
 
-    fprintf(stderr, "accepted connection on port %d\n", priv->lsc.port);
-    handle_client(fd);
+    // fprintf(stderr, "accepted connection on port %d\n", priv->lsc.port);
+    handle_client(priv->vs, fd);
   }
 
   out:

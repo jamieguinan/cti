@@ -72,9 +72,9 @@ extern void Comm_close(Comm * comm);
 extern void Comm_write_string_with_byte(Comm * comm, String *str, char byteval);
 extern String * Comm_read_string_to_byte(Comm * comm, char byteval);
 
+extern void Comm_read_append_array(Comm * comm, ArrayU8 * array);
 #if 0
-extern void Comm_read_append_array(Comm * comm, Array_u8 * array);
-extern void Comm_write_from_array(Comm * comm,  Array_u8 * array, unsigned int * offset);
+extern void Comm_write_from_array(Comm * comm,  ArrayU8 * array, unsigned int * offset);
 // write up to 32000 bytes, maybe less, starting from offset, offset is updated
 extern void Comm_write_from_array_complete(Comm * comm,  Array_u8 * array);
 #endif
