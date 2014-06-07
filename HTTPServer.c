@@ -1,6 +1,62 @@
 /*
  * HTTP Server module.
+ * 
+ * Normal usage is to associate a VirtualStorage instance, and
+ * search that for requests.
+ *
  */
+
+  /* Examples from my local apache server...
+
+    HTTP/1.1 200 OK
+    Date: Fri, 06 Jun 2014 20:34:32 GMT
+    Server: Apache
+    Last-Modified: Fri, 06 Jun 2014 20:34:15 GMT
+    ETag: "be1dba-1500-4fb30c8efbfc0"
+    Accept-Ranges: bytes
+    Content-Length: 5376
+    Content-Type: image/jpeg
+
+    [data...]
+
+
+    HTTP/1.1 400 Bad Request
+    Date: Fri, 06 Jun 2014 20:38:03 GMT
+    Server: Apache
+    Content-Length: 285
+    Connection: close
+    Content-Type: text/html; charset=iso-8859-1
+
+    <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+    <html><head>
+    <title>400 Bad Request</title>
+    </head><body>
+    <h1>Bad Request</h1>
+    <p>Your browser sent a request that this server could not understand.<br />
+    </p>
+    <hr>
+    <address>Apache Server at localhost Port 80</address>
+    </body></html>
+
+
+    HTTP/1.1 404 Not Found
+    Date: Fri, 06 Jun 2014 20:36:44 GMT
+    Server: Apache
+    Content-Length: 267
+    Content-Type: text/html; charset=iso-8859-1
+
+    <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+    <html><head>
+    <title>404 Not Found</title>
+    </head><body>
+    <h1>Not Found</h1>
+    <p>The requested URL /nosuch.jpg was not found on this server.</p>
+    <hr>
+    <address>Apache Server at localhost Port 80</address>
+    </body></html>
+
+  */
+
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -61,7 +117,7 @@ static int set_virtual_storage(Instance *pi, const char *value)
   HTTPServer_private *priv = (HTTPServer_private *)pi;
   Instance * i = InstanceGroup_find(gig, S((char*)value));
   if (i) {
-    priv->vs = VirtualStorage_from_instance(pi);
+    priv->vs = VirtualStorage_from_instance(i);
   }
   return 0;
 }
@@ -95,20 +151,19 @@ static void * http_thread(void *data)
 {
   VirtualStorage_and_FD *vsfd = data;
   VirtualStorage *vs = vsfd->vs;
-  Mem_free(vsfd); vsfd = NULL;
+  Comm comm = { .io.s = vsfd->fd, .io.state = IO_OPEN_SOCKET };
+  Mem_free(vsfd);
+  ArrayU8 * request = ArrayU8_new();
+  int n = 0;
 
   /* NOTE: This could handle HTTP/1.1 multiple items per connection by
-     wrapping everything in a loop from "Comm ..." below and not
+     wrapping everything in a loop (or using "goto top") and not
      breaking until any of,
      (1) the client closes its end
      (2) the client sends invalid protocol
      (3) there are too many threads
      (4) N number of passes
   */
-
-  Comm comm = { .io.s = vsfd->fd, .io.state = IO_OPEN_SOCKET };
-  ArrayU8 * request = ArrayU8_new();
-  int n = 0;
 
   /* Strings that should be checked and freed on exit. */
   String * srq = String_value_none();
@@ -132,7 +187,7 @@ static void * http_thread(void *data)
       n = ArrayU8_search(request, 0, ArrayU8_temp_string("\n\n"));
     }
     if (n > 0) {
-      fprintf(stderr, "%s: found double newline at %d\n", __func__, n);
+      // fprintf(stderr, "%s: found double newline at %d\n", __func__, n);
       break;
     }
   }
@@ -146,78 +201,54 @@ static void * http_thread(void *data)
     if (String_list_len(operation) >= 2) {
       op = String_list_get(operation, 0);
       if (String_eq(op, S("GET"))) {
-	printf("Looks like a GET request\n");
+	// printf("Looks like a GET request\n");
 	path = String_list_get(operation, 1);      
       }
       else if (String_eq(op, S("POST"))) {
-	printf("Looks like a POST request (not handled)\n");
+	// printf("Looks like a POST request (not handled)\n");
       }
     }
   }
 
   if (!path) {
-    /* FIXME: 400 Bad Request */
+    /* Return 40x code. */
+    static const char * text = 
+      "<html>\n"
+      "<head>\n"
+      "<title>400 bad request</title>\n"
+      "</head>\n"
+      "<body>\n"
+      "<p>bad request</p>\n"
+      "</body>\n"
+      "</html>\n"
+      ;
+    String *result = String_sprintf("HTTP/1.1 400 Bad Request\r\n"
+				    // Date:
+				    // Server:
+				    // Last-modified:
+				    // Etag:
+				    // Accept-Ranges:
+				    "Content-length: %ld\r\n"
+				    "Content-type: %s\r\n"
+				    "\r\n"
+				    "%s",
+				    strlen(text),
+				    "text/html",
+				    text
+				    );
+    ArrayU8 *aresult = ArrayU8_temp_const(s(result), String_len(result));
+    Comm_write_from_array_complete(&comm, aresult);
+    String_free(&result);
     goto out;
   }
 
-  printf("path: %s\n", s(path));
+  // printf("path: %s\n", s(path));
 
   /* Try to find resource. */
   Resource * resource = NULL;
   if (vs) {
     resource = VirtualStorage_get(vs, path);
   }
-
-  /* Examples...
-
-    HTTP/1.1 200 OK
-    Date: Fri, 06 Jun 2014 20:34:32 GMT
-    Server: Apache
-    Last-Modified: Fri, 06 Jun 2014 20:34:15 GMT
-    ETag: "be1dba-1500-4fb30c8efbfc0"
-    Accept-Ranges: bytes
-    Content-Length: 5376
-    Content-Type: image/jpeg
-
-    [data...]
-
-
-    HTTP/1.1 400 Bad Request
-    Date: Fri, 06 Jun 2014 20:38:03 GMT
-    Server: Apache
-    Content-Length: 285
-    Connection: close
-    Content-Type: text/html; charset=iso-8859-1
-
-    <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
-    <html><head>
-    <title>400 Bad Request</title>
-    </head><body>
-    <h1>Bad Request</h1>
-    <p>Your browser sent a request that this server could not understand.<br />
-    </p>
-    <hr>
-    <address>Apache Server at localhost Port 80</address>
-    </body></html>
-
-
-    HTTP/1.1 404 Not Found
-    Date: Fri, 06 Jun 2014 20:36:44 GMT
-    Server: Apache
-    Content-Length: 267
-    Content-Type: text/html; charset=iso-8859-1
-
-    <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
-    <html><head>
-    <title>404 Not Found</title>
-    </head><body>
-    <h1>Not Found</h1>
-    <p>The requested URL /nosuch.jpg was not found on this server.</p>
-    <hr>
-    <address>Apache Server at localhost Port 80</address>
-    </body></html>
-
-  */
 
   if (resource) {
     /* Return 20x code, try sending. */
@@ -234,17 +265,47 @@ static void * http_thread(void *data)
 				   resource->size,
 				   resource->mime_type
 				   );
+
       ArrayU8 *ahdr = ArrayU8_temp_const(s(hdr), String_len(hdr));
       Comm_write_from_array_complete(&comm, ahdr);
       String_free(&hdr);
       if (comm.io.state == IO_CLOSED) { break; }
+
       ArrayU8 *ar = ArrayU8_temp_const(resource->data, resource->size);
       Comm_write_from_array_complete(&comm, ar);
       if (comm.io.state == IO_CLOSED) { break; }
+
     } while (0);
   }
   else {
     /* Return 40x code. */
+    static const char * text = 
+      "<html>\n"
+      "<head>\n"
+      "<title>404 path not found</title>\n"
+      "</head>\n"
+      "<body>\n"
+      "<p>path not found</p>\n"
+      "</body>\n"
+      "</html>\n"
+      ;
+    String *result = String_sprintf("HTTP/1.1 404 Not Found\r\n"
+				    // Date:
+				    // Server:
+				    // Last-modified:
+				    // Etag:
+				    // Accept-Ranges:
+				    "Content-length: %ld\r\n"
+				    "Content-type: %s\r\n"
+				    "\r\n"
+				    "%s",
+				    strlen(text),
+				    "text/html",
+				    text
+				    );
+    ArrayU8 *aresult = ArrayU8_temp_const(s(result), String_len(result));
+    Comm_write_from_array_complete(&comm, aresult);
+    String_free(&result);
   }
   
  out:

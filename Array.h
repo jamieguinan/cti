@@ -6,8 +6,11 @@
 
 typedef struct {
   uint8_t *data;
-  unsigned long len;
-  unsigned long int available;
+  /* These have to be long and not unsigned long for certain
+   * arithmetic operations to work properly, including subtractions
+   * in ArrayU8_search(). */
+  long len;
+  long int available;
 } ArrayU8;
 
 extern ArrayU8 * ArrayU8_new(void);

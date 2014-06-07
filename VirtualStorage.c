@@ -102,6 +102,18 @@ static void VirtualStorage_instance_init(Instance *pi)
   VirtualStorage_private *priv = (VirtualStorage_private *)pi;
   priv->idx = Index_new();
   Lock_init(&priv->idx_lock);
+
+  String * rootpath = String_new("CTI Web Server\n");
+  Resource * r = Mem_malloc(sizeof(*r));
+  r->container = rootpath;
+  r->data = s(rootpath);
+  r->size = String_len(rootpath);
+  r->mime_type = "text/plain";
+  int err;
+  Index_add_string(priv->idx, S("/"), r, &err);
+  if (err) {
+    printf("error adding rootpath\n");
+  }
 }
 
 
@@ -145,8 +157,10 @@ void * VirtualStorage_get(VirtualStorage * vs, String * path)
   /* Operate */
   int err;
   result = Index_find_string(priv->idx, path, &err);
+
+  // printf("result: %p\n", result);
+
   if (result) {
-    
   }
 
   /* Unlock */
