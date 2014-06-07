@@ -440,7 +440,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   /* Copy the data. */
   ArrayU8_append(pes, data);
 
-  if (v) printf("pid=%d pes->len=%d, data->len=%d\n", pid, pes->len, data->len);
+  if (v) printf("pid=%d pes->len=%ld, data->len=%ld\n", pid, pes->len, data->len);
   
   /* Now pack into TS packets... */
   unsigned int pes_offset = 0;
@@ -463,7 +463,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     unsigned int afAdjust = 1;	/* space for the afLen byte */
 
     pes_remaining = pes->len - pes_offset;
-    if (v) printf("pes->len=%d pes_remaining=%d\n", pes->len, pes_remaining);
+    if (v) printf("pes->len=%ld pes_remaining=%d\n", pes->len, pes_remaining);
 
     packet->data[0] = 0x47;			/* Sync byte */
 

@@ -149,6 +149,7 @@ typedef struct {
   uint8_t *data;
   int data_length;		/* Provisional. */
   int encoded_length;		/* Actual encoded jpeg size. */
+  int has_huffman_tables;	/* Set by Jpeg_fix(). */
 
   Image_common c;
 } Jpeg_buffer;
@@ -235,6 +236,7 @@ extern Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c);
 extern Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c); /* DJpeg.c */
 extern void Jpeg_buffer_discard(Jpeg_buffer *jpeg);
 extern Jpeg_buffer *Jpeg_buffer_ref(Jpeg_buffer *jpeg);
+extern void Jpeg_fix(Jpeg_buffer *jpeg);
 
 extern O511_buffer *O511_buffer_new(int width, int height, Image_common *c);
 extern O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c);

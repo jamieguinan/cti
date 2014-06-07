@@ -43,7 +43,7 @@ void ArrayU8_append(ArrayU8 *a, ArrayU8 *b)
 void ArrayU8_trim_left(ArrayU8 *a, int amount)
 {
   if (amount > a->len) {
-    fprintf(stderr, "%s: tried to trim %d bytes but array only has %d bytes!\n", __func__, amount, a->len);
+    fprintf(stderr, "%s: tried to trim %d bytes but array only has %ld bytes!\n", __func__, amount, a->len);
   }
   memmove(a->data, a->data+amount, a->len-amount);
   a->len -= amount;

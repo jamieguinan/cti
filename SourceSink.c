@@ -568,14 +568,6 @@ Comm * Comm_new(char * name)
 }
 
 
-void Comm_write_string_with_byte(Comm * comm, String *str, char byteval)
-{
-  /* FIXME: Could make this a single call if implemented io_writev. */
-  io_write(&comm->io, s(str), String_len(str));
-  io_write(&comm->io, &byteval, 1);
-}
-
-
 String * Comm_read_string_to_byte(Comm * comm, char byteval)
 {
   ArrayU8 * chunk = NULL;
@@ -638,20 +630,27 @@ void Comm_read_append_array(Comm * comm, ArrayU8 * array)
   }
 }
 
-#if 0
-void Comm_write_from_array(Comm * comm,  ArrayU8 * array, unsigned int * offset)
+void Comm_write_from_array(Comm * comm,  ArrayU8 * array, unsigned long * offset)
 {
+  io_write(&comm->io, array->data, array->len);
 }
 
-
-// write up to 32000 bytes, maybe less, starting from offset, offset is updated
 void Comm_write_from_array_complete(Comm * comm,  ArrayU8 * array)
 {
+  io_write(&comm->io, array->data, array->len);
 }
-#endif
+
+void Comm_write_string_with_byte(Comm * comm, String *str, char byteval)
+{
+  /* FIXME: Could make this a single call if implemented io_writev. */
+  io_write(&comm->io, s(str), String_len(str));
+  io_write(&comm->io, &byteval, 1);
+}
 
 
 void Comm_free(Comm **comm)
 {
+  fprintf(stderr, "%s: %s:%d\n", __func__, __FILE__, __LINE__);  exit(1);
 }
+
 

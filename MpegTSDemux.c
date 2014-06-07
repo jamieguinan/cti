@@ -246,7 +246,7 @@ static void handle_pes(MpegTSDemux_private *priv, Stream *s)
 
   if (priv->v.show_pes) {
     printf("    Prefix 000001 OK\n");
-    printf("    Final PES unit length %d\n", s->data->len);
+    printf("    Final PES unit length %ld\n", s->data->len);
     printf("    Stream id %d\n", edata[3]);
     printf("    PES Packet length %d%s\n", ppl, (ppl?"":" (unspecified)"));
   }
@@ -686,7 +686,7 @@ static void MpegTSDemux_tick(Instance *pi)
     newChunk = Source_read(priv->source);
 
     if (newChunk && cfg.verbosity) { 
-      fprintf(stderr, "got %d bytes\n", newChunk->len);
+      fprintf(stderr, "got %ld bytes\n", newChunk->len);
     }
 
     if (!newChunk) {

@@ -49,7 +49,7 @@ void Cryptor_context_init(Cryptor_context *ctx, String *filename)
     fprintf(stderr, "failed to load cipher file %s\n", filename->bytes);
   }
   else {
-    fprintf(stderr, "loaded cipher block from %s (%d bytes)\n", filename->bytes, ctx->cipher->len);
+    fprintf(stderr, "loaded cipher block from %s (%ld bytes)\n", filename->bytes, ctx->cipher->len);
   }
 }
 
