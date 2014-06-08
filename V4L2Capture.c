@@ -1143,7 +1143,9 @@ static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   FILE *f;
   char filename[64];
-  sprintf(filename, "snap%04d.jpg", pi->counter);
+
+  Jpeg_fix(j);
+  sprintf(filename, "snap%06d.jpg", pi->counter);
   fprintf(stderr, "%s\n", filename);
   f = fopen(filename, "wb");
   if (f) {

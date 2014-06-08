@@ -911,12 +911,6 @@ Jpeg_buffer *Jpeg_buffer_ref(Jpeg_buffer *jpeg)
 }
 
 
-void Jpeg_fix(Jpeg_buffer *jpeg)
-{
-  /* See mjpegfix.py for reference. */
-}
-
-
 O511_buffer *O511_buffer_new(int width, int height, Image_common *c)
 {
   O511_buffer *o511 = Mem_calloc(1, sizeof(O511_buffer));
