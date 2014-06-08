@@ -15,6 +15,9 @@ config vc format MJPG
 config vc size 640x480
 config vc fps 30
 
+connect sdl:Keycode_msg sdl:Keycode_msg
+connect sdl:Keycode_msg_2 vc:Keycode_msg
+
 config sdl mode OVERLAY
 
 config vc Exposure,.Auto.Priority 0

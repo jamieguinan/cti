@@ -14,6 +14,7 @@
 #include "Images.h"
 #include "Mem.h"
 #include "Cfg.h"
+#include "Array.h"
 
 static void Config_handler(Instance *pi, void *data);
 static void Jpeg_handler(Instance *pi, void *data);
@@ -543,3 +544,176 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
   return jpeg;
 }
 
+
+/* I also put Jpeg_fix() in this module, because it has access to the huffman
+   tables, an again I didn't want Images.c to pull in jpeglib.h, nor define
+   a second copy of the tables. */
+enum maker_enums { 
+  SOI = 0xd8, 
+  APP0 = 0xe0, 
+  DQT = 0xdb, 
+  SOF0 = 0xc0, 
+  SOS = 0xda, 
+  EOI = 0xd9, 
+  DRI = 0xdd, 
+  DHT = 0xc4 
+};
+
+static const char *markers[] = {
+  [SOI] = "SOI",
+  [APP0] = "APP0",
+  [DQT] = "DQT", 
+  [SOF0] = "SOF0",
+  [SOS] = "SOS",
+  [EOI] = "EOI",
+  [DRI] = "DRI",
+  [DHT] = "DHT",
+};
+
+void Jpeg_fix(Jpeg_buffer *jpeg)
+{
+  /* This is based on "mjpegfix.py" which I wrote several years
+     ealier.  The Jpeg data is replaced at the end, but the buffer
+     structure remains in place.  In other words, it does not produced
+     a new Jpeg_buffer. */
+
+  if (jpeg->has_huffman_tables) {
+    return;
+  }
+
+  int saw_sof = 0;
+  int i = 0;
+  int i0;
+  int j;
+  int len;
+  ArrayU8 * newdata = ArrayU8_new();
+
+  while (1) {
+    uint8_t c0, c, marker;
+    int blockL=0;
+    int blockR=0;
+    if (i == jpeg->encoded_length) {
+      break;
+    }
+    c0 = jpeg->data[i];
+    if (c0 != 0xff) {
+      fprintf(stderr, "%d (0x%X): expected 0xff, saw 0x%02x\n", i, i, c0);
+      break;
+    }
+    c = jpeg->data[i+1];
+    if (!markers[c]) {
+      fprintf(stderr, "Unknown marker: 0x%02x\n", c);
+      i+=1;
+      continue;
+    }
+
+    marker = c;
+
+    if (marker == SOI) {
+      i += 2;
+    }
+    else if (marker == SOS) {
+      // Fixed size part, followed by variable length data...
+      i0 = i+2;
+      len = (jpeg->data[i+2]) << 8;
+      len += jpeg->data[i+3];
+      i += (len + 2);
+      while (1) {
+	uint8_t x[1] = { 0xff};
+	j = ArrayU8_search(ArrayU8_temp_const(jpeg->data, jpeg->data_length),
+			   i, 
+			   ArrayU8_temp_const(x, 1));
+	if (j == -1) {
+	  fprintf(stderr, "reached end of data without finding closing tag!\n");
+	  goto out;
+	}
+	if (jpeg->data[j+1] == 0x00) {
+	  // Data contained literal 0xff.
+	  i = j+1;
+	  continue;
+	}
+	else if ( (jpeg->data[j+1] & 0xf0) == 0xd0 
+		  && (jpeg->data[j+1] & 0x0f) <= 7) {
+	  // Restart marker.  Keep searching inside SOS.
+	  i = j+2;
+	  continue;
+	}
+	else {
+	  // Advance, keep searching...
+	  i = j;
+	  break;
+	}
+      }
+      // block = jpegdata[i0:i];
+      blockL = i0;
+      blockR = i;
+    }
+    else if (marker == EOI) {
+      uint8_t xx[2] = {c0, c};
+      ArrayU8_append(newdata, ArrayU8_temp_const(xx, 2));
+      goto out;
+    }
+    else if (marker == DRI) {
+      // block = jpegdata[i+2:i+2+4];
+      blockL = i+2;
+      blockR = i+2+4;
+      i += 6;
+    }
+    else {
+      i0 = i+2;
+      len = jpeg->data[i+2] << 8;
+      len += jpeg->data[i+3];
+      // print 'len=0x%x' % (len);
+      i += (len + 2);
+      // block = jpegdata[i0:i];
+      blockL = i0;
+      blockR = i;
+    }
+    
+    if (saw_sof && marker != DHT) {
+      /* Add huffman tables.  Using the same tables that are set
+	 during decompression if they are found to be missing
+	 there. */
+      static const uint8_t hdr1[4] = {0xff, 0xc4, 0x00, 0x1f};
+      static const uint8_t hdr2[4] = {0xff, 0xc4, 0x00, 0xb5};
+
+      ArrayU8_append(newdata, ArrayU8_temp_const(hdr1, 4));
+      ArrayU8_append(newdata, ArrayU8_temp_const(dc_huff_tbl_ptrs[0]->bits, 17));
+      ArrayU8_append(newdata, ArrayU8_temp_const(dc_huff_tbl_ptrs[0]->huffval, 12));
+
+      ArrayU8_append(newdata, ArrayU8_temp_const(hdr2, 4));
+      ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[0]->bits, 17));
+      ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[0]->huffval, 162));
+
+      ArrayU8_append(newdata, ArrayU8_temp_const(hdr1, 4));
+      ArrayU8_append(newdata, ArrayU8_temp_const(dc_huff_tbl_ptrs[1]->bits, 17));
+      ArrayU8_append(newdata, ArrayU8_temp_const(dc_huff_tbl_ptrs[1]->huffval, 12));
+
+      ArrayU8_append(newdata, ArrayU8_temp_const(hdr2, 4));
+      ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[1]->bits, 17));
+      ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[1]->huffval, 162));
+    }
+    
+    if (marker == SOF0) {
+      saw_sof = 1;
+    }
+    else {
+      saw_sof = 0;
+    }
+
+    uint8_t xx[2] = {c0, c};
+    ArrayU8_append(newdata, ArrayU8_temp_const(xx, 2));
+
+    if (blockL < blockR) {
+      ArrayU8_append(newdata, ArrayU8_temp_const(jpeg->data+blockL, (blockR-blockL)));
+    }
+  }
+
+ out:
+  Mem_free(jpeg->data);
+  /* Don't free newdata, just assign its fields to jpeg. */
+  jpeg->data = newdata->data;
+  jpeg->data_length = newdata->available;
+  jpeg->encoded_length = newdata->len;
+  jpeg->has_huffman_tables = 1;
+}

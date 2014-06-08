@@ -67,6 +67,8 @@ static void Jpeg_handler(Instance *pi, void *data)
   VirtualStorage_private *priv = (VirtualStorage_private *)pi;
   Jpeg_buffer *jpeg = data;
 
+  Jpeg_fix(jpeg);
+
   if (!jpeg->c.label || String_is_none(jpeg->c.label)) {
     fprintf(stderr, "VirtualStorage requires c.label to be set for Jpegs\n");
     Jpeg_buffer_discard(jpeg);
