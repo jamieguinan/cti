@@ -279,7 +279,6 @@ cx88.cmd
 cx88audiocap.cmd
 cx88play.cmd
 cx88video.cmd
-cygfuncs.c
 datatest.cmd
 demux.c
 dpf.c
@@ -369,6 +368,7 @@ logitech-mirror.cmd
 logitech-null.cmd
 logitech-oggfwd-01.cmd
 logitech-single-serve.cmd
+logitech-webserve.cmd
 logitech-yuyv.cmd
 logitech.cmd
 ltsend.cmd

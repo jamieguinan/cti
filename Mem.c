@@ -1,5 +1,6 @@
 #include "Mem.h"
 #include "Cfg.h"
+#include "StackDebug.h"
 #include <string.h>		/* memcpy */
 #include <stdlib.h>
 #include <inttypes.h>		/* PRIu64 */
@@ -11,7 +12,6 @@
 #define NUM_ALLOCATIONS 1024
 
 static pthread_mutex_t mem_lock = PTHREAD_MUTEX_INITIALIZER;
-static uint64_t mem_seq;
 
 static void backtrace_and_hold(void)
 {
@@ -47,28 +47,24 @@ void backtrace_and_exit(void)
 void *_Mem_calloc(int count, int size, const char *func, int line)
 {
   pthread_mutex_lock(&mem_lock);
-  void *ptr = calloc(count, size+1+sizeof(mem_seq));
+  void *ptr = calloc(count, size);
   if (cfg.mem_tracking) {
-    ((uint8_t*)ptr)[count*size] = 0xFA;
-    mem_seq += 1;
-    memcpy(ptr+size+1, &mem_seq, sizeof(mem_seq));
-    fprintf(stderr, "calloc,%s:%d,%p, %" PRIu64 "\n", func, line, ptr, mem_seq);
+    StackDebug2(ptr, "+");
   }
   pthread_mutex_unlock(&mem_lock);
+  // fprintf(stderr, "calloc: %p\n", ptr);
   return ptr;
 }
 
 void *_Mem_malloc(int size, const char *func, int line)
 {
   pthread_mutex_lock(&mem_lock);
-  void *ptr = malloc(size+1+sizeof(mem_seq));
+  void *ptr = malloc(size);
   if (cfg.mem_tracking) {
-    ((uint8_t*)ptr)[size] = 0xFA;
-    mem_seq += 1;
-    memcpy(ptr+size+1, &mem_seq, sizeof(mem_seq));
-    fprintf(stderr, "malloc,%s:%d,%p, %" PRIu64 "\n", func, line, ptr, mem_seq);
+    StackDebug2(ptr, "+");
   }
   pthread_mutex_unlock(&mem_lock);
+  // fprintf(stderr, "malloc: %p\n", ptr);
   return ptr;
 }
 
@@ -76,14 +72,11 @@ void *_Mem_realloc(void *ptr, int newsize, const char *func, int line)
 {
   pthread_mutex_lock(&mem_lock);
   if (cfg.mem_tracking) {
-    fprintf(stderr, "rfree,%s:%d,%p\n", func, line, ptr);
+    StackDebug2(ptr, "-");
   }
-  void *newptr = realloc(ptr, newsize+1+sizeof(mem_seq));
+  void *newptr = realloc(ptr, newsize);
   if (cfg.mem_tracking) {
-    ((uint8_t*)newptr)[newsize] = 0xFA;
-    mem_seq += 1;
-    memcpy(newptr+newsize+1, &mem_seq, sizeof(mem_seq));
-    fprintf(stderr, "realloc,%s:%d,%p, %" PRIu64 "\n", func, line, newptr, mem_seq);
+    StackDebug2(newptr, "+");
   }
   pthread_mutex_unlock(&mem_lock);
   return newptr;
@@ -94,8 +87,9 @@ void _Mem_free(void *ptr, const char *func, int line)
 {
   pthread_mutex_lock(&mem_lock);
   if (cfg.mem_tracking) {
-    fprintf(stderr, "free,%s:%d,%p\n", func, line, ptr);
+    StackDebug2(ptr, "-");
   }
+  // fprintf(stderr, "free: %p\n", ptr);
   free(ptr);
   pthread_mutex_unlock(&mem_lock);
 }
@@ -117,6 +111,8 @@ void _Mem_memcpyPtr(Ptr dest, int dest_offset, uint8_t *src, int length, const c
 }
 
 
+#if 0
+/* This is unused. */
 int _Mem_unref(MemObject *mo, const char *func)
 {
   int rc;
@@ -126,3 +122,4 @@ int _Mem_unref(MemObject *mo, const char *func)
   pthread_mutex_unlock(&mem_lock);
   return rc;
 }
+#endif

@@ -10,6 +10,7 @@
 #include <stdio.h>		/* FILE, sprintf, printf */
 #include <string.h>		/* strstr */
 
+__attribute__((no_instrument_function))
 void __cyg_profile_func_enter (void *this_fn,
 			       void *call_site)
 {
@@ -25,6 +26,7 @@ void __cyg_profile_func_enter (void *this_fn,
 }
 
 
+__attribute__((no_instrument_function))
 void __cyg_profile_func_exit  (void *this_fn,
 			       void *call_site)
 {
@@ -43,7 +45,7 @@ static void show_symbol(void *addr)
 {
   FILE *f = fopen("/tmp/cti.map", "r");
   if (!f) {
-    printf(" %p\n", addr);
+    fprintf(stderr, " %p\n", addr);
     return;
 
   }
@@ -56,7 +58,7 @@ static void show_symbol(void *addr)
       break;
     }
     if (strstr(line, addr_str)) {
-      printf("%s", line);
+      fprintf(stderr, "%s", line);
       break;
     }
   }
@@ -68,8 +70,29 @@ void StackDebug(void)
   int i;
   Instance *pi = pthread_getspecific(instance_key);
   if (!pi) { return; }
-  printf("%s:\n", pi->label);
-  for (i=0; i < pi->stack_index; i++) {
-    show_symbol(pi->stack[i]);
+  fprintf(stderr, "%s:\n", pi->label);
+  if (pi->stack_index) {
+    for (i=0; i < pi->stack_index; i++) {
+      show_symbol(pi->stack[i]);
+    }
   }
+  else {
+    fprintf(stderr, "%s: this build probably did not have instrumented functions\n", __func__);
+  }
+}
+
+void StackDebug2(void *ptr, const char * text)
+{
+  int i;
+  Instance *pi = pthread_getspecific(instance_key);
+  if (!pi) { 
+    fprintf(stderr, "no instance key for thread\n");
+    return; 
+  }
+  fprintf(stderr, "%s::", pi->label);
+  for (i=0; i < pi->stack_index; i++) {
+    fprintf(stderr, "/%p", pi->stack[i]);
+  }
+  fprintf(stderr, "::%p::%s", ptr, text);
+  fprintf(stderr, "\n");
 }

@@ -29,13 +29,18 @@ void instance_key_init(void)
 }
 
 
+void CTI_register_instance(Instance *pi)
+{
+  prctl(PR_SET_NAME, pi->label);
+  pthread_setspecific(instance_key, (void*)pi);	/* For later retrieval */
+}
+
+
 static void * Instance_thread_main(void *vp)
 {
   Instance *pi = vp;
 
-  prctl(PR_SET_NAME, pi->label);
-
-  pthread_setspecific(instance_key, vp);	/* For later retrieval */
+  CTI_register_instance(pi);
 
   while (1) {
     pi->tick(pi);

@@ -354,6 +354,8 @@ extern void getdoubletime(double *tdest);
 extern void CTI_cmdline_add(const char *key, const char *value);
 extern const char *CTI_cmdline_get(const char *key);
 
+extern void CTI_register_instance(Instance *pi);
+
 #ifdef CTI_SHARED
 #define shared_export(sym) void cti_init(void) { sym(); }
 #else

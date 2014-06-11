@@ -53,6 +53,7 @@ int app_code(int argc, char *argv[])
     // printf("*** waiting for callback to be filled in...\n");
     Callback_wait(ui_callback);
     printf("callback_func @ %p\n", ui_callback->func);
+    
     if (ui_callback->func) {
       ui_callback->func(ui_callback->data);
     }

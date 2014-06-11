@@ -66,7 +66,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 {
   VirtualStorage_private *priv = (VirtualStorage_private *)pi;
   Jpeg_buffer *jpeg = data;
-
+  
   Jpeg_fix(jpeg);
 
   if (!jpeg->c.label || String_is_none(jpeg->c.label)) {
@@ -99,6 +99,20 @@ static void Jpeg_handler(Instance *pi, void *data)
 }
 
 
+static void VirtualStorage_tick(Instance *pi)
+{
+  Handler_message *hm;
+
+  hm = GetData(pi, 1);
+  if (hm) {
+    hm->handler(pi, hm->data);
+    ReleaseMessage(&hm,pi);
+  }
+
+  pi->counter++;
+}
+
+
 static void VirtualStorage_instance_init(Instance *pi)
 {
   VirtualStorage_private *priv = (VirtualStorage_private *)pi;
@@ -126,7 +140,7 @@ static Template VirtualStorage_template = {
   .num_inputs = table_size(VirtualStorage_inputs),
   .outputs = VirtualStorage_outputs,
   .num_outputs = table_size(VirtualStorage_outputs),
-  .tick = NULL,
+  .tick = VirtualStorage_tick,
   .instance_init = VirtualStorage_instance_init,
 };
 

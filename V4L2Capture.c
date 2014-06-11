@@ -68,7 +68,7 @@ typedef struct  {
 
   /* Many of these variables might end up being strings, and interpreted in set_* functions. */
   String drivermatch;            /* Optional, I use this for matching gspca sub-devices. */
-  String devpath;
+  String * devpath;
   int fd;
   int enable;			/* Set this to start capturing. */
 
@@ -135,7 +135,7 @@ static int set_device(Instance *pi, const char *value)
   struct v4l2_tuner tuner = {};
   int i;
 
-  String_clear_local(&priv->devpath);
+  String_clear(&priv->devpath);
 
   if (priv->fd != -1) {
     close(priv->fd);
@@ -148,23 +148,23 @@ static int set_device(Instance *pi, const char *value)
   for (i=0; i < available_v4l_devices.descriptions.count; i++) {
     if (strstr(available_v4l_devices.descriptions.items[i]->bytes, value)) {
       puts("found it!");
-      String_set_local(&priv->devpath, available_v4l_devices.strings.items[i]->bytes);
+      String_set(&priv->devpath, available_v4l_devices.strings.items[i]->bytes);
       break;
     }
   }
 
   Range_free(&available_v4l_devices);
   
-  if (!sl(priv->devpath)) {
+  if (String_is_none(priv->devpath)) {
     /* Not found, try value. */
-    String_set_local(&priv->devpath, value);
+    String_set(&priv->devpath, value);
   }
 
-  priv->fd = open(sl(priv->devpath), O_RDWR);
+  priv->fd = open(s(priv->devpath), O_RDWR);
 
   if (priv->fd == -1) {
     /* FIXME: Set error status, do not call perror. */
-    perror(sl(priv->devpath));
+    perror(s(priv->devpath));
     goto out;
   }
 
@@ -1423,6 +1423,7 @@ static void V4L2Capture_tick(Instance *pi)
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
       getdoubletime(&j->c.timestamp);
+      j->c.label = String_new("/snapshot.jpg");
       FPS_update_timestamp(&priv->calculated_fps, j->c.timestamp);
       j->c.nominal_period = priv->nominal_period;
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
