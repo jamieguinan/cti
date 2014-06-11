@@ -1000,6 +1000,9 @@ static int my_event_loop(void *data)
   int rc;
   Instance *pi = data;
 
+  CTI_register_instance(pi);	/* Required for stack debugging, since not using
+				   Instance_thread_main(). */
+
   SDLstuff_private *priv = (SDLstuff_private *)pi;
 
   priv->width = 640;

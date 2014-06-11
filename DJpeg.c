@@ -201,7 +201,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   cinfo.client_data = &jb;
   error = setjmp(jb);
   if (error) {
-    printf("%s:%d\n", __func__, __LINE__);
+    fprintf(stderr, "%s:%d\n", __func__, __LINE__);
     goto jdd;
   }
   
@@ -710,10 +710,12 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
   }
 
  out:
+  /* Transfer newdata->data to jpeg->data.  This requires a little "manual" effort. */
   Mem_free(jpeg->data);
-  /* Don't free newdata, just assign its fields to jpeg. */
   jpeg->data = newdata->data;
   jpeg->data_length = newdata->available;
   jpeg->encoded_length = newdata->len;
   jpeg->has_huffman_tables = 1;
+  newdata->data = NULL;
+  ArrayU8_cleanup(&newdata);
 }

@@ -190,6 +190,29 @@ String * String_sprintf(const char *fmt, ...)
 }
 
 
+/* 2014-Jun-10 --> How did I not have these before?? */
+void String_clear(String **s)
+{
+  if (*s) {
+    if (!String_is_none(*s)) {
+      String_free(s);
+    }
+  }
+  *s = String_value_none();
+}
+
+
+void String_set(String **s, const char *init)
+{
+  String_clear(s);
+  *s = String_new(init);
+}
+
+//void String_set_sprintf(String **s, const char *fmt, ...) {}
+
+/* <-- 2014-Jun-10 */
+
+
 int String_find(String *s, int offset, const char *s1, int *end)
 {
   int i, j;

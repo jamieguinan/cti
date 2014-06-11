@@ -133,8 +133,8 @@ void Index_analyze(Index *idx)
     Index_analyze_2(p, 0, &maxDepth, &leftNodes, &rightNodes);
   }
 
-  printf("max depth=%d, %d left nodes, %d right nodes\n", 
-	 maxDepth, leftNodes, rightNodes);
+  printf("max depth=%d, %d left nodes, %d right nodes, %d total nodes\n", 
+	 maxDepth, leftNodes, rightNodes, leftNodes + rightNodes + 1);
 }
 
 

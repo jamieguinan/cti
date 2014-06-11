@@ -1,4 +1,4 @@
-default: default1
+>default: default1
 
 include ../platforms.make
 
@@ -32,7 +32,6 @@ LDFLAGS += -ldl -lrt
 endif
 
 #CPPFLAGS += -finstrument-functions
-CPPFLAGS += -DUSE_STACKDEBUG
 
 # "-static" is a problem for alsa, and other things...
 
