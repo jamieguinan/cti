@@ -31,7 +31,7 @@ ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 endif
 
-#CPPFLAGS += -finstrument-functions
+CPPFLAGS += -finstrument-functions
 
 # "-static" is a problem for alsa, and other things...
 

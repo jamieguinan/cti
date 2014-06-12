@@ -67,20 +67,20 @@ typedef struct  {
   Instance i;
 
   /* Many of these variables might end up being strings, and interpreted in set_* functions. */
-  String drivermatch;            /* Optional, I use this for matching gspca sub-devices. */
+  String * drivermatch;            /* Optional, I use this for matching gspca sub-devices. */
   String * devpath;
   int fd;
   int enable;			/* Set this to start capturing. */
 
-  String format;
+  String * format;
 
   /* Mostly relevant for TV/RGB */
-  String input;
+  String * input;
   int input_index;
-  String std;
-  String brightness;
-  String saturation;
-  String contrast;
+  String * std;
+  String * brightness;
+  String * saturation;
+  String * contrast;
 
   struct v4l2_frequency freq;
   /* int channel; */  /* There might be more to this, like tuner, etc... */
@@ -89,8 +89,8 @@ typedef struct  {
   int height;
 
   /* Mostly relevant for JPEG */
-  String autoexpose;
-  String exposure;
+  String * autoexpose;
+  String * exposure;
   // int auto_expose;
   // int exposure_value;
   int focus;
@@ -178,8 +178,8 @@ static int set_device(Instance *pi, const char *value)
     goto out;
   }
 
-  if (sl(priv->drivermatch) && !streq((const char*)v4l2_caps.driver, sl(priv->drivermatch))) {
-    fprintf(stderr, "driver mismatch %s != %s\n", v4l2_caps.driver, sl(priv->drivermatch));
+  if (priv->drivermatch && !streq((const char*)v4l2_caps.driver, s(priv->drivermatch))) {
+    fprintf(stderr, "driver mismatch %s != %s\n", v4l2_caps.driver, s(priv->drivermatch));
     close(priv->fd);
     priv->fd = -1;
     goto out;
@@ -286,7 +286,7 @@ static int set_input(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  String_set_local(&priv->input, value);
+  String_set(&priv->input, value);
 
  out:
   return rc;
@@ -346,7 +346,7 @@ static int set_format(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  String_set_local(&priv->format, value);
+  String_set(&priv->format, value);
 
  out:
   return rc;
@@ -468,7 +468,7 @@ static int set_std(Instance *pi, const char *value)
   }
 
   /* Everything worked, save value. */
-  String_set_local(&priv->std, value);
+  String_set(&priv->std, value);
 
  out:
   return rc;
@@ -562,8 +562,8 @@ static int set_brightness(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_BRIGHTNESS, atoi(value));
   if (rc == 0) {
-    String_set_local(&priv->brightness, value);
-    printf("brightness set to %s\n", sl(priv->brightness));
+    String_set(&priv->brightness, value);
+    printf("brightness set to %s\n", s(priv->brightness));
   }
   return rc;
 }
@@ -574,8 +574,8 @@ static int set_contrast(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_CONTRAST, atoi(value));
   if (rc == 0) {
-    String_set_local(&priv->contrast, value);
-    printf("contrast set to %s\n", sl(priv->contrast));
+    String_set(&priv->contrast, value);
+    printf("contrast set to %s\n", s(priv->contrast));
   }
   return rc;
 }
@@ -591,8 +591,8 @@ static int set_autoexpose(Instance *pi, const char *value)
 
   rc = generic_v4l2_set(priv, V4L2_CID_EXPOSURE_AUTO, atoi(value));
   if (rc == 0) {
-    String_set_local(&priv->autoexpose, value);
-    printf("autoexpose set to %s\n", sl(priv->autoexpose));
+    String_set(&priv->autoexpose, value);
+    printf("autoexpose set to %s\n", s(priv->autoexpose));
   }
   return rc;
 }
@@ -607,8 +607,8 @@ static int set_exposure(Instance *pi, const char *value)
 #endif
   rc = generic_v4l2_set(priv, V4L2_CID_EXPOSURE_ABSOLUTE, atoi(value));
   if (rc == 0) {
-    String_set_local(&priv->exposure, value);
-    printf("exposure set to %s\n", sl(priv->exposure));
+    String_set(&priv->exposure, value);
+    printf("exposure set to %s\n", s(priv->exposure));
   }
   return rc;
 }
@@ -619,8 +619,8 @@ static int set_saturation(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   rc = generic_v4l2_set(priv, V4L2_CID_SATURATION, atoi(value));
   if (rc == 0) {
-    String_set_local(&priv->saturation, value);
-    printf("saturation set to %s\n", sl(priv->saturation));
+    String_set(&priv->saturation, value);
+    printf("saturation set to %s\n", s(priv->saturation));
   }
   return rc;
 }
@@ -927,7 +927,7 @@ static int set_snapshot(Instance *pi, const char *value)
 static int set_drivermatch(Instance *pi, const char *value)
 {
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
-  String_set_local(&priv->drivermatch, value);
+  String_set(&priv->drivermatch, value);
   return 0;
 }
 
@@ -1286,7 +1286,7 @@ static void V4L2Capture_tick(Instance *pi)
     priv->sequence = priv->vbuffer.sequence;
   }
 
-  dpf("capture on buffer %d Ok [ priv->format=%s, counter=%d ]\n", priv->wait_on, sl(priv->format),
+  dpf("capture on buffer %d Ok [ priv->format=%s, counter=%d ]\n", priv->wait_on, s(priv->format),
       pi->counter);
 
   pi->counter += 1;
@@ -1303,10 +1303,10 @@ static void V4L2Capture_tick(Instance *pi)
   }
 
   /* Post to output. */
-  if (!sl(priv->format)) {
+  if (!s(priv->format)) {
     /* Format not set! */
   }
-  else if (streq(sl(priv->format), "BGR3")) {
+  else if (streq(s(priv->format), "BGR3")) {
     if (pi->outputs[OUTPUT_BGR3].destination) {
       BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, 0L);
       memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
@@ -1326,7 +1326,7 @@ static void V4L2Capture_tick(Instance *pi)
       PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
     }
   }
-  else if (streq(sl(priv->format), "422P")) {
+  else if (streq(s(priv->format), "422P")) {
     if (pi->outputs[OUTPUT_YUV422P].destination) {
       YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
       Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
@@ -1353,7 +1353,7 @@ static void V4L2Capture_tick(Instance *pi)
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
-  else if (streq(sl(priv->format), "YU12")) {
+  else if (streq(s(priv->format), "YU12")) {
     if (pi->outputs[OUTPUT_YUV420P].destination) {
       YUV420P_buffer *y420p = YUV420P_buffer_new(priv->width, priv->height, 0L);
       dpf("%s allocated y420p @ %p", __func__, y420p);
@@ -1380,7 +1380,7 @@ static void V4L2Capture_tick(Instance *pi)
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
-  else if (streq(sl(priv->format), "YUYV")) {
+  else if (streq(s(priv->format), "YUYV")) {
     if (priv->vbuffer.bytesused != priv->width*priv->height*2) {
       fprintf(stderr, "%s: YUYV buffer is not the expected size!\n", __func__);
     }
@@ -1418,8 +1418,8 @@ static void V4L2Capture_tick(Instance *pi)
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
-  else if (streq(sl(priv->format), "JPEG") ||
-	   streq(sl(priv->format), "MJPG") ) {
+  else if (streq(s(priv->format), "JPEG") ||
+	   streq(s(priv->format), "MJPG") ) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
       getdoubletime(&j->c.timestamp);
@@ -1440,7 +1440,7 @@ static void V4L2Capture_tick(Instance *pi)
       }
     }
   }
-  else if (streq(sl(priv->format), "O511")) {
+  else if (streq(s(priv->format), "O511")) {
     if (pi->outputs[OUTPUT_O511].destination) {
       O511_buffer *o = O511_buffer_new(priv->width, priv->height, 0L);
       getdoubletime(&o->c.timestamp);
@@ -1460,7 +1460,7 @@ static void V4L2Capture_tick(Instance *pi)
     }
   }
   else {
-    fprintf(stderr, "%s: format %s not handled!\n", __func__, sl(priv->format));
+    fprintf(stderr, "%s: format %s not handled!\n", __func__, s(priv->format));
   }
 
   /* Update queue indexes. */
