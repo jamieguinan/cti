@@ -553,7 +553,6 @@ static void MjpegDemux_tick(Instance *pi)
   }
 
   /* Check for known content-types. */
-
   if (streq(priv->current.content_type->bytes, "audio/x-wav")) {
     /* Extract Wav buffer, */
     Wav_buffer *w = Wav_buffer_from(priv->chunk->data + priv->current.eoh + 4, priv->current.content_length);
@@ -603,6 +602,12 @@ static void MjpegDemux_tick(Instance *pi)
   else if (streq(priv->current.content_type->bytes, "image/jpeg")) {
     Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
 				      priv->current.content_length, 0L);
+
+    if (!j) {
+      /* This can happen if corrupt data is sent. */
+      goto out;
+    }
+
     j->c.timestamp = priv->current.timestamp;
     j->c.nominal_period = priv->current.period;
 
@@ -704,7 +709,7 @@ static void MjpegDemux_tick(Instance *pi)
   }
 
  out:
-  /* Trim consumed data from chunk, but also copy it to rawdata output if set. */
+  /* Trim consumed data from chunk. But also copy it to rawdata output if set. */
   if (pi->outputs[OUTPUT_RAWDATA].destination) {
     int size = (priv->current.eoh + 4 + priv->current.content_length);
     RawData_buffer *raw = RawData_buffer_new(size);
@@ -712,6 +717,7 @@ static void MjpegDemux_tick(Instance *pi)
     PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
   }
 
+  /* Also, side-channel output. */
   if (priv->output_sink) {
     Sink_write(priv->output_sink, priv->chunk->data, priv->current.eoh + 4 + priv->current.content_length);
   }
