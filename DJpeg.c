@@ -508,6 +508,12 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
   jmp_buf jb;
   int error = 0;
 
+  if (Image_guess_type(data, 5) != IMAGE_TYPE_JPEG) {
+    fprintf(stderr, "%s: data does not look like a jpeg file [%02x %02x %02x %02x]\n", 
+	    __func__, data[0], data[1], data[2], data[3]);
+    return NULL;    
+  }
+
   cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
 					this may cause the program to call 
 					exit()! */
@@ -518,6 +524,7 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
   cinfo.client_data = &jb;
   error = setjmp(jb);
   if (error) {
+    fprintf(stderr, "%s:%d\n", __func__, __LINE__);
     if (0) {
       save_error_jpeg(data, data_length);
     }
@@ -580,6 +587,9 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
   if (jpeg->has_huffman_tables) {
     return;
   }
+
+  /* FIXME: Consider implementing and calling LockedRef_count() and
+     returning if there are more then one reference holders. */
 
   int saw_sof = 0;
   int i = 0;

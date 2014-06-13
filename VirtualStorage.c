@@ -67,8 +67,6 @@ static void Jpeg_handler(Instance *pi, void *data)
   VirtualStorage_private *priv = (VirtualStorage_private *)pi;
   Jpeg_buffer *jpeg = data;
   
-  Jpeg_fix(jpeg);
-
   if (!jpeg->c.label || String_is_none(jpeg->c.label)) {
     fprintf(stderr, "VirtualStorage requires c.label to be set for Jpegs\n");
     Jpeg_buffer_discard(jpeg);
@@ -77,10 +75,11 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   /* Prepare */
   Resource * r = Mem_malloc(sizeof(*r));
-  Jpeg_fix(jpeg);
   r->container = jpeg;
   r->data = jpeg->data;
   r->size = jpeg->data_length;
+  /* Setting the mime_type allows Jpeg_buffer_discard() to be called later, so memory
+     leaks are avoided. */
   r->mime_type = "image/jpeg";
 
   /* Lock */

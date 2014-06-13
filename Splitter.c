@@ -1,5 +1,5 @@
 /* 
- * Duplicates or references inputs, distributes to outputs.
+ * Clones or references inputs, distributes to outputs.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -155,7 +155,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     if (pi->outputs[j].destination) {
       out_count -= 1;
       if (out_count) {
-	/* Clone and post buffer. */
+	/* Ref and post buffer. */
 	Jpeg_buffer *Jpeg_tmp = Jpeg_buffer_ref(jpeg_in);
 	PostData(Jpeg_tmp, pi->outputs[j].destination); 
 	Jpeg_tmp = NULL;
@@ -194,7 +194,7 @@ static void Wav_handler(Instance *pi, void *data)
     if (pi->outputs[j].destination) {
       out_count -= 1;
       if (out_count) {
-	/* Clone and post buffer. */
+	/* Ref and post buffer. */
 	Wav_buffer *Wav_tmp = Wav_ref(wav_in);
 	PostData(Wav_tmp, pi->outputs[j].destination); 
 	Wav_tmp = NULL;

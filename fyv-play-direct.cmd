@@ -47,6 +47,7 @@ config sdl mode OVERLAY
 #config sdl width 1280
 #config sdl height 720
 
+# config mjd output fyv-direct-capture.mjx
 
 config mjd input 192.168.2.75:6666
 config mjd retry 1
