@@ -926,6 +926,15 @@ static int set_snapshot(Instance *pi, const char *value)
 }
 
 
+static int set_fix(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  priv->fix = atoi(value);
+  return 0;
+  
+}
+
+
 static int set_drivermatch(Instance *pi, const char *value)
 {
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
@@ -951,6 +960,9 @@ static Config config_table[] = {
   { "mute",       set_mute,   0L, 0L},
   { "fps",        set_fps,   0L, 0L},
   { "frequency",  set_frequency,  0L, 0L},
+  { "fix",        set_fix, 0L, 0L}, 
+  /* NOTE: cti_set_int does not work here.  This module uses custom
+     config handler that sets priv->handled. */
 };
 
 
@@ -1146,7 +1158,6 @@ static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
   FILE *f;
   char filename[64];
 
-  Jpeg_fix(j);
   sprintf(filename, "snap%06d.jpg", pi->counter);
   fprintf(stderr, "%s\n", filename);
   f = fopen(filename, "wb");

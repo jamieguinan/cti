@@ -1,4 +1,4 @@
-mt
+# mt
 new V4L2Capture vc
 new DJpeg dj
 new SDLstuff sdl
@@ -21,6 +21,7 @@ config vc device UVC
 config vc format MJPG
 config vc size 640x480
 config vc fps 30
+#config vc fix 1
 
 connect sdl:Keycode_msg sdl:Keycode_msg
 connect sdl:Keycode_msg_2 vc:Keycode_msg
