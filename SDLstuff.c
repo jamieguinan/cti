@@ -290,7 +290,7 @@ static int set_fullscreen(Instance *pi, const char *value)
 static int set_smoother(Instance *pi, const char *value)
 {
   SDLstuff_private *priv = (SDLstuff_private *)pi;
-  Instance * i = InstanceGroup_find(gig, S(value));
+  Instance * i = InstanceGroup_find(gig, S((char*)value));
   if (i && streq(i->label, "VSmoother")) {
     priv->smoother = (VSmoother *)i;
   }
@@ -1015,7 +1015,7 @@ static void GRAY_handler(Instance *pi, void *data)
 
 Instance *my_instance;
 
-int sdl_event_loop(void)
+void sdl_event_loop(void)
 {
   /* This needs to run in the context of the main application thread, for
      certain platforms (OSX in particular). */
@@ -1079,8 +1079,6 @@ int sdl_event_loop(void)
     }
 
   }
-
-  return 0;
 }
 
 
@@ -1113,7 +1111,8 @@ static void SDLstuff_tick(Instance *pi)
 
 
 #ifdef __APPLE__
-/* Special version in SDLMain.m that does OSX required setup. */
+/* Special version in SDLMain.m that does OSX required setup, then
+   calls back to sdl_event_loop(). */
 extern int platform_sdl_main(int argc, char *argv[]);
 #else
 int platform_sdl_main(int argc, char *argv[])
