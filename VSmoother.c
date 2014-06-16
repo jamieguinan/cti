@@ -20,14 +20,14 @@ static Output VSmoother_outputs[] = {
 };
 
 /* Full type declaration. */
-typedef struct _VSmoother {
+struct _VSmoother {
   Instance i;
   double period;
   //unsigned int factor;
   // double tlast;
   double last_ftime;
   double eta;
-} VSmoother;
+};
 
 
 static Config config_table[] = {
