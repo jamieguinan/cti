@@ -1,6 +1,10 @@
 #include "Mem.h"
 #include "Cfg.h"
+#ifdef USE_STACK_DEBUG
 #include "StackDebug.h"
+#else
+#define StackDebug2(x,y)
+#endif
 #include <string.h>		/* memcpy */
 #include <stdlib.h>
 #include <inttypes.h>		/* PRIu64 */

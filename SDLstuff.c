@@ -15,6 +15,7 @@
 #include "Cfg.h"
 #include "Keycodes.h"
 #include "Pointer.h"
+#include "VSmoother.h"
 
 
 static int SDLtoCTI_Keymap[SDLK_LAST] = {
@@ -130,6 +131,9 @@ typedef struct {
     int wireframe;
     int fov;
   } GL;
+
+  /* Smoother */
+  VSmoother *smoother;
 } SDLstuff_private;
 
 static void _reset_video(SDLstuff_private *priv, const char *func);
@@ -283,12 +287,24 @@ static int set_fullscreen(Instance *pi, const char *value)
 }
 
 
+static int set_smoother(Instance *pi, const char *value)
+{
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
+  Instance * i = InstanceGroup_find(gig, S(value));
+  if (i && streq(i->label, "VSmoother")) {
+    priv->smoother = (VSmoother *)i;
+  }
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "label", set_label, 0L, 0L},
   { "mode", set_mode, 0L, 0L},
   { "width", set_width, 0L, 0L},
   { "height", set_height, 0L, 0L},
   { "fullscreen", set_fullscreen, 0L, 0L},
+  { "smoother", set_smoother, 0L, 0L},
 };
 
 
@@ -666,8 +682,14 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
 
   getdoubletime(&tnow);
   // nanosleep(tv_next - tv_now);
-  
+
   update_display_times();
+
+  if (priv->smoother) {
+    VSmoother_smooth(priv->smoother, 
+		     c->timestamp,
+		     ((Instance *)priv)->pending_messages);
+  }
 }
 
 static void post_render_frame(Instance *pi)

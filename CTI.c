@@ -6,7 +6,9 @@
 #include <time.h>		/* nanosleep */
 #include <sys/time.h>		/* gettimeofday */
 #include <stdarg.h>		/* vprintf */
+#ifdef __linux__
 #include <sys/prctl.h>	/* prctl */
+#endif
 
 #ifndef streq
 #define streq(a, b)  (strcmp(a, b) == 0)
@@ -31,7 +33,9 @@ void instance_key_init(void)
 
 void CTI_register_instance(Instance *pi)
 {
+#ifdef __linux__
   prctl(PR_SET_NAME, pi->label);
+#endif
   pthread_setspecific(instance_key, (void*)pi);	/* For later retrieval */
 }
 
@@ -712,7 +716,7 @@ Callback *Callback_new(void)
 
 void Callback_wait(Callback *cb)
 {
-  /* This just waits someone else to lock/unlock the lock. */
+  /* This just waits for someone else to lock/unlock the lock. */
   Lock_acquire(&cb->lock);
   Lock_release__event_wait__lock_acquire(&cb->lock, &cb->event);
   Lock_release(&cb->lock);
@@ -722,6 +726,7 @@ void Callback_wait(Callback *cb)
 void Callback_fill(Callback *cb, int (*func)(void *), void *data)
 {
   Lock_acquire(&cb->lock);  
+  printf("%s(%p)\n", __func__, func);
   cb->func = func;
   cb->data = data;
   Event_signal(&cb->event);  // Is this even necessary?  It probably doesn't hurt.

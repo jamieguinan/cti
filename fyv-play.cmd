@@ -2,6 +2,7 @@ new MjpegDemux mjd
 new DJpeg dj
 new SDLstuff sdl
 new ALSAPlayback ap
+new VSmoother vs
 
 new CairoContext cc
 

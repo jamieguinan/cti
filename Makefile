@@ -1,4 +1,4 @@
->default: default1
+default: default1
 
 include ../platforms.make
 
@@ -31,7 +31,8 @@ ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 endif
 
-CPPFLAGS += -finstrument-functions
+# CPPFLAGS += -finstrument-functions
+CPPFLAGS += -DUSE_STACK_DEBUG
 
 # "-static" is a problem for alsa, and other things...
 
