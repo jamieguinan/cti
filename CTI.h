@@ -312,9 +312,15 @@ typedef struct {
   Event event;
 } Callback;
 
+
 extern Callback *Callback_new(void);
 extern void Callback_wait(Callback *cb);
 extern void Callback_fill(Callback *cb, int (*func)(void *), void *data);
+
+
+/*  Alternative to Callback mechanism. */
+extern int (*ui_main)(int argc, char *argv[]) ;
+
 
 /* Raw data buffer */
 typedef struct {

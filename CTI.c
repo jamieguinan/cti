@@ -23,6 +23,8 @@ pthread_key_t instance_key;
 int instance_key_initialized;
 int g_synchronous = 0;		/* Can be toggled in ScriptV00.c */
 
+int (*ui_main)(int argc, char *argv[]) = NULL;
+
 void instance_key_init(void)
 {
   pthread_key_create(&instance_key, NULL);
@@ -716,7 +718,7 @@ Callback *Callback_new(void)
 
 void Callback_wait(Callback *cb)
 {
-  /* This just waits for someone else to lock/unlock the lock. */
+  /* This just waits someone else to lock/unlock the lock. */
   Lock_acquire(&cb->lock);
   Lock_release__event_wait__lock_acquire(&cb->lock, &cb->event);
   Lock_release(&cb->lock);

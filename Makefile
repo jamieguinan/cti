@@ -18,8 +18,10 @@ CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
 #CFLAGS += -Os -ggdb
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
+ifneq ($(ARCH),i386-Darwin)
 ifneq ($(ARCH),pentium3-Linux)
 CFLAGS += -Wno-unused-result
+endif
 endif
 endif
 endif
@@ -175,8 +177,8 @@ endif
 
 # SDL on OSX
 ifeq ($(ARCH),i386-Darwin)
-MAIN=SDLMain.o
 OBJS+=$(OBJDIR)/sdl_main.o
+OBJS+=$(OBJDIR)/SDLMain.o
 endif
 
 # Signals
@@ -204,6 +206,7 @@ endif
 endif
 
 # Cairo
+ifneq ($(ARCH),i386-Darwin)
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
 ifeq (0,$(shell (pkg-config cairo --cflags > /dev/null 2> /dev/null; echo $$?)))
@@ -213,6 +216,7 @@ LDFLAGS+=$$(pkg-config cairo --libs)
 # This is a new requirement to resolve undefined reference to `pixman_*' errors
 LDFLAGS+=$$(pkg-config pixman-1 --libs)
 CPPFLAGS+=-DHAVE_CAIRO
+endif
 endif
 endif
 endif

@@ -1013,14 +1013,16 @@ static void GRAY_handler(Instance *pi, void *data)
 }
 
 
-static int my_event_loop(void *data)
+Instance *my_instance;
+
+int sdl_event_loop(void)
 {
   /* This needs to run in the context of the main application thread, for
      certain platforms (OSX in particular). */
   Handler_message *hm;
   SDL_Event ev;
   int rc;
-  Instance *pi = data;
+  Instance *pi = my_instance;
 
   CTI_register_instance(pi);	/* Required for stack debugging, since not using
 				   Instance_thread_main(). */
@@ -1109,10 +1111,28 @@ static void SDLstuff_tick(Instance *pi)
   }
 }
 
+
+#ifdef __APPLE__
+/* Special version in SDLMain.m that does OSX required setup. */
+extern int platform_sdl_main(int argc, char *argv[]);
+#else
+int platform_sdl_main(int argc, char *argv[])
+{
+  sdl_event_loop();
+  return 0;
+}
+#endif
+
+
 static void SDLstuff_instance_init(Instance *pi)
 {
+#if 0
   extern Callback *ui_callback;	/* cti_app.c */
   Callback_fill(ui_callback, my_event_loop, pi);
+#endif
+
+  my_instance = pi;
+  ui_main = platform_sdl_main;
 }
 
 
