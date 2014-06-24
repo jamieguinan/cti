@@ -175,6 +175,8 @@ TV.c
 TV.h
 Tap.c
 Tap.h
+TreeWalker.c
+TreeWalker.h
 UI001.c
 UI001.h
 Uvc.c
@@ -312,6 +314,7 @@ fyv-mux.cmd
 fyv-null.cmd
 fyv-play-audiotest.cmd
 fyv-play-direct.cmd
+fyv-play-osx.cmd
 fyv-play.cmd
 fyv-stream-save-forward.cmd
 fyv-test.cmd
@@ -454,6 +457,7 @@ wii-fwd.cmd
 wrmem.c
 wrmem.h
 x.c
+x.cmd
 x1.cmd
 x2.c
 x4.cmd

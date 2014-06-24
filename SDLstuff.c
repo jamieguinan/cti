@@ -1048,6 +1048,9 @@ void sdl_event_loop(void)
 
   while (1) {
     rc = SDL_WaitEvent(&ev);
+
+    printf("ev.type=%d\n", ev.type);
+
     if (!rc) {
       fprintf(stderr, "SDL_error %d %s\n", rc, SDL_GetError());
       exit(1);
@@ -1072,12 +1075,10 @@ void sdl_event_loop(void)
 		 pi->outputs[OUTPUT_KEYCODE].destination);
       }
     }
-
     else if (ev.type == SDL_QUIT) {
       fprintf(stderr, "Got SDL_QUIT\n");
       exit(0);
     }
-
   }
 }
 
