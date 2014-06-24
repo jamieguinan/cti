@@ -8,44 +8,35 @@
 #include "Log.h"
 
 static void Config_handler(Instance *pi, void *msg);
-static void rgb3_handler(Instance *pi, void *msg);
-static void bgr3_handler(Instance *pi, void *msg);
-static void y422p_handler(Instance *pi, void *msg);
 
 /* VSmoother Instance and Template implementation. */
-enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_YUV422P };
+enum { INPUT_CONFIG  /* , INPUT_RGB3, INPUT_BGR3, INPUT_YUV422P */ };
 static Input VSmoother_inputs[] = { 
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
-  [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = bgr3_handler },
-  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_BGR3, OUTPUT_YUV422P };
+// enum { OUTPUT_RGB3, OUTPUT_BGR3, OUTPUT_YUV422P };
 static Output VSmoother_outputs[] = { 
-  [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
-  [ OUTPUT_BGR3 ] = {.type_label = "BGR3_buffer", .destination = 0L },
-  [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
 };
 
-typedef struct {
+/* Full type declaration. */
+struct _VSmoother {
   Instance i;
   double period;
-  double sum;
-  unsigned int factor;
+  //unsigned int factor;
   // double tlast;
   double last_ftime;
   double eta;
-} VSmoother_private;
+};
 
 
 static Config config_table[] = {
 };
 
 
-static void smooth(VSmoother_private *priv, 
-		   double frame_timestamp, 
-		   int pending_messages)
+void VSmoother_smooth(VSmoother *priv, 
+		      double frame_timestamp, 
+		      int pending_messages)
 {
   /* Compare current frame time and previous frame time, and
      keep a running average of frame periods.  Sleep for difference
@@ -59,12 +50,16 @@ static void smooth(VSmoother_private *priv,
 
   ftime = frame_timestamp;
 
-  if (!priv->factor) {
-    priv->factor = 1;
-    goto out;
-  }
+  //if (!priv->factor) {
+  //  priv->factor = 1;
+  //  goto out;
+  //}
 
   ftdiff = ftime - priv->last_ftime;
+
+  printf("ftime=%.2f last_ftime=%.2f ftdiff=%.2f\n",
+	 ftime, priv->last_ftime, ftdiff);
+
   if (ftdiff <= 0.0 || ftdiff > 10.0) {  
     /* Unreasonable frame rates. */
     goto out;
@@ -121,59 +116,6 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
-static void rgb3_handler(Instance *pi, void *data)
-{
-  VSmoother_private *priv = (VSmoother_private *)pi;
-  RGB3_buffer *rgb3_in = data;
-  if (pi->outputs[OUTPUT_RGB3].destination) {
-    smooth(priv, rgb3_in->c.timestamp, pi->pending_messages);
-    PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);
-  }
-  else {
-    RGB3_buffer_discard(rgb3_in);
-  }
-}
-
-static void bgr3_handler(Instance *pi, void *data)
-{
-  VSmoother_private *priv = (VSmoother_private *)pi;
-  BGR3_buffer *bgr3_in = data;
-  if (pi->outputs[OUTPUT_BGR3].destination) {
-    smooth(priv, bgr3_in->c.timestamp, pi->pending_messages);
-    PostData(bgr3_in, pi->outputs[OUTPUT_BGR3].destination);
-  }
-  else {
-    BGR3_buffer_discard(bgr3_in);
-  }
-}
-
-static void y422p_handler(Instance *pi, void *data)
-{
-  VSmoother_private *priv = (VSmoother_private *)pi;
-  YUV422P_buffer *y422p_in = data;
-  if (pi->outputs[OUTPUT_YUV422P].destination) {
-    smooth(priv, y422p_in->c.timestamp, pi->pending_messages);
-    PostData(y422p_in, pi->outputs[OUTPUT_YUV422P].destination);
-  }
-  else {
-    YUV422P_buffer_discard(y422p_in);
-  }
-}
-
-
-static void VSmoother_tick(Instance *pi)
-{
-  Handler_message *hm;
-
-  hm = GetData(pi, 1);
-
-  if (hm) {
-    hm->handler(pi, hm->data);
-    ReleaseMessage(&hm,pi);
-  }
-
-  pi->counter++;
-}
 
 static void VSmoother_instance_init(Instance *pi)
 {
@@ -182,12 +124,12 @@ static void VSmoother_instance_init(Instance *pi)
 
 static Template VSmoother_template = {
   .label = "VSmoother",
-  .priv_size = sizeof(VSmoother_private),
+  .priv_size = sizeof(VSmoother),
   .inputs = VSmoother_inputs,
   .num_inputs = table_size(VSmoother_inputs),
   .outputs = VSmoother_outputs,
   .num_outputs = table_size(VSmoother_outputs),
-  .tick = VSmoother_tick,
+  // .tick = VSmoother_tick,
   .instance_init = VSmoother_instance_init,  
 };
 

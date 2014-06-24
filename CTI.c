@@ -6,7 +6,9 @@
 #include <time.h>		/* nanosleep */
 #include <sys/time.h>		/* gettimeofday */
 #include <stdarg.h>		/* vprintf */
+#ifdef __linux__
 #include <sys/prctl.h>	/* prctl */
+#endif
 
 #ifndef streq
 #define streq(a, b)  (strcmp(a, b) == 0)
@@ -21,6 +23,8 @@ pthread_key_t instance_key;
 int instance_key_initialized;
 int g_synchronous = 0;		/* Can be toggled in ScriptV00.c */
 
+int (*ui_main)(int argc, char *argv[]) = NULL;
+
 void instance_key_init(void)
 {
   pthread_key_create(&instance_key, NULL);
@@ -31,7 +35,9 @@ void instance_key_init(void)
 
 void CTI_register_instance(Instance *pi)
 {
+#ifdef __linux__
   prctl(PR_SET_NAME, pi->label);
+#endif
   pthread_setspecific(instance_key, (void*)pi);	/* For later retrieval */
 }
 
@@ -722,6 +728,7 @@ void Callback_wait(Callback *cb)
 void Callback_fill(Callback *cb, int (*func)(void *), void *data)
 {
   Lock_acquire(&cb->lock);  
+  printf("%s(%p)\n", __func__, func);
   cb->func = func;
   cb->data = data;
   Event_signal(&cb->event);  // Is this even necessary?  It probably doesn't hurt.

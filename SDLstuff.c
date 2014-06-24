@@ -15,6 +15,7 @@
 #include "Cfg.h"
 #include "Keycodes.h"
 #include "Pointer.h"
+#include "VSmoother.h"
 
 
 static int SDLtoCTI_Keymap[SDLK_LAST] = {
@@ -130,6 +131,9 @@ typedef struct {
     int wireframe;
     int fov;
   } GL;
+
+  /* Smoother */
+  VSmoother *smoother;
 } SDLstuff_private;
 
 static void _reset_video(SDLstuff_private *priv, const char *func);
@@ -283,12 +287,24 @@ static int set_fullscreen(Instance *pi, const char *value)
 }
 
 
+static int set_smoother(Instance *pi, const char *value)
+{
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
+  Instance * i = InstanceGroup_find(gig, S((char*)value));
+  if (i && streq(i->label, "VSmoother")) {
+    priv->smoother = (VSmoother *)i;
+  }
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "label", set_label, 0L, 0L},
   { "mode", set_mode, 0L, 0L},
   { "width", set_width, 0L, 0L},
   { "height", set_height, 0L, 0L},
   { "fullscreen", set_fullscreen, 0L, 0L},
+  { "smoother", set_smoother, 0L, 0L},
 };
 
 
@@ -666,8 +682,14 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
 
   getdoubletime(&tnow);
   // nanosleep(tv_next - tv_now);
-  
+
   update_display_times();
+
+  if (priv->smoother) {
+    VSmoother_smooth(priv->smoother, 
+		     c->timestamp,
+		     ((Instance *)priv)->pending_messages);
+  }
 }
 
 static void post_render_frame(Instance *pi)
@@ -991,14 +1013,16 @@ static void GRAY_handler(Instance *pi, void *data)
 }
 
 
-static int my_event_loop(void *data)
+Instance *my_instance;
+
+void sdl_event_loop(void)
 {
   /* This needs to run in the context of the main application thread, for
      certain platforms (OSX in particular). */
   Handler_message *hm;
   SDL_Event ev;
   int rc;
-  Instance *pi = data;
+  Instance *pi = my_instance;
 
   CTI_register_instance(pi);	/* Required for stack debugging, since not using
 				   Instance_thread_main(). */
@@ -1024,6 +1048,9 @@ static int my_event_loop(void *data)
 
   while (1) {
     rc = SDL_WaitEvent(&ev);
+
+    printf("ev.type=%d\n", ev.type);
+
     if (!rc) {
       fprintf(stderr, "SDL_error %d %s\n", rc, SDL_GetError());
       exit(1);
@@ -1048,15 +1075,11 @@ static int my_event_loop(void *data)
 		 pi->outputs[OUTPUT_KEYCODE].destination);
       }
     }
-
     else if (ev.type == SDL_QUIT) {
       fprintf(stderr, "Got SDL_QUIT\n");
       exit(0);
     }
-
   }
-
-  return 0;
 }
 
 
@@ -1087,10 +1110,29 @@ static void SDLstuff_tick(Instance *pi)
   }
 }
 
+
+#ifdef __APPLE__
+/* Special version in SDLMain.m that does OSX required setup, then
+   calls back to sdl_event_loop(). */
+extern int platform_sdl_main(int argc, char *argv[]);
+#else
+int platform_sdl_main(int argc, char *argv[])
+{
+  sdl_event_loop();
+  return 0;
+}
+#endif
+
+
 static void SDLstuff_instance_init(Instance *pi)
 {
+#if 0
   extern Callback *ui_callback;	/* cti_app.c */
   Callback_fill(ui_callback, my_event_loop, pi);
+#endif
+
+  my_instance = pi;
+  ui_main = platform_sdl_main;
 }
 
 

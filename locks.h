@@ -21,9 +21,19 @@ typedef struct {
 
 #ifdef __APPLE__
 #include <pthread.h>
+#include <semaphore.h>
 typedef struct {
   pthread_mutex_t lock;
 } Lock;
+
+typedef struct {
+  pthread_cond_t event;
+} Event;
+
+typedef struct {
+  sem_t sem;
+} Sem;
+
 #endif
 
 #ifdef __MINGW32__

@@ -3,6 +3,7 @@
 #include <sys/time.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>		/* sleep */
 
 #include "CTI.h"
 
@@ -47,15 +48,16 @@ int app_code(int argc, char *argv[])
   }
 
   while (1) {
-    /* Certain platforms (like OSX) require that UI code be called from the 
-       main application thread.  So the code waits here for a callback function
-       to be filled in, and calls it. */
-    // printf("*** waiting for callback to be filled in...\n");
-    Callback_wait(ui_callback);
-    printf("callback_func @ %p\n", ui_callback->func);
-    
-    if (ui_callback->func) {
-      ui_callback->func(ui_callback->data);
+    /* Certain platforms (like OSX) require that UI code be called
+       from the main application thread, so wait here until the
+       ui_main function pointer is filled in, then call it.  It can't
+       hurt to do the same on platforms without that requirement, so
+       do the same always. */
+    if (ui_main) {
+      ui_main(argc, argv);
+    }
+    else {
+      nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
     }
   }
 
