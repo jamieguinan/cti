@@ -1049,7 +1049,7 @@ void sdl_event_loop(void)
   while (1) {
     rc = SDL_WaitEvent(&ev);
 
-    printf("ev.type=%d\n", ev.type);
+    // printf("ev.type=%d\n", ev.type);
 
     if (!rc) {
       fprintf(stderr, "SDL_error %d %s\n", rc, SDL_GetError());

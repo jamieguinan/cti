@@ -33,10 +33,13 @@ ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 endif
 
-# CPPFLAGS += -finstrument-functions
-CPPFLAGS += -DUSE_STACK_DEBUG
+# Enable these next 2 lines for debugging segfaults and
+# other errors.
+#CPPFLAGS += -DUSE_STACK_DEBUG
+#CPPFLAGS += -finstrument-functions
 
-# "-static" is a problem for alsa, and other things...
+# "-static" is a problem for alsa, and other things, so
+# don't use it.
 
 OBJDIR ?= .
 
@@ -133,7 +136,6 @@ OBJS= \
 	$(OBJDIR)/XmlSubset.o \
 	$(OBJDIR)/nodetree.o \
 	$(OBJDIR)/Stats.o \
-	$(OBJDIR)/StackDebug.o \
 	$(OBJDIR)/AudioFilter.o \
 	$(OBJDIR)/HTTPServer.o \
 	$(OBJDIR)/VirtualStorage.o \
@@ -332,11 +334,6 @@ $(OBJDIR)/ctest$(EXEEXT): \
 
 
 $(OBJDIR)/%.o: %.c Makefile
-	@echo CC $<
-#	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-
-$(OBJDIR)/StackDebug.o: StackDebug.c Makefile
 	@echo CC $<
 #	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@

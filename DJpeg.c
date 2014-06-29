@@ -553,7 +553,7 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
 
 
 /* I also put Jpeg_fix() in this module, because it has access to the huffman
-   tables, an again I didn't want Images.c to pull in jpeglib.h, nor define
+   tables, and again I didn't want Images.c to pull in jpeglib.h, nor define
    a second copy of the tables. */
 enum maker_enums { 
   SOI = 0xd8, 
@@ -581,7 +581,7 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
 {
   /* This is based on "mjpegfix.py" which I wrote several years
      ealier.  The Jpeg data is replaced at the end, but the buffer
-     structure remains in place.  In other words, it does not produced
+     structure remains in place.  In other words, it does not produce
      a new Jpeg_buffer. */
 
   if (jpeg->has_huffman_tables) {

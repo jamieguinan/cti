@@ -10,6 +10,7 @@
 #include <stdio.h>		/* FILE, sprintf, printf */
 #include <string.h>		/* strstr */
 
+#ifdef USE_STACK_DEBUG
 __attribute__((no_instrument_function))
 void __cyg_profile_func_enter (void *this_fn,
 			       void *call_site)
@@ -39,7 +40,6 @@ void __cyg_profile_func_exit  (void *this_fn,
     pi->stack_index -= 1;
   }
 }
-
 
 static void show_symbol(void *addr)
 {
@@ -96,3 +96,15 @@ void StackDebug2(void *ptr, const char * text)
   fprintf(stderr, "::%p::%s", ptr, text);
   fprintf(stderr, "\n");
 }
+
+#else
+
+void StackDebug(void)
+{
+}
+
+void StackDebug2(void *ptr, const char * text)
+{
+}
+
+#endif

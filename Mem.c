@@ -1,10 +1,5 @@
 #include "Mem.h"
 #include "Cfg.h"
-#ifdef USE_STACK_DEBUG
-#include "StackDebug.h"
-#else
-#define StackDebug2(x,y)
-#endif
 #include <string.h>		/* memcpy */
 #include <stdlib.h>
 #include <inttypes.h>		/* PRIu64 */
@@ -13,6 +8,10 @@
 //#include <execinfo.h>
 #include <pthread.h>
 
+/* I found it easier to just include StackDebug.c in here, rather than
+   fix the bunch of mini-projects that include Mem.c */
+#include "StackDebug.c"
+
 #define NUM_ALLOCATIONS 1024
 
 static pthread_mutex_t mem_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -20,7 +19,7 @@ static pthread_mutex_t mem_lock = PTHREAD_MUTEX_INITIALIZER;
 static void backtrace_and_hold(void)
 {
 #if 0
-  /* This isn't work on ARM, nor n270. */
+  /* This doesn't work on ARM, nor n270. */
   int i, n;
   void *buffer[32];
   n = backtrace(buffer, 32);
