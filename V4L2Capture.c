@@ -1153,10 +1153,11 @@ static void Keycode_handler(Instance *pi, void *msg)
 
 static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
 {
-  /* NOTE: These typically don't include the default huffman tables. */
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   FILE *f;
   char filename[64];
+
+  Jpeg_fix(j);			/* Just in case. */
 
   sprintf(filename, "snap%06d.jpg", pi->counter);
   fprintf(stderr, "%s\n", filename);

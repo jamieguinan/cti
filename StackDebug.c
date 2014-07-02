@@ -40,7 +40,6 @@ void __cyg_profile_func_exit  (void *this_fn,
   }
 }
 
-
 static void show_symbol(void *addr)
 {
   FILE *f = fopen("/tmp/cti.map", "r");
@@ -96,3 +95,4 @@ void StackDebug2(void *ptr, const char * text)
   fprintf(stderr, "::%p::%s", ptr, text);
   fprintf(stderr, "\n");
 }
+

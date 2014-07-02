@@ -33,10 +33,13 @@ ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 endif
 
-# CPPFLAGS += -finstrument-functions
-CPPFLAGS += -DUSE_STACK_DEBUG
+# Enable these next 2 lines for debugging segfaults and
+# other errors.
+#CPPFLAGS += -DUSE_STACK_DEBUG
+#CPPFLAGS += -finstrument-functions
 
-# "-static" is a problem for alsa, and other things...
+# "-static" is a problem for alsa, and other things, so
+# don't use it.
 
 OBJDIR ?= .
 
@@ -133,7 +136,6 @@ OBJS= \
 	$(OBJDIR)/XmlSubset.o \
 	$(OBJDIR)/nodetree.o \
 	$(OBJDIR)/Stats.o \
-	$(OBJDIR)/StackDebug.o \
 	$(OBJDIR)/AudioFilter.o \
 	$(OBJDIR)/HTTPServer.o \
 	$(OBJDIR)/VirtualStorage.o \
@@ -295,14 +297,6 @@ $(OBJDIR)/cti$(EXEEXT): \
 	@echo LINK
 #	@echo $(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
-ifeq ($(ARCH),x86_64-Linux)
-# Sigh, some libs bump their version numbers all the fucking time.  And I like to keep
-# cti binaries around for later use, without always having to rebuild.  So, keep a
-# cache of libraries which frequently change.
-#	@echo Copying required libaries that frequently change:
-#	@cp -Lvu $$(ldd $@ | grep -E '264|png' | sed -e 's,.*/usr,/usr,g' -e 's, .*$$,,') $(HOME)/lib/
-# Or ../../platform/$(ARCH)/lib/ ?
-endif
 	@echo Generating map
 	$(NM) $@ | sort > $@.map
 	@echo STRIP
@@ -332,11 +326,6 @@ $(OBJDIR)/ctest$(EXEEXT): \
 
 
 $(OBJDIR)/%.o: %.c Makefile
-	@echo CC $<
-#	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
-
-$(OBJDIR)/StackDebug.o: StackDebug.c Makefile
 	@echo CC $<
 #	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@

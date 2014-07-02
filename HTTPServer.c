@@ -6,7 +6,8 @@
  *
  */
 
-  /* Examples from my local apache server...
+/* Here are some examples from my local apache server, which I used as
+   a reference while writing this code,
 
     HTTP/1.1 200 OK
     Date: Fri, 06 Jun 2014 20:34:32 GMT
