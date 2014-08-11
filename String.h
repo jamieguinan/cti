@@ -100,6 +100,7 @@ extern String * String_list_find(String_list *slst, String *target);
 extern void String_list_free(String_list **slst);
 extern String * String_list_pull_at(String_list * slst, int i);
 extern void String_list_del_at(String_list * slst, int i);
+extern void String_list_trim(String_list * slst);
 
 #ifndef streq
 #define streq(a,b) (strcmp((a),(b))==0)

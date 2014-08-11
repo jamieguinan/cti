@@ -6,6 +6,7 @@
 #include "Images.h"
 #include "Cfg.h"
 #include "CTI.h"
+#include "File.h"
 
 static void Config_handler(Instance *pi, void *msg);
 static void Jpeg_handler(Instance *pi, void *msg);
@@ -23,6 +24,7 @@ static Output JpegFiler_outputs[] = {
 
 typedef struct {
   Instance i;
+  int fnumber;
   // int ...;
 } JpegFiler_private;
 
@@ -38,20 +40,30 @@ static void Config_handler(Instance *pi, void *data)
 
 static void Jpeg_handler(Instance *pi, void *msg)
 {
+  JpegFiler_private *priv = (JpegFiler_private *) pi;
   Jpeg_buffer *jpeg_in = msg;
+  char name[256];
 
-  if (pi->counter % 1 == 0) {
-    char name[256];
-    sprintf(name, "%09d.jpg", pi->counter);
-    FILE *f = fopen(name, "wb");
-    if (f) {
-      if (fwrite(jpeg_in->data, jpeg_in->encoded_length, 1, f) != 1) {
-	perror("fwrite");
-      }
-      fclose(f);
+  while (1) {
+    priv->fnumber += 1;
+    sprintf(name, "%09d.jpg", priv->fnumber);
+    if (File_exists(S(name))) {
+      continue;
+    }
+    else {
+      break;
     }
   }
 
+
+  FILE *f = fopen(name, "wb");
+  if (f) {
+    if (fwrite(jpeg_in->data, jpeg_in->encoded_length, 1, f) != 1) {
+      perror("fwrite");
+    }
+    fclose(f);
+  }
+  
   if (jpeg_in->c.eof) {
     fprintf(stderr, "%s detected EOF\n", __func__);
     exit(0);

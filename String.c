@@ -217,7 +217,7 @@ int String_find(String *s, int offset, const char *s1, int *end)
 {
   int i, j;
   int s1len = strlen(s1);
-  for (i = offset; i < (s->len - s1len); i++) {
+  for (i = offset; i <= (s->len - s1len); i++) {
     for (j = 0; j < s1len; j++) {
       if (s->bytes[i+j] != s1[j]) {
 	break;
@@ -480,9 +480,10 @@ String * String_list_get(String_list *slst, int index)
     return _String_none;
   }
   else if (index < 0) {
+    // printf("-index=%d slst->len=%d<br>\n", -index, slst->len);
     if ((-index) < slst->len) {
       /* Return from top. */
-      return slst->_strings[slst->len - index];
+      return slst->_strings[slst->len + index];
     }
     else {
       /* FIXME warn... */
@@ -560,7 +561,7 @@ String * String_list_pull_at(String_list * slst, int i)
   }
 
   if (i < 0) {
-    i = slst->len - i;
+    i = slst->len + i;
   }
 
   if (i < 0 || i >= slst->len) {
@@ -582,6 +583,30 @@ void String_list_del_at(String_list * slst, int i)
 {
   String * tmp = String_list_pull_at(slst, i);
   if (!String_is_none(tmp)) {
+    String_free(&tmp);
+  }
+}
+
+
+void String_list_trim(String_list * slst)
+{
+  String * tmp;
+
+  /* Trim leading empty string. */
+  tmp = String_list_get(slst, 0);
+  //printf("%d %d<br>\n", String_is_none(tmp), String_eq(tmp, S("")));
+  if (!String_is_none(tmp) && String_eq(tmp, S(""))) {
+    //printf("deleting leading empty string<br>\n");
+    tmp = String_list_pull_at(slst, 0);
+    String_free(&tmp);
+  }
+
+  /* Trim trailing empty string. */
+  tmp = String_list_get(slst, -1);
+
+  if (!String_is_none(tmp) && String_eq(tmp, S(""))) {
+    //printf("deleting trailing empty string<br>\n");
+    tmp = String_list_pull_at(slst, -1);
     String_free(&tmp);
   }
 }
