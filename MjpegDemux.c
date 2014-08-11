@@ -48,7 +48,7 @@ enum { PARSING_HEADER, PARSING_DATA };
 
 typedef struct {
   Instance i;
-  String input;
+  String *input;
   Source *source;
   ArrayU8 *chunk;
   String *boundary;
@@ -58,10 +58,13 @@ typedef struct {
 
   int enable;			/* Set this to start processing. */
 
-  String output;			/* Side channel. */
+  String *output;			/* Side channel. */
   Sink *output_sink;
+  int output_enable;
 
-  String wavout;			/* Side channel. */
+  int rec_key;
+
+  String wavout;			/* Audio side channel. */
   Sink *wavout_sink;
 
   long stop_source_at;			/* Stop and close source once it passes this offset. */
@@ -125,8 +128,8 @@ static int set_input(Instance *pi, const char *value)
     }
   }
 
-  String_set_local(&priv->input, value);
-  priv->source = Source_new(sl(priv->input));
+  String_set(&priv->input, value);
+  priv->source = Source_new(s(priv->input));
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);
@@ -142,9 +145,6 @@ static int set_input(Instance *pi, const char *value)
 static int set_output(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = (MjpegDemux_private *)pi;
-  if (priv->output_sink) {
-    Sink_free(&priv->output_sink);
-  }
 
   if (value[0] == '$') {
     value = getenv(value+1);
@@ -154,9 +154,52 @@ static int set_output(Instance *pi, const char *value)
     }
   }
 
-  String_set_local(&priv->output, value);
-  priv->output_sink = Sink_new(sl(priv->output));
+  String_set(&priv->output, value);
+  return 0;
+}
 
+
+static int set_output_enable_priv(MjpegDemux_private *priv, int x)
+{
+  if (String_is_none(priv->output)) {
+    fprintf(stderr, "%s: output name is not set\n", __func__);
+    return 1;
+  }
+
+  if (priv->output_enable == x) {
+    /* No change. */
+    return 0;
+  }
+
+  priv->output_enable = x;
+
+  if (priv->output_sink) {
+    Sink_free(&priv->output_sink);
+  }
+
+  if (priv->output_enable) {
+    fprintf(stderr, "output enabled\n");
+    priv->output_sink = Sink_new(s(priv->output));
+  }
+  else {
+    fprintf(stderr, "output disbled\n");
+  }
+  return 0;
+}
+
+
+static int set_output_enable(Instance *pi, const char *value)
+{
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
+  int x = atoi(value);
+  return set_output_enable_priv(priv, x);
+}
+
+
+static int set_rec_key(Instance *pi, const char *value)
+{
+  MjpegDemux_private *priv = (MjpegDemux_private *)pi;
+  priv->rec_key = Keycode_from_string(value);
   return 0;
 }
 
@@ -248,6 +291,8 @@ static int do_seek(Instance *pi, const char *value)
 static Config config_table[] = {
   { "input", set_input, 0L, 0L },
   { "output", set_output, 0L, 0L },
+  { "output_enable", set_output_enable, 0L, 0L},
+  { "rec_key", set_rec_key, 0L, 0L},
   { "wavout", set_wavout, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
   { "retry", 0L, 0L, 0L, cti_set_int, offsetof(MjpegDemux_private, retry) },
@@ -279,7 +324,6 @@ static void Keycode_handler(Instance *pi, void *msg)
     priv->b = 0;		/* reset */
     printf("a:%ld b:%ld\n", priv->a, priv->b);
   }
-
   else if (km->keycode == CTI__KEY_B && priv->source && (priv->a != -1) ) {
     priv->b = Source_tell(priv->source);
     if (priv->b < priv->a) {
@@ -307,21 +351,22 @@ static void Keycode_handler(Instance *pi, void *msg)
       reset_current(priv);
     }
   }
-
   else if (km->keycode == CTI__KEY_S) {
     if (priv->source) {
       priv->snapshot = 1;
     }
   }
-
   else if (km->keycode == CTI__KEY_X) {
     /* Show approximate file offset. */
     long n = Source_tell(priv->source);
     printf("offset %ld, %ld @ 1000\n", n, n/1000);
   }
-
+  else if (km->keycode == priv->rec_key) {
+    /* Toggle record. */
+    fprintf(stderr, "toggle\n");
+    set_output_enable_priv(priv, priv->output_enable ? 0 : 1);
+  }
   else {
-    /* Show approximate file offset. */
     printf("%s: unhandled keycode %d\n", __func__, km->keycode);
   }
 
@@ -411,7 +456,7 @@ static void MjpegDemux_tick(Instance *pi)
 	fprintf(stderr, "%s: retrying\n", __func__);
 	Source_close_current(priv->source);
 	Source_free(&priv->source);
-	priv->source = Source_new(sl(priv->input));
+	priv->source = Source_new(s(priv->input));
       }
       sleep_and_return = 1;
 
@@ -752,7 +797,8 @@ static void MjpegDemux_instance_init(Instance *pi)
   priv->use_feedback = 0;
   priv->video.stream_t0 = -1.0;
   priv->feedback_threshold = 20;
-  
+  priv->input = String_value_none();
+  priv->output = String_value_none();
   priv->seek_amount = 10000000;
 }
 

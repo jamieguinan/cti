@@ -10,7 +10,11 @@
 
 /* I found it easier to just include StackDebug.c in here, rather than
    fix the bunch of mini-projects that include Mem.c */
+#ifdef USE_STACK_DEBUG
 #include "StackDebug.c"
+#else
+#define StackDebug2(a, b)
+#endif
 
 #define NUM_ALLOCATIONS 1024
 

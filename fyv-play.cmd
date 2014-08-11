@@ -19,6 +19,7 @@ connect mjd Jpeg_buffer dj
 connect sdl Feedback_buffer mjd
 
 connect sdl:Keycode_msg sdl:Keycode_msg
+connect sdl:Keycode_msg_2 mjd:Keycode_msg
 
 #connect dj RGB3_buffer sdl
 #connect dj YUV422P_buffer sdl
@@ -31,8 +32,8 @@ config dj dct_method ifast
 
 config ap useplug 1
 #config ap device plughw:0
-#config ap device Dummy
-config ap device UA25
+config ap device Dummy
+#config ap device UA25
 #config ap device CK804
 config ap rate 16000
 config ap channels 1
@@ -48,10 +49,15 @@ config sdl mode OVERLAY
 #config sdl width 1280
 #config sdl height 720
 
+# Side-channel output, to be toggled at runtime.
+config mjd output /av/media/tmp/frontyard-%Y%m%d-%H%M%S.mjx
 
+# Use relay, see "frontyard-relay.cmd"
 config mjd input 127.0.0.1:7131
 config mjd retry 1
 config mjd enable 1
+
+config mjd rec_key R
 
 config ap enable 1
 

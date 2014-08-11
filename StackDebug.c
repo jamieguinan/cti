@@ -10,7 +10,6 @@
 #include <stdio.h>		/* FILE, sprintf, printf */
 #include <string.h>		/* strstr */
 
-#ifdef USE_STACK_DEBUG
 __attribute__((no_instrument_function))
 void __cyg_profile_func_enter (void *this_fn,
 			       void *call_site)
@@ -97,14 +96,3 @@ void StackDebug2(void *ptr, const char * text)
   fprintf(stderr, "\n");
 }
 
-#else
-
-void StackDebug(void)
-{
-}
-
-void StackDebug2(void *ptr, const char * text)
-{
-}
-
-#endif

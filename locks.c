@@ -1,8 +1,8 @@
 #include "locks.h"
-#include "StackDebug.h"
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "StackDebug.h"
 
 void Lock_init(Lock *lock)
 {

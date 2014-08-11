@@ -47,7 +47,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void TreeWalker_instance_init(Instance *pi)
 {
-  TreeWalker_private *priv = (TreeWalker_private *)pi;
+  // TreeWalker_private *priv = (TreeWalker_private *)pi;
 }
 
 
@@ -67,7 +67,7 @@ void TreeWalker_init(void)
   // Template_register(&TreeWalker_template);
 }
 
-TreeWalker_walk(String *dstr, void (*callback)(String * path, unsigned char dtype) )
+void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char dtype) )
 {
   DIR * d = opendir(s(dstr));
   if (!d) {
@@ -110,13 +110,16 @@ TreeWalker_walk(String *dstr, void (*callback)(String * path, unsigned char dtyp
 	continue;
       }
       String *nextdir = String_sprintf("%s/%s", s(dstr), de->d_name);
-      if (callback) { callback(dstr, DT_DIR); }
-      TreeWalker_walk(nextdir, callback);
+      int ignore = 0;
+      if (callback) { ignore = callback(nextdir, DT_DIR); }
+      if (ignore == 0) { 
+	TreeWalker_walk(nextdir, callback);
+      }
       String_free(&nextdir);
     }
     else if (d_type == DT_REG) {
       String *fullname = String_sprintf("%s/%s", s(dstr), de->d_name);
-      if (callback) {  callback(dstr, DT_REG); }
+      if (callback) {  callback(fullname, DT_REG); }
       String_free(&fullname);
     }
   }
@@ -127,7 +130,7 @@ TreeWalker_walk(String *dstr, void (*callback)(String * path, unsigned char dtyp
 
 #ifdef TEST
 
-void xcallback(String *path, unsigned char dtype)
+int xcallback(String *path, unsigned char dtype)
 {
   if (dtype == DT_DIR) {
     printf("   directory: %s\n", s(path));
@@ -135,6 +138,7 @@ void xcallback(String *path, unsigned char dtype)
   else if (dtype == DT_REG) {
     printf("regular file: %s\n", s(path));
   }
+  return 0;
 }
 
 int main(int argc, char *argv[])
