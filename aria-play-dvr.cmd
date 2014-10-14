@@ -6,7 +6,6 @@ new JpegTran jt
 new VSmoother vs
 new VFilter vf
 
-connect mjd O511_buffer do511
 # Insert a JpegTran to clean up extraneous bytes.  Needed if feeding to
 # libavcodec (ffmpeg, mplayer, etc.)
 #connect mjd Jpeg_buffer jt
@@ -33,8 +32,6 @@ config sdl mode OVERLAY
 
 connect dj YUV422P_buffer vf
 connect vf YUV422P_buffer sdl
-
-connect do511 RGB3_buffer sdl
 
 #config mjd input ./rcv
 # Port 6667 is full speed, port 6668 is every-other.
