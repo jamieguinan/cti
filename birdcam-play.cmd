@@ -42,11 +42,17 @@ config sdl mode OVERLAY
 #config sdl width 1280
 #config sdl height 720
 
+# Side-channel output, to be toggled at runtime.
+config mjd output /av/media/tmp/crittercam-%Y%m%d-%H%M%S.mjx
+
 config sdl label BIRDCAM
 
+# Use relay, see "crittercam-relay.cmd"
 config mjd input 127.0.0.1:7130
 config mjd retry 1
 config mjd enable 1
+
+config mjd rec_key R
 
 config ap enable 1
 

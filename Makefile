@@ -31,6 +31,8 @@ CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
 LDFLAGS += -L../../platform/$(ARCH)/lib -ljpeg -lpthread
 ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
+# rdynamic allows loaded .so files to see CTI global symbols.
+LDFLAGS += -rdynamic
 endif
 
 # Enable these next 2 lines for debugging segfaults and
@@ -139,6 +141,9 @@ OBJS= \
 	$(OBJDIR)/AudioFilter.o \
 	$(OBJDIR)/HTTPServer.o \
 	$(OBJDIR)/VirtualStorage.o \
+	$(OBJDIR)/ATSCTuner.o \
+	$(OBJDIR)/Y4MOverlay.o \
+	$(OBJDIR)/LinuxEvent.o \
 	$(OBJDIR)/crc.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
@@ -229,6 +234,14 @@ OBJS+=	$(OBJDIR)/LibDV.o
 CPPFLAGS+=$$(pkg-config libdv --cflags)
 LDFLAGS+=$$(pkg-config libdv --libs)
 CPPFLAGS+=-DHAVE_LIBDV
+endif
+
+# libpng
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libpng.pc))
+OBJS+=	$(OBJDIR)/LibPng.o
+CPPFLAGS+=$$(pkg-config libpng --cflags)
+LDFLAGS+=$$(pkg-config libpng --libs)
+CPPFLAGS+=-DHAVE_LIBPNG
 endif
 
 # libmpeg2

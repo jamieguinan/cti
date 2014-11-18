@@ -87,6 +87,7 @@ static int set_proc(Instance *pi, const char *value)
   }
 
   fprintf(stderr, "%s(%s)\n", __func__, value);
+  /* Prepend pipe character for eventual call to io_open(). */ 
   priv->proc = String_sprintf("|%s", value);
   
   return 0;
@@ -150,13 +151,22 @@ static int handle_token(Instance *pi, const char *value)
 }
 
 
-static int handle_start_readonly(Instance *pi, const char *value_ignored)
+static int handle_start_readonly(Instance *pi, const char *optional_param)
 {
   SubProc_private *priv = (SubProc_private *)pi;
   
   close_all(priv);
 
-  priv->proc_stdout = Source_new(s(priv->proc));
+  if (streq(optional_param, "1")) {
+    /* Simple case, enable. */
+    priv->proc_stdout = Source_new(s(priv->proc));
+  }
+  else {
+    /* Enable with parameter. */
+    String * source_path = String_sprintf("%s %s", s(priv->proc), optional_param);
+    priv->proc_stdout = Source_new(s(source_path));
+    String_free(&source_path);
+  }
 
   if (!priv->proc_stdout) {
     return 1;
@@ -172,13 +182,22 @@ static int handle_start_readonly(Instance *pi, const char *value_ignored)
 }
 
 
-static int handle_start_writeonly(Instance *pi, const char *value_ignored)
+static int handle_start_writeonly(Instance *pi, const char *optional_param)
 {
   SubProc_private *priv = (SubProc_private *)pi;
   
   close_all(priv);
 
-  priv->proc_stdin = Sink_new(s(priv->proc));
+  if (streq(optional_param, "1")) {
+    /* Simple case, enable. */
+    priv->proc_stdin = Sink_new(s(priv->proc));    
+  }
+  else {
+    /* Enable with parameter. */
+    String * sink_path = String_sprintf("%s %s", s(priv->proc), optional_param);
+    priv->proc_stdin = Sink_new(s(sink_path));
+    String_free(&sink_path);
+  }
 
   if (!priv->proc_stdin) {
     return 1;

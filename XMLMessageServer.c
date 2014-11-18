@@ -102,6 +102,8 @@ static void handle_client_message(IO_common *io, String *msg, Node * response)
       }
     }
   }
+  
+  /* FIXME: Clean up the "top" Node and the String instances above. */
 }
 
 

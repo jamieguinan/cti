@@ -1,4 +1,5 @@
-/* Lirc client.  IR remote control input for Linux.  */
+/* Lirc client.  IR remote control input for Linux.  
+ * NOTE: This is probably going to be obviated by LinuxInput.c */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */

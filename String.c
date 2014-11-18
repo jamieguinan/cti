@@ -163,6 +163,18 @@ void String_trim_right(String *s)
     }
 }
 
+void String_shorten(String *s, int newlength)
+{
+  if (newlength < 0) {
+    fprintf(stderr, "cannot set negative length string\n");
+    return;
+  }
+  if (newlength <= s->len) {
+    s->bytes[newlength] = 0;
+    s->len = newlength;
+  }
+}
+
 
 String * String_sprintf(const char *fmt, ...)
 {

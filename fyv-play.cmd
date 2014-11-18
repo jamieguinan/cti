@@ -18,14 +18,17 @@ connect mjd Jpeg_buffer dj
 
 connect sdl Feedback_buffer mjd
 
+# 'q' to quit.
 connect sdl:Keycode_msg sdl:Keycode_msg
+# 's' for snapshot
 connect sdl:Keycode_msg_2 mjd:Keycode_msg
 
 #connect dj RGB3_buffer sdl
-#connect dj YUV422P_buffer sdl
+connect dj YUV422P_buffer sdl
 
-connect dj YUV422P_buffer cc
-connect cc YUV422P_buffer sdl
+#connect dj YUV422P_buffer cc
+#connect cc YUV422P_buffer sdl
+
 
 # ifast works best on sully.
 config dj dct_method ifast
@@ -52,8 +55,13 @@ config sdl mode OVERLAY
 # Side-channel output, to be toggled at runtime.
 config mjd output /av/media/tmp/frontyard-%Y%m%d-%H%M%S.mjx
 
+config sdl label FRONTYARD
+
 # Use relay, see "frontyard-relay.cmd"
-config mjd input 127.0.0.1:7131
+# config mjd input 127.0.0.1:7131
+
+config mjd input 192.168.2.75:6666
+
 config mjd retry 1
 config mjd enable 1
 

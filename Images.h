@@ -85,6 +85,17 @@ typedef struct {
 } RGB3_buffer;
 
 
+/* RGBA buffer. */
+typedef struct {
+  MemObject mo;
+  int width;
+  int height;
+  uint8_t *data;
+  int data_length;
+  Image_common c;
+} RGBA_buffer;
+
+
 /* BGR3 buffer */
 typedef struct {
   MemObject mo;
@@ -182,7 +193,6 @@ typedef struct {
   Image_common c;
 } H264_buffer;
 
-
 extern Gray_buffer *Gray_buffer_new(int width, int height, Image_common *c);
 extern Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c);
 extern Gray_buffer *Gray_buffer_from(uint8_t *data, int width, int height, Image_common *c);
@@ -190,12 +200,18 @@ extern void Gray_buffer_discard(Gray_buffer *gray);
 
 extern Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c);
 extern void Gray32_buffer_discard(Gray32_buffer *gray);
+
 extern RGB3_buffer *PPM_buffer_from(uint8_t *data, int len, Image_common *c);
 extern RGB3_buffer *RGB3_buffer_new(int width, int height, Image_common *c);
 extern RGB3_buffer *RGB3_buffer_clone(RGB3_buffer *rgb);
 extern RGB3_buffer *RGB3_buffer_ref(RGB3_buffer *rgb);
 extern void RGB3_buffer_discard(RGB3_buffer *rgb);
 extern void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int height, int stride);
+
+extern RGBA_buffer *RGBA_buffer_new(int width, int height, Image_common *c);
+extern RGBA_buffer *RGBA_buffer_clone(RGBA_buffer *rgb);
+extern RGBA_buffer *RGBA_buffer_ref(RGBA_buffer *rgb);
+extern void RGBA_buffer_discard(RGBA_buffer *rgb);
 
 extern BGR3_buffer *BGR3_buffer_new(int width, int height, Image_common *c);
 extern void BGR3_buffer_discard(BGR3_buffer *rgb);
@@ -244,5 +260,6 @@ extern void O511_buffer_discard(O511_buffer *o511);
 
 extern H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c);
 extern void H264_buffer_discard(H264_buffer *h264);
+
 
 #endif

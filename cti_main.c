@@ -75,6 +75,9 @@
 #include "Mpeg2Dec.h"
 #include "HTTPServer.h"
 #include "VirtualStorage.h"
+#include "ATSCTuner.h"
+#include "Y4MOverlay.h"
+#include "LinuxEvent.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -196,6 +199,9 @@ int cti_main(int argc, char *argv[])
   XMLMessageServer_init();
   HTTPServer_init();
   VirtualStorage_init();
+  ATSCTuner_init();
+  Y4MOverlay_init();
+  LinuxEvent_init();
   //PCMSource_init();
 
   return app_code(argc, argv);
