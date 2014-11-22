@@ -446,7 +446,7 @@ static void get_input_range(Instance *pi, Range *range)
 
 static int set_std_priv(V4L2Capture_private *priv)
 {
-  if (!String_is_valid(priv->std)) {
+  if (String_is_none(priv->std)) {
     return -1;
   }
 
@@ -573,7 +573,7 @@ static void get_saturation_range(Instance *pi, Range *range)
 
 static int set_brightness_priv(V4L2Capture_private *priv)
 {
-  if (!String_is_valid(priv->brightness)) {
+  if (String_is_none(priv->brightness)) {
     return -1;
   }
 
@@ -594,7 +594,7 @@ static int set_brightness(Instance *pi, const char *value)
 
 static int set_saturation_priv(V4L2Capture_private *priv)
 {
-  if (!String_is_valid(priv->saturation)) {
+  if (String_is_none(priv->saturation)) {
     return -1;
   }
 
@@ -619,7 +619,7 @@ static int set_saturation(Instance *pi, const char *value)
 
 static int set_contrast_priv(V4L2Capture_private *priv)
 {
-  if (!String_is_valid(priv->contrast)) {
+  if (String_is_none(priv->contrast)) {
     return -1;
   }
 
@@ -1585,6 +1585,17 @@ static void V4L2Capture_instance_init(Instance *pi)
   priv->check_sequence = 0;
   priv->vbuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   priv->vbuffer.memory = V4L2_MEMORY_MMAP;  /* Change this later if device doesn't support mmap */
+
+  priv->drivermatch = String_value_none();
+  priv->devpath = String_value_none();
+  priv->format = String_value_none();
+  priv->input = String_value_none();
+  priv->std = String_value_none();
+  priv->brightness = String_value_none();
+  priv->saturation = String_value_none();
+  priv->contrast = String_value_none();
+  priv->autoexpose = String_value_none();
+  priv->exposure = String_value_none();
   
 }
 
