@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <sys/ioctl.h>		/* ioctl */
 #include <sys/mman.h>		/* mmap */
+#include <poll.h>		/* poll */
 
 /* open() an other things... */
 #include <sys/types.h>
@@ -111,6 +112,7 @@ typedef struct  {
   } buffers[NUM_BUFFERS];
   int wait_on;
   int last_queued;
+  int timeout_ms;		/* Frame timeout before full reset */
 
   int sequence;			/* Keep track of lost frames. */
   int check_sequence;		/* Some cards (cx88) don't set sequence! */
@@ -128,6 +130,7 @@ typedef struct  {
 static void get_device_range(Instance *pi, Range *range);
 static void stream_disable(V4L2Capture_private *priv);
 static int stream_enable(V4L2Capture_private *priv);
+static void V4L2_queue_unmap(V4L2Capture_private *priv);
 
 static int set_device(Instance *pi, const char *value)
 {
@@ -141,6 +144,7 @@ static int set_device(Instance *pi, const char *value)
 
   if (priv->fd != -1) {
     close(priv->fd);
+    V4L2_queue_unmap(priv);
     priv->fd = -1;
   }
   
@@ -148,6 +152,8 @@ static int set_device(Instance *pi, const char *value)
   Range available_v4l_devices = {};
   get_device_range(pi, &available_v4l_devices);
   for (i=0; i < available_v4l_devices.descriptions.count; i++) {
+    printf("strstr( %s, %s )\n",
+	   available_v4l_devices.descriptions.items[i]->bytes, value);
     if (strstr(available_v4l_devices.descriptions.items[i]->bytes, value)) {
       puts("found it!");
       String_set(&priv->devpath, available_v4l_devices.strings.items[i]->bytes);
@@ -158,7 +164,7 @@ static int set_device(Instance *pi, const char *value)
   Range_free(&available_v4l_devices);
   
   if (String_is_none(priv->devpath)) {
-    /* Not found, try value. */
+    /* Not found, try value as a path. */
     String_set(&priv->devpath, value);
   }
 
@@ -438,9 +444,12 @@ static void get_input_range(Instance *pi, Range *range)
 }
 
 
-static int set_std(Instance *pi, const char *value)
+static int set_std_priv(V4L2Capture_private *priv)
 {
-  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  if (!String_is_valid(priv->std)) {
+    return -1;
+  }
+
   int rc = 0;
   int i;
   struct v4l2_standard standard = {};
@@ -452,10 +461,10 @@ static int set_std(Instance *pi, const char *value)
     rc = ioctl(priv->fd, VIDIOC_ENUMSTD, &standard);
     if (rc == -1) {
       perror("VIDIOC_ENUMSTD");
-      goto out;
+    goto out;
     }
     
-    if (streq((char*)standard.name, value))  {
+    if (streq((char*)standard.name, s(priv->std)))  {
       printf("%s (%d/%d)\n", standard.name, standard.frameperiod.denominator, standard.frameperiod.numerator);
       break;
     }
@@ -469,11 +478,15 @@ static int set_std(Instance *pi, const char *value)
     goto out;
   }
 
-  /* Everything worked, save value. */
-  String_set(&priv->std, value);
-
  out:
   return rc;
+}
+
+static int set_std(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  String_set(&priv->std, value);
+  return set_std_priv(priv);
 }
 
 
@@ -558,28 +571,70 @@ static void get_saturation_range(Instance *pi, Range *range)
 }
 
 
+static int set_brightness_priv(V4L2Capture_private *priv)
+{
+  if (!String_is_valid(priv->brightness)) {
+    return -1;
+  }
+
+  int rc = generic_v4l2_set(priv, V4L2_CID_BRIGHTNESS, atoi(s(priv->brightness)));
+  if (rc == 0) {
+    printf("brightness set to %s\n", s(priv->brightness));
+  }
+  return rc;
+}
+
+
 static int set_brightness(Instance *pi, const char *value)
 {
-  int rc;
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
-  rc = generic_v4l2_set(priv, V4L2_CID_BRIGHTNESS, atoi(value));
+  String_set(&priv->brightness, value);
+  return set_brightness_priv(priv);
+}
+
+static int set_saturation_priv(V4L2Capture_private *priv)
+{
+  if (!String_is_valid(priv->saturation)) {
+    return -1;
+  }
+
+  int rc;
+  rc = generic_v4l2_set(priv, V4L2_CID_SATURATION, atoi(s(priv->saturation)));
   if (rc == 0) {
-    String_set(&priv->brightness, value);
-    printf("brightness set to %s\n", s(priv->brightness));
+    String_set(&priv->saturation, s(priv->saturation));
+    printf("saturation set to %s\n", s(priv->saturation));
+  }
+  return rc;
+}
+
+
+static int set_saturation(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  String_set(&priv->saturation, value);
+  return set_saturation_priv(priv);
+}
+
+
+
+static int set_contrast_priv(V4L2Capture_private *priv)
+{
+  if (!String_is_valid(priv->contrast)) {
+    return -1;
+  }
+
+  int rc = generic_v4l2_set(priv, V4L2_CID_CONTRAST, atoi(s(priv->contrast)));
+  if (rc == 0) {
+    printf("contrast set to %s\n", s(priv->contrast));
   }
   return rc;
 }
 
 static int set_contrast(Instance *pi, const char *value)
 {
-  int rc;
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
-  rc = generic_v4l2_set(priv, V4L2_CID_CONTRAST, atoi(value));
-  if (rc == 0) {
-    String_set(&priv->contrast, value);
-    printf("contrast set to %s\n", s(priv->contrast));
-  }
-  return rc;
+  String_set(&priv->contrast, value);
+  return set_contrast_priv(priv);
 }
 
 static int set_autoexpose(Instance *pi, const char *value)
@@ -615,17 +670,6 @@ static int set_exposure(Instance *pi, const char *value)
   return rc;
 }
 
-static int set_saturation(Instance *pi, const char *value)
-{
-  int rc;
-  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
-  rc = generic_v4l2_set(priv, V4L2_CID_SATURATION, atoi(value));
-  if (rc == 0) {
-    String_set(&priv->saturation, value);
-    printf("saturation set to %s\n", s(priv->saturation));
-  }
-  return rc;
-}
 
 static int set_mute(Instance *pi, const char *value)
 {
@@ -811,7 +855,7 @@ static int V4L2_queue_setup(V4L2Capture_private *priv)
     .type = priv->vbuffer.type,
     .memory = priv->vbuffer.memory,
   };
-    
+
   rc = ioctl(priv->fd, VIDIOC_REQBUFS, &req);
   if (rc == -1) {
     perror("VIDIOC_REQBUFS");
@@ -842,13 +886,23 @@ static int V4L2_queue_setup(V4L2Capture_private *priv)
 }
 
 
+static void V4L2_queue_unmap(V4L2Capture_private *priv)
+{
+  int i;
+  for (i=0; i < NUM_BUFFERS; i++) {
+    if (priv->buffers[i].data) {
+      printf("unmapping buffer %d\n", i);
+      munmap(priv->buffers[i].data, priv->buffers[i].length);
+    }
+  }
+}
+
+
 static int stream_enable(V4L2Capture_private *priv)
 {
   int i, rc;
 
-  if (priv->buffers[0].data == 0L) {
-    V4L2_queue_setup(priv);
-  }
+  V4L2_queue_setup(priv);
 
   /* Queue up N-1 buffers.  Have to do this every time the stream is enabled.*/
   for (i=0; i < (NUM_BUFFERS-1); i++) {
@@ -935,6 +989,14 @@ static int set_fix(Instance *pi, const char *value)
 }
 
 
+static int set_timeout_ms(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  priv->timeout_ms = atoi(value);
+  return 0;
+  
+}
+
 static int set_drivermatch(Instance *pi, const char *value)
 {
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
@@ -944,6 +1006,8 @@ static int set_drivermatch(Instance *pi, const char *value)
 
 
 static Config config_table[] = {
+  /* NOTE: cti_set_int does not work here.  This module uses a custom
+     config handler that sets priv->handled. */
   { "snapshot",   set_snapshot, 0L, 0L},
   { "device",     set_device, 0L, get_device_range},
   { "drivermatch",     set_drivermatch, 0L, 0L},
@@ -961,8 +1025,7 @@ static Config config_table[] = {
   { "fps",        set_fps,   0L, 0L},
   { "frequency",  set_frequency,  0L, 0L},
   { "fix",        set_fix, 0L, 0L}, 
-  /* NOTE: cti_set_int does not work here.  This module uses custom
-     config handler that sets priv->handled. */
+  { "timeout_ms", set_timeout_ms, 0L, 0L}, 
 };
 
 
@@ -977,8 +1040,6 @@ static int find_control(V4L2Capture_private *priv, const char *label, struct v4l
     if (pass1) { local_verbose = 1; }
     pass1 = 0;
   }
-
-  puts(__func__);
 
   printf("[trying standard controls]\n");
 
@@ -1279,6 +1340,36 @@ static void V4L2Capture_tick(Instance *pi)
 
   /* Wait on oldest queued. */
   priv->vbuffer.index = priv->wait_on;
+
+
+  /* Check for timeout.  I wrote this to fix problems with em28xx USB
+     capture on aria, which seems to stall under certain conditions, I
+     suspect related to lirc_serial calling udelay().  But it might be
+     useful in other situations, too. */
+  if (priv->timeout_ms) {
+    struct pollfd fds[1] = {};
+    fds[0].events = POLLIN;
+    fds[0].fd = priv->fd;
+    rc = poll(fds, 1, priv->timeout_ms);
+    if (rc != 1) {
+      printf("*** timeout rc=%d, resetting\n", rc);
+      close(priv->fd);
+      V4L2_queue_unmap(priv);
+      priv->fd = open(s(priv->devpath), O_RDWR);
+      if (priv->fd == -1) {
+	/* FIXME: Set error status, do not call perror. */
+	perror(s(priv->devpath));
+	goto out;
+      }
+      else {
+	printf("device re-open Ok fd=%d\n", priv->fd);
+      }
+      
+      stream_enable(priv);
+      goto out;
+    }
+  }
+  
   rc = ioctl(priv->fd, VIDIOC_DQBUF, &priv->vbuffer);
   if (-1 == rc) {
     perror("VIDIOC_DQBUF");
