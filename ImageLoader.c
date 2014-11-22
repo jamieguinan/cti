@@ -22,10 +22,11 @@ static Input ImageLoader_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-enum { OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_JPEG, OUTPUT_H264, OUTPUT_AAC };
+enum { OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_YUV420P, OUTPUT_JPEG, OUTPUT_H264, OUTPUT_AAC };
 static Output ImageLoader_outputs[] = {
   [ OUTPUT_GRAY ] = { .type_label = "GRAY_buffer", .destination = 0L },
   [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .destination = 0L },
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
   [ OUTPUT_AAC ] = { .type_label = "AAC_buffer", .destination = 0L },
@@ -42,6 +43,7 @@ static int set_file(Instance *pi, const char *value)
   ImageType t;
   Gray_buffer *gray = 0L;
   YUV422P_buffer *y422p = 0L;
+  YUV420P_buffer *y420p = 0L;
   Jpeg_buffer *jpeg = 0L;
   H264_buffer *h264 = 0L;
   AAC_buffer *aac = 0L;
