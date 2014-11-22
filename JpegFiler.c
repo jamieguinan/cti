@@ -25,11 +25,29 @@ static Output JpegFiler_outputs[] = {
 typedef struct {
   Instance i;
   int fnumber;
-  // int ...;
+  String * prefix;
+  FILE * notify_fifo;
 } JpegFiler_private;
 
+static int set_prefix(Instance *pi, const char *value)
+{
+  JpegFiler_private * priv = (JpegFiler_private *)pi;
+  String_set(&priv->prefix, value);
+  return 0;
+}
+
+static int set_notify_fifo(Instance *pi, const char *value)
+{
+  JpegFiler_private * priv =  (JpegFiler_private *) pi;
+  priv->notify_fifo = fopen(value, "w");
+  printf("notify_fifo(%s) = %p\n", value, priv->notify_fifo);
+  return 0;
+}
+
+
 static Config config_table[] = {
-  // { "...",    set_..., get_..., get_..._range },
+  { "prefix",    set_prefix, 0L, 0L},
+  { "notify_fifo",    set_notify_fifo, 0L, 0L},
 };
 
 
@@ -46,7 +64,9 @@ static void Jpeg_handler(Instance *pi, void *msg)
 
   while (1) {
     priv->fnumber += 1;
-    sprintf(name, "%09d.jpg", priv->fnumber);
+    sprintf(name, "%s%09d.jpg", 
+	    priv->prefix ? s(priv->prefix) : "", 
+	    priv->fnumber);
     if (File_exists(S(name))) {
       continue;
     }
@@ -67,6 +87,10 @@ static void Jpeg_handler(Instance *pi, void *msg)
   if (jpeg_in->c.eof) {
     fprintf(stderr, "%s detected EOF\n", __func__);
     exit(0);
+  }
+
+  if (priv->notify_fifo) {
+    fprintf(priv->notify_fifo, "%s\n", name);
   }
 
   /* Discard input buffer. */

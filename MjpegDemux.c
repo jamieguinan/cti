@@ -200,6 +200,7 @@ static int set_rec_key(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   priv->rec_key = Keycode_from_string(value);
+  printf("set_rec_key(%s), rec_key=%d\n", value, priv->rec_key);
   return 0;
 }
 
@@ -800,6 +801,7 @@ static void MjpegDemux_instance_init(Instance *pi)
   priv->input = String_value_none();
   priv->output = String_value_none();
   priv->seek_amount = 10000000;
+  priv->rec_key = -1;		/* invalid key */
 }
 
 static Template MjpegDemux_template = {

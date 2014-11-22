@@ -45,7 +45,7 @@ static Output LinuxEvent_outputs[] = {
 
 typedef struct {
   Instance i;
-  int grab;			/* Set before opening to grab device. */
+  int grab;			/* Set before opening to grab device on open. */
   int devfd;
   String * devpath;
 } LinuxEvent_private;

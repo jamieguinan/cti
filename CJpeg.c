@@ -306,9 +306,9 @@ static void compress_and_post(Instance *pi,
   }
 
   if (report_time) {
-    printf("* %.5f (q=%d)\n", 
-	   tdiff, 
-	   priv->adjusted_quality);
+    dpf("* %.5f (q=%d)\n", 
+	tdiff, 
+	priv->adjusted_quality);
   }
 }
 

@@ -45,6 +45,35 @@ static void expand(char token[256])
   }
 }
 
+
+#include <dlfcn.h>
+static void load_module(ScriptV00_private *priv, const char *filename)
+{
+  /* File should contain a symbol made from the basename of the file plus "_init()" */
+  void * pmod = dlopen(filename, RTLD_NOW);
+  if (!pmod) {
+    fprintf(stderr, "failed to load %s\n", filename);
+    return;
+  }
+
+  String * fname2 = String_new(filename);
+  String * init_sym_name = String_basename(fname2);
+  int dot;
+  int i = String_find(init_sym_name, 0, ".so", &dot);
+  if (i > 0) {
+    String_shorten(init_sym_name, i);
+    String_cat1(init_sym_name, "_init");
+  }
+  
+  void (*init_sym)(void) = dlsym(pmod, s(init_sym_name));
+  if (init_sym) {
+    init_sym();
+  }
+  else {
+    fprintf(stderr, "could not find symbol %s\n", s(init_sym_name));
+  }
+}
+
 static void scan_file(ScriptV00_private *priv, const char *filename);
 
 static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
@@ -82,6 +111,9 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   }
   else if ((sscanf(line->bytes, "include %255s", token1) == 1)) {
     scan_file(priv, token1);
+  }
+  else if ((sscanf(line->bytes, "load %255s", token1) == 1)) {
+    load_module(priv, token1);
   }
   else if ((strstr(line->bytes, "system ") == line->bytes)) {
     int rc = system(line->bytes + strlen("system "));
