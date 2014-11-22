@@ -144,8 +144,13 @@ void String_free(String **s)
     fprintf(stderr, "%s: cannot free special NONE string!\n", __func__);
     return;
   }
-  String_clear_local(*s);
-  Mem_free(*s);
+  if (*s) {
+    String_clear_local(*s);
+    Mem_free(*s);
+  }
+  else {
+    fprintf(stderr, "%s: string is already free\n", __func__);
+  }
   *s = 0L;
 }
 
@@ -161,6 +166,18 @@ void String_trim_right(String *s)
       s->bytes[s->len-1] = '\0';
       s->len -= 1;
     }
+}
+
+void String_shorten(String *s, int newlength)
+{
+  if (newlength < 0) {
+    fprintf(stderr, "cannot set negative length string\n");
+    return;
+  }
+  if (newlength <= s->len) {
+    s->bytes[newlength] = 0;
+    s->len = newlength;
+  }
 }
 
 
@@ -303,6 +320,7 @@ int String_is_none(String * s)
 {
   return (s == _String_none ? 1 : 0);
 }
+
 
 void String_append_bytes(String *s, const char *bytes, int count)
 {
