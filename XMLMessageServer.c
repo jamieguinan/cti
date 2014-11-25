@@ -102,6 +102,8 @@ static void handle_client_message(IO_common *io, String *msg, Node * response)
       }
     }
   }
+  
+  /* FIXME: Clean up the "top" Node and the String instances above. */
 }
 
 
@@ -150,7 +152,7 @@ static void XMLMessageServer_tick(Instance *pi)
     Comm comm = { .io.s = -1 };
     Node * resp = node_new("response");
     comm.io.s = accept(priv->lsc.fd, (struct sockaddr *)&comm.io.addr, &comm.io.addrlen);
-    fprintf(stderr, "%s: new connection!\n", __func__);
+    // fprintf(stderr, "%s: new connection!\n", __func__);
     if (comm.io.s == -1) {    
       /* This is unlikely but possible.  If it happens, just clean up
 	 and return... */
