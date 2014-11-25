@@ -650,7 +650,9 @@ void Comm_write_string_with_byte(Comm * comm, String *str, char byteval)
 
 void Comm_free(Comm **comm)
 {
-  fprintf(stderr, "%s: %s:%d\n", __func__, __FILE__, __LINE__);  exit(1);
+  Comm_close(*comm);
+  Mem_free(*comm);
+  *comm = 0L;
 }
 
 
