@@ -12,6 +12,7 @@
 
 #include "CTI.h"
 #include "LinuxEvent.h"
+#include "Keycodes.h"
 
 const char * type_strings[] = {
   [EV_SYN] = "EV_SYN",
@@ -38,9 +39,9 @@ static Input LinuxEvent_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-//enum { /* OUTPUT_... */ };
+enum { OUTPUT_KEYCODE };
 static Output LinuxEvent_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
+  [ OUTPUT_KEYCODE ] = { .type_label = "Keycode_message", .destination = 0L },
 };
 
 typedef struct {
@@ -119,7 +120,13 @@ static void handle_next_event(Instance *pi)
   // printf("%s code=%d value=%d\n", ev_type_string(ev.type), ev.code, ev.value);
   if (ev.type == EV_KEY && ev.value == 1) {
     printf("%s code=%d value=%d\n", ev_type_string(ev.type), ev.code, ev.value);
+
+    if (pi->outputs[OUTPUT_KEYCODE].destination) {
+      PostData(Keycode_message_new(ev.code), pi->outputs[OUTPUT_KEYCODE].destination);
+    }
+
   }
+
 }
 
 
