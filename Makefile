@@ -134,6 +134,7 @@ OBJS= \
 	$(OBJDIR)/ExecProc.o \
 	$(OBJDIR)/dpf.o \
 	$(OBJDIR)/XMLMessageServer.o \
+	$(OBJDIR)/XMLMessageRelay.o \
 	$(OBJDIR)/socket_common.o \
 	$(OBJDIR)/XmlSubset.o \
 	$(OBJDIR)/nodetree.o \

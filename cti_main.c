@@ -72,6 +72,7 @@
 #include "SubProc.h"
 #include "ExecProc.h"
 #include "XMLMessageServer.h"
+#include "XMLMessageRelay.h"
 #include "Mpeg2Dec.h"
 #include "HTTPServer.h"
 #include "VirtualStorage.h"
@@ -197,6 +198,7 @@ int cti_main(int argc, char *argv[])
   SubProc_init();
   ExecProc_init();
   XMLMessageServer_init();
+  XMLMessageRelay_init();
   HTTPServer_init();
   VirtualStorage_init();
   ATSCTuner_init();
