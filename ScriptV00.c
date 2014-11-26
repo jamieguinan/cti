@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include "CTI.h"
 #include "Cfg.h"
@@ -52,7 +53,7 @@ static void load_module(ScriptV00_private *priv, const char *filename)
   /* File should contain a symbol made from the basename of the file plus "_init()" */
   void * pmod = dlopen(filename, RTLD_NOW);
   if (!pmod) {
-    fprintf(stderr, "failed to load %s\n", filename);
+    fprintf(stderr, "failed to load %s, error %s\n", filename, dlerror());
     return;
   }
 
