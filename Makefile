@@ -346,7 +346,7 @@ $(OBJDIR)/%.o: %.c Makefile
 
 $(OBJDIR)/%.so: %.c Makefile
 	@echo 'CC (dll)' $<
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SHARED_FLAGS) -DCTI_SHARED $< -o $@
+	@$(CC) $(CPPFLAGS) $(CFLAGS) $(SHARED_FLAGS) -DCTI_SHARED $< -o $@
 
 $(OBJDIR)/%.o: %.m Makefile
 	@echo CC $<
