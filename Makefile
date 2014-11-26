@@ -9,7 +9,7 @@ PKGCONFIGDIR ?= /usr/lib/pkgconfig
 HOSTARCH=$(shell uname -m)-$(shell uname -s)
 
 ifeq ($(ARCH),$(HOSTARCH))
-LDFLAGS+=-Wl,-rpath,$(shell pwd)/../../platform/$(ARCH)/lib
+LDFLAGS+=-Wl,-rpath,$(shell pwd)/../../platform/$(ARCH)/lib -lm
 endif
 
 CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
@@ -195,7 +195,7 @@ OBJS+=$(OBJDIR)/Signals.o
 #endif
 
 # Lirc
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../liblirc_client.so))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../liblirc_client.so 2> /dev/null ))
 OBJS+= $(OBJDIR)/Lirc.o
 CPPFLAGS+=-DHAVE_LIRC
 LDFLAGS+=-llirc_client
@@ -230,7 +230,7 @@ endif
 endif
 
 # libdv
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libdv.pc))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libdv.pc  2> /dev/null ))
 OBJS+=	$(OBJDIR)/LibDV.o
 CPPFLAGS+=$$(pkg-config libdv --cflags)
 LDFLAGS+=$$(pkg-config libdv --libs)
@@ -238,7 +238,7 @@ CPPFLAGS+=-DHAVE_LIBDV
 endif
 
 # libpng
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libpng.pc))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libpng.pc  2> /dev/null ))
 OBJS+=	$(OBJDIR)/LibPng.o
 CPPFLAGS+=$$(pkg-config libpng --cflags)
 LDFLAGS+=$$(pkg-config libpng --libs)
@@ -246,7 +246,7 @@ CPPFLAGS+=-DHAVE_LIBPNG
 endif
 
 # libmpeg2
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libmpeg2.pc))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libmpeg2.pc  2> /dev/null ))
 OBJS+=	$(OBJDIR)/Mpeg2Dec.o
 CPPFLAGS+=$$(pkg-config libmpeg2 --cflags)
 LDFLAGS+=$$(pkg-config libmpeg2 --libs)
@@ -254,7 +254,7 @@ CPPFLAGS+=-DHAVE_LIBMPEG2
 endif
 
 # Quicktime
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libquicktime.pc))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libquicktime.pc  2> /dev/null ))
 OBJS+=$(OBJDIR)/LibQuickTimeOutput.o
 CPPFLAGS+=$$(pkg-config libquicktime --cflags)
 LDFLAGS+=$$(pkg-config libquicktime --libs) -lpixman-1
@@ -263,7 +263,7 @@ endif
 
 # Ogg
 ifneq ($(ARCH),pentium3-Linux)
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/vorbisenc.pc))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/vorbisenc.pc 2> /dev/null ))
 OBJS+=$(OBJDIR)/OggOutput.o
 CPPFLAGS+=$$(pkg-config vorbisenc theoraenc --cflags)
 LDFLAGS+=$$(pkg-config vorbisenc theoraenc --libs)
@@ -273,7 +273,7 @@ endif
 
 # H264
 ifneq ($(ARCH),pentium3-Linux)
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc 2> /dev/null ))
 OBJS+=$(OBJDIR)/H264.o
 CPPFLAGS+=$$(pkg-config x264 --cflags)
 LDFLAGS+=$$(pkg-config x264 --libs)
@@ -282,14 +282,14 @@ endif
 endif
 
 # AAC
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../../include/faac.h))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../../include/faac.h  2> /dev/null ))
 OBJS+=$(OBJDIR)/AAC.o
 LDFLAGS+=-lfaac
 CPPFLAGS+=-DHAVE_AAC
 endif
 
 # SQLite
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/sqlite3.pc))
+ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/sqlite3.pc 2> /dev/null ))
 OBJS+=$(OBJDIR)/SQLite.o
 LDFLAGS += -lsqlite3
 CPPFLAGS+=-DHAVE_SQLITE3
@@ -297,7 +297,7 @@ endif
 
 # CUDA
 ifeq ($(ARCH),x86_64-Linux)
-ifneq (,$(shell /bin/ls /opt/cuda/bin/nvcc))
+ifneq (,$(shell /bin/ls /opt/cuda/bin/nvcc  2> /dev/null ))
 OBJS+=$(OBJDIR)/NVidiaCUDA.o
 LDFLAGS += 
 CPPFLAGS+=
@@ -346,7 +346,7 @@ $(OBJDIR)/%.o: %.c Makefile
 
 $(OBJDIR)/%.so: %.c Makefile
 	@echo 'CC (dll)' $<
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(SHARED_FLAGS) -DCTI_SHARED -c $< -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(SHARED_FLAGS) -DCTI_SHARED $< -o $@
 
 $(OBJDIR)/%.o: %.m Makefile
 	@echo CC $<
