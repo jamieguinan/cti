@@ -186,7 +186,7 @@ static int set_device(Instance *pi, const char *value)
     goto out;
   }
 
-  if (priv->drivermatch && !streq((const char*)v4l2_caps.driver, s(priv->drivermatch))) {
+  if (!String_is_none(priv->drivermatch) && !streq((const char*)v4l2_caps.driver, s(priv->drivermatch))) {
     fprintf(stderr, "driver mismatch %s != %s\n", v4l2_caps.driver, s(priv->drivermatch));
     close(priv->fd);
     priv->fd = -1;
