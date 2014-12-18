@@ -38,7 +38,7 @@ typedef struct {
   Items_per_sec bytes_per_sec;
 } Source;
 
-extern Source * Source_new(char * path /* , options? */ );
+extern Source * Source_new(const char * path /* , options? */ );
 extern ArrayU8 * Source_read(Source *source);
 extern int Source_poll_read(Source *source, int timeout);
 extern int Source_seek(Source *source, long amount);
@@ -47,6 +47,7 @@ extern long Source_tell(Source *source);
 extern void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData);
 extern void Source_set_persist(Source *source, int value);
 extern void Source_close_current(Source *source);
+extern void Source_reopen(Source *source);
 extern void Source_free(Source **source);
 
 
@@ -54,10 +55,12 @@ typedef struct {
   IO_common io;
 } Sink;
 
-extern Sink * Sink_new(char * path);
+extern Sink * Sink_allocate(const char * path);
+extern Sink * Sink_new(const char * path);
 extern void Sink_write(Sink *sink, void *data, int length);
 extern void Sink_flush(Sink *sink);
 extern void Sink_close_current(Sink *sink);
+extern void Sink_reopen(Sink *sink);
 extern void Sink_free(Sink **sink);
 
 

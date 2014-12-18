@@ -48,7 +48,6 @@ enum { PARSING_HEADER, PARSING_DATA };
 
 typedef struct {
   Instance i;
-  String *input;
   Source *source;
   ArrayU8 *chunk;
   String *boundary;
@@ -58,13 +57,11 @@ typedef struct {
 
   int enable;			/* Set this to start processing. */
 
-  String *output;			/* Side channel. */
-  Sink *output_sink;
+  Sink *output_sink;		/* Side channel. */
   int output_enable;
 
   int rec_key;
 
-  String wavout;			/* Audio side channel. */
   Sink *wavout_sink;
 
   long stop_source_at;			/* Stop and close source once it passes this offset. */
@@ -116,10 +113,6 @@ static int set_input(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = (MjpegDemux_private *)pi;
 
-  if (priv->source) {
-    Source_free(&priv->source);
-  }
-
   if (value[0] == '$') {
     value = getenv(value+1);
     if (!value) {
@@ -128,8 +121,7 @@ static int set_input(Instance *pi, const char *value)
     }
   }
 
-  String_set(&priv->input, value);
-  priv->source = Source_new(s(priv->input));
+  priv->source = Source_new(value);
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);
@@ -154,15 +146,19 @@ static int set_output(Instance *pi, const char *value)
     }
   }
 
-  String_set(&priv->output, value);
+  if (priv->output_sink) {
+    Sink_free(&priv->output_sink);
+  }
+
+  priv->output_sink = Sink_allocate(value);
   return 0;
 }
 
 
 static int set_output_enable_priv(MjpegDemux_private *priv, int x)
 {
-  if (String_is_none(priv->output)) {
-    fprintf(stderr, "%s: output name is not set\n", __func__);
+  if (!priv->output_sink) {
+    fprintf(stderr, "%s: output is not set\n", __func__);
     return 1;
   }
 
@@ -173,15 +169,12 @@ static int set_output_enable_priv(MjpegDemux_private *priv, int x)
 
   priv->output_enable = x;
 
-  if (priv->output_sink) {
-    Sink_free(&priv->output_sink);
-  }
-
   if (priv->output_enable) {
-    fprintf(stderr, "output enabled\n");
-    priv->output_sink = Sink_new(s(priv->output));
+    Sink_reopen(priv->output_sink);
+    fprintf(stderr, "output [re]enabled\n");
   }
   else {
+    Sink_close_current(priv->output_sink);
     fprintf(stderr, "output disbled\n");
   }
   return 0;
@@ -208,9 +201,6 @@ static int set_rec_key(Instance *pi, const char *value)
 static int set_wavout(Instance *pi, const char *value)
 {
   MjpegDemux_private *priv = (MjpegDemux_private *)pi;
-  if (priv->wavout_sink) {
-    Sink_free(&priv->wavout_sink);
-  }
 
   if (value[0] == '$') {
     value = getenv(value+1);
@@ -220,8 +210,11 @@ static int set_wavout(Instance *pi, const char *value)
     }
   }
 
-  String_set_local(&priv->wavout, value);
-  priv->wavout_sink = Sink_new(sl(priv->wavout));
+  if (priv->wavout_sink) {
+    Sink_free(&priv->wavout_sink);
+  }
+
+  priv->wavout_sink = Sink_new(value);
 
   return 0;
 }
@@ -233,9 +226,22 @@ static int set_enable(Instance *pi, const char *value)
 
   priv->enable = atoi(value);
 
-  if (priv->enable && !priv->source) {
-    fprintf(stderr, "MjpegDemux: cannot enable because source not set!\n");
-    priv->enable = 0;
+  if (priv->enable) {
+    if (!priv->source) {
+      fprintf(stderr, "MjpegDemux: cannot enable because source not set!\n");
+      priv->enable = 0;
+    }
+    else {
+      if (!IO_ok(priv->source)) {
+	Source_reopen(priv->source);
+      }
+    }
+  }
+
+  else {
+    if (priv->source) {
+      Source_close_current(priv->source);
+    }
   }
   
   printf("MjpegDemux enable set to %d\n", priv->enable);
@@ -456,8 +462,7 @@ static void MjpegDemux_tick(Instance *pi)
       if (priv->retry) {
 	fprintf(stderr, "%s: retrying\n", __func__);
 	Source_close_current(priv->source);
-	Source_free(&priv->source);
-	priv->source = Source_new(s(priv->input));
+	Source_reopen(priv->source);
       }
       sleep_and_return = 1;
 
@@ -764,7 +769,7 @@ static void MjpegDemux_tick(Instance *pi)
   }
 
   /* Also, side-channel output. */
-  if (priv->output_sink) {
+  if (priv->output_sink && IO_ok(priv->output_sink)) {
     Sink_write(priv->output_sink, priv->chunk->data, priv->current.eoh + 4 + priv->current.content_length);
   }
 
@@ -798,8 +803,6 @@ static void MjpegDemux_instance_init(Instance *pi)
   priv->use_feedback = 0;
   priv->video.stream_t0 = -1.0;
   priv->feedback_threshold = 20;
-  priv->input = String_value_none();
-  priv->output = String_value_none();
   priv->seek_amount = 10000000;
   priv->rec_key = -1;		/* invalid key */
 }

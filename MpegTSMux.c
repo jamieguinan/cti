@@ -762,7 +762,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     }
     
     priv->output_sink = Sink_new(sl(priv->output));
-    String *tmp = String_new(sl(priv->output_sink->io.generated_name));
+    String *tmp = String_new(s(priv->output_sink->io.generated_path));
     String_list_add(priv->m3u8_ts_files, &tmp);
     m3u8_files_update(priv);
     priv->m3u8_pts_start = pts_now;

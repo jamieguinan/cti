@@ -17,7 +17,24 @@
 #include <poll.h>		/* poll */
 #include <fcntl.h>		/* fcntl */
 
-static void io_close_current(IO_common *io);
+
+static void io_close_current(IO_common *io)
+{
+  if (io->f) {
+    fclose(io->f);
+    io->f = NULL;
+  }
+  else if (io->p) {
+    pclose(io->p);
+    io->p = NULL;
+  }
+  else if (io->s != -1) {   
+    close(io->s);
+    io->s = -1;
+  }
+  io->state = IO_CLOSED;
+}
+
 
 static void io_open(IO_common *io, const char *mode)
 {
@@ -150,13 +167,22 @@ static void io_write(IO_common * io, void *data, int length)
 }
 
 
-Sink *Sink_new(char * path)
+
+Sink * Sink_allocate(const char * path)
+{
+  /* Allocate but do not open. */
+  Sink *sink = Mem_calloc(1, sizeof(*sink));
+  String_set(&sink->io.path, path);
+  sink->io.state = IO_CLOSED;
+  return sink;
+}
+
+
+Sink *Sink_new(const char * path)
 {
   Sink *sink = Mem_calloc(1, sizeof(*sink));
-  dpf("%s(%s)\n", __func__, path);
   String_set(&sink->io.path, path);
   io_open(&sink->io, "wb");
-
   return sink;
 }
 
@@ -178,27 +204,19 @@ void Sink_flush(Sink *sink)
 }
 
 
-static void io_close_current(IO_common *io)
-{
-  if (io->f) {
-    fclose(io->f);
-    io->f = NULL;
-  }
-  else if (io->p) {
-    pclose(io->p);
-    io->p = NULL;
-  }
-  else if (io->s != -1) {   
-    close(io->s);
-    io->s = -1;
-  }
-  io->state = IO_CLOSED;
-}
-
-
 void Sink_close_current(Sink *sink)
 {
   io_close_current(&sink->io);
+}
+
+
+void Sink_reopen(Sink *sink)
+{
+  if (!sink) {
+    fprintf(stderr, "%s: NULL sink\n", __func__);
+    return;
+  }
+  io_open(&sink->io, "wb");
 }
 
 
@@ -210,7 +228,7 @@ void Sink_free(Sink **sink)
 }
 
 
-Source * Source_new(char * path)
+Source * Source_new(const char * path)
 {
   Source * source = Mem_calloc(1, sizeof(*source));
 
@@ -421,6 +439,16 @@ void Source_close_current(Source *source)
     source->io.s = -1;
   }
   source->io.state = IO_CLOSED;
+}
+
+
+void Source_reopen(Source * source)
+{
+  if (!source) {
+    fprintf(stderr, "%s: NULL source\n", __func__);
+    return;
+  }
+  io_open(&source->io, "rb");
 }
 
 
