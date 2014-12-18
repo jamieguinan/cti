@@ -19,19 +19,22 @@
 
 static void io_close_current(IO_common *io);
 
-static void io_open(IO_common *io, char *name, const char *mode)
+static void io_open(IO_common *io, const char *mode)
 {
   int rc;
 
   io->s = -1;			/* Default to invalid socket value. */
+  io->state = IO_CLOSED;
 
-  char *colon = strchr(name, ':');
+  char * path = s(io->path);	/* convenience */
+
+  char * colon = strchr(path, ':');
   if (colon && isdigit(colon[1])) {
     /* Split into host, port parts. */
-    int hostlen = colon - name;
-    char host[strlen(name)+1];
-    char port[strlen(name)+1];
-    strncpy(host, name, hostlen); host[hostlen] = 0;
+    int hostlen = colon - path;
+    char host[strlen(path)+1];
+    char port[strlen(path)+1];
+    strncpy(host, path, hostlen); host[hostlen] = 0;
     strcpy(port, colon+1);
     //  fprintf(stderr, "host=%s port=%s\n", host, port);
     /* Connect to remote TCP port. */
@@ -66,6 +69,7 @@ static void io_open(IO_common *io, char *name, const char *mode)
       /* Note: alternatively, could keep the socket and retry the open... */
       close(io->s);
       io->s = -1;
+      io->state = IO_CLOSED;
       goto out;
     }
 
@@ -74,7 +78,7 @@ static void io_open(IO_common *io, char *name, const char *mode)
   }
   else { 
     /* File.  Apply strftime() to allow time-based naming. */
-    char out_name[256];
+    char out_path[256];
     time_t t = time(NULL);
     struct tm *lt = localtime(&t);
     if (!lt) {
@@ -82,22 +86,24 @@ static void io_open(IO_common *io, char *name, const char *mode)
       goto out;
     }
 
-    if (name[0] == '|') {
-      /* Open as pipe, only for output. */
-      strftime(out_name, sizeof(out_name), name, lt);
-      io->p = popen(out_name+1, "w");
+    if (path[0] == '|' && mode[0] == 'w') {
+      /* Open as pipe.  I noted at one point this worked only for
+	 output.  Don't remember why, but I'm keeping the 'w' test
+	 above just in case. */
+      strftime(out_path, sizeof(out_path), path, lt);
+      io->p = popen(out_path+1, "w");
       if (io->p) {
 	io->state = IO_OPEN_PIPE;
-	String_set_local(&io->generated_name, out_name);
+	String_set(&io->generated_path, out_path);
       }
     }
     else {
-      /* Open as file. */
-      strftime(out_name, sizeof(out_name), name, lt);
-      io->f = fopen(out_name, mode);
+      /* Open as regular file. */
+      strftime(out_path, sizeof(out_path), path, lt);
+      io->f = fopen(out_path, mode);
       if (io->f) {
 	io->state = IO_OPEN_FILE;
-	String_set_local(&io->generated_name, out_name);
+	String_set(&io->generated_path, out_path);
       }
     }
   }
@@ -107,7 +113,7 @@ static void io_open(IO_common *io, char *name, const char *mode)
 }
 
 
-static void io_write(IO_common *io, void *data, int length)
+static void io_write(IO_common * io, void *data, int length)
 {
   int n;
 
@@ -144,16 +150,12 @@ static void io_write(IO_common *io, void *data, int length)
 }
 
 
-Sink *Sink_new(char *name)
+Sink *Sink_new(char * path)
 {
   Sink *sink = Mem_calloc(1, sizeof(*sink));
-
-  dpf("%s(%s)\n", __func__, name);
-
-  sink->io.s = -1;			/* Default to invalid socket value. */
-  sink->io.state = IO_CLOSED;
-
-  io_open(&sink->io, name, "wb");
+  dpf("%s(%s)\n", __func__, path);
+  String_set(&sink->io.path, path);
+  io_open(&sink->io, "wb");
 
   return sink;
 }
@@ -208,87 +210,19 @@ void Sink_free(Sink **sink)
 }
 
 
-Source *Source_new(char *name)
+Source * Source_new(char * path)
 {
-  int rc;
-  Source *source = Mem_calloc(1, sizeof(*source));
+  Source * source = Mem_calloc(1, sizeof(*source));
 
-  source->io.s = -1;			/* Default to invalid socket value. */
-  source->io.state = IO_CLOSED;
+  String_set(&source->io.path, path);
+  io_open(&source->io, "rb");
 
-  char *colon = strchr(name, ':');
-  if (colon && isdigit(colon[1])) {
-    /* Split into host, port parts. */
-    int hostlen = colon - name;
-    char host[strlen(name)+1];
-    char port[strlen(name)+1];
-    strncpy(host, name, hostlen); host[hostlen] = 0;
-    strcpy(port, colon+1);
-    fprintf(stderr, "host=%s port=%s\n", host, port);
-    /* Connect to remote TCP port. */
-
-    struct addrinfo hints = {
-      .ai_socktype = SOCK_STREAM,
-    };
-    struct addrinfo *results = 0L;
-
-    rc = getaddrinfo(host, port,
-			 &hints,
-			 &results);
-    if (rc != 0) {
-      perror("getaddrinfo"); goto out;
-    }
-
-    source->io.s = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
-    /* NOTE: Could be additional entries in linked list above. */
-
-    if (source->io.s == -1) {
-      perror("socket"); goto out;
-    }
-
-    rc = connect(source->io.s, results->ai_addr, results->ai_addrlen);
-    if (rc == -1) {
-      perror("connect"); 
-      /* Note: alternatively, could keep the socket and retry the open... */
-      close(source->io.s);
-      source->io.s = -1;
-      source->io.state = IO_CLOSED;
-      goto out;
-    }
-
-    freeaddrinfo(results);  results = 0L;
-  }
-#if 0
-  /* FIXME: This code is flaky... */
-  else if (String_ends_with(S(name), "|")) {
-    /* Pipe. */
-    char tmpname[strlen(name)]; strncpy(tmpname, name, strlen(name)-1);
-    source->persist = 1;
-    source->io.p = popen(tmpname, "rb");
-    if (!source->io.p) {
-      perror(tmpname);
-    }
-    else {
-      source->file_size = 0;
+  if (source->io.state == IO_OPEN_FILE) {
+    if (fseek(source->io.f, 0, SEEK_END) == 0) {
+      source->file_size = ftell(source->io.f);
+      fseek(source->io.f, 0, SEEK_SET);
     }
   }
-#endif
-  else {
-    /* Regular file. */
-    source->persist = 1;
-    source->io.f = fopen(name, "rb");
-    if (!source->io.f) {
-      perror(name);
-    }
-    else {
-      if (fseek(source->io.f, 0, SEEK_END) == 0) {
-	source->file_size = ftell(source->io.f);
-	fseek(source->io.f, 0, SEEK_SET);
-      }
-    }
-  }
-  
- out:
   return source;
 }
 
@@ -555,14 +489,14 @@ void Source_set_persist(Source *source, int value)
 
 
 /* New 2-way Comm interface. */
-Comm * Comm_new(char * name)
+Comm * Comm_new(char * path)
 {
   Comm * comm = Mem_calloc(1, sizeof(*comm));
 
   comm->io.s = -1;			/* Default to invalid socket value. */
   comm->io.state = IO_CLOSED;
-  
-  io_open(&comm->io, name, "w+b");
+  String_set(&comm->io.path, path);
+  io_open(&comm->io, "w+b");
   
   return comm;
 }

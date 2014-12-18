@@ -17,6 +17,8 @@ typedef enum {
 } IO_state;
 
 typedef struct {
+  String * path;		/* name of file or socket path */
+  String * generated_path;	/* strftime output */
   FILE *f;			/* file */
   FILE *p;			/* pipe (popen) */
   int s;			/* socket */
@@ -25,7 +27,6 @@ typedef struct {
   IO_state state;
   unsigned int read_timeout_ms;
   ArrayU8 * extra;		/* extra data left over after certain operations */
-  String generated_name;
 } IO_common;
 
 typedef struct {
@@ -37,7 +38,7 @@ typedef struct {
   Items_per_sec bytes_per_sec;
 } Source;
 
-extern Source *Source_new(char *name /* , options? */ );
+extern Source * Source_new(char * path /* , options? */ );
 extern ArrayU8 * Source_read(Source *source);
 extern int Source_poll_read(Source *source, int timeout);
 extern int Source_seek(Source *source, long amount);
@@ -53,7 +54,7 @@ typedef struct {
   IO_common io;
 } Sink;
 
-extern Sink *Sink_new(char *name);
+extern Sink * Sink_new(char * path);
 extern void Sink_write(Sink *sink, void *data, int length);
 extern void Sink_flush(Sink *sink);
 extern void Sink_close_current(Sink *sink);
@@ -67,7 +68,7 @@ typedef struct {
 
 #define IO_ok(x)  (x->io.state != IO_CLOSED)
 
-extern Comm * Comm_new(char * name);
+extern Comm * Comm_new(char * path);
 extern void Comm_close(Comm * comm);
 extern void Comm_write_string_with_byte(Comm * comm, String *str, char byteval);
 extern String * Comm_read_string_to_byte(Comm * comm, char byteval);
