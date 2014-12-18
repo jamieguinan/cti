@@ -462,7 +462,12 @@ String_list * String_split_s(const char *src, const char *splitter)
 }
 
 
-static String_list *_string_list_none;
+static String_list __String_list_none = {
+  .len = 0,
+  .available = 0,
+};
+
+static String_list * _string_list_none = &__String_list_none;
 
 
 int String_list_is_none(String_list *slst)
