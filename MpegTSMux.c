@@ -136,7 +136,6 @@ typedef struct {
   Instance i;
   /* TS name format string, using '%s' will generate sequential
      names. */
-  String output;
   Sink *output_sink;
 
   /* TS sequence duration in seconds. */
@@ -238,10 +237,6 @@ static int set_pmt_pcrpid(Instance *pi, const char *value)
 static int set_output(Instance *pi, const char *value)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
-  if (priv->output_sink) {
-    Sink_free(&priv->output_sink);
-  }
-
   if (value[0] == '$') {
     value = getenv(value+1);
     if (!value) {
@@ -250,8 +245,11 @@ static int set_output(Instance *pi, const char *value)
     }
   }
   
-  String_set_local(&priv->output, value);
-  // priv->output_sink = Sink_new(sl(priv->output));
+  if (priv->output_sink) {
+    Sink_free(&priv->output_sink);
+  }
+
+  priv->output_sink = Sink_allocate(value);
 
   return 0;
 }
@@ -755,13 +753,10 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     return;
   }
 
-  if (sl(priv->output)) {
+  if (priv->output_sink) {
     /* flush() always starts a new output segment. */
-    if (priv->output_sink) {
-      Sink_free(&priv->output_sink);
-    }
-    
-    priv->output_sink = Sink_new(sl(priv->output));
+    Sink_close_current(priv->output_sink);
+    Sink_reopen(priv->output_sink);
     String *tmp = String_new(s(priv->output_sink->io.generated_path));
     String_list_add(priv->m3u8_ts_files, &tmp);
     m3u8_files_update(priv);
@@ -824,7 +819,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
 	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
       }
 
-      if (sl(priv->output)) {
+      if (priv->output_sink) {
 	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
       }
 
@@ -845,7 +840,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
 	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
       }
 
-      if (sl(priv->output)) {
+      if (priv->output_sink) {
 	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
       }
 
@@ -868,7 +863,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
       PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
     }
 
-    if (sl(priv->output)) {
+    if (priv->output_sink) {
       Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
     }
 

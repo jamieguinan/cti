@@ -35,7 +35,6 @@ enum { PARSING_HEADER, PARSING_FRAME };
 
 typedef struct {
   Instance i;
-  String input;
   Source *source;
   ArrayU8 *chunk;
   String *boundary;
@@ -71,10 +70,6 @@ typedef struct {
 static int set_input(Instance *pi, const char *value)
 {
   Y4MInput_private *priv = (Y4MInput_private *)pi;
-  if (priv->source) {
-    Source_free(&priv->source);
-  }
-
   if (value[0] == '$') {
     value = getenv(value+1);
     if (!value) {
@@ -83,8 +78,11 @@ static int set_input(Instance *pi, const char *value)
     }
   }
 
-  String_set_local(&priv->input, value);
-  priv->source = Source_new(sl(priv->input));
+  if (priv->source) {
+    Source_free(&priv->source);
+  }
+
+  priv->source = Source_new(value);
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);

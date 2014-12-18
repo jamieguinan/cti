@@ -30,7 +30,6 @@ enum { Y4MOUTPUT_STATE_INIT, Y4MOUTPUT_STATE_HEADER_SENT, Y4MOUTPUT_STATE_SENDIN
 
 typedef struct {
   Instance i;
-  String output;		/* File or host:port, used to intialize sink. */
   String interlace;
   Sink *sink;
   int state;
@@ -49,8 +48,7 @@ static int set_output(Instance *pi, const char *value)
     Sink_free(&priv->sink);
   }
 
-  String_set_local(&priv->output, value);
-  priv->sink = Sink_new(sl(priv->output));
+  priv->sink = Sink_new(value);
 
   return 0;
 }

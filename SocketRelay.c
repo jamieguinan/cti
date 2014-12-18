@@ -27,7 +27,6 @@ static Output SocketRelay_outputs[] = {
 
 typedef struct {
   Instance i;
-  String input;
   Source * source;
   int enable;
 } SocketRelay_private;
@@ -41,8 +40,7 @@ static int set_input(Instance *pi, const char *value)
     Source_free(&priv->source);
   }
 
-  String_set_local(&priv->input, value);
-
+  priv->source = Source_allocate(value);
   return 0;
 }
 
@@ -56,13 +54,14 @@ static int set_enable(Instance *pi, const char *value)
   }
   priv->enable = newval;
 
-  if (priv->source) {
-    /* Free current source if either closing or re-enabling. */
-    Source_free(&priv->source);
-  }
-
   if (priv->enable) {
-    priv->source = Source_new(sl(priv->input));
+    if (priv->source) {
+      Source_reopen(priv->source);
+    }
+    else {
+      fprintf(stderr, "%s/%s: source is not set\n", __FILE__, __func__);
+      priv->enable = 0;
+    }
   }
 
   return 0;

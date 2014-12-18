@@ -49,8 +49,7 @@ typedef struct {
   Instance i;
   int pts;
   x264_t *encoder;
-  String output;			/* Side channel. */
-  Sink *output_sink;
+  Sink *output_sink;		/* Side channel. */
 
   /* These next few values should point to x264_preset_*[] from x264.h */
   const char * preset;
@@ -102,10 +101,6 @@ const char * nal_priority_e_strs[] = {
 static int set_output(Instance *pi, const char *value)
 {
   H264_private *priv = (H264_private *)pi;
-  if (priv->output_sink) {
-    Sink_free(&priv->output_sink);
-  }
-
   if (value[0] == '$') {
     value = getenv(value+1);
     if (!value) {
@@ -114,8 +109,10 @@ static int set_output(Instance *pi, const char *value)
     }
   }
   
-  String_set_local(&priv->output, value);
-  priv->output_sink = Sink_new(sl(priv->output));
+  if (priv->output_sink) {
+    Sink_free(&priv->output_sink);
+  }
+  priv->output_sink = Sink_new(value);
 
   return 0;
 }
@@ -392,7 +389,7 @@ static void YUV420P_handler(Instance *pi, void *msg)
       PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
 
-    if (frame_size > 0 && sl(priv->output)) {
+    if (frame_size > 0 && priv->output_sink) {
       Sink_write(priv->output_sink, nal[0].p_payload, frame_size);
     }
 

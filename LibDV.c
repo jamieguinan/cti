@@ -43,7 +43,6 @@ static Output LibDV_outputs[] = {
 typedef struct {
   Instance i;
   dv_decoder_t *decoder;
-  String input;
   Source *source;
   ArrayU8 *chunk;
   int needData;
@@ -59,10 +58,6 @@ typedef struct {
 static int set_input(Instance *pi, const char *value)
 {
   LibDV_private *priv = (LibDV_private *)pi;
-  if (priv->source) {
-    Source_free(&priv->source);
-  }
-
   if (value[0] == '$') {
     value = getenv(value+1);
     if (!value) {
@@ -71,8 +66,10 @@ static int set_input(Instance *pi, const char *value)
     }
   }
   
-  String_set_local(&priv->input, value);
-  priv->source = Source_new(sl(priv->input));
+  if (priv->source) {
+    Source_free(&priv->source);
+  }
+  priv->source = Source_new(value);
   priv->frame_counter = 0;
 
   if (priv->chunk) {

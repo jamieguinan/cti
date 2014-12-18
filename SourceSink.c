@@ -228,6 +228,15 @@ void Sink_free(Sink **sink)
 }
 
 
+Source * Source_allocate(const char * path)
+{
+  Source * source = Mem_calloc(1, sizeof(*source));
+  String_set(&source->io.path, path);  
+  source->io.state = IO_CLOSED;
+  return source;
+}
+
+
 Source * Source_new(const char * path)
 {
   Source * source = Mem_calloc(1, sizeof(*source));

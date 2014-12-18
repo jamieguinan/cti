@@ -29,7 +29,6 @@ static Output RawSource_outputs[] = {
 
 typedef struct {
   Instance i;
-  String input;
   Source *source;
   int read_timeout;
   uint64_t bytes_total;
@@ -42,11 +41,11 @@ typedef struct {
 static int set_input(Instance *pi, const char *value)
 {
   RawSource_private *priv = (RawSource_private *)pi;
+
   if (priv->source) {
     Source_free(&priv->source);
   }
-  String_set_local(&priv->input, value);
-  priv->source = Source_new(sl(priv->input));
+  priv->source = Source_new(value);
 
   if (priv->source && pi->outputs[OUTPUT_CONFIG].destination) {
     /* New source activated, send reset message. */
@@ -77,7 +76,7 @@ static void RawSource_move_data(Instance *pi)
   if (priv->source && priv->read_timeout && Source_poll_read(priv->source, priv->read_timeout) == 0) {
     /* No read activity, assume stalled. */
     Source_close_current(priv->source);
-    set_input(pi, sl(priv->input));
+    Source_reopen(priv->source);
   }
   
   if (!priv->source) {
@@ -91,7 +90,7 @@ static void RawSource_move_data(Instance *pi)
 
   if (priv->source->eof) {
     Source_close_current(priv->source);
-    set_input(pi, sl(priv->input));
+    Source_reopen(priv->source);
   }
 
   dpf("%s: %d bytes, %" PRIu64 " bytes total (%" PRIu64 "MB)\n", 
@@ -135,12 +134,13 @@ static void RawSource_tick(Instance *pi)
   RawSource_private *priv = (RawSource_private *)pi;
   int wait_flag;
 
-  if (!priv->source && sl(priv->input)) {
+  if (priv->source && !IO_ok(priv->source)) {
     /* Retry. */
-    set_input(pi, sl(priv->input));
+    Source_close_current(priv->source);
+    Source_reopen(priv->source);
   }
 
-  if (!sl(priv->input)) {
+  if (!priv->source) {
     wait_flag = 1;
   }
   else {

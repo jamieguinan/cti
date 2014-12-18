@@ -34,7 +34,6 @@ static Output AVIDemux_outputs[] = {
 
 typedef struct {
   Instance i;
-  String input;
   Source *source;
   ArrayU8 *chunk;
   int needData;
@@ -59,9 +58,7 @@ static int set_input(Instance *pi, const char *value)
   if (priv->source) {
     Source_free(&priv->source);
   }
-
-  String_set_local(&priv->input, value);
-  priv->source = Source_new(sl(priv->input));
+  priv->source = Source_new(value);
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);

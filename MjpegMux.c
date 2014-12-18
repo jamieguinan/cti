@@ -41,7 +41,6 @@ static Output MjpegMux_outputs[] = {
 
 typedef struct {
   Instance i;
-  String output;		/* File or host:port, used to intialize sink. */
   Sink *sink;
   int seq;
   int every;
@@ -52,14 +51,12 @@ typedef struct {
 static int set_output(Instance *pi, const char *value)
 {
   MjpegMux_private *priv = (MjpegMux_private *)pi;
+  fprintf(stderr, "set_output(%s)\n", value);
+
   if (priv->sink) {
     Sink_free(&priv->sink);
   }
-
-  fprintf(stderr, "set_output(%s)\n", value);
-
-  String_set_local(&priv->output, value);
-  priv->sink = Sink_new(sl(priv->output));
+  priv->sink = Sink_new(value);
   priv->every = 1;
 
   return 0;
@@ -69,14 +66,10 @@ static int set_output(Instance *pi, const char *value)
 static int do_restart(Instance *pi, const char *value)
 {
   MjpegMux_private *priv = (MjpegMux_private *)pi;
-  if (sl(priv->output)) {
-    /* Use a copy of the string, because priv->output.bytes will get 
-       deleted in String_set_local()  */
-    char output[strlen(sl(priv->output))+1];
-    strcpy(output, sl(priv->output));
-    set_output(pi, output);
+  if (priv->sink) {
+    Sink_close_current(priv->sink);
+    Sink_reopen(priv->sink);
   }
-
   return 0;
 }
 
@@ -92,7 +85,6 @@ static Config config_table[] = {
 static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
-  MjpegMux_private *priv = (MjpegMux_private *)pi;
 }
 
 #define BOUNDARY "--0123456789NEXT\r\n"

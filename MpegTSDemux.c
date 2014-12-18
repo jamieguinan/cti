@@ -87,7 +87,6 @@ static int packetCounter = 0;
 
 typedef struct {
   Instance i;
-  String input;
   Source *source;
   ArrayU8 *chunk;
   int needData;
@@ -133,10 +132,6 @@ typedef struct {
 static int set_input(Instance *pi, const char *value)
 {
   MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
-  if (priv->source) {
-    Source_free(&priv->source);
-  }
-
   if (value[0] == '$') {
     value = getenv(value+1);
     if (!value) {
@@ -145,8 +140,11 @@ static int set_input(Instance *pi, const char *value)
     }
   }
 
-  String_set_local(&priv->input, value);
-  priv->source = Source_new(sl(priv->input));
+  if (priv->source) {
+    Source_free(&priv->source);
+  }
+
+  priv->source = Source_new(value);
 
   if (priv->chunk) {
     ArrayU8_cleanup(&priv->chunk);
@@ -697,8 +695,7 @@ static void MpegTSDemux_tick(Instance *pi)
       if (priv->retry) {
 	fprintf(stderr, "%s: retrying.\n", __func__);
 	sleep(1);
-	Source_free(&priv->source);
-	priv->source = Source_new(sl(priv->input));
+	Source_reopen(priv->source);
       }
       else if (priv->exit_on_eof) {
 	exit(0);
