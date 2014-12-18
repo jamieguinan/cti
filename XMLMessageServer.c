@@ -1,6 +1,8 @@
 /*
- * This module handles remote "config instance key value" requests,
+ * This module handles remote "config intent value" requests,
  * one message per connection.  Might add other functionality later.
+ * "intent" is mapped to a instance/value pair via "intent" control
+ * messages.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -30,7 +32,33 @@ typedef struct {
   Instance i;
   listen_common lsc;
   int enable;
+  Index * intents;
 } XMLMessageServer_private;
+
+
+typedef struct {
+  /* The intent name is stored in the containing index. */
+  Instance * instance;
+  String * key_str;
+} Intent;
+
+
+Intent * Intent_new(Instance * instance, String * key_str)
+{
+  Intent * i = Mem_calloc(1, sizeof(*i));
+  i->instance = instance;
+  i->key_str = String_dup(key_str);
+  return i;
+}
+
+
+Intent * Intent_lookup(XMLMessageServer_private * priv, String * intent_str)
+{
+  int err;
+  Intent * it = Index_find_string(priv->intents, intent_str, &err);
+  return it;
+}
+
 
 
 static int set_v4port(Instance *pi, const char *value)
@@ -46,13 +74,35 @@ static int set_v4port(Instance *pi, const char *value)
 static int set_enable(Instance *pi, const char *value)
 {
   XMLMessageServer_private *priv = (XMLMessageServer_private *)pi;
-
   return listen_socket_setup(&priv->lsc);
 }
+
+
+static int set_intent(Instance *pi, const char *value)
+{
+  /* value is colon-separated, intentstring:instancename:instancekeyword */
+  XMLMessageServer_private *priv = (XMLMessageServer_private *)pi;
+  String_list * ink = String_split_s(value, ":");
+  String * intent_str = String_list_get(ink, 0);
+  String * instance_str = String_list_get(ink, 1);
+  String * key_str = String_list_get(ink, 2);
+  Instance * instance = InstanceGroup_find(gig, instance_str);
+
+  if (instance && !String_is_none(intent_str) && !String_is_none(key_str)) {
+    Intent * intent = Intent_new(instance, key_str);
+    int err;
+    Index_add_string(priv->intents, intent_str, intent, &err);
+  }
+  String_list_free(&ink);
+  return 0;
+}
+
+
 
 static Config config_table[] = {
   { "v4port", set_v4port, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
+  { "intent", set_intent, 0L, 0L },
 };
 
 
@@ -62,7 +112,7 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void handle_client_message(IO_common *io, String *msg, Node * response)
+static void handle_client_message(XMLMessageServer_private *priv, IO_common *io, String *msg, Node * response)
 {
   /* Right now this only handles config messages. */
   Node * top = xml_string_to_nodetree(msg);
@@ -75,11 +125,13 @@ static void handle_client_message(IO_common *io, String *msg, Node * response)
    * String * instance_str = xml_find_simple_node_value_by_path(top, "config/instance") 
    */
 
-  Node * instance_node = node_find_subnode_by_path(top, "config/instance");
-  Node * key_node = node_find_subnode_by_path(top, "config/key");
+  Node * instance_node = node_find_subnode_by_path(top, "config/instance"); /* TO BE PHASED OUT */
+  Node * key_node = node_find_subnode_by_path(top, "config/key"); /* TO BE PHASED OUT */
+  Node * intent_node = node_find_subnode_by_path(top, "config/intent"); /* NEW */
   Node * value_node = node_find_subnode_by_path(top, "config/value");
 
   if (instance_node && key_node && value_node) {
+    /* TO BE PHASED OUT */
     String *instance_str = xml_simple_node_value(instance_node);
     String *key_str = xml_simple_node_value(key_node);
     String *value_str = xml_simple_node_value(value_node);
@@ -96,6 +148,25 @@ static void handle_client_message(IO_common *io, String *msg, Node * response)
       if (inst) {
 	Config_buffer *c = Config_buffer_new(s(key_str), s(value_str));
 	PostData(c, &inst->inputs[0]);
+      }
+      else {
+	/* note instance not found */
+      }
+    }
+  }
+  
+  else if (intent_node && value_node) {
+    /* NEW */
+    String *intent_str = xml_simple_node_value(intent_node);
+    String *value_str = xml_simple_node_value(value_node);
+    
+    if (!String_is_none(intent_str) &&
+	!String_is_none(value_str)) {
+      // What about return values?  Return on "reponse" node tree.
+      Intent *i = Intent_lookup(priv, intent_str);
+      if (i) {
+	Config_buffer *c = Config_buffer_new(s(i->key_str), s(value_str));
+	PostData(c, &i->instance->inputs[0]);
       }
       else {
 	/* note instance not found */
@@ -162,7 +233,7 @@ static void XMLMessageServer_tick(Instance *pi)
       /* Read, parse, respond, close.... */
       String *message = Comm_read_string_to_byte(&comm, '$');
       if (!String_is_none(message)) {
-	handle_client_message(&comm.io, message, resp);
+	handle_client_message(priv, &comm.io, message, resp);
       }
     }
     String *resp_str = node_to_string(resp);
@@ -177,7 +248,9 @@ static void XMLMessageServer_tick(Instance *pi)
 
 static void XMLMessageServer_instance_init(Instance *pi)
 {
-  // XMLMessageServer_private *priv = (XMLMessageServer_private *)pi;
+  XMLMessageServer_private *priv = (XMLMessageServer_private *)pi;
+  priv->intents = Index_new();
+  
 }
 
 
