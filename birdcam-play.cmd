@@ -24,9 +24,10 @@ connect ef YUV420P_buffer sdl
 config ef rotate 270
 
 #config ap device plughw:0
-config ap device default
+#config ap device default
 #config ap device Dummy
-config ap useplug 1
+#config ap useplug 1
+config ap device ua_dmix_plug
 #config ap device CK804
 config ap rate 16000
 config ap channels 1
