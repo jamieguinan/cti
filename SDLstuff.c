@@ -960,7 +960,7 @@ static void GRAY_handler(Instance *pi, void *data)
   switch (priv->renderMode) {
   case RENDER_MODE_GL: 
     {
-      RGB3_buffer *rgb3 = RGB3_buffer_new(gray->width, gray->height, &gray->c);
+      rgb3 = RGB3_buffer_new(gray->width, gray->height, &gray->c);
       int i;
       int j = 0;
       /* FIXME: Do this efficiently...*/
@@ -973,7 +973,7 @@ static void GRAY_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_OVERLAY: 
     {
-      YUV420P_buffer *yuv420p = YUV420P_buffer_new(gray->width, gray->height, &gray->c);
+      yuv420p = YUV420P_buffer_new(gray->width, gray->height, &gray->c);
       memcpy(yuv420p->y, gray->data, gray->data_length);
       memset(yuv420p->cb, 128, yuv420p->cb_length);
       memset(yuv420p->cr, 128, yuv420p->cr_length);
@@ -982,7 +982,7 @@ static void GRAY_handler(Instance *pi, void *data)
     break;
   case RENDER_MODE_SOFTWARE: 
     {
-      BGR3_buffer *bgr3 = BGR3_buffer_new(gray->width, gray->height, &gray->c);
+      bgr3 = BGR3_buffer_new(gray->width, gray->height, &gray->c);
       int i;
       int j = 0;
       /* FIXME: Do this efficiently...*/
