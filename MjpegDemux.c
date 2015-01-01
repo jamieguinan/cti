@@ -699,7 +699,7 @@ static void MjpegDemux_tick(Instance *pi)
       }
 
       if (priv->use_fixed_video_period) {
-	printf("fixed video period..\n");
+	//printf("fixed video period..\n");
 	nanosleep( double_to_timespec(priv->fixed_video_period), NULL);	
       }
       else if (priv->use_timestamps && !priv->seen_audio) {
