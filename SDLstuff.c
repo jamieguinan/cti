@@ -63,6 +63,7 @@ static int SDLtoCTI_Keymap[SDLK_LAST] = {
   [SDLK_MINUS] = CTI__KEY_MINUS,
   [SDLK_EQUALS] = CTI__KEY_EQUALS,
   [SDLK_CARET] = CTI__KEY_CARET,
+  [SDLK_SPACE] = CTI__KEY_SPACE,
 };
 
 

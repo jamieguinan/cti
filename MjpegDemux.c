@@ -106,6 +106,8 @@ typedef struct {
   int exit_on_eof;
 
   int show_offset;		/* Display a file offset suitable for editing. */
+
+  int paused;			/* Toggle pause. */
 } MjpegDemux_private;
 
 
@@ -368,6 +370,10 @@ static void Keycode_handler(Instance *pi, void *msg)
     long n = Source_tell(priv->source);
     printf("offset %ld, %ld @ 1000\n", n, n/1000);
   }
+  else if (km->keycode == CTI__KEY_P) {
+    /* Pause */
+    priv->paused = priv->paused ? 0 : 1;
+  }
   else if (km->keycode == priv->rec_key) {
     /* Toggle record. */
     fprintf(stderr, "toggle\n");
@@ -442,6 +448,10 @@ static void MjpegDemux_tick(Instance *pi)
 
   if (priv->pending_feedback > priv->feedback_threshold) {
     sleep_and_return = 1;
+  }
+
+  if (priv->paused) {
+    sleep_and_return = 1;    
   }
 
   if (!sleep_and_return && priv->needData) {

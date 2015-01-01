@@ -78,6 +78,7 @@ CTI__KEY_PLUS,
 CTI__KEY_MINUS,
 CTI__KEY_EQUALS,
 CTI__KEY_CARET,
+CTI__KEY_SPACE,
 };
 
 typedef struct {

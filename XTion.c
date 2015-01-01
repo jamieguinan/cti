@@ -5,6 +5,7 @@
 
 #include "CTI.h"
 #include "XTion.h"
+#include "Images.h"
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -13,9 +14,9 @@ static Input XTion_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-//enum { /* OUTPUT_... */ };
+enum { OUTPUT_GRAY };
 static Output XTion_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
+[ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -23,6 +24,12 @@ typedef struct {
   FILE *f;
   int frameno;
   int delayms;
+  struct {
+    int x;
+    int y;
+    int width;
+    int height;
+  } roi;
 } XTion_private;
 
 static int set_file(Instance *pi, const char *value)
@@ -46,17 +53,62 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
-static void process_frame(XTion_private * priv)
+static int image_width = 320;
+static int image_height = 240;
+
+
+void gray_draw_box(Gray_buffer *gb, int x, int y, int width, int height, uint8_t value)
 {
-  uint16_t frame[320*240*sizeof(uint16_t)];
-  if (!fread(frame, 320*240*sizeof(uint16_t), 1, priv->f)) {
+  int ix, iy;
+  
+  for (iy=y; iy < (y+height); iy++) {
+    if (iy < 0 || iy >= gb->height) continue;
+    uint8_t * p = &(gb->data[gb->width * iy]);
+    if (iy == y || iy == ((y+height-1))) {
+      /* Draw line. */
+      for (ix=x; ix <= (x+width); ix++) {
+	if (ix > 0 && ix < (gb->width)) {
+	  p[ix] = value;
+	}
+      }
+    }
+    else {
+      /* Draw edge points. */
+      ix = x+width;
+      if (x > 0 && x < (gb->width)) {  p[x] = value; }
+      if (ix > 0 && ix < (gb->width)) {  p[ix] = value; }
+    }
+  }
+}
+
+static void process_frame(Instance *pi)
+{
+  XTion_private *priv = (XTion_private *)pi;
+  uint16_t frame[image_width*image_height*sizeof(uint16_t)];
+  if (!fread(frame, image_width*image_height*sizeof(uint16_t), 1, priv->f)) {
     fclose(priv->f); priv->f = 0L;
     return;
   }
   priv->frameno++;
-  printf("frame %d\n", priv->frameno++);
+  printf("frame %d\n", priv->frameno);
   if (priv->delayms) {
-    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = priv->delayms * 1000000}, NULL);
+    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (1000000000/60)}, NULL);
+  }
+
+  if (pi->outputs[OUTPUT_GRAY].destination) {
+    /* Create gray buffer. */
+    int z;
+    Gray_buffer *gray_out = Gray_buffer_new(image_width, image_height, NULL);
+  
+    for (z=0; z < (image_width*image_height); z++) {
+      gray_out->data[z] = ((frame[z] - 1000)/6)&0xff;
+    }
+
+    if (priv->roi.width) {
+      gray_draw_box(gray_out, priv->roi.x-1, priv->roi.y-1, priv->roi.width+2, priv->roi.height+2, 255);
+    }
+
+    PostData(gray_out, pi->outputs[OUTPUT_GRAY].destination);
   }
 }
 
@@ -81,7 +133,7 @@ static void XTion_tick(Instance *pi)
   }
 
   if (priv->f) {
-    process_frame(priv);
+    process_frame(pi);
   }
 
   pi->counter++;
@@ -89,7 +141,11 @@ static void XTion_tick(Instance *pi)
 
 static void XTion_instance_init(Instance *pi)
 {
-  // XTion_private *priv = (XTion_private *)pi;
+  XTion_private *priv = (XTion_private *)pi;
+  priv->roi.x = 20;
+  priv->roi.y = 20;
+  priv->roi.width = 200;
+  priv->roi.height = 160;
 }
 
 

@@ -134,8 +134,6 @@ typedef struct {
 
 typedef struct {
   Instance i;
-  /* TS name format string, using '%s' will generate sequential
-     names. */
   Sink *output_sink;
 
   /* TS sequence duration in seconds. */
@@ -236,6 +234,7 @@ static int set_pmt_pcrpid(Instance *pi, const char *value)
 
 static int set_output(Instance *pi, const char *value)
 {
+  /* Using '%s' in the value string will generate sequential names. */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   if (value[0] == '$') {
     value = getenv(value+1);

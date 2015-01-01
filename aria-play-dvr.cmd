@@ -41,7 +41,9 @@ config mjd input 192.168.2.22:6667
 
 #config ap device plughw:2
 
-config ap device out1234
+#config ap device out1234
+
+config ap device default
 
 #config ap useplug 1
 #config ap device UA25

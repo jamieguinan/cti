@@ -23,6 +23,7 @@ extern void ArrayU8_cleanup(ArrayU8 **a);
 extern String * ArrayU8_to_string(ArrayU8 **a);
 extern String * ArrayU8_extract_string(ArrayU8 *a, int i1, int i2);
 extern int ArrayU8_search(ArrayU8 *a, int offset, const ArrayU8 *target);
+void ArrayU8_extract_uint8(ArrayU8 *a, int offset, uint8_t *value);
 extern void ArrayU8_extract_uint32le(ArrayU8 *a, int offset, uint32_t *value);
 
 /* FIXME: Can probably use varargs to figure out n value for .len and .available. */

@@ -15,7 +15,7 @@ connect sp:YUV422P_buffer.2 cj:YUV422P_buffer
 
 connect cj Jpeg_buffer mjm
 
-config mjm output vimicro-%Y%m%d-%H%M%S.mjx
+config mjm output /tmp/vimicro-%Y%m%d-%H%M%S.mjx
 
 config vc device Vimicro
 config vc format YUYV
