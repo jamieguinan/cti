@@ -22,7 +22,8 @@ static Input ImageLoader_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
-enum { OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_YUV420P, OUTPUT_JPEG, OUTPUT_H264, OUTPUT_AAC };
+enum { OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_YUV420P, OUTPUT_JPEG, OUTPUT_H264, OUTPUT_AAC,
+       OUTPUT_RGB3 };
 static Output ImageLoader_outputs[] = {
   [ OUTPUT_GRAY ] = { .type_label = "GRAY_buffer", .destination = 0L },
   [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
@@ -30,6 +31,8 @@ static Output ImageLoader_outputs[] = {
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
   [ OUTPUT_AAC ] = { .type_label = "AAC_buffer", .destination = 0L },
+  [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
+  [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -43,10 +46,11 @@ static int set_file(Instance *pi, const char *value)
   ImageType t;
   Gray_buffer *gray = 0L;
   YUV422P_buffer *y422p = 0L;
-  YUV420P_buffer *y420p = 0L;
+  // YUV420P_buffer *y420p = 0L;
   Jpeg_buffer *jpeg = 0L;
   H264_buffer *h264 = 0L;
   AAC_buffer *aac = 0L;
+  RGB3_buffer *rgb = 0L;
   int result;
 
   printf("fdata->len=%ld\n", fdata->len);
@@ -78,7 +82,17 @@ static int set_file(Instance *pi, const char *value)
     }
     break;
   case IMAGE_TYPE_PPM:
-    fprintf(stderr, "%s:%d PPM load not supported yet\n", __FILE__, __LINE__);
+    rgb = PPM_buffer_from(fdata->data, fdata->len, 0L);
+    printf("rgb=%p\n", rgb);
+    if (rgb) {
+      if (pi->outputs[OUTPUT_RGB3].destination) {
+	printf("posting...\n");
+	PostDataGetResult(rgb, pi->outputs[OUTPUT_RGB3].destination, &result);
+      }
+      else {
+	// discard
+      }
+    }
     break;
   case IMAGE_TYPE_JPEG:
     jpeg = Jpeg_buffer_from(fdata->data, fdata->len, 0L);

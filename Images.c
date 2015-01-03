@@ -89,6 +89,62 @@ Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c)
 }
 
 
+RGB3_buffer * PPM_buffer_from(uint8_t *data, int len, Image_common *c)
+{
+  ArrayU8 *a = ArrayU8_temp_const(data,len);
+  int i = 0, j = 0;
+  int x = 0, y = 0, maxval = 0;
+  int n;
+
+  ArrayU8 *PPMsignature = ArrayU8_temp_const("P6\n", strlen("P6\n"));
+  ArrayU8 *newline = ArrayU8_temp_const("\n", strlen("\n"));
+
+  if (ArrayU8_search(a, 0, PPMsignature) == -1) {
+    fprintf(stderr, "PPM signature not found file\n");
+    return 0L;
+  }
+
+  i = PPMsignature->len;
+  while (maxval == 0) {
+    j = ArrayU8_search(a, i, newline);
+    if (j == -1) {
+      fprintf(stderr, "not a PPM file\n");
+      return 0L;
+    }
+    if (!x) {
+      n = sscanf((char*)a->data+i, "%d %d", &x, &y);
+      if (n == 2) {
+	printf("%dx%d\n", x, y);
+      }
+    }
+    else {
+      n = sscanf((char*)a->data+i, "%d", &maxval);
+      if (n == 1) {
+	printf("%d\n", maxval);
+      }
+    }
+    
+    if (n == 0 && a->data[i] != '#') {
+      fprintf(stderr, "not a PPM file (no comment)\n");
+      return 0L;
+    }
+
+    i = j+1;
+  }
+
+  j += 1;			/* skip newline */
+
+  fprintf(stderr, "PPM: %dx%d %d expected %d found\n", x, y, x*y*3, len - j);
+  if (x*y*3 == len-j) {
+    RGB3_buffer * rgb = RGB3_buffer_new(x, y, c);
+    memcpy(rgb->data, a->data+j, len-j);
+    return rgb;
+  }
+  
+  return 0L;
+}
+
+
 Gray_buffer *Gray_buffer_from(uint8_t *data, int width, int height, Image_common *c)
 {
   Gray_buffer *gray = Gray_buffer_new(width, height, c);
