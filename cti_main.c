@@ -79,6 +79,7 @@
 #include "ATSCTuner.h"
 #include "Y4MOverlay.h"
 #include "LinuxEvent.h"
+#include "VMixer.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -204,6 +205,7 @@ int cti_main(int argc, char *argv[])
   ATSCTuner_init();
   Y4MOverlay_init();
   LinuxEvent_init();
+  VMixer_init();
   //PCMSource_init();
 
   return app_code(argc, argv);

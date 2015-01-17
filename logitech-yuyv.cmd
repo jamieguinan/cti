@@ -4,6 +4,8 @@ new ALSAPlayback ap
 new DJpeg dj
 new SDLstuff sdl
 new UI001 ui
+new CJpeg cj
+new JpegFiler jf
 
 # The jpeg/rgb path can be there even if it isn't used.
 connect vc Jpeg_buffer dj
@@ -34,8 +36,16 @@ config vc autoexpose 3
 #config vc autoexpose 1
 #config vc exposure 300
 
+config cj quality 85
+config jf prefix logitech
+config sdl snapshot_key S
+
+connect sdl YUV422P_buffer cj
+connect cj Jpeg_buffer jf
+
 connect sdl:Keycode_msg sdl:Keycode_msg
 connect sdl:Keycode_msg_2 vc:Keycode_msg
+
 
 config ac device U0x46d0x81b
 config ac rate 16000

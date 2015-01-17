@@ -86,13 +86,15 @@ static Input SDLstuff_inputs[] = {
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG, OUTPUT_KEYCODE, OUTPUT_KEYCODE_2, OUTPUT_POINTER };
+enum { OUTPUT_FEEDBACK, OUTPUT_CONFIG, OUTPUT_KEYCODE, OUTPUT_KEYCODE_2, OUTPUT_POINTER,
+       OUTPUT_YUV420P, OUTPUT_YUV422P };
 static Output SDLstuff_outputs[] = {
   [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
   [ OUTPUT_KEYCODE ] = { .type_label = "Keycode_msg", .destination = 0L },
   [ OUTPUT_KEYCODE_2 ] = { .type_label = "Keycode_msg_2", .destination = 0L },
   [ OUTPUT_POINTER ] = { .type_label = "Pointer_event", .destination = 0L },
+  [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
 };
 
 enum { RENDER_MODE_GL, RENDER_MODE_OVERLAY, RENDER_MODE_SOFTWARE };
@@ -122,6 +124,11 @@ typedef struct {
 
   String label;
   int label_set;
+
+  int rec_key;
+  int snapshot_key;
+
+  int snapshot;
 
   /* Overlay, used by XVideo under Linux. */
   SDL_Overlay *overlay;
@@ -207,6 +214,16 @@ static void Keycode_handler(Instance *pi, void *msg)
     handled = 1;
     exit(0);
   }
+
+  else if (km->keycode == priv->rec_key) {
+    printf("REC\n");
+  }
+
+  else if (km->keycode == priv->snapshot_key) {
+    printf("SNAPSHOT\n");
+    priv->snapshot = 1;
+  }
+
 
   if (!handled && pi->outputs[OUTPUT_KEYCODE_2].destination) {
     /* Pass along... */
@@ -299,6 +316,24 @@ static int set_smoother(Instance *pi, const char *value)
 }
 
 
+static int set_rec_key(Instance *pi, const char *value)
+{
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
+  priv->rec_key = Keycode_from_string(value);
+  printf("set_rec_key(%s), rec_key=%d\n", value, priv->rec_key);
+  return 0;
+}
+
+
+static int set_snapshot_key(Instance *pi, const char *value)
+{
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
+  priv->snapshot_key = Keycode_from_string(value);
+  printf("set_snapshot_key(%s), snapshot_key=%d\n", value, priv->snapshot_key);
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "label", set_label, 0L, 0L},
   { "mode", set_mode, 0L, 0L},
@@ -306,6 +341,8 @@ static Config config_table[] = {
   { "height", set_height, 0L, 0L},
   { "fullscreen", set_fullscreen, 0L, 0L},
   { "smoother", set_smoother, 0L, 0L},
+  { "rec_key", set_rec_key, 0L, 0L},
+  { "snapshot_key", set_snapshot_key, 0L, 0L},
 };
 
 
@@ -834,7 +871,12 @@ static void YUV422P_handler(Instance *pi, void *data)
   if (yuv420p) {
     YUV420P_buffer_discard(yuv420p);
   }
+
   if (yuv422p) {
+    if (priv->snapshot && pi->outputs[OUTPUT_YUV422P].destination) {
+      PostData(YUV422P_buffer_ref(yuv422p), pi->outputs[OUTPUT_YUV422P].destination);
+      priv->snapshot = 0;
+    }
     YUV422P_buffer_discard(yuv422p);
   }
 

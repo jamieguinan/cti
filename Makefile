@@ -145,6 +145,7 @@ OBJS= \
 	$(OBJDIR)/ATSCTuner.o \
 	$(OBJDIR)/Y4MOverlay.o \
 	$(OBJDIR)/LinuxEvent.o \
+	$(OBJDIR)/VMixer.o \
 	$(OBJDIR)/crc.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o

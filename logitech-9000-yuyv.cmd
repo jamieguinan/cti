@@ -22,7 +22,8 @@ config ui add_button text=Set;width=200;height=150;bgcolor=0xff0000
 # Ignore backed up frames.
 config dj max_messages 2
 
-config vc device UVC
+# config vc device UVC
+config vc device /dev/v4l/by-id/usb-046d_0990_95586111-video-index0
 config vc format YUYV
 #config vc format MJPG
 config vc Exposure,.Auto.Priority 0
