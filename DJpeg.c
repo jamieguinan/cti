@@ -299,26 +299,19 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   uint8_t *buffers[3] = {};
 
-  /* Round up the output height to the next 16-byte boundary.  This is
-     necessary to allow the jpeg_read_raw_data() loop to work with
-     16-line blocks.  Could resize after decompression if desired.
-     FIXME: Should I do this for width, too?  Try a 641-wide image
-     sometime... */
-  int output_height = cinfo.image_height + (15-((cinfo.image_height-1)%16));
-
   /* Allocate and use one of the output image buffer types, and fill
      that in during decompress.  Even if it isn't an assigned output,
      it will be needed for conversion to an assigned output. */
   if (fmt->imgtype == IMAGE_TYPE_YUV422P) {
     /* FIXME: Pad for DCT block boundaries, see libjpeg.txt */
-    yuv422p = YUV422P_buffer_new(cinfo.image_width, output_height, &jpeg_in->c);
+    yuv422p = YUV422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
     buffers[0] = yuv422p->y;
     buffers[1] = yuv422p->cb;
     buffers[2] = yuv422p->cr;
   }
   else if (fmt->imgtype == IMAGE_TYPE_YUV420P) {
     /* FIXME: Pad for DCT block boundaries, see libjpeg.txt */
-    yuv420p = YUV420P_buffer_new(cinfo.image_width, output_height, &jpeg_in->c);
+    yuv420p = YUV420P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
     buffers[0] = yuv420p->y;
     buffers[1] = yuv420p->cb;
     buffers[2] = yuv420p->cr;

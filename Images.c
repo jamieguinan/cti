@@ -731,11 +731,12 @@ YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
   yuv420p->cb_length = width*height/4;
 
   /* One data allocation, component pointers are set within it. */
-  yuv420p->data = Mem_calloc(1, yuv420p->y_length + yuv420p->cr_length + yuv420p->cb_length);
+  yuv420p->data = Mem_calloc(1, yuv420p->y_length + yuv420p->cr_length + yuv420p->cb_length
+			     + (width*3*16));
 
   yuv420p->y = yuv420p->data;
-  yuv420p->cr = yuv420p->data + yuv420p->y_length;
-  yuv420p->cb = yuv420p->data + yuv420p->y_length + yuv420p->cr_length;
+  yuv420p->cr = yuv420p->data + yuv420p->y_length + (width*16);
+  yuv420p->cb = yuv420p->data + yuv420p->y_length + yuv420p->cr_length + (width*16*2);
 
   LockedRef_init(&yuv420p->c.ref);  
   return yuv420p;
