@@ -257,12 +257,12 @@ Source * Source_new(const char * path)
 ArrayU8 * io_read(IO_common *io)
 {
   /* FIXME: Allow and handle timeouts. */
-  /* First copy from io->extra. */
   int max_read = 32000;
   uint8_t * tmp = Mem_calloc(1, max_read);
   ArrayU8 * result = NULL;
   int len = 0;
 
+  /* First copy from io->extra. */
   if (io->extra) {
     result = io->extra; io->extra = NULL;
   }

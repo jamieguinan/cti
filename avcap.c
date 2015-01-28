@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     SetConfig(vc, "device", s->bytes);
   }
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(vc, "format", &range);
   for (j=0; j < range->x.strings.values.things_count; j++) {
     String *s;
@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     printf("\n");
   }
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(vc, "input", &range);
   for (j=0; j < range->x.strings.values.things_count; j++) {
     String *s;
@@ -115,13 +115,13 @@ int main(int argc, char *argv[])
   }
 
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(vc, "brightness", &range);
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(vc, "contrast", &range);
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(vc, "saturation", &range);
 
   if (streq(mode, "vcr") || streq(mode, "wii") || streq(mode, "sullytv")) {
@@ -194,13 +194,13 @@ int main(int argc, char *argv[])
 
   SetConfig(ac, "device", alsadev);
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(ac, "rate", &range);
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(ac, "channels", &range);
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(ac, "format", &range);
 
   Connect(ac, "Wav_buffer", mj);

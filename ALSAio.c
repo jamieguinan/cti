@@ -40,7 +40,6 @@ static Output ALSACapture_outputs[] = {
 };
 
 
-#if 0
 /* FIXME: Use these when ready. */
 static int rates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 96000, 192000 };
 
@@ -51,7 +50,6 @@ static int channels[] = {
   6,				/* 5.1 */
   12,				/* envy24 output (note: input is 10 channels) */
 };
-#endif
 
 static struct {
   const char *label;
@@ -134,7 +132,7 @@ static int set_device(Instance *pi, const char *value)
     }
   }
 
-  Range_free(&available_alsa_devices);
+  Range_clear(&available_alsa_devices);
 
   if (!sl(priv->device)) {
     /* Not found, try value as supplied. */
@@ -242,8 +240,6 @@ static int set_rate(Instance *pi, const char *value)
 
 static void get_rate_range(Instance *pi, Range *range)
 {
-#if 0
-  /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
   ALSAio_private *priv = (ALSAio_private *)pi;
@@ -253,13 +249,16 @@ static void get_rate_range(Instance *pi, Range *range)
     return;
   }
 
+  Range_clear(range);
+  range->type = RANGE_INT_VALUES;
+
   for (i=0; i < table_size(rates); i++) {
     rc = snd_pcm_hw_params_test_rate(priv->handle, priv->hwparams, rates[i], 0);
     if (rc == 0) {
       printf("  rate %d is available\n", rates[i]);
+      // Add(List(int))(range->intvalues, rates[i]);
     }
   }
-#endif
 }
 
 
@@ -291,8 +290,6 @@ static int set_channels(Instance *pi, const char *value)
 
 static void get_channels_range(Instance *pi, Range *range)
 {
-#if 0
-  /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
   ALSAio_private *priv = (ALSAio_private *)pi;
@@ -308,7 +305,6 @@ static void get_channels_range(Instance *pi, Range *range)
       printf("  %d-channel sampling available\n", channels[i]);
     }
   }
-#endif
 }
 
 

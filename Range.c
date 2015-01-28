@@ -31,10 +31,16 @@ Range *Range_new(int type)
 }
 
 
-void Range_free(Range *range)
+void Range_clear(Range *range)
 {
   ISet_clear(range->strings);
   ISet_clear(range->descriptions);
   memset(range, 0, sizeof(*range));
 }
 
+void Range_free(Range **range)
+{
+  Range_clear(*range);
+  Mem_free(*range);
+  *range = 0L;
+}
