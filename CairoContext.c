@@ -8,6 +8,7 @@
 #include "CairoContext.h"
 #include "Images.h"
 #include "XArray.h"
+#include "Array.h"
 #include "Cfg.h"
 
 #include "cairo.h"
@@ -79,6 +80,7 @@ typedef struct {
   int width;
   int height;
   XArray(CairoCommand, commands);
+  Array(CairoCommand) commands2;
   String * text;
   long timeout;
   long timeout_timestamp;
@@ -128,6 +130,7 @@ static int add_command(Instance *pi, const char *value)
     cmd.command = CC_COMMAND_SET_TEXT;
     cmd.text = String_new(value + strlen(label) + 1);
     XArray_append(priv->commands, &cmd);
+    Array_append(cmd, priv->commands2);
     found = 1;
     goto out;
   }
@@ -142,6 +145,7 @@ static int add_command(Instance *pi, const char *value)
       }
       printf("\n");
       XArray_append(priv->commands, &cmd);
+      Array_append(cmd, priv->commands2);
       found = 1;
       goto out;
     }
@@ -152,6 +156,7 @@ static int add_command(Instance *pi, const char *value)
 	       label);
     if (streq(label, "reset")) {
       XArray_cleanup(priv->commands);
+      // FIXME:
     }
   }
   
@@ -172,6 +177,8 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
   for (i=0; i < XArray_count(priv->commands); i++) {
     CairoCommand *cmd;
     XArray_get_ptr(priv->commands, i, cmd);
+
+    CairoCommand cmd2 = Array_get(priv->commands2, i);
 
     switch (cmd->command) {
 
