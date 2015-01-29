@@ -23,3 +23,15 @@ void Array_grow(void ** items,
   // printf("*available=%d\n", *available);
 }
 
+
+void Array_clear(void ** items,
+		 int * available,
+		 int * count)
+{
+  if (*items) {
+    Mem_free(*items);
+  }
+  (*items) = 0L;
+  *available = 0;
+  *count = 0;
+}

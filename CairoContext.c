@@ -151,8 +151,7 @@ static int add_command(Instance *pi, const char *value)
     n = sscanf(value, "%255s",
 	       label);
     if (streq(label, "reset")) {
-      // XArray_cleanup(priv->commands);
-      // FIXME:
+      Array_free(priv->commands, CairoCommand, NULL);
     }
   }
   

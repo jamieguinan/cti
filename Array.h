@@ -20,16 +20,23 @@ extern void Array_grow(void ** items,
 		       int * available,
 		       int * count);
 
-#define Array_append(item, c) { Array_grow((void*)&(c.items), sizeof(c.items[0]), &(c.available), &(c.count)); \
-  c.items[c.count-1] = item; }
+extern void Array_clear(void ** items,
+			int * available,
+			int * count);
+
+#define Array_append(item, c) do { Array_grow((void*)&(c.items), sizeof(c.items[0]), &(c.available), &(c.count)); \
+    c.items[c.count-1] = item; } while (0)
 #define Array_get(c, i) (c.items[i])
 #define Array_count(c) (c.count)
+#define Array_free(c, type, f)  do { void (*cleanup_func)(type)=f; \
+    if (f) { int i; for (i=0;i<c.count;i++){cleanup_func(c.items[i]);} } \
+    Array_clear((void*)&(c.items), &c.available, &c.count); } while (0)
 
-
-#define Array_ptr_append(item, c) { Array_grow((void*)&(c->items), sizeof(c->items[0]), &(c->available), &(c->count)); \
-  c->items[c->count-1] = item; }
+#define Array_ptr_append(item, c) do { Array_grow((void*)&(c->items), sizeof(c->items[0]), &(c->available), &(c->count)); \
+    c->items[c->count-1] = item; } while (00
 #define Array_ptr_get(c, i) (c->items[i])
 #define Array_ptr_count(c) (c->count)
+
 
 /* The Array() type declaration at the bottom can be used anywhere:
    local, pointer, struct member, parameter.  */
