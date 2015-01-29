@@ -7,7 +7,6 @@
 #include "CTI.h"
 #include "CairoContext.h"
 #include "Images.h"
-#include "XArray.h"
 #include "Array.h"
 #include "Cfg.h"
 
@@ -79,8 +78,7 @@ typedef struct {
   //int top;
   int width;
   int height;
-  XArray(CairoCommand, commands);
-  Array(CairoCommand) commands2;
+  Array(CairoCommand) commands;
   String * text;
   long timeout;
   long timeout_timestamp;
@@ -129,8 +127,7 @@ static int add_command(Instance *pi, const char *value)
   if (streq(value, "set_text") && value[strlen(value)] != 0) {
     cmd.command = CC_COMMAND_SET_TEXT;
     cmd.text = String_new(value + strlen(label) + 1);
-    XArray_append(priv->commands, &cmd);
-    Array_append(cmd, priv->commands2);
+    Array_append(cmd, priv->commands);
     found = 1;
     goto out;
   }
@@ -144,8 +141,7 @@ static int add_command(Instance *pi, const char *value)
 	printf(" %lf", cmd.args[j]);
       }
       printf("\n");
-      XArray_append(priv->commands, &cmd);
-      Array_append(cmd, priv->commands2);
+      Array_append(cmd, priv->commands);
       found = 1;
       goto out;
     }
@@ -155,7 +151,7 @@ static int add_command(Instance *pi, const char *value)
     n = sscanf(value, "%255s",
 	       label);
     if (streq(label, "reset")) {
-      XArray_cleanup(priv->commands);
+      // XArray_cleanup(priv->commands);
       // FIXME:
     }
   }
@@ -174,50 +170,47 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
   priv->surface = cairo_image_surface_create(CAIRO_FORMAT_RGB24, priv->width, priv->height);
   priv->context = cairo_create(priv->surface);
 
-  for (i=0; i < XArray_count(priv->commands); i++) {
-    CairoCommand *cmd;
-    XArray_get_ptr(priv->commands, i, cmd);
+  for (i=0; i < Array_count(priv->commands); i++) {
+    CairoCommand cmd = Array_get(priv->commands, i);
 
-    CairoCommand cmd2 = Array_get(priv->commands2, i);
-
-    switch (cmd->command) {
+    switch (cmd.command) {
 
     case CC_COMMAND_SET_SOURCE_RGB:
-      cairo_set_source_rgb(priv->context, cmd->args[0], cmd->args[1], cmd->args[2]);
+      cairo_set_source_rgb(priv->context, cmd.args[0], cmd.args[1], cmd.args[2]);
       break;
 
     case CC_COMMAND_SET_SOURCE_RGBA:
-      cairo_set_source_rgba(priv->context, cmd->args[0], cmd->args[1], cmd->args[2], cmd->args[3]);
+      cairo_set_source_rgba(priv->context, cmd.args[0], cmd.args[1], cmd.args[2], cmd.args[3]);
       break;
 
     case CC_COMMAND_SET_LINE_WIDTH:
-      cairo_set_line_width(priv->context, cmd->args[0]);
+      cairo_set_line_width(priv->context, cmd.args[0]);
       break;
 
     case CC_COMMAND_MOVE_TO:
-      cairo_move_to(priv->context, cmd->args[0], cmd->args[1]);
+      cairo_move_to(priv->context, cmd.args[0], cmd.args[1]);
       break;
     case CC_COMMAND_LINE_TO:
-      cairo_line_to(priv->context, cmd->args[0], cmd->args[1]);
+      cairo_line_to(priv->context, cmd.args[0], cmd.args[1]);
       break;
     case CC_COMMAND_REL_MOVE_TO:
-      cairo_rel_move_to(priv->context, cmd->args[0], cmd->args[1]);
+      cairo_rel_move_to(priv->context, cmd.args[0], cmd.args[1]);
       break;
     case CC_COMMAND_REL_LINE_TO:
-      cairo_rel_line_to(priv->context, cmd->args[0], cmd->args[1]);
+      cairo_rel_line_to(priv->context, cmd.args[0], cmd.args[1]);
       break;
     case CC_COMMAND_CLOSE_PATH:
       cairo_close_path(priv->context);
       break;
 
     case CC_COMMAND_TRANSLATE:
-      cairo_translate(priv->context, cmd->args[0], cmd->args[1]);
+      cairo_translate(priv->context, cmd.args[0], cmd.args[1]);
       break;
     case CC_COMMAND_SCALE:
-      cairo_scale(priv->context, cmd->args[0], cmd->args[1]);
+      cairo_scale(priv->context, cmd.args[0], cmd.args[1]);
       break;
     case CC_COMMAND_ROTATE:
-      cairo_rotate(priv->context, cmd->args[0]);
+      cairo_rotate(priv->context, cmd.args[0]);
       break;
 
     case CC_COMMAND_FILL:
@@ -238,11 +231,11 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
       break;
 
     case CC_COMMAND_SET_FONT_SIZE:
-      cairo_set_font_size(priv->context, cmd->args[0]);
+      cairo_set_font_size(priv->context, cmd.args[0]);
       break;
     case CC_COMMAND_SET_TEXT:
-      if (cmd->text) {
-	cairo_show_text(priv->context, cmd->text->bytes);
+      if (cmd.text) {
+	cairo_show_text(priv->context, cmd.text->bytes);
       }
       break;
     case CC_COMMAND_SHOW_TEXT:
