@@ -7,7 +7,7 @@
 #include "CTI.h"
 #include "CairoContext.h"
 #include "Images.h"
-#include "XArrayU8.h"
+#include "XArray.h"
 #include "Cfg.h"
 
 #include "cairo.h"

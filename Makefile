@@ -58,7 +58,7 @@ OBJS= \
 	$(OBJDIR)/Index.o \
 	$(OBJDIR)/Cfg.o \
 	$(OBJDIR)/Log.o \
-	$(OBJDIR)/Array.o \
+	$(OBJDIR)/ArrayU8.o \
 	$(OBJDIR)/Range.o \
 	$(OBJDIR)/File.o \
 	$(OBJDIR)/jmemsrc.o \
