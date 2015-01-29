@@ -36,6 +36,9 @@ extern void Array_clear(void ** items,
     c->items[c->count-1] = item; } while (00
 #define Array_ptr_get(c, i) (c->items[i])
 #define Array_ptr_count(c) (c->count)
+#define Array_ptr_free(c, type, f)  do { void (*cleanup_func)(type)=f; \
+    if (f) { int i; for (i=0;i<c->count;i++){cleanup_func(c->items[i]);} } \
+    Array_clear((void*)&(c->items), &c->available, &c->count); } while (0)
 
 
 /* The Array() type declaration at the bottom can be used anywhere:
