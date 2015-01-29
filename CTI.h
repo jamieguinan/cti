@@ -15,8 +15,6 @@
 #include "Mem.h"
 #include "Index.h"
 
-#include "Collection.h"
-
 extern pthread_key_t instance_key;
 extern int instance_key_initialized;
 extern void instance_key_init(void); /* Call once at startup. */

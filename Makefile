@@ -86,7 +86,6 @@ OBJS= \
 	$(OBJDIR)/Null.o \
 	$(OBJDIR)/Control.o \
 	$(OBJDIR)/Effects01.o \
-	$(OBJDIR)/Collection.o \
 	$(OBJDIR)/SocketRelay.o \
 	$(OBJDIR)/SocketServer.o \
 	$(OBJDIR)/VSmoother.o \
