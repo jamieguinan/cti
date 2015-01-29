@@ -146,6 +146,7 @@ OBJS= \
 	$(OBJDIR)/LinuxEvent.o \
 	$(OBJDIR)/VMixer.o \
 	$(OBJDIR)/crc.o \
+	$(OBJDIR)/Array.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
