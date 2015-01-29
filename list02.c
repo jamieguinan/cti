@@ -7,16 +7,22 @@
    pointers to the individual list structure members, from the item
    assignment, which is type-specific but can be done with a simple
    assignment in a enclosing macro that also calls the growth
-   function.
+   function.  My instinct had always been to include the growth
+   and assignment in the same macro, which C++ templates solve
+   nicely, but can be really messy in C, ending up with lots of
+   duplicate code.
+
+   Haha, turns out I had written very similar code in XArray.c some
+   time ago.
 */
 
-void _list_grow(void ** items,
+void _array_grow(void ** items,
 	  int itemsize,
 	  int * available,
 	  int * count) 
 {
   *count += 1;
-  printf("*available=%d\n", *available);
+  //printf("*available=%d\n", *available);
   if (*available == 0) {
     *available = 2;
     void *tmp = malloc(itemsize*(*available));
@@ -29,14 +35,21 @@ void _list_grow(void ** items,
     /* FIXME: if (!tmp) { error_handler(); return; } */
     (*items) = tmp;
   }
-  printf("*available=%d\n", *available);
+  // printf("*available=%d\n", *available);
 }
 
-#define list_append(item, c) { _list_grow((void*)&(c.items), sizeof(c.items[0]), &(c.available), &(c.count)); \
+#define array_append(item, c) { _array_grow((void*)&(c.items), sizeof(c.items[0]), &(c.available), &(c.count)); \
   c.items[c.count-1] = item; }
 
-#define List(t) struct { t * items; int itemsize; int available; int count; }
+#define array_get(c, i) (c.items[i])
 
+#define array_ptr_append(item, c) { _array_grow((void*)&(c->items), sizeof(c->items[0]), &(c->available), &(c->count)); \
+  c->items[c->count-1] = item; }
+
+#define array_ptr_get(c, i) (c->items[i])
+
+/* This Array type declaration can be used anywhere: local, pointer, struct member, parameter */
+#define Array(t) struct { t * items; int itemsize; int available; int count; }
 
 /* Example type definition. */
 typedef struct {
@@ -49,31 +62,29 @@ typedef struct {
 } abc;
 
 
-/* Same type definition, using macros. */
-
+/* Same type definition, using macro. */
 typedef struct {
-  List(int) rates;
+  Array(int) rates;
 } xyz;
 
-
-#define get(c, i) (c.items[i])
 
 int main()
 {
   abc x1 = {};
-  _list_grow((void*)&x1.rates.items, sizeof(int), &x1.rates.available, &x1.rates.count); x1.rates.items[x1.rates.count-1] = 4;
+  /* explicit call */
+  _array_grow((void*)&x1.rates.items, sizeof(int), &x1.rates.available, &x1.rates.count); x1.rates.items[x1.rates.count-1] = 4;
 
   xyz x2 = {};
-  list_append(5, x2.rates);
+  /* macro call */
+  array_append(5, x2.rates);
 
-  //List(int) * x3 = malloc(sizeof(*x3));
-  //list_append(6, x3);
+  /* pointer declaration */
+  Array(int) * x3 = malloc(sizeof(*x3));
+  array_ptr_append(6, x3);
   
-  printf("%d\n", get(x1.rates, 0));
-  printf("%d\n", get(x2.rates, 0));
-  //printf("%d\n", get(x3, 0));
+  printf("%d\n", array_get(x1.rates, 0));
+  printf("%d\n", array_get(x2.rates, 0));
+  printf("%d\n", array_ptr_get(x3, 0));
 
   return 0;
 }
-
-
