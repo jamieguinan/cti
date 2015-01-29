@@ -161,7 +161,7 @@ static int set_device(Instance *pi, const char *value)
     }
   }
 
-  Range_free(&available_v4l_devices);
+  Range_clear(&available_v4l_devices);
   
   if (String_is_none(priv->devpath)) {
     /* Not found, try value as a path. */

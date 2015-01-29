@@ -15,8 +15,6 @@
 #include "Mem.h"
 #include "Index.h"
 
-#include "Collection.h"
-
 extern pthread_key_t instance_key;
 extern int instance_key_initialized;
 extern void instance_key_init(void); /* Call once at startup. */
@@ -50,6 +48,7 @@ enum {
   RANGE_STRINGS, 
   RANGE_INTS, 
   RANGE_FLOATS,
+  RANGE_INT_VALUES,
 };
 
 typedef struct {
@@ -70,11 +69,13 @@ typedef struct {
   ISet(String) descriptions;
   IntRange ints;
   FloatRange floats;
+  ISet(int) intvalues;
 } Range;
 
 extern Range *Range_new(int type);
 extern int Range_match_substring(Range *r, const char *substr);
-extern void Range_free(Range *r);
+extern void Range_clear(Range *r);
+extern void Range_free(Range **r);
 
 typedef struct {
   int type;

@@ -85,7 +85,7 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(vc, "format", &range);
   for (j=0; j < range->x.strings.values.things_count; j++) {
     String *s;
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     printf("\n");
   }
 
-  Range_free(&range);
+  Range_clear(&range);
   GetConfigRange(vc, "input", &range);
   for (j=0; j < range->x.strings.values.things_count; j++) {
     String *s;
@@ -113,13 +113,13 @@ int main(int argc, char *argv[])
 
 
   if (bt) {
-    Range_free(&range);
+    Range_clear(&range);
     GetConfigRange(vc, "brightness", &range);
 
-    Range_free(&range);
+    Range_clear(&range);
     GetConfigRange(vc, "contrast", &range);
 
-    Range_free(&range);
+    Range_clear(&range);
     GetConfigRange(vc, "saturation", &range);
   }
 
