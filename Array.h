@@ -1,5 +1,5 @@
-#ifndef _CTI_ARRAY_H_
-#define _CTI_ARRAY_H_
+#ifndef _CTI_ARRAYU8_H_
+#define _CTI_ARRAYU8_H_
 
 #include <stdint.h>
 #include "String.h"
