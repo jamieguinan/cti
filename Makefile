@@ -25,7 +25,7 @@ endif
 endif
 endif
 endif
-# -std=c99 
+# -std=c99
 CPPFLAGS += -I../../platform/$(ARCH)/include -I../jpeg-7
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
 LDFLAGS += -L../../platform/$(ARCH)/lib -ljpeg -lpthread
@@ -162,7 +162,7 @@ OBJS+=\
 	$(OBJDIR)/V4L2Capture.o \
 	$(OBJDIR)/ALSAio.o \
 	$(OBJDIR)/ALSAMixer.o
-LDFLAGS+=-lasound 
+LDFLAGS+=-lasound
 CPPFLAGS+=-DHAVE_PRCTL
 endif
 
@@ -299,7 +299,7 @@ endif
 ifeq ($(ARCH),x86_64-Linux)
 ifneq (,$(shell /bin/ls /opt/cuda/bin/nvcc  2> /dev/null ))
 OBJS+=$(OBJDIR)/NVidiaCUDA.o
-LDFLAGS += 
+LDFLAGS +=
 CPPFLAGS+=
 endif
 endif
@@ -330,13 +330,6 @@ $(OBJDIR)/mjplay$(EXEEXT): \
 	@echo LINK
 	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 #	$(STRIP) $@
-
-
-$(OBJDIR)/ctest$(EXEEXT): \
-	$(OBJDIR)/Collection.o \
-	$(OBJDIR)/ctest.o
-	$(CC) $(filter %.o, $^) -o $@
-
 
 
 $(OBJDIR)/%.o: %.c Makefile
