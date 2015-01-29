@@ -68,7 +68,7 @@
 #include "SourceSink.h"
 #include "socket_common.h"
 #include "VirtualStorage.h"
-//#include "Array.h"
+//#include "ArrayU8.h"
 
 static void Config_handler(Instance *pi, void *msg);
 

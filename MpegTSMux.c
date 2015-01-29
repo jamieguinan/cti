@@ -20,7 +20,7 @@
 #include "MpegTS.h"
 #include "Images.h"
 #include "Audio.h"
-#include "Array.h"
+#include "ArrayU8.h"
 #include "SourceSink.h"
 
 /* From libavformat/mpegtsenc.c */

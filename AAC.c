@@ -11,7 +11,7 @@
 #include "CTI.h"
 #include "AAC.h"
 #include "Audio.h"
-#include "Array.h"
+#include "ArrayU8.h"
 
 #include "faac.h"
 

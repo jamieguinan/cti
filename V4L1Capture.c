@@ -18,7 +18,7 @@
 #include "CTI.h"
 #include "V4L1Capture.h"
 #include "Mem.h"
-#include "Array.h"
+#include "ArrayU8.h"
 #include "Images.h"
 
 #define table_size(x) (sizeof(x)/sizeof(x[0]))

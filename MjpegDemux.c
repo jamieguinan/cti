@@ -17,7 +17,7 @@
 #include "Wav.h"
 #include "Mem.h"
 #include "String.h"
-#include "Array.h"
+#include "ArrayU8.h"
 #include "SourceSink.h"
 #include "Cfg.h"
 #include "Numbers.h"

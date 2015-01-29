@@ -6,7 +6,7 @@
 #include "CTI.h"
 #include "Y4MOverlay.h"
 #include "Images.h"
-#include "Array.h"
+#include "ArrayU8.h"
 #include "File.h"
 
 static void Config_handler(Instance *pi, void *msg);

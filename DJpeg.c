@@ -14,7 +14,7 @@
 #include "Images.h"
 #include "Mem.h"
 #include "Cfg.h"
-#include "Array.h"
+#include "ArrayU8.h"
 
 static void Config_handler(Instance *pi, void *data);
 static void Jpeg_handler(Instance *pi, void *data);

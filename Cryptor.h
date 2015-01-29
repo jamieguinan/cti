@@ -1,7 +1,7 @@
 #ifndef _CRYPTOR_H
 #define _CRYPTOR_H
 
-#include "Array.h"
+#include "ArrayU8.h"
 
 typedef struct {
   ArrayU8 *cipher;

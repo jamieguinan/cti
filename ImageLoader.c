@@ -11,7 +11,7 @@
 #include "CTI.h"
 #include "ImageLoader.h"
 #include "Images.h"
-#include "Array.h"
+#include "ArrayU8.h"
 #include "File.h"
 #include "Audio.h"
 

@@ -1,7 +1,7 @@
 #ifndef _CTI_FILE_H_
 #define _CTI_FILE_H_
 
-#include "Array.h"
+#include "ArrayU8.h"
 #include "String.h"
 
 extern ArrayU8 * File_load_data(String * filename);

@@ -1,7 +1,7 @@
 #ifndef _SOURCESINK_H_
 #define _SOURCESINK_H_
 
-#include "Array.h"
+#include "ArrayU8.h"
 #include "Stats.h"
 #include <stdint.h>
 #include <stdio.h>		/* FILE * */

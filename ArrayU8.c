@@ -1,5 +1,5 @@
 //#include "CTI.h"
-#include "Array.h"
+#include "ArrayU8.h"
 #include "Mem.h"
 #include <string.h>
 #include <stdio.h>

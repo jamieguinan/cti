@@ -6,7 +6,7 @@
 #include <string.h>
 #include "Images.h"
 #include "Audio.h"
-#include "Array.h"
+#include "ArrayU8.h"
 #include "Mem.h"
 #include "Cfg.h"
 #include "dpf.h"

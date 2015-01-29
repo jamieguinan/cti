@@ -1,5 +1,5 @@
 #include "Mem.h"
-#include "XArray.h"
+#include "XArrayU8.h"
 #include <string.h>
 
 void _XArray_append(void **elements, void *element_ptr, int element_size, XArrayInfo *info)
