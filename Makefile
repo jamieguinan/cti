@@ -91,7 +91,6 @@ OBJS= \
 	$(OBJDIR)/VSmoother.o \
 	$(OBJDIR)/Y4MInput.o \
 	$(OBJDIR)/Y4MOutput.o \
-	$(OBJDIR)/XArray.o \
 	$(OBJDIR)/JpegSource.o \
 	$(OBJDIR)/RGB3Source.o \
 	$(OBJDIR)/HalfWidth.o \
