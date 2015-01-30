@@ -39,8 +39,7 @@ int listen_socket_setup(listen_common *lsc)
   lsc->fd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (lsc->fd == -1) {
-    /* FIXME: see Socket.log_error in modc code */
-    fprintf(stderr, "socket error\n");
+    perror("socket");
     return 1;
   }
 
@@ -53,8 +52,7 @@ int listen_socket_setup(listen_common *lsc)
     int reuse = 1;
     rc = setsockopt(lsc->fd, SOL_SOCKET, SO_REUSEADDR, (void*)&reuse, sizeof(reuse));
     if (rc == -1) { 
-      // Socket.log_error(s, "SO_REUSEADDR"); 
-      fprintf(stderr, "SO_REUSEADDR\n"); 
+      perror("SO_REUSEADDR\n"); 
       close(lsc->fd); lsc->fd = -1;
       return 1;
     }
@@ -64,7 +62,6 @@ int listen_socket_setup(listen_common *lsc)
 
   rc = bind(lsc->fd, (struct sockaddr *)&sa, sizeof(sa));
   if (rc == -1) { 
-    /* FIXME: see Socket.log_error in modc code */
     perror("bind"); 
     close(lsc->fd); lsc->fd = -1;
     return 1;
@@ -72,8 +69,7 @@ int listen_socket_setup(listen_common *lsc)
 
   rc = listen(lsc->fd, 5);
   if (rc == -1) { 
-    /* FIXME: see Socket.log_error in modc code */
-    fprintf(stderr, "listen\n"); 
+    perror("listen"); 
     close(lsc->fd); lsc->fd = -1;
     return 1;
   }

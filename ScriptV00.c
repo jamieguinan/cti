@@ -122,7 +122,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       perror("system");
     }
   }
-  /* FIXME: These strstr() comparisons are sloppy.  Can I at least tokenize them?  */
+  /* These strstr() comparisons are sloppy.  I could tokenize them or something. */
   else if ((strstr(line->bytes, "exit") == line->bytes)) {
     exit(1);
   }
@@ -150,7 +150,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       cfg.pause = 1;
       /* Wait until newline then reset. */
       if (fgets(token1, 255, stdin) == NULL) {
-	/* Handle EOF. */
+	fprintf(stderr, "note: got EOF after pause.\n");
       }
       cfg.pause = 0;
     }
@@ -168,7 +168,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       if (is_stdin) {
 	/* Wait until newline then reset. */
 	if (fgets(token1, 255, stdin) == NULL) {
-	  /* FIXME: Handle EOF. */
+	  fprintf(stderr, "note: got EOF after verbose toggle.\n");
 	}
 	cfg.verbosity = 0;
       }
@@ -179,7 +179,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       if (is_stdin) {
 	/* Wait until newline then reset. */
 	if (fgets(token1, 255, stdin) == NULL) {
-	  /* FIXME: Handle EOF. */
+	  fprintf(stderr, "note: got EOF after dpt.\n");
 	}
       }
       cti_debug_printf_toggle(index);

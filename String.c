@@ -479,9 +479,7 @@ int String_list_is_none(String_list *slst)
 String_list * String_split(String *str, const char *splitter)
 {
   if (String_is_none(str)) {
-    /* Return empty list. */
-    /* FIXME: Could have a _String_list_none type? */
-    return String_list_new();
+    return String_list_value_none();
   }
   return String_split_s(s(str), splitter);
 }
@@ -495,11 +493,11 @@ int String_list_len(String_list * slst)
 String * String_list_get(String_list *slst, int index)
 {
   if (slst->len == 0) {
-    /* FIXME: Maybe make a function that warns, then returns null string? */
+    fprintf(stderr, "String_list is empty (index %d)\n", index);
     return _String_none;
   }
   else if (index >= slst->len) {
-    /* FIXME: Again, a warning. */
+    fprintf(stderr, "String_list index %d out of range\n", index);
     return _String_none;
   }
   else if (index < 0) {
@@ -509,7 +507,7 @@ String * String_list_get(String_list *slst, int index)
       return slst->_strings[slst->len + index];
     }
     else {
-      /* FIXME warn... */
+      fprintf(stderr, "String_list index %d out of range\n", index);
       return _String_none;
     }
   }

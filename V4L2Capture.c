@@ -171,7 +171,6 @@ static int set_device(Instance *pi, const char *value)
   priv->fd = open(s(priv->devpath), O_RDWR);
 
   if (priv->fd == -1) {
-    /* FIXME: Set error status, do not call perror. */
     perror(s(priv->devpath));
     goto out;
   }
@@ -179,7 +178,6 @@ static int set_device(Instance *pi, const char *value)
   /* This query is also an implicit check for V4L2. */
   rc = ioctl(priv->fd, VIDIOC_QUERYCAP, &v4l2_caps);
   if (-1 == rc) {
-    /* FIXME: Set error status, do not call perror. */
     perror("VIDIOC_QUERYCAP");
     close(priv->fd);
     priv->fd = -1;
@@ -193,8 +191,8 @@ static int set_device(Instance *pi, const char *value)
     goto out;
   }
 
-  /* FIXME: Store ".driver" field from result. */
   fprintf(stderr, "card: %s\n", v4l2_caps.card);
+  fprintf(stderr, "driver: %s\n", v4l2_caps.driver);
 
   /* Check tuner capabilities */
   rc = ioctl(priv->fd, VIDIOC_G_TUNER, &tuner);
@@ -1183,7 +1181,6 @@ static void Config_handler(Instance *pi, void *data)
   /* First walk the config table. */
   for (i=0; i < table_size(config_table); i++) {
     if (streq(config_table[i].label, cb_in->label->bytes)) {
-      // int rc = ... /* FIXME: What to do with this? */
       config_table[i].set(pi, cb_in->value->bytes);
       priv->msg_handled = 1;
       break;
@@ -1357,7 +1354,6 @@ static void V4L2Capture_tick(Instance *pi)
       V4L2_queue_unmap(priv);
       priv->fd = open(s(priv->devpath), O_RDWR);
       if (priv->fd == -1) {
-	/* FIXME: Set error status, do not call perror. */
 	perror(s(priv->devpath));
 	goto out;
       }
@@ -1373,9 +1369,7 @@ static void V4L2Capture_tick(Instance *pi)
   rc = ioctl(priv->fd, VIDIOC_DQBUF, &priv->vbuffer);
   if (-1 == rc) {
     perror("VIDIOC_DQBUF");
-    /* FIXME: How to handle dequeue errors?  Probably easiest to just shut
-       things down and invalidate the object. */
-    exit(1);
+    sleep(1); 			/* Sleep so don't flood output. */
     goto out;
   }  
 
