@@ -1169,6 +1169,10 @@ int platform_sdl_main(int argc, char *argv[])
 
 static void SDLstuff_instance_init(Instance *pi)
 {
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
+  priv->rec_key = -1;
+  priv->snapshot_key = -1;
+
 #if 0
   extern Callback *ui_callback;	/* cti_app.c */
   Callback_fill(ui_callback, my_event_loop, pi);

@@ -379,7 +379,7 @@ static void Keycode_handler(Instance *pi, void *msg)
     fprintf(stderr, "toggle\n");
     set_output_enable_priv(priv, priv->output_enable ? 0 : 1);
   }
-  else {
+  else if (km->keycode != CTI__KEY_UNKNOWN) {
     printf("%s: unhandled keycode %d\n", __func__, km->keycode);
   }
 

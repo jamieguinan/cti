@@ -1,6 +1,6 @@
 default: default1
 
-include ../platforms.make
+include ../build/platforms.make
 
 MAIN=main.o
 
