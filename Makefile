@@ -346,7 +346,7 @@ $(OBJDIR)/%.o: %.m Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -vf $(OBJDIR)/*.o  $(OBJDIR)/*.dep
+	rm -vf $(OBJDIR)/*.o  $(OBJDIR)/*.dep $(OBJDIR)/cti
 
 DEPS=$(wildcard $(OBJDIR)/*.dep)
 ifneq ($(DEPS),)
