@@ -24,7 +24,9 @@ extern void Array_clear(void ** items,
 			int * available,
 			int * count);
 
-#define Array_append(item, c) do { Array_grow((void*)&(c.items), sizeof(c.items[0]), &(c.available), &(c.count)); \
+extern void Array_set_error_handler(void (*handler)(void));
+
+#define Array_append(c, item) do { Array_grow((void*)&(c.items), sizeof(c.items[0]), &(c.available), &(c.count)); \
     c.items[c.count-1] = item; } while (0)
 #define Array_get(c, i) (c.items[i])
 #define Array_count(c) (c.count)
@@ -32,7 +34,7 @@ extern void Array_clear(void ** items,
     if (f) { int i; for (i=0;i<c.count;i++){cleanup_func(c.items[i]);} } \
     Array_clear((void*)&(c.items), &c.available, &c.count); } while (0)
 
-#define Array_ptr_append(item, c) do { Array_grow((void*)&(c->items), sizeof(c->items[0]), &(c->available), &(c->count)); \
+#define Array_ptr_append(c, item) do { Array_grow((void*)&(c->items), sizeof(c->items[0]), &(c->available), &(c->count)); \
     c->items[c->count-1] = item; } while (00
 #define Array_ptr_get(c, i) (c->items[i])
 #define Array_ptr_count(c) (c->count)

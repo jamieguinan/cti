@@ -1,6 +1,10 @@
 /*
  * A few image types are reference-counted to save memory when used
  * by multiple instances.
+ *
+ * [1] Some buffers are allocated with extra padding, because, quoting
+ * from libjpeg.txt, "The buffer you pass must be large enough to
+ * hold the actual data plus padding to DCT-block boundaries."
  */
 #include <stdio.h>
 #include <string.h>
@@ -356,6 +360,7 @@ YUV422P_buffer * YUV422P_buffer_new(int width, int height, Image_common *c)
   yuv422p->cb_width = width/2;
   yuv422p->cb_height = height;
   yuv422p->cb_length = yuv422p->cb_width*yuv422p->cb_height;
+  /* FIXME: pad [1] */
   yuv422p->y = Mem_calloc(1, yuv422p->y_length+32); yuv422p->y[yuv422p->y_length] = 0x55;
   yuv422p->cr = Mem_calloc(1, yuv422p->cr_length+32);  yuv422p->cr[yuv422p->cr_length] = 0x55;
   yuv422p->cb = Mem_calloc(1, yuv422p->cb_length+32);  yuv422p->cb[yuv422p->cb_length] = 0x55;
@@ -732,7 +737,7 @@ YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
 
   /* One data allocation, component pointers are set within it. */
   yuv420p->data = Mem_calloc(1, yuv420p->y_length + yuv420p->cr_length + yuv420p->cb_length
-			     + (width*3*16));
+			     + (width*3*16));  // [1]
 
   yuv420p->y = yuv420p->data;
   yuv420p->cr = yuv420p->data + yuv420p->y_length + (width*16);

@@ -40,7 +40,6 @@ static Output ALSACapture_outputs[] = {
 };
 
 
-/* FIXME: Use these when ready. */
 static int rates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 96000, 192000 };
 
 static int channels[] = { 
@@ -250,13 +249,13 @@ static void get_rate_range(Instance *pi, Range *range)
   }
 
   Range_clear(range);
-  range->type = RANGE_INT_VALUES;
+  range->type = RANGE_INT_ENUM;
 
   for (i=0; i < table_size(rates); i++) {
     rc = snd_pcm_hw_params_test_rate(priv->handle, priv->hwparams, rates[i], 0);
     if (rc == 0) {
       printf("  rate %d is available\n", rates[i]);
-      // Add(List(int))(range->intvalues, rates[i]);
+      Array_append(range->int_enums, rates[i]);
     }
   }
 }
@@ -299,10 +298,14 @@ static void get_channels_range(Instance *pi, Range *range)
     return;
   }
 
+  Range_clear(range);
+  range->type = RANGE_INT_ENUM;
+
   for (i=0; i < table_size(channels); i++) {
     rc = snd_pcm_hw_params_test_channels(priv->handle, priv->hwparams, channels[i]);
     if (rc == 0) {
       printf("  %d-channel sampling available\n", channels[i]);
+      Array_append(range->int_enums, rates[i]);
     }
   }
 }
@@ -349,8 +352,6 @@ static int set_format(Instance *pi, const char *value)
 
 static void get_format_range(Instance *pi, Range *range)
 {
-#if 0
-  /* FIXME: Need modc or similar ephemeral string and list support. */
   int i;
   int rc;
   ALSAio_private *priv = (ALSAio_private *)pi;
@@ -360,13 +361,16 @@ static void get_format_range(Instance *pi, Range *range)
     return;
   }
 
+  Range_clear(range);
+  range->type = RANGE_STRINGS;
+
   for (i=0; i < table_size(formats); i++) {
     rc = snd_pcm_hw_params_test_format(priv->handle, priv->hwparams, formats[i].value);
     if (rc == 0) {
       printf("  %s sampling available\n", formats[i].label);
+      ISet_add(range->strings, String_new(formats[i].label));
     }
   }
-#endif
 }
 
 static int set_frames_per_io(Instance *pi, const char *value)

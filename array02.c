@@ -29,7 +29,7 @@ int main()
 
   xyz x2 = {};
   /* macro call */
-  Array_append(5, x2.rates);
+  Array_append(x2.rates, 5);
 
   /* pointer declaration */
   Array(int) * x3 = malloc(sizeof(*x3));

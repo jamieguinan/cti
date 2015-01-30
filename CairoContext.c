@@ -127,7 +127,7 @@ static int add_command(Instance *pi, const char *value)
   if (streq(value, "set_text") && value[strlen(value)] != 0) {
     cmd.command = CC_COMMAND_SET_TEXT;
     cmd.text = String_new(value + strlen(label) + 1);
-    Array_append(cmd, priv->commands);
+    Array_append(priv->commands, cmd);
     found = 1;
     goto out;
   }
@@ -141,7 +141,7 @@ static int add_command(Instance *pi, const char *value)
 	printf(" %lf", cmd.args[j]);
       }
       printf("\n");
-      Array_append(cmd, priv->commands);
+      Array_append(priv->commands, cmd);
       found = 1;
       goto out;
     }

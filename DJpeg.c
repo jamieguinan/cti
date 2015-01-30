@@ -303,20 +303,17 @@ static void Jpeg_handler(Instance *pi, void *data)
      that in during decompress.  Even if it isn't an assigned output,
      it will be needed for conversion to an assigned output. */
   if (fmt->imgtype == IMAGE_TYPE_YUV422P) {
-    /* FIXME: Pad for DCT block boundaries, see libjpeg.txt */
     yuv422p = YUV422P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
     buffers[0] = yuv422p->y;
     buffers[1] = yuv422p->cb;
     buffers[2] = yuv422p->cr;
   }
   else if (fmt->imgtype == IMAGE_TYPE_YUV420P) {
-    /* FIXME: Pad for DCT block boundaries, see libjpeg.txt */
     yuv420p = YUV420P_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
     buffers[0] = yuv420p->y;
     buffers[1] = yuv420p->cb;
     buffers[2] = yuv420p->cr;
   }
-
 
   while (cinfo.output_scanline < cinfo.output_height) {
     int n;
