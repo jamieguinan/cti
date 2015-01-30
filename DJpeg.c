@@ -579,7 +579,7 @@ static const char *markers[] = {
 void Jpeg_fix(Jpeg_buffer *jpeg)
 {
   /* This is based on "mjpegfix.py" which I wrote several years
-     ealier.  The Jpeg data is replaced at the end, but the buffer
+     earlier.  The Jpeg data is replaced at the end, but the buffer
      structure remains in place.  In other words, it does not produce
      a new Jpeg_buffer. */
 

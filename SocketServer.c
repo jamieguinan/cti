@@ -218,11 +218,6 @@ static void SocketServer_tick(Instance *pi)
     wait_flag = 0;
   }
 
-  /* FIXME: Maybe should drain all input messages before going on the
-     select() call.  If the frequency of incoming audio blocks exceeds
-     the corresponding select() timeout frequency, the input queue will
-     back up! */
-
   hm = GetData(pi, wait_flag);
   if (hm) {
     hm->handler(pi, hm->data);
