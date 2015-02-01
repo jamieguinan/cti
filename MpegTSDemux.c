@@ -200,6 +200,7 @@ static Config config_table[] = {
   { "v.PMT", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, v.PMT) },
 
   { "d.tspackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, d.tspackets) },
+  { "d.espackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, d.espackets) },
 };
 
 
@@ -396,15 +397,17 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
     if (s->data) {
       /* Flush, free, reallocate. */
       if (s->data->len) {
-	char name[32];
-	FILE *f;
-	sprintf(name, "%05d-%04d.%04d", packetCounter, s->pid, s->seq);
-	f = fopen(name, "wb");
-	if (f) {
-	  int n = fwrite(s->data->data, s->data->len, 1, f);
-	  if (n != 1) { perror(name); }
-	  fclose(f);
+	if (0) {
+	  char name[32];
+	  FILE *f;
+	  sprintf(name, "%05d-%04d.%04d", packetCounter, s->pid, s->seq);
+	  f = fopen(name, "wb");
+	  if (f) {
+	    int n = fwrite(s->data->data, s->data->len, 1, f);
+	    if (n != 1) { perror(name); }
+	    fclose(f);
 	  f = NULL;
+	  }
 	}
 	
 	if (pid != 0 && pid != priv->pmt_id) { 
