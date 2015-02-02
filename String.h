@@ -97,6 +97,7 @@ extern int String_list_len(String_list *slst);
 extern String * String_list_get(String_list *slst, int n);
 extern String * String_list_find_val(String_list *slst, String *key, int skip);
 extern void String_list_add(String_list *slst, String **add);
+extern void String_list_append_s(String_list *slst, const char *s);
 extern String * String_list_find(String_list *slst, String *target);
 extern void String_list_free(String_list **slst);
 extern String * String_list_pull_at(String_list * slst, int i);

@@ -437,6 +437,12 @@ void String_list_add(String_list *slst, String **add)
   }
 }
 
+void String_list_append_s(String_list *slst, const char *svalue)
+{
+  String * s = String_new(svalue);
+  String_list_add(slst, &s);
+}
+
 
 String_list * String_split_s(const char *src, const char *splitter)
 {
