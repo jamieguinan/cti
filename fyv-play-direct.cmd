@@ -31,8 +31,9 @@ config dj dct_method ifast
 config ap useplug 1
 #config ap device plughw:0
 #config ap device Dummy
-config ap device UA25
+#config ap device UA25
 #config ap device CK804
+config ap device default
 config ap rate 16000
 config ap channels 1
 config ap format signed.16-bit.little.endian
