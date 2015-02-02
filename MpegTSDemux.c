@@ -87,9 +87,11 @@ static int packetCounter = 0;
 
 typedef struct {
   Instance i;
-  Source *source;
-  ArrayU8 *chunk;
+  Source * source;
+  ArrayU8 * chunk;
   int needData;
+
+  String_list * queue;	 /* Allow input file names to be queued up. */
 
   int enable;			/* Set this to start processing. */
   int filter_pid;
@@ -122,10 +124,12 @@ typedef struct {
 
   /* Debug */
   struct {
-    int tspackets;
-    int espackets;
+    int tspackets;		/* Write out individual TS packets. */
+    int espackets;		/* Write out individual ES packets. */
   } d;
-  
+
+  Sink * tsfile;	  /* Write all TS packets to a single file. */
+  Sink * esfile;	  /* Write all ES packets to a file. */
 } MpegTSDemux_private;
 
 
@@ -157,6 +161,15 @@ static int set_input(Instance *pi, const char *value)
 }
 
 
+static int set_queue(Instance *pi, const char *value)
+{
+  MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
+  String_list_append_s(priv->queue, value);
+
+  return 0;
+}
+
+
 static int set_enable(Instance *pi, const char *value)
 {
   MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
@@ -164,8 +177,15 @@ static int set_enable(Instance *pi, const char *value)
   priv->enable = atoi(value);
 
   if (priv->enable && !priv->source) {
-    fprintf(stderr, "MpegTSDemux: cannot enable because source not set!\n");
-    priv->enable = 0;
+    if (String_list_len(priv->queue) == 0) {
+      fprintf(stderr, "MpegTSDemux: cannot enable because neither source nor queue are set!\n");
+      priv->enable = 0;
+    }
+    else {
+      String * src = String_list_pull_at(priv->queue, 0);
+      set_input(pi, s(src));
+      String_free(&src);
+    }
   }
   
   printf("MpegTSDemux enable set to %d\n", priv->enable);
@@ -176,6 +196,7 @@ static int set_enable(Instance *pi, const char *value)
 
 static int set_filter_pid(Instance *pi, const char *value)
 {
+  /* FIXME: This isn't actually used for anything... */
   MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
 
   priv->filter_pid = atoi(value);
@@ -186,11 +207,31 @@ static int set_filter_pid(Instance *pi, const char *value)
 }
 
 
+static int set_tsfile(Instance *pi, const char *value)
+{
+  MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
+  if (priv->tsfile) { Sink_free(&priv->tsfile);  }
+  priv->tsfile = Sink_new(value);
+  return 0;  
+}
+
+
+static int set_esfile(Instance *pi, const char *value)
+{
+  MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
+  if (priv->esfile) { Sink_free(&priv->esfile);  }
+  priv->esfile = Sink_new(value);
+  return 0;
+}
+
+
 static Config config_table[] = {
   { "input", set_input, 0L, 0L },
+  { "queue", set_queue, 0L, 0L },
   { "enable", set_enable, 0L, 0L },
   { "filter_pid", set_filter_pid, 0L, 0L },
   { "exit_on_eof", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, exit_on_eof) },
+  { "retry", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, retry) },
   // { "use_feedback", set_use_feedback, 0L, 0L },
   { "v.print_packet", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, v.print_packet) },
   { "v.show_pes", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, v.show_pes) },
@@ -201,6 +242,9 @@ static Config config_table[] = {
 
   { "d.tspackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, d.tspackets) },
   { "d.espackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSDemux_private, d.espackets) },
+
+  { "tsfile", set_tsfile, 0L, 0L},
+  { "esfile", set_esfile, 0L, 0L},
 };
 
 
@@ -339,6 +383,10 @@ static void handle_pes(MpegTSDemux_private *priv, Stream *s)
       }
       fclose(f);
     }
+  }
+
+  if (priv->esfile) {
+    Sink_write(priv->esfile, edata+n, elementary_payload_bytes);
   }
 
   if (priv->v.show_pes) { printf("    [end completed PES packet]\n"); }
@@ -640,6 +688,10 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
       fclose(f);
     }
   }
+
+  if (priv->tsfile) {
+    Sink_write(priv->tsfile, packet, 188);
+  }
 }
 
 
@@ -691,14 +743,17 @@ static void MpegTSDemux_tick(Instance *pi)
     }
 
     if (!newChunk) {
-      /* FIXME: EOF on a local file should be restartable.  Maybe
-	 socket sources should be restartable, too. */
       Source_close_current(priv->source);
       fprintf(stderr, "%s: source finished.\n", __func__);
       if (priv->retry) {
 	fprintf(stderr, "%s: retrying.\n", __func__);
 	sleep(1);
 	Source_reopen(priv->source);
+      }
+      else if (String_list_len(priv->queue) != 0) {
+	String * src = String_list_pull_at(priv->queue, 0);
+	set_input(pi, s(src));
+	String_free(&src);
       }
       else if (priv->exit_on_eof) {
 	exit(0);
@@ -727,7 +782,8 @@ static void MpegTSDemux_instance_init(Instance *pi)
 {
   MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
   priv->filter_pid = -1;
-  cfg.verbosity = 1;
+  cfg.verbosity = 0;
+  priv->queue = String_list_new();
 }
 
 
