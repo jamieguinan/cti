@@ -286,7 +286,9 @@ static void Instance_print(Index_node *node)
 void Instance_list(int verbose)
 {
   /* List instances in global instance group. */
-  Index_walk(gig->instances.index, Instance_print);
+  if (gig->instances.index) {
+    Index_walk(gig->instances.index, Instance_print);
+  }
 }
 
 static Instance * _Instantiate_local(const char *label, int run)
