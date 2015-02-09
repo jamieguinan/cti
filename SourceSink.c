@@ -20,6 +20,10 @@
 
 static void io_close_current(IO_common *io)
 {
+  if (io->state == IO_CLOSED) {
+    return;
+  }
+
   if (io->f) {
     fclose(io->f);
     io->f = NULL;
