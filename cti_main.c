@@ -79,7 +79,6 @@
 #include "ATSCTuner.h"
 #include "Y4MOverlay.h"
 #include "LinuxEvent.h"
-#include "XTion.h"
 #include "VMixer.h"
 //#include "PCMSource.h"
 
