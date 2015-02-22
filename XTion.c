@@ -6,12 +6,15 @@
 #include "CTI.h"
 #include "XTion.h"
 #include "Images.h"
+#include "Keycodes.h"
 
 static void Config_handler(Instance *pi, void *msg);
+static void Keycode_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG };
+enum { INPUT_CONFIG, INPUT_KEYCODE };
 static Input XTion_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
 enum { OUTPUT_GRAY };
@@ -24,6 +27,7 @@ typedef struct {
   FILE *f;
   int frameno;
   int delayms;
+  int paused;
   struct {
     int x;
     int y;
@@ -53,6 +57,19 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
+static void Keycode_handler(Instance *pi, void *msg)
+{
+  XTion_private *priv = (XTion_private *)pi;
+  Keycode_message *km = msg;
+
+  if (km->keycode == CTI__KEY_SPACE) {
+    priv->paused = priv->paused ? 0 : 1;
+  }
+
+  Keycode_message_cleanup(&km);
+}
+
+
 static int image_width = 320;
 static int image_height = 240;
 
@@ -81,19 +98,32 @@ void gray_draw_box(Gray_buffer *gb, int x, int y, int width, int height, uint8_t
   }
 }
 
+
+static void touch_detect(XTion_private *priv, Gray_buffer *gray)
+{
+  
+}
+
+
 static void process_frame(Instance *pi)
 {
   XTion_private *priv = (XTion_private *)pi;
   uint16_t frame[image_width*image_height*sizeof(uint16_t)];
+
+  //  printf("frame %d\n", priv->frameno);
+  if (priv->delayms) {
+    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (1000000000/60)}, NULL);
+  }
+
+  if (priv->paused) {
+    return;
+  }
+
   if (!fread(frame, image_width*image_height*sizeof(uint16_t), 1, priv->f)) {
     fclose(priv->f); priv->f = 0L;
     return;
   }
   priv->frameno++;
-  printf("frame %d\n", priv->frameno);
-  if (priv->delayms) {
-    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (1000000000/60)}, NULL);
-  }
 
   if (pi->outputs[OUTPUT_GRAY].destination) {
     /* Create gray buffer. */
@@ -105,6 +135,8 @@ static void process_frame(Instance *pi)
     }
 
     if (priv->roi.width) {
+      gray_draw_box(gray_out, priv->roi.x-1, priv->roi.y-1, priv->roi.width+2, priv->roi.height+2, 255);
+      touch_detect(priv, gray_out);
       gray_draw_box(gray_out, priv->roi.x-1, priv->roi.y-1, priv->roi.width+2, priv->roi.height+2, 255);
     }
 
