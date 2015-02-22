@@ -79,6 +79,7 @@
 #include "ATSCTuner.h"
 #include "Y4MOverlay.h"
 #include "LinuxEvent.h"
+#include "XTion.h"
 #include "VMixer.h"
 //#include "PCMSource.h"
 
@@ -206,6 +207,7 @@ int cti_main(int argc, char *argv[])
   Y4MOverlay_init();
   LinuxEvent_init();
   VMixer_init();
+  XTion_init();
   //PCMSource_init();
 
   return app_code(argc, argv);
