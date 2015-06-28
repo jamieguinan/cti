@@ -16,6 +16,7 @@
 #include <unistd.h>		/* close, fcntl */
 #include <poll.h>		/* poll */
 #include <fcntl.h>		/* fcntl */
+#include <errno.h>
 
 
 static void io_close_current(IO_common *io)
@@ -43,6 +44,7 @@ static void io_close_current(IO_common *io)
 static void io_open(IO_common *io, const char *mode)
 {
   int rc;
+  struct addrinfo *results = 0L;
 
   io->s = -1;			/* Default to invalid socket value. */
   io->state = IO_CLOSED;
@@ -57,13 +59,12 @@ static void io_open(IO_common *io, const char *mode)
     char port[strlen(path)+1];
     strncpy(host, path, hostlen); host[hostlen] = 0;
     strcpy(port, colon+1);
-    //  fprintf(stderr, "host=%s port=%s\n", host, port);
+    fprintf(stderr, "host=%s port=%s\n", host, port);
     /* Connect to remote TCP port. */
     struct addrinfo hints = {
       .ai_socktype = SOCK_STREAM,
     };
-    struct addrinfo *results = 0L;
-
+    struct addrinfo *rp = 0L;
     rc = getaddrinfo(host, port,
 			 &hints,
 			 &results);
@@ -71,33 +72,33 @@ static void io_open(IO_common *io, const char *mode)
       perror("getaddrinfo"); goto out;
     }
 
-    io->s = socket(results->ai_family, results->ai_socktype, results->ai_protocol);
-    /* NOTE: Could be additional entries in linked list above. */
-
+    for (rp=results; rp != NULL; rp = rp->ai_next) {
+      io->s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+      /* NOTE: Could be additional entries in linked list above. */
+      if (io->s == -1) {
+        perror("socket"); goto out;
+      }
+  #if 0
+      if (fcntl(io->s, FD_CLOEXEC)) {
+        perror("FD_CLOEXEC");
+      }
+  #endif
+      rc = connect(io->s, rp->ai_addr, rp->ai_addrlen);
+      //fprintf(stderr, "rc=%d io->s=%d ai_addrlen=%d, errno=%d\n", rc, io->s, rp->ai_addrlen, errno);
+      if (rc == -1) {
+        // perror("connect");
+        /* Note: alternatively, could keep the socket and retry the open... */
+        close(io->s);
+        io->s = -1;
+        io->state = IO_CLOSED;
+      }
+    }
     if (io->s == -1) {
-      perror("socket"); goto out;
-    }
-
-#if 0
-    if (fcntl(io->s, FD_CLOEXEC)) {
-      perror("FD_CLOEXEC");
-    }
-#endif
-
-    rc = connect(io->s, results->ai_addr, results->ai_addrlen);
-    if (rc == -1) {
-      perror("connect"); 
-      /* Note: alternatively, could keep the socket and retry the open... */
-      close(io->s);
-      io->s = -1;
-      io->state = IO_CLOSED;
       goto out;
     }
-
-    freeaddrinfo(results);  results = 0L;
     io->state = IO_OPEN_SOCKET;
   }
-  else { 
+  else {
     /* File.  Apply strftime() to allow time-based naming. */
     char out_path[256];
     time_t t = time(NULL);
@@ -128,8 +129,12 @@ static void io_open(IO_common *io, const char *mode)
       }
     }
   }
-  
+
  out:
+  if (results) {
+    freeaddrinfo(results);  results = 0L;
+  }
+
   return;
 }
 
