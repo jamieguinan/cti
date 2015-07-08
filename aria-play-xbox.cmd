@@ -33,7 +33,7 @@ connect vf YUV422P_buffer sdl
 #connect dj YUV422P_buffer sdl
 
 #config mjd input ./rcv
-config mjd input 192.168.2.22:6667
+config mjd input 192.168.2.109:6667
 #config mjd input 127.0.0.1:5000:L
 
 config ap device plughw:2
