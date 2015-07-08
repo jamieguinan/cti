@@ -67,6 +67,8 @@ static void Config_handler(Instance *pi, void *data)
 
 static void M3U8_tick(Instance *pi)
 {
+#if 0
+  // In progress, commented out so I can work on other code.
   M3U8_private *priv = (M3U8_private *)pi;
   Handler_message *hm;
   int wait_flag = 1;
@@ -86,6 +88,7 @@ static void M3U8_tick(Instance *pi)
   }
 
   pi->counter++;
+#endif
 }
 
 static void M3U8_instance_init(Instance *pi)
