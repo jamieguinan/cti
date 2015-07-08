@@ -3,6 +3,7 @@ new DJpeg dj
 new JpegTran jt
 new SDLstuff sdl
 new UI001 ui
+new LinuxEvent button
 
 # The jpeg/rgb path can be there even if it isn't used.
 connect vc Jpeg_buffer jt
@@ -37,7 +38,20 @@ config vc fps 30
 #config vc autoexpose 1
 #config vc exposure 300
 
-connect sdl:Keycode_msg vc:Keycode_msg
-connect sdl:Keycode_msg_2 sdl:Keycode_msg
+# 'q' to quit.
+connect sdl:Keycode_msg sdl:Keycode_msg
 
 config vc enable 1
+
+# Enable snapshot button.
+config button device /dev/input/by-id/usb-Vimicro_Co._ltd_Vimicro_USB2.0_UVC_PC_Camera-event-if00
+config sdl snapshot_key CAMERA
+connect button Keycode_msg sdl
+
+# Save snapshot as Jpeg.
+new CJpeg cj
+new JpegFiler jf
+config cj quality 85
+connect sdl YUV422P_buffer cj
+connect cj Jpeg_buffer jf
+config jf prefix vimicro_

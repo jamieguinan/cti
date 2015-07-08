@@ -79,6 +79,7 @@ CTI__KEY_MINUS,
 CTI__KEY_EQUALS,
 CTI__KEY_CARET,
 CTI__KEY_SPACE,
+CTI__KEY_CAMERA,
 };
 
 typedef struct {

@@ -41,7 +41,7 @@ static Input LinuxEvent_inputs[] = {
 
 enum { OUTPUT_KEYCODE };
 static Output LinuxEvent_outputs[] = {
-  [ OUTPUT_KEYCODE ] = { .type_label = "Keycode_message", .destination = 0L },
+  [ OUTPUT_KEYCODE ] = { .type_label = "Keycode_msg", .destination = 0L },
 };
 
 typedef struct {
@@ -119,10 +119,12 @@ static void handle_next_event(Instance *pi)
   
   // printf("%s code=%d value=%d\n", ev_type_string(ev.type), ev.code, ev.value);
   if (ev.type == EV_KEY && ev.value == 1) {
-    printf("%s code=%d value=%d\n", ev_type_string(ev.type), ev.code, ev.value);
+    int cti_key = Keycode_from_linux_event(ev.code);
+    printf("%s code=%d (transalted=%d) value=%d\n", ev_type_string(ev.type), ev.code, cti_key,
+	   ev.value);
 
     if (pi->outputs[OUTPUT_KEYCODE].destination) {
-      PostData(Keycode_message_new(ev.code), pi->outputs[OUTPUT_KEYCODE].destination);
+      PostData(Keycode_message_new(cti_key), pi->outputs[OUTPUT_KEYCODE].destination);
     }
 
   }

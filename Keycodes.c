@@ -90,6 +90,7 @@ int Keycode_from_string(const char *string)
   _test_(FORWARD);
   _test_(HOME);
   _test_(POWER);
+  _test_(CAMERA);
   return -1;
 }
 
@@ -170,7 +171,7 @@ static int linux_event_to_keycode[] = {
   //_map_(KEY_PLUS),
   //_map_(KEY_EQUALS),
   //_map_(KEY_CARET),
-  
+  _map_(KEY_CAMERA),
 };
 
 
@@ -251,6 +252,7 @@ static const char * keycode_to_string_map[] = {
   _ksmap_(CTI__KEY_MINUS),
   _ksmap_(CTI__KEY_EQUALS),
   _ksmap_(CTI__KEY_CARET),
+  _ksmap_(CTI__KEY_CAMERA),
 };
 
 
