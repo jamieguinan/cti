@@ -3,6 +3,9 @@
  * size alloction for String_sprintf is one of my favorite things
  * about it.
  */
+
+/* Please see accompanying String.licence for copyright and licensing information. */
+
 #include "String.h"
 #include <string.h>
 #include <stdlib.h>

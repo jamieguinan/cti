@@ -7,6 +7,9 @@
  * other encodings.
  */
 
+/* Please see accompanying String.licence for copyright and licensing information. */
+
+
 typedef struct {
   char *bytes;
   int len;

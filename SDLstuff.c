@@ -95,6 +95,7 @@ static Output SDLstuff_outputs[] = {
   [ OUTPUT_KEYCODE_2 ] = { .type_label = "Keycode_msg_2", .destination = 0L },
   [ OUTPUT_POINTER ] = { .type_label = "Pointer_event", .destination = 0L },
   [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },
 };
 
 enum { RENDER_MODE_GL, RENDER_MODE_OVERLAY, RENDER_MODE_SOFTWARE };
@@ -1047,6 +1048,10 @@ static void GRAY_handler(Instance *pi, void *data)
   }
 
   if (yuv420p) {
+    if (priv->snapshot && pi->outputs[OUTPUT_YUV420P].destination) {
+      PostData(YUV420P_buffer_ref(yuv420p), pi->outputs[OUTPUT_YUV420P].destination);
+      priv->snapshot = 0;
+    }
     YUV420P_buffer_discard(yuv420p);
   }
 
