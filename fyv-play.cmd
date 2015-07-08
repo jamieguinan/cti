@@ -62,7 +62,7 @@ config sdl label FRONTYARD
 # Use relay, see "frontyard-relay.cmd"
 # config mjd input 127.0.0.1:7131
 
-config mjd input 192.168.2.75:6666
+config mjd input 192.168.2.110:6666
 
 config mjd retry 1
 config mjd enable 1

@@ -50,7 +50,7 @@ config sdl mode OVERLAY
 
 # config mjd output fyv-direct-capture.mjx
 
-config mjd input 192.168.2.75:6666
+config mjd input 192.168.2.110:6666
 config mjd retry 1
 config mjd enable 1
 
