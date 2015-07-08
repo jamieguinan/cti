@@ -320,7 +320,7 @@ ArrayU8 * io_read(IO_common *io)
   else if (io->s != -1) {
     len = recv(io->s, tmp, max_read, 0);
     if (len == 0) {
-      fprintf(stderr, "recv(max_read=%d) -> %d\n", max_read, len);
+      //fprintf(stderr, "recv(max_read=%d) -> %d\n", max_read, len);
       io_close_current(io);
     }
 
