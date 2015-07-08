@@ -147,6 +147,7 @@ OBJS= \
 	$(OBJDIR)/crc.o \
 	$(OBJDIR)/Array.o \
 	$(OBJDIR)/M3U8.o \
+	$(OBJDIR)/HTTPClient.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
