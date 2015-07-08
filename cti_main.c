@@ -80,6 +80,7 @@
 #include "Y4MOverlay.h"
 #include "LinuxEvent.h"
 #include "VMixer.h"
+#include "M3U8.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -206,6 +207,7 @@ int cti_main(int argc, char *argv[])
   Y4MOverlay_init();
   LinuxEvent_init();
   VMixer_init();
+  M3U8_init();
   //PCMSource_init();
 
   return app_code(argc, argv);
