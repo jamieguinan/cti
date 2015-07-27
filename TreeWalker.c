@@ -13,59 +13,9 @@
 #include <sys/stat.h>		/* stat */
 #include <unistd.h>		/* stat */
 
-#include "CTI.h"
+//#include "CTI.h"
 #include "TreeWalker.h"
 #include "String.h"
-
-static void Config_handler(Instance *pi, void *msg);
-
-enum { INPUT_CONFIG };
-static Input TreeWalker_inputs[] = {
-  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-};
-
-//enum { /* OUTPUT_... */ };
-static Output TreeWalker_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
-};
-
-typedef struct {
-  Instance i;
-  // int ...;
-} TreeWalker_private;
-
-static Config config_table[] = {
-  // { "...",    set_..., get_..., get_..._range },
-};
-
-
-static void Config_handler(Instance *pi, void *data)
-{
-  // Generic_config_handler(pi, data, config_table, table_size(config_table));
-}
-
-
-static void TreeWalker_instance_init(Instance *pi)
-{
-  // TreeWalker_private *priv = (TreeWalker_private *)pi;
-}
-
-
-static Template TreeWalker_template = {
-  .label = "TreeWalker",
-  .priv_size = sizeof(TreeWalker_private),  
-  .inputs = TreeWalker_inputs,
-  .num_inputs = table_size(TreeWalker_inputs),
-  .outputs = TreeWalker_outputs,
-  .num_outputs = table_size(TreeWalker_outputs),
-  .tick = NULL,
-  .instance_init = TreeWalker_instance_init,
-};
-
-void TreeWalker_init(void)
-{
-  // Template_register(&TreeWalker_template);
-}
 
 void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char dtype) )
 {
