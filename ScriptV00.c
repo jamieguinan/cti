@@ -75,6 +75,20 @@ static void load_module(ScriptV00_private *priv, const char *filename)
   }
 }
 
+void ScriptV00_Config(Instance *inst, const char *token2, const char *token3)
+{
+  {
+    if (inst) {
+      Config_buffer *c = Config_buffer_new(token2, token3);
+      printf("posting config message %s %s to %s\n", token2, token3, inst->label);
+      // PostData(c, &inst->inputs[0]);
+      int result;
+      PostDataGetResult(c, &inst->inputs[0], &result);
+    }
+  }
+}
+
+
 static void scan_file(ScriptV00_private *priv, const char *filename);
 
 static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
@@ -103,11 +117,16 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       p = strchr(p, ' ')+1;
       strcpy(token3, p);
       expand(token3);
+
+#if 0
       Config_buffer *c = Config_buffer_new(token2, token3);
       printf("posting config message %s %s to %s\n", token2, token3, inst->label);
       // PostData(c, &inst->inputs[0]);
       int result;
       PostDataGetResult(c, &inst->inputs[0], &result);
+#else
+      ScriptV00_Config(inst, token2, token3);
+#endif
     }
   }
   else if ((sscanf(line->bytes, "include %255s", token1) == 1)) {

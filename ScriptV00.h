@@ -3,4 +3,7 @@
 
 extern void ScriptV00_init(void);
 
+/* This can be used outside "cti". */
+extern void ScriptV00_Config(Instance *inst, const char *token2, const char *token3);
+
 #endif
