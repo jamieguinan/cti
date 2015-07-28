@@ -1,4 +1,4 @@
-/* Search and replace "SQLite" with new module name. */
+/* Convenience wrapper around sqlite3. */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -7,65 +7,47 @@
 #include "SQLite.h"
 #include "sqlite3.h"
 
-static void Config_handler(Instance *pi, void *msg);
+#define no_callback NULL
+#define no_errmsg NULL
 
-enum { INPUT_CONFIG };
-static Input SQLite_inputs[] = {
-  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-};
+typedef struct _SQLite {
+  sqlite3 *db;
+} SQLite;
 
-//enum { /* OUTPUT_... */ };
-static Output SQLite_outputs[] = {
-  //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
-};
-
-typedef struct {
-  Instance i;
-  // int ...;
-} SQLite_private;
-
-static Config config_table[] = {
-  // { "...",    set_..., get_..., get_..._range },
-};
-
-
-static void Config_handler(Instance *pi, void *data)
+SQLite * SQLite_open(String * dbschema, String * dbfile)
 {
-  Generic_config_handler(pi, data, config_table, table_size(config_table));
-}
+  int rc;
+  SQLite * sql = NULL;
+  puts(__func__);
 
-static void SQLite_tick(Instance *pi)
-{
-  Handler_message *hm;
-
-  hm = GetData(pi, 1);
-  if (hm) {
-    hm->handler(pi, hm->data);
-    ReleaseMessage(&hm,pi);
+  if (String_is_none(dbschema)) {
+    fprintf(stderr, "%s:%s schema is unset\n", __FILE__, __func__);
+    rc = 1;
+    goto out;
   }
 
-  pi->counter++;
+  sql = Mem_calloc(1, sizeof(*sql));
+
+  rc = sqlite3_open(s(dbfile), &sql->db);
+  if(rc != 0) {
+    fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(sql->db));
+    sqlite3_close(sql->db); Mem_free(sql);
+    goto out;
+  }
+
+  String * q = String_sprintf("CREATE TABLE IF NOT EXISTS %s;", s(dbschema));
+  rc = sqlite3_exec(sql->db, s(q), no_callback, 0, no_errmsg);
+  if(rc != 0) {
+    fprintf(stderr, "%s\nerror %d: %s\n", s(q), rc, sqlite3_errmsg(sql->db));
+    goto out;
+  }
+  String_free(&q);
+
+ out:
+  return sql;
 }
 
-static void SQLite_instance_init(Instance *pi)
-{
-  // SQLite_private *priv = (SQLite_private *)pi;
-}
-
-
-static Template SQLite_template = {
-  .label = "SQLite",
-  .priv_size = sizeof(SQLite_private),  
-  .inputs = SQLite_inputs,
-  .num_inputs = table_size(SQLite_inputs),
-  .outputs = SQLite_outputs,
-  .num_outputs = table_size(SQLite_outputs),
-  .tick = SQLite_tick,
-  .instance_init = SQLite_instance_init,
-};
 
 void SQLite_init(void)
 {
-  sqlite3_initialize();
-  Template_register(&SQLite_template);
 }
