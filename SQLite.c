@@ -18,7 +18,7 @@ SQLite * SQLite_open(String * dbschema, String * dbfile)
 {
   int rc;
   SQLite * sql = NULL;
-  puts(__func__);
+  // puts(__func__);
 
   if (String_is_none(dbschema)) {
     fprintf(stderr, "%s:%s schema is unset\n", __FILE__, __func__);
