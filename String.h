@@ -9,6 +9,8 @@
 
 /* Please see accompanying String.licence for copyright and licensing information. */
 
+#include <string.h>		/* strlen */
+
 
 typedef struct {
   char *bytes;
