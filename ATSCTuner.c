@@ -1,4 +1,6 @@
-/* Search and replace "ATSCTuner" with new module name. */
+/*
+ * This module is incomplete.
+ */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
