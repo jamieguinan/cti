@@ -237,8 +237,7 @@ static void * http_thread(void *data)
 				    "text/html",
 				    text
 				    );
-    ArrayU8 *aresult = ArrayU8_temp_const(s(result), String_len(result));
-    Comm_write_from_array_complete(&comm, aresult);
+    Comm_write_from_string_complete(&comm, result);
     String_free(&result);
     goto out;
   }
@@ -267,8 +266,7 @@ static void * http_thread(void *data)
 				   resource->mime_type
 				   );
 
-      ArrayU8 *ahdr = ArrayU8_temp_const(s(hdr), String_len(hdr));
-      Comm_write_from_array_complete(&comm, ahdr);
+      Comm_write_from_string_complete(&comm, hdr);
       String_free(&hdr);
       if (comm.io.state == IO_CLOSED) { break; }
 
@@ -304,8 +302,7 @@ static void * http_thread(void *data)
 				    "text/html",
 				    text
 				    );
-    ArrayU8 *aresult = ArrayU8_temp_const(s(result), String_len(result));
-    Comm_write_from_array_complete(&comm, aresult);
+    Comm_write_from_string_complete(&comm, result);
     String_free(&result);
   }
   
