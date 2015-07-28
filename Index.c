@@ -3,7 +3,7 @@
  * 
  * This is 2nd year Computer Science stuff, but as a professional
  * programmer I've been spoiled by Python, C++ STL, and other
- * containerss, so I haven't written code like this since ~1992.
+ * containers, so I haven't written code like this since ~1992.
  * Writing this evokes memories of my compsci professors drawing nodes
  * on the whiteboard...
  */
