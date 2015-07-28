@@ -148,6 +148,7 @@ OBJS= \
 	$(OBJDIR)/Array.o \
 	$(OBJDIR)/M3U8.o \
 	$(OBJDIR)/HTTPClient.o \
+	$(OBJDIR)/TunerControl.o \
 	$(OBJDIR)/$(MAIN) \
 	../../platform/$(ARCH)/jpeg-7/transupp.o
 
