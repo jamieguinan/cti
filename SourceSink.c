@@ -165,6 +165,8 @@ static void io_write(IO_common * io, void *data, int length)
 	 but should have some kind of solution or at least a
 	 recommendation or note.  Maybe a timeout, and fill in an
 	 error value if couldn't send all in time? */
+      //if (io_writable(io)) {
+      //}
       n = send(io->s, ((char*)data)+sent, length, 0);
       if (n <= 0) {
 	perror("send");
@@ -610,15 +612,34 @@ void Comm_read_append_array(Comm * comm, ArrayU8 * array)
   }
 }
 
+
 void Comm_write_from_array(Comm * comm,  ArrayU8 * array, unsigned long * offset)
 {
+  /* FIXME: Update offset? */
   io_write(&comm->io, array->data, array->len);
 }
 
+
 void Comm_write_from_array_complete(Comm * comm,  ArrayU8 * array)
 {
+  /* FIXME: Repeat until finished? */
   io_write(&comm->io, array->data, array->len);
 }
+
+
+void Comm_write_from_string(Comm * comm,  String * str, unsigned long * offset)
+{
+  /* FIXME: Update offset? */
+  io_write(&comm->io, str->bytes, str->len);
+}
+
+
+void Comm_write_from_string_complete(Comm * comm, String * str)
+{
+  /* FIXME: Repeat until finished? */
+  io_write(&comm->io, str->bytes, str->len);
+}
+
 
 void Comm_write_string_with_byte(Comm * comm, String *str, char byteval)
 {

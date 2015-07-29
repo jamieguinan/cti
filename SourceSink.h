@@ -25,6 +25,7 @@ typedef struct {
   struct sockaddr_in addr;	/* socket details... */
   socklen_t addrlen;		/* socket details... */
   IO_state state;
+  long offset;
   unsigned int read_timeout_ms;
   ArrayU8 * extra;		/* extra data left over after certain operations */
 } IO_common;
@@ -80,6 +81,8 @@ extern String * Comm_read_string_to_byte(Comm * comm, char byteval);
 extern void Comm_read_append_array(Comm * comm, ArrayU8 * array);
 extern void Comm_write_from_array(Comm * comm,  ArrayU8 * array, unsigned long * offset);
 extern void Comm_write_from_array_complete(Comm * comm,  ArrayU8 * array);
+extern void Comm_write_from_string(Comm * comm,  String * str, unsigned long * offset);
+extern void Comm_write_from_string_complete(Comm * comm,  String * str);
 extern void Comm_free(Comm **comm);
 
 
