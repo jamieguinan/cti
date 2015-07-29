@@ -47,6 +47,11 @@ SQLite * SQLite_open(String * dbschema, String * dbfile)
   return sql;
 }
 
+void SQLite_exec(SQLite * sql, const char * query)
+{
+  sqlite3_exec(sql->db, query, no_callback, 0, no_errmsg);
+}
+
 
 void SQLite_init(void)
 {
