@@ -68,7 +68,6 @@
 #include "AVIDemux.h"
 #include "RawSource.h"
 #include "ImageOutput.h"
-#include "SQLite.h"
 #include "SubProc.h"
 #include "ExecProc.h"
 #include "XMLMessageServer.h"
@@ -147,10 +146,6 @@ int cti_main(int argc, char *argv[])
 
 #ifdef HAVE_LIRC
   Lirc_init();
-#endif
-
-#ifdef HAVE_SQLITE3
-  SQLite_init();
 #endif
 
   CJpeg_init();

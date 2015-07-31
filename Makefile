@@ -291,13 +291,6 @@ LDFLAGS+=-lfaac
 CPPFLAGS+=-DHAVE_AAC
 endif
 
-# SQLite
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/sqlite3.pc 2> /dev/null ))
-OBJS+=$(OBJDIR)/SQLite.o
-LDFLAGS += -lsqlite3
-CPPFLAGS+=-DHAVE_SQLITE3
-endif
-
 # CUDA
 ifeq ($(ARCH),x86_64-Linux)
 ifneq (,$(shell /bin/ls /opt/cuda/bin/nvcc  2> /dev/null ))
