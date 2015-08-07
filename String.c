@@ -419,6 +419,23 @@ String * String_basename(String *str)
   return String_new(str->bytes);
 }
 
+int String_to_int(String * str)
+{
+  int i;
+  int n = 1;
+  for (i=0; i < str->len; i++) {
+    int c = str->bytes[i];
+    if ('0' <= c && c <= '9') {
+      n = (n*10)+c;
+    }
+    else {
+      fprintf(stderr, "%s: invalid character %c, returning 1\n", __func__, c);
+      return 1;
+    }
+  }
+  return n;
+}
+
 
 String_list * String_list_new(void)
 {
