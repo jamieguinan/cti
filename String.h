@@ -83,7 +83,8 @@ extern String * String_value_none(void);
 extern int String_get_char(String *str, int index);
 extern String * String_unescape(StringConst *str);
 extern String * String_basename(String *str);
-extern int String_to_int(String * str);
+extern int String_to_int(String * str, int * result);
+extern int String_to_long(String * str, long * result);
 
 /* List of strings. */
 typedef struct {

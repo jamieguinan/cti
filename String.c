@@ -419,21 +419,45 @@ String * String_basename(String *str)
   return String_new(str->bytes);
 }
 
-int String_to_int(String * str)
+int String_to_int(String * str, int * result)
 {
   int i;
-  int n = 1;
+  int n = 0;
   for (i=0; i < str->len; i++) {
     int c = str->bytes[i];
     if ('0' <= c && c <= '9') {
-      n = (n*10)+c;
+      n = (n*10)+(c-'0');
     }
     else {
-      fprintf(stderr, "%s: invalid character %c, returning 1\n", __func__, c);
+      fprintf(stderr, "%s: invalid character %c, result unchanged\n", __func__, c);
       return 1;
     }
+    //printf("  n=%d\n", n);
   }
-  return n;
+
+  *result = n;
+  return 0;
+}
+
+
+int String_to_long(String * str, long * result)
+{
+  int i;
+  long n = 0;
+  for (i=0; i < str->len; i++) {
+    int c = str->bytes[i];
+    if ('0' <= c && c <= '9') {
+      n = (n*10)+(c-'0');
+    }
+    else {
+      fprintf(stderr, "%s: invalid character %c, result unchanged\n", __func__, c);
+      return 1;
+    }
+    //printf("  n=%ld\n", n);
+  }
+
+  *result = n;
+  return 0;
 }
 
 
