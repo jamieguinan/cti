@@ -198,6 +198,24 @@ Sink *Sink_new(const char * path)
 }
 
 
+int Sink_poll(Sink *sink, int timeout_ms)
+{
+  struct pollfd fds[1];
+  fds[0].events = POLLOUT;
+  if (sink->io.f) {
+    fds[0].fd = fileno(sink->io.f);
+  }
+  else if (sink->io.s != -1) {
+    fds[0].fd = sink->io.s;
+  }
+  else {
+    return 0;
+  }
+
+  return poll(fds, 1, timeout_ms);
+}
+
+
 void Sink_write(Sink *sink, void *data, int length)
 {
   io_write(&sink->io, data, length);
@@ -354,7 +372,7 @@ ArrayU8 * Source_read(Source *source)
 }
 
 
-int Source_poll_read(Source *source, int timeout)
+int Source_poll(Source *source, int timeout_ms)
 {
   struct pollfd fds[1];
   fds[0].events = POLLIN;
@@ -369,7 +387,7 @@ int Source_poll_read(Source *source, int timeout)
     return 0;
   }
   
-  return poll(fds, 1, timeout);
+  return poll(fds, 1, timeout_ms);
 }
 
 

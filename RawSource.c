@@ -73,7 +73,7 @@ static void RawSource_move_data(Instance *pi)
   ArrayU8 *chunk;
   int needData = 1;
 
-  if (priv->source && priv->read_timeout && Source_poll_read(priv->source, priv->read_timeout) == 0) {
+  if (priv->source && priv->read_timeout && Source_poll(priv->source, priv->read_timeout) == 0) {
     /* No read activity, assume stalled. */
     Source_close_current(priv->source);
     Source_reopen(priv->source);

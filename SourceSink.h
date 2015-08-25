@@ -42,7 +42,7 @@ typedef struct {
 extern Source * Source_new(const char * path /* , options? */ );
 extern Source * Source_allocate(const char * path);
 extern ArrayU8 * Source_read(Source *source);
-extern int Source_poll_read(Source *source, int timeout);
+extern int Source_poll(Source *source, int timeout_ms);
 extern int Source_seek(Source *source, long amount);
 extern int Source_set_offset(Source *source, long amount);
 extern long Source_tell(Source *source);
@@ -60,6 +60,7 @@ typedef struct {
 extern Sink * Sink_new(const char * path);
 extern Sink * Sink_allocate(const char * path);
 extern void Sink_write(Sink *sink, void *data, int length);
+extern int Sink_poll(Sink *sink, int timeout_ms);
 extern void Sink_flush(Sink *sink);
 extern void Sink_close_current(Sink *sink);
 extern void Sink_reopen(Sink *sink);
