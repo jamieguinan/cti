@@ -12,16 +12,18 @@
 
 static void Config_handler(Instance *pi, void *msg);
 static void Y422p_handler(Instance *pi, void *msg);
+static void Y420p_handler(Instance *pi, void *msg);
 static void RGB3_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_RGB3 };
+enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_YUV420P, INPUT_RGB3 };
 static Input VFilter_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = Y422p_handler },
+  [ INPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .handler = Y420p_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
 };
 
-enum { OUTPUT_YUV422P, OUTPUT_RGB3 };
+enum { OUTPUT_YUV422P, /* OUTPUT_YUV420P, */ OUTPUT_RGB3 };
 static Output VFilter_outputs[] = {
   [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
@@ -374,6 +376,14 @@ static void single_trim(VFilter_private * priv, uint8_t *data_in, uint8_t *data_
   }
 }
 
+
+static void Y420p_handler(Instance *pi, void *msg)
+{
+  YUV420P_buffer *y420p_in = msg;
+  YUV422P_buffer * y422p_out = YUV420P_to_YUV422P(y420p_in);
+  YUV420P_buffer_discard(y420p_in);
+  Y422p_handler(pi, y422p_out);
+}
 
 
 static void Y422p_handler(Instance *pi, void *msg)
