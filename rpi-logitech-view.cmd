@@ -20,7 +20,7 @@ connect do511 RGB3_buffer sdl
 
 #config mjd input ./rcv
 # Port 6667 is full speed, port 6668 is every-other.
-config mjd input 192.168.2.80:6666
+config mjd input 192.168.2.7:6666
 #config mjd input 127.0.0.1:6667
 #config mjd input 192.168.2.109:6668
 #config mjd input 127.0.0.1:5000:L

@@ -810,23 +810,28 @@ YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p)
   YUV422P_buffer * yuv422p = YUV422P_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
   int x, y;
 
-  printf("%s() has not been tested\n", __func__);
+  //printf("%s() has not been tested\n", __func__);
 
   /* Copy luma channel directly. */
-  memcpy(yuv422p->y, yuv422p->y, yuv422p->y_length);
-
+  memcpy(yuv422p->y, yuv420p->y, yuv420p->y_length); 
+#if 0
+  memset(yuv422p->cb, 127, yuv422p->cb_length);
+  memset(yuv422p->cr, 127, yuv422p->cr_length);
+ goto out;
+#endif
   /* Basically just need to stretch the chroma subimages vertically. */
   for (y = 0; y < yuv422p->height; y++) {
-    uint8_t * srcCb = yuv420p->cb + (y * yuv420p->cb_width)/2;
-    uint8_t * srcCr = yuv420p->cr + (y * yuv420p->cb_width)/2;
+    uint8_t * srcCb = yuv420p->cb + ((y/2) * yuv420p->cb_width);
+    uint8_t * srcCr = yuv420p->cr + ((y/2) * yuv420p->cr_width);
     uint8_t * destCb = yuv422p->cb + (y * yuv422p->cb_width);
-    uint8_t * destCr = yuv422p->cr + (y * yuv422p->cb_width);
+    uint8_t * destCr = yuv422p->cr + (y * yuv422p->cr_width);
     for (x = 0; x < yuv422p->cb_width; x+=1) {
       *destCb++ = *srcCb++;
       *destCr++ = *srcCr++;
     }
   }
 
+ out:
   // printf("n=%d\n", n);
   return yuv422p;
 }
