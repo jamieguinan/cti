@@ -1,6 +1,10 @@
-#include <stdio.h>
-#include <string.h>
+#include <stdio.h>		/* FILE for jpeglib.h */
+#include <setjmp.h>		/* setjmp */
+#include <stdlib.h>		/* exit */
 
+#include "Images.h"
+#include "Mem.h"
+#include "ArrayU8.h"
 #include "jpeglib.h"
 
 #include "cdjpeg.h"
@@ -8,86 +12,37 @@
 #include "jmemsrc.h"
 #include "jpeghufftables.h"
 
-#include "CTI.h"
-#include "DJpeg.h"
-#include "Images.h"
-#include "Mem.h"
-#include "Cfg.h"
-#include "ArrayU8.h"
+#ifndef cti_table_size
+#define cti_table_size(x) (sizeof(x)/sizeof(x[0]))
+#endif
 
-static void Config_handler(Instance *pi, void *data);
-static void Jpeg_handler(Instance *pi, void *data);
-
-/* DJpeg Instance and Template implementation. */
-enum { INPUT_CONFIG, INPUT_JPEG };
-static Input DJpeg_inputs[] = { 
-  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
-};
-
-enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_YUV420P, OUTPUT_JPEG };
-static Output DJpeg_outputs[] = { 
-  [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
-  [ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
-  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },
-  [ OUTPUT_YUV422P ] = {.type_label = "YUV422P_buffer", .destination = 0L },
-  [ OUTPUT_JPEG ] = {.type_label = "Jpeg_buffer", .destination = 0L }, /* pass-through */
-};
-
-typedef struct {
-  Instance i;
-
-  /* Jpeg decode context... */
-  int use_green_for_gray;
-  int sampling_warned;
-  int max_messages;
-  int dct_method;
-
-  int every;
-} 
-DJpeg_private;
-
-
-static int set_dct_method(Instance *pi, const char *value)
+static void save_error_jpeg(uint8_t *data, int data_length)
 {
-  DJpeg_private *priv = (DJpeg_private *)pi;
+  char filename[256];
+  sprintf(filename, "error-%ld.jpg", time(NULL));
+  FILE *f = fopen(filename, "wb");
+  int n = fwrite(data, 1, data_length, f);
+  if (n != data_length) {
+    perror("fwrite"); 
+  } else {
+    printf("saved erroneous jpeg to error.jpg\n");
+    fclose(f);
+  }
+}
 
-  if (streq(value, "islow")) {
-    priv->dct_method = JDCT_ISLOW;
-  }
-  else if (streq(value, "ifast")) {
-    priv->dct_method = JDCT_IFAST;
-  }
-  else if (streq(value, "float")) {
-    priv->dct_method = JDCT_FLOAT;
+
+static void jerr_error_handler(j_common_ptr cinfo)
+{
+  (*cinfo->err->output_message) (cinfo);
+  if (cinfo->client_data) {
+    jmp_buf *jb = cinfo->client_data;
+    fprintf(stderr, "(recovering)\n");
+    longjmp(*jb, 1);
   }
   else {
-    fprintf(stderr, "%s: unknown method %s\n", __func__, value);
+    exit(1);
   }
-  return 0;
 }
-
-
-static int do_quit(Instance *pi, const char *value)
-{
-  exit(0);
-  return 0;
-}
-
-
-static Config config_table[] = {
-  { "max_messages", 0L, 0L, 0L, cti_set_int, offsetof(DJpeg_private, max_messages) },
-  { "every", 0L, 0L, 0L, cti_set_int, offsetof(DJpeg_private, every) },
-  { "dct_method", set_dct_method, 0L, 0L},
-  { "quit",    do_quit, 0L, 0L },
-};
-
-
-static void Config_handler(Instance *pi, void *data)
-{
-  Generic_config_handler(pi, data, config_table, table_size(config_table));
-}
-
 
 typedef struct {
   const char *label;
@@ -115,46 +70,77 @@ static FormatInfo known_formats[] = {
 };
 
 
+/* Create a Jpeg buffer from raw jpeg data.  This can return NULL if
+   invalid jpeg data!  I put this function in this file rather than
+   Images.c because this module includes jpeglib.h, and if I'm
+   building on a system without the jpeg library, I still want
+   Images.c to build, without requiring a bunch of #ifdefs */
+Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
+{
+  Jpeg_buffer *jpeg = 0L;
+  struct jpeg_decompress_struct cinfo;
+  struct jpeg_error_mgr jerr;
+  jmp_buf jb;
+  int error = 0;
+
+  if (Image_guess_type(data, 5) != IMAGE_TYPE_JPEG) {
+    fprintf(stderr, "%s: data does not look like a jpeg file [%02x %02x %02x %02x]\n", 
+	    __func__, data[0], data[1], data[2], data[3]);
+    return NULL;    
+  }
+
+  cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
+					this may cause the program to call 
+					exit()! */
+  jerr.error_exit = jerr_error_handler;
+
+  jpeg_create_decompress(&cinfo);
+
+  cinfo.client_data = &jb;
+  error = setjmp(jb);
+  if (error) {
+    fprintf(stderr, "%s:%d\n", __func__, __LINE__);
+    if (0) {
+      save_error_jpeg(data, data_length);
+    }
+    goto out;
+  }
+
+  jpeg_mem_src(&cinfo, data, data_length);
+
+  (void) jpeg_read_header(&cinfo, TRUE); /* Possible path to setjmp() above. */
+
+  // printf("jpeg: width=%d height=%d\n", cinfo.image_width, cinfo.image_height);
+
+  /* If no error, allocate and return jpeg, otherwise it will return NULL. */
+  jpeg = Jpeg_buffer_new(data_length, c);
+  jpeg->width = cinfo.image_width;
+  jpeg->height = cinfo.image_height;
+  jpeg->data_length = data_length;
+  jpeg->encoded_length = data_length;
+  memcpy(jpeg->data, data, data_length);
+
+ out:  
+  jpeg_destroy_decompress(&cinfo); 
+  
+  return jpeg;
+}
+
 static void jerr_warning_noop(j_common_ptr cinfo, int msg_level)
 {
 }
 
 
-static void Jpeg_handler(Instance *pi, void *data)
+void Jpeg_decompress(Jpeg_buffer * jpeg_in, 
+		     YUV420P_buffer ** yuv420p_result,
+		     YUV422P_buffer ** yuv422p_result)
 {
-  DJpeg_private *priv = (DJpeg_private *)pi;
-  double t1, t2;
   int save_width = 0;
   int save_height = 0;
-  Jpeg_buffer *jpeg_in = data;
   int i;
 
-  /* Provisional image buffers. */
-  YUV422P_buffer * yuv422p = NULL;
   YUV420P_buffer * yuv420p = NULL;
-  RGB3_buffer * rgb3 = NULL;
-
-  if (priv->every && (pi->counter % priv->every != 0)) {
-    goto out;
-  }
-
-  if (priv->max_messages && pi->pending_messages > priv->max_messages) {
-    /* Skip without decoding. */
-    fprintf(stderr, "DJpeg skipping %d (%d %d)\n", pi->counter,
-	    pi->pending_messages, priv->max_messages);
-    goto out;
-  }
-
-  getdoubletime(&t1);
-
-  if (!(pi->outputs[OUTPUT_YUV422P].destination ||
-	pi->outputs[OUTPUT_YUV420P].destination ||
-	pi->outputs[OUTPUT_RGB3].destination ||
-	pi->outputs[OUTPUT_GRAY].destination)) {
-    /* No decompressed outputs set up. */
-    goto out;
-  }
-
+  YUV422P_buffer * yuv422p = NULL;
 
   /* Decompress to YCrCb, then convert to outputs as needed. */
   struct jpeg_decompress_struct cinfo;
@@ -197,7 +183,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   FormatInfo *fmt = NULL;
   for (i=0; i < cti_table_size(known_formats); i++) {
     if (memcmp(samp_factors, known_formats[i].factors, sizeof(samp_factors)) == 0) {
-      dpf("Jpeg subsampling: %s\n", known_formats[i].label);
+      // dpf("Jpeg subsampling: %s\n", known_formats[i].label);
       fmt = &(known_formats[i]);
       break;
     }
@@ -265,7 +251,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   /* I verified that setting .dct_method before jpeg_start_decompress() works with 
      jpeg-7 by adding printfs in the respective jidct*.c functions and running
      separate tests for dct_method ifast, islow, and float. */
-  cinfo.dct_method = priv->dct_method;
+  cinfo.dct_method = JDCT_DEFAULT; // priv->dct_method;
   (void) jpeg_start_decompress(&cinfo);
 
   uint8_t *buffers[3] = {};
@@ -352,114 +338,222 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   (void) jpeg_finish_decompress(&cinfo);
 
-  /* Sanity check... */
-  if (!yuv422p && !yuv420p) {
-    printf("neither yuv422p or yuv420p is set!?\n");
-    goto jdd;
-  }
-
-  if (pi->outputs[OUTPUT_GRAY].destination) {
-    /* Clone Y channel, pass along. */
-    Gray_buffer *gray_out = Gray_buffer_new(cinfo.image_width, cinfo.image_height, &jpeg_in->c);
-    memcpy(gray_out->data, buffers[0], cinfo.image_width * cinfo.image_height);
-    PostData(gray_out, pi->outputs[OUTPUT_GRAY].destination);
-  }
-
-  if (pi->outputs[OUTPUT_YUV422P].destination) {
-    if (fmt->imgtype == IMAGE_TYPE_YUV420P && !yuv422p) {
-      /* Convert. */
-      yuv422p = YUV420P_to_YUV422P(yuv420p);
-    }
-    /* Post. */
-    PostData(YUV422P_buffer_ref(yuv422p), pi->outputs[OUTPUT_YUV422P].destination);
-  }
-
-  if (pi->outputs[OUTPUT_YUV420P].destination) {
-    if (fmt->imgtype == IMAGE_TYPE_YUV422P && !yuv420p) {
-      /* Convert. */
-      yuv420p = YUV422P_to_YUV420P(yuv422p);
-    }
-    /* Post. */
-    PostData(YUV420P_buffer_ref(yuv420p), pi->outputs[OUTPUT_YUV420P].destination);
-  }
-
-  if (pi->outputs[OUTPUT_RGB3].destination) {
-    if (fmt->imgtype == IMAGE_TYPE_YUV420P) {
-      rgb3 = YUV420P_to_RGB3(yuv420p);
-    }
-    else if (fmt->imgtype == IMAGE_TYPE_YUV422P) {
-      rgb3 = YUV422P_to_RGB3(yuv422p);
-    }
-    /* Post... */
-    PostData(RGB3_buffer_ref(rgb3), pi->outputs[OUTPUT_RGB3].destination);
-  }
-
-  /* Discard/unref buffers. */
-  if (yuv422p) {
-    YUV422P_buffer_discard(yuv422p);
-  }
-
-  if (yuv420p) {
-    YUV420P_buffer_discard(yuv420p);
-  }
-
-  if (rgb3) {
-    RGB3_buffer_discard(rgb3);
-  }
-
-
  jdd:
   jpeg_destroy_decompress(&cinfo);
 
  out:
-  /* Discard or pass along input buffer. */
-  if (pi->outputs[OUTPUT_JPEG].destination) {
-    PostData(jpeg_in, pi->outputs[OUTPUT_JPEG].destination);
+  if (yuv420p) {
+    if (yuv420p_result) {
+      *yuv420p_result = yuv420p;
+    }
+    else {
+      YUV420P_buffer_discard(yuv420p);
+    }
   }
-  else {
-    Jpeg_buffer_discard(jpeg_in);
+
+  if (yuv422p) {
+    if (yuv422p_result) {
+      *yuv422p_result = yuv422p;
+    }
+    else {
+      YUV422P_buffer_discard(yuv422p);
+    }
   }
-  pi->counter += 1;
-
-  /* Calculate decompress time. */
-  getdoubletime(&t2);
-  float tdiff = t2 - t1;
-
-  dpf("djpeg %.5f (%dx%d)\n", tdiff, save_width, save_height);
 }
 
-static void DJpeg_tick(Instance *pi)
+
+RGB3_buffer * Jpeg_to_rgb3(Jpeg_buffer * jpeg)
 {
-  Handler_message *hm;
-
-  hm = GetData(pi, 1);
-
-  if (hm) {
-    hm->handler(pi, hm->data);
-    ReleaseMessage(&hm,pi);
+  RGB3_buffer * rgb3 = NULL;
+  YUV422P_buffer * yuv422p = NULL;
+  YUV420P_buffer * yuv420p = NULL;
+  Jpeg_decompress(jpeg, &yuv420p, &yuv422p);
+  if (yuv420p) {
+    rgb3 = YUV420P_to_RGB3(yuv420p);
+    YUV420P_buffer_discard(yuv420p);
   }
+  else if (yuv422p) {
+    rgb3 = YUV422P_to_RGB3(yuv422p);
+    YUV422P_buffer_discard(yuv422p);
+  }
+  return rgb3;
 }
 
-static void DJpeg_instance_init(Instance *pi)
-{
-  DJpeg_private *priv = (DJpeg_private *)pi;
-  priv->use_green_for_gray = 1;
-  priv->dct_method = JDCT_DEFAULT;
-}
 
-static Template DJpeg_template = {
-  .label = "DJpeg",
-  .priv_size = sizeof(DJpeg_private),
-  .inputs = DJpeg_inputs,
-  .num_inputs = table_size(DJpeg_inputs),
-  .outputs = DJpeg_outputs,
-  .num_outputs = table_size(DJpeg_outputs),
-  .tick = DJpeg_tick,
-  .instance_init = DJpeg_instance_init,
+/* I also put Jpeg_fix() in this module, because it has access to the huffman
+   tables, and again I didn't want Images.c to pull in jpeglib.h, nor define
+   a second copy of the tables. */
+enum maker_enums { 
+  SOI = 0xd8, 
+  APP0 = 0xe0, 
+  DQT = 0xdb, 
+  SOF0 = 0xc0, 
+  SOS = 0xda, 
+  EOI = 0xd9, 
+  DRI = 0xdd, 
+  DHT = 0xc4 
 };
 
+static const char *markers[] = {
+  [SOI] = "SOI",
+  [APP0] = "APP0",
+  [DQT] = "DQT", 
+  [SOF0] = "SOF0",
+  [SOS] = "SOS",
+  [EOI] = "EOI",
+  [DRI] = "DRI",
+  [DHT] = "DHT",
+};
 
-void DJpeg_init(void)
+void Jpeg_fix(Jpeg_buffer *jpeg)
 {
-  Template_register(&DJpeg_template);
+  /* This is based on "mjpegfix.py" which I wrote several years
+     earlier.  The Jpeg data is replaced at the end, but the buffer
+     structure remains in place.  In other words, it does not produce
+     a new Jpeg_buffer. */
+
+  if (jpeg->has_huffman_tables) {
+    return;
+  }
+
+  /* FIXME: Consider implementing and calling LockedRef_count() and
+     returning if there are more then one reference holders. */
+
+  int saw_sof = 0;
+  int i = 0;
+  int i0;
+  int j;
+  int len;
+  ArrayU8 * newdata = ArrayU8_new();
+
+  while (1) {
+    uint8_t c0, c, marker;
+    int blockL=0;
+    int blockR=0;
+    if (i == jpeg->encoded_length) {
+      break;
+    }
+    c0 = jpeg->data[i];
+    if (c0 != 0xff) {
+      fprintf(stderr, "%d (0x%X): expected 0xff, saw 0x%02x\n", i, i, c0);
+      break;
+    }
+    c = jpeg->data[i+1];
+    if (!markers[c]) {
+      fprintf(stderr, "Unknown marker: 0x%02x\n", c);
+      i+=1;
+      continue;
+    }
+
+    marker = c;
+
+    if (marker == SOI) {
+      i += 2;
+    }
+    else if (marker == SOS) {
+      // Fixed size part, followed by variable length data...
+      i0 = i+2;
+      len = (jpeg->data[i+2]) << 8;
+      len += jpeg->data[i+3];
+      i += (len + 2);
+      while (1) {
+	uint8_t x[1] = { 0xff};
+	j = ArrayU8_search(ArrayU8_temp_const(jpeg->data, jpeg->data_length),
+			   i, 
+			   ArrayU8_temp_const(x, 1));
+	if (j == -1) {
+	  fprintf(stderr, "reached end of data without finding closing tag!\n");
+	  goto out;
+	}
+	if (jpeg->data[j+1] == 0x00) {
+	  // Data contained literal 0xff.
+	  i = j+1;
+	  continue;
+	}
+	else if ( (jpeg->data[j+1] & 0xf0) == 0xd0 
+		  && (jpeg->data[j+1] & 0x0f) <= 7) {
+	  // Restart marker.  Keep searching inside SOS.
+	  i = j+2;
+	  continue;
+	}
+	else {
+	  // Advance, keep searching...
+	  i = j;
+	  break;
+	}
+      }
+      // block = jpegdata[i0:i];
+      blockL = i0;
+      blockR = i;
+    }
+    else if (marker == EOI) {
+      uint8_t xx[2] = {c0, c};
+      ArrayU8_append(newdata, ArrayU8_temp_const(xx, 2));
+      goto out;
+    }
+    else if (marker == DRI) {
+      // block = jpegdata[i+2:i+2+4];
+      blockL = i+2;
+      blockR = i+2+4;
+      i += 6;
+    }
+    else {
+      i0 = i+2;
+      len = jpeg->data[i+2] << 8;
+      len += jpeg->data[i+3];
+      // print 'len=0x%x' % (len);
+      i += (len + 2);
+      // block = jpegdata[i0:i];
+      blockL = i0;
+      blockR = i;
+    }
+    
+    if (saw_sof && marker != DHT) {
+      /* Add huffman tables.  Using the same tables that are set
+	 during decompression if they are found to be missing
+	 there. */
+      static const uint8_t hdr1[4] = {0xff, 0xc4, 0x00, 0x1f};
+      static const uint8_t hdr2[4] = {0xff, 0xc4, 0x00, 0xb5};
+
+      ArrayU8_append(newdata, ArrayU8_temp_const(hdr1, 4));
+      ArrayU8_append(newdata, ArrayU8_temp_const(dc_huff_tbl_ptrs[0]->bits, 17));
+      ArrayU8_append(newdata, ArrayU8_temp_const(dc_huff_tbl_ptrs[0]->huffval, 12));
+
+      ArrayU8_append(newdata, ArrayU8_temp_const(hdr2, 4));
+      ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[0]->bits, 17));
+      ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[0]->huffval, 162));
+
+      ArrayU8_append(newdata, ArrayU8_temp_const(hdr1, 4));
+      ArrayU8_append(newdata, ArrayU8_temp_const(dc_huff_tbl_ptrs[1]->bits, 17));
+      ArrayU8_append(newdata, ArrayU8_temp_const(dc_huff_tbl_ptrs[1]->huffval, 12));
+
+      ArrayU8_append(newdata, ArrayU8_temp_const(hdr2, 4));
+      ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[1]->bits, 17));
+      ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[1]->huffval, 162));
+    }
+    
+    if (marker == SOF0) {
+      saw_sof = 1;
+    }
+    else {
+      saw_sof = 0;
+    }
+
+    uint8_t xx[2] = {c0, c};
+    ArrayU8_append(newdata, ArrayU8_temp_const(xx, 2));
+
+    if (blockL < blockR) {
+      ArrayU8_append(newdata, ArrayU8_temp_const(jpeg->data+blockL, (blockR-blockL)));
+    }
+  }
+
+ out:
+  /* Transfer newdata->data to jpeg->data.  This requires a little "manual" effort. */
+  Mem_free(jpeg->data);
+  jpeg->data = newdata->data;
+  jpeg->data_length = newdata->available;
+  jpeg->encoded_length = newdata->len;
+  jpeg->has_huffman_tables = 1;
+  newdata->data = NULL;
+  ArrayU8_cleanup(&newdata);
 }

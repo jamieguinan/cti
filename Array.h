@@ -35,7 +35,7 @@ extern void Array_set_error_handler(void (*handler)(void));
     Array_clear((void*)&(c.items), &c.available, &c.count); } while (0)
 
 #define Array_ptr_append(c, item) do { Array_grow((void*)&(c->items), sizeof(c->items[0]), &(c->available), &(c->count)); \
-    c->items[c->count-1] = item; } while (00
+    c->items[c->count-1] = item; } while (0)
 #define Array_ptr_get(c, i) (c->items[i])
 #define Array_ptr_count(c) (c->count)
 #define Array_ptr_free(c, type, f)  do { void (*cleanup_func)(type)=f; \

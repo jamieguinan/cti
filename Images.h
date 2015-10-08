@@ -253,6 +253,7 @@ extern Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_commo
 extern void Jpeg_buffer_discard(Jpeg_buffer *jpeg);
 extern Jpeg_buffer *Jpeg_buffer_ref(Jpeg_buffer *jpeg);
 extern void Jpeg_fix(Jpeg_buffer *jpeg);
+extern RGB3_buffer * Jpeg_to_rgb3(Jpeg_buffer * jpeg);
 
 extern O511_buffer *O511_buffer_new(int width, int height, Image_common *c);
 extern O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c);
@@ -260,6 +261,7 @@ extern void O511_buffer_discard(O511_buffer *o511);
 
 extern H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int height, Image_common *c);
 extern void H264_buffer_discard(H264_buffer *h264);
+
 
 
 #endif

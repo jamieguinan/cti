@@ -67,6 +67,7 @@ OBJS= \
 	$(OBJDIR)/wrmem.o \
 	$(OBJDIR)/CJpeg.o \
 	$(OBJDIR)/DJpeg.o \
+	$(OBJDIR)/jpeg_misc.o \
 	$(OBJDIR)/DO511.o \
 	$(OBJDIR)/ov511_decomp.o \
 	$(OBJDIR)/Images.o \
