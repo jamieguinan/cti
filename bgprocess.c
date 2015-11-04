@@ -12,7 +12,7 @@ void bgprocess(const char * cmdline, int * pidptr)
 {
   char *args[64];
   int cclen = strlen(cmdline)+1;
-  printf("cmdcopy is %d bytes\n", cclen);
+  //printf("cmdcopy is %d bytes\n", cclen);
   char cmdcopy[cclen];
   strcpy(cmdcopy, cmdline);
   int i;
@@ -31,9 +31,9 @@ void bgprocess(const char * cmdline, int * pidptr)
     else {
       break;
     }
-    printf("%d: %s\n", i, args[i]);
+    //printf("%d: %s\n", i, args[i]);
   }
-  printf("%d: %s\n", i, args[i]);
+  //printf("%d: %s\n", i, args[i]);
 
   if (i==63) {
     fprintf(stderr, "%s: maximum 64 cmdline components\n", __func__);
@@ -63,7 +63,19 @@ void bgstop(int * pidptr)
 {
   int pid = *pidptr;
   int status = 0;
+  int i;
+  int tries = 3;
   kill(pid, SIGTERM);
-  waitpid(pid, &status, 0);
+  for (i=0; i<tries; i++) {
+    if (waitpid(pid, &status, WNOHANG) == pid) { break; }
+    sleep(1);
+  }
+
+  if (i == tries) {
+    fprintf(stderr, "pid %d did not exit after %d seconds, sending SIGKILL\n", pid, tries);
+    kill(pid, SIGKILL);
+    waitpid(pid, &status, 0);
+  }
+
   *pidptr = -1;
 }
