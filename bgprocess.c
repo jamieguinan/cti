@@ -8,6 +8,25 @@
 
 #include "bgprocess.h"
 
+void bgprocessv(char * args[], int * pidptr)
+{
+  pid_t newpid = fork();
+  switch(newpid) {
+  case -1:
+    perror("fork");
+    break;
+  case 0:
+    /* child */
+    execvp(args[0], args);
+    break;
+  default:
+    /* parent */
+    *pidptr = newpid;
+    break;
+  }
+
+}
+
 void bgprocess(const char * cmdline, int * pidptr)
 {
   char *args[64];
@@ -42,40 +61,40 @@ void bgprocess(const char * cmdline, int * pidptr)
 
   args[i+1] = NULL;
 
-  pid_t newpid = fork();
-  switch(newpid) {
-  case -1:
-    perror("fork");
-    break;
-  case 0:
-    /* child */
-    execvp(args[0], args);
-    break;
-  default:
-    /* parent */
-    *pidptr = newpid;
-    break;
-  }
+  bgprocessv(args, pidptr);
 }
 
 
-void bgstop(int * pidptr)
+void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
 {
   int pid = *pidptr;
   int status = 0;
   int i;
-  int tries = 3;
-  kill(pid, SIGTERM);
-  for (i=0; i<tries; i++) {
-    if (waitpid(pid, &status, WNOHANG) == pid) { break; }
+  int rc=-1;
+
+  kill(pid, signal);
+  for (i=0; i<timeout_seconds; i++) {
+    rc = waitpid(pid, &status, WNOHANG);
+    if (rc == -1) {
+      perror("waitpid");
+    }
+    else if (rc == pid) {
+      break; 
+    }
     sleep(1);
   }
 
-  if (i == tries) {
-    fprintf(stderr, "pid %d did not exit after %d seconds, sending SIGKILL\n", pid, tries);
+  if (i == timeout_seconds && rc != -1) {
+    fprintf(stderr, "pid %d did not exit after %d seconds, sending SIGKILL\n", pid, timeout_seconds);
     kill(pid, SIGKILL);
     waitpid(pid, &status, 0);
   }
 
   *pidptr = -1;
+}
+
+
+void bgstop(int * pidptr)
+{
+  bgstopsigtimeout(pidptr, SIGTERM, 3);
 }
