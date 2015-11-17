@@ -118,16 +118,17 @@ int main()
 	  }
 	  printf("send checksum=%d\n", chksum);
 	}
-
+	ipc_debug_recv_checksum = 1;
 	ipc_send(fd, synth_buffer+code_size+len_size, ss, 1000);
       }
 
       while (!thread_done) {}
+      ipc_debug_recv_checksum = 0;
       close(fd);
     }   
   }
 
-  printf("%d/%ld\n", i, table_size(send_sizes));
+  printf("\n%d/%ld tests completed\n", i, table_size(send_sizes));
 
   return 0;
 }

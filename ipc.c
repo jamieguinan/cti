@@ -12,6 +12,8 @@
 
 #include "ipc.h"
 
+int ipc_debug_recv_checksum;
+
 int writable(int fd, int timeout_ms)
 {
   struct pollfd fds[1] = { { .fd = fd, .events = POLLOUT } } ;
@@ -141,7 +143,7 @@ int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_
     message_read += n;
   }
 
-  if (0) { 
+  if (ipc_debug_recv_checksum) { 
     int i;
     int chksum = 0;
     for (i=0; i < result_length; i++) {
