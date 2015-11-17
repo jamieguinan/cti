@@ -22,7 +22,8 @@ typedef struct {
   int common_count;
 } SchemaColumn_check;
 
-extern int db_check(sqlite3 *db, const char * table_name, SchemaColumn * schema, int num_columns, const char * constraints);
+extern int db_check(sqlite3 *db, const char * table_name, 
+		    SchemaColumn * schema, int num_columns, const char * constraints);
 
 extern int sql_exec_free_query(sqlite3 *pdb,
 			       char * query,

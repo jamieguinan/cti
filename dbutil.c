@@ -94,7 +94,8 @@ static int schema_check_callback(void *i_ptr,
 }
 
 
-int db_check(sqlite3 *db, const char * table_name, SchemaColumn * schema, int num_columns, const char * constraints)
+int db_check(sqlite3 *db, const char * table_name, 
+	     SchemaColumn * schema, int num_columns, const char * constraints)
 {
   /* Check for same number of columns, with same names and types. */
   SchemaColumn_check sdc = { schema, 0, num_columns, 0, String_new(""), String_new("") };
