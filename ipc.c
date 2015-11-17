@@ -36,6 +36,7 @@ int ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout_ms)
 {
   int message_written = 0;
   int n;
+
   if (message_length <= 250) {
     uint8_t msglen = message_length;
     
@@ -58,7 +59,7 @@ int ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout_ms)
 			    { .iov_base = &msglen32, .iov_len = 4 },
 			    { .iov_base = message, .iov_len = message_length } };
     if (!writable(fd, timeout_ms)) { fprintf(stderr, "%s: not writable\n", __func__); return 1; }
-    n = writev(fd, iov, 2);
+    n = writev(fd, iov, 3);
     if (n < 1) { fprintf(stderr, "%s: writev case 2 failed\n", __func__); return 1; }
     else if (n < 5) {
       /* Rare case, sent code but only sent part of length. Send remainder of length. */
@@ -98,7 +99,7 @@ int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_
     fprintf(stderr, "%s: warning, pmessage should be initialized to NULL\n", __func__);
   }
 
-  if (!readable(fd, timeout_ms)) { fprintf(stderr, "%s: not writable\n", __func__); return 1; }
+  if (!readable(fd, timeout_ms)) { fprintf(stderr, "%s: case 1 not readable\n", __func__); return 1; }
   n = read(fd, buffer, sizeof(buffer));
   if (n < 1) { fprintf(stderr, "%s: read case 1 failed\n", __func__); return 1; } 
   bytes_read = n;
@@ -111,8 +112,9 @@ int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_
   }
   else if (code == 251) {
     /* Read message length into buffer. */
+    if (0) printf("%s: reading message length, bytes_read=%d\n", __func__, bytes_read);
     while (bytes_read < 5) {
-      if (!readable(fd, timeout_ms)) { fprintf(stderr, "%s: not readable\n", __func__); return 1; }
+      if (!readable(fd, timeout_ms)) { fprintf(stderr, "%s: case 2 not readable\n", __func__); return 1; }
       n = read(fd, buffer+bytes_read, sizeof(buffer)-bytes_read);
       if (n < 1) { fprintf(stderr, "%s: read case 2 failed\n", __func__); return 1; }
       bytes_read += n;
@@ -122,8 +124,10 @@ int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_
       + (buffer[2] << 8)
       + (buffer[3] << 16)
       + (buffer[4] << 24);
+    if (0) printf("%s: result_length=%d\n", __func__, result_length);
     result = malloc(result_length);
     message_read = (bytes_read - 5);
+    if (0) printf("%s: result_length=%d message_read=%d (so far)\n", __func__, result_length, message_read);
     memcpy(result, buffer+5, message_read);
   }
   else {
@@ -131,10 +135,19 @@ int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_
   }
 
   while (message_read < result_length) {
-    if (!readable(fd, timeout_ms)) { fprintf(stderr, "%s: not readable\n", __func__); free(message); return 1; }
-    n = read(fd, message+message_read, result_length-message_read);
-    if (n < 1) { fprintf(stderr, "%s: read case 2 failed\n", __func__); free(message); return 1; }
+    if (!readable(fd, timeout_ms)) { fprintf(stderr, "%s: case 3 not readable\n", __func__); free(result); return 1; }
+    n = read(fd, result+message_read, result_length-message_read);
+    if (n < 1) { fprintf(stderr, "%s: read case 3 failed\n", __func__); free(result); return 1; }
     message_read += n;
+  }
+
+  if (0) { 
+    int i;
+    int chksum = 0;
+    for (i=0; i < result_length; i++) {
+      chksum = chksum + result[i];
+    }
+    printf("recv checksum=%d\n", chksum);
   }
 
   *message = result;
