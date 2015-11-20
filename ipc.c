@@ -3,9 +3,9 @@
  * This is rather low-level, uses malloc/free and bare read/write calls.
  */
 #include <stdio.h>		/* fprintf */
-#include <string.h>		/* memcpy xo*/
+#include <string.h>		/* memcpy */
 #include <stdint.h>		/* int types */
-#include <stdlib.h>		/* malloc */
+#include <stdlib.h>		/* malloc, free */
 #include <unistd.h>		/* read, write */
 #include <sys/uio.h>		/* writev */
 #include <poll.h>		/* poll */
@@ -149,11 +149,21 @@ int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_
     for (i=0; i < result_length; i++) {
       chksum = chksum + result[i];
     }
-    printf("recv checksum=%d\n", chksum);
+    fprintf(stderr, "recv checksum=%d\n", chksum);
   }
 
   *message = result;
   *message_length = result_length;
   
   return 0;
+}
+
+
+void ipc_free(uint8_t ** message, uint32_t * message_length)
+{
+  if (message && *message) {
+    free(*message);
+    *message = NULL;
+    *message_length = 0;
+  }
 }
