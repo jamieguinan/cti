@@ -374,7 +374,7 @@ static void HTTPServer_tick(Instance *pi)
 
   if (FD_ISSET(priv->lsc.fd, &rfds)) {
     struct sockaddr_in addr;
-    socklen_t addrlen;
+    socklen_t addrlen = sizeof(addr);
     int fd = accept(priv->lsc.fd, (struct sockaddr *)&addr, &addrlen);
     if (fd == -1) {
       /* This is unlikely but possible.  If it happens, just clean up
