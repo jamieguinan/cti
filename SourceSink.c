@@ -59,7 +59,7 @@ static void io_open(IO_common *io, const char *mode)
     char port[strlen(path)+1];
     strncpy(host, path, hostlen); host[hostlen] = 0;
     strcpy(port, colon+1);
-    fprintf(stderr, "host=%s port=%s\n", host, port);
+    // fprintf(stderr, "host=%s port=%s\n", host, port);
     /* Connect to remote TCP port. */
     struct addrinfo hints = {
       .ai_socktype = SOCK_STREAM,
