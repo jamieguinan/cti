@@ -74,9 +74,8 @@ static void io_open(IO_common *io, const char *mode)
 
     for (rp=results; rp != NULL; rp = rp->ai_next) {
       io->s = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
-      /* NOTE: Could be additional entries in linked list above. */
       if (io->s == -1) {
-        perror("socket"); goto out;
+        perror("socket"); continue;
       }
   #if 0
       if (fcntl(io->s, FD_CLOEXEC)) {
@@ -85,8 +84,11 @@ static void io_open(IO_common *io, const char *mode)
   #endif
       rc = connect(io->s, rp->ai_addr, rp->ai_addrlen);
       //fprintf(stderr, "rc=%d io->s=%d ai_addrlen=%d, errno=%d\n", rc, io->s, rp->ai_addrlen, errno);
+      if (rc == 0) {
+	break;
+      }
       if (rc == -1) {
-        // perror("connect");
+        perror("connect");
         /* Note: alternatively, could keep the socket and retry the open... */
         close(io->s);
         io->s = -1;
