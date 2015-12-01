@@ -11,6 +11,7 @@
 #include "wrmem.h"
 #include "jmemsrc.h"
 #include "jpeghufftables.h"
+#include "jpeg_misc.h"
 
 #ifndef cti_table_size
 #define cti_table_size(x) (sizeof(x)/sizeof(x[0]))
@@ -43,16 +44,6 @@ static void jerr_error_handler(j_common_ptr cinfo)
     exit(1);
   }
 }
-
-typedef struct {
-  const char *label;
-  ImageType imgtype;
-  int libjpeg_colorspace;
-  const char * libjpeg_colorspace_label;
-  int factors[6];
-  int crcb_width_divisor;
-  int crcb_height_divisor;
-} FormatInfo;
 
 static FormatInfo known_formats[] = {
   /* See swdev/notes.txt regarding subsampling and formats. */
@@ -133,10 +124,11 @@ static void jerr_warning_noop(j_common_ptr cinfo, int msg_level)
 
 void Jpeg_decompress(Jpeg_buffer * jpeg_in, 
 		     YUV420P_buffer ** yuv420p_result,
-		     YUV422P_buffer ** yuv422p_result)
+		     YUV422P_buffer ** yuv422p_result,
+		     FormatInfo ** pfmt)
 {
-  int save_width = 0;
-  int save_height = 0;
+  //int save_width = 0;
+  //int save_height = 0;
   int i;
 
   YUV420P_buffer * yuv420p = NULL;
@@ -168,8 +160,8 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
 
   (void) jpeg_read_header(&cinfo, TRUE);
 
-  save_width = cinfo.image_width;
-  save_height = cinfo.image_height;
+  //save_width = cinfo.image_width;
+  //save_height = cinfo.image_height;
   
   int samp_factors[6] = {
     cinfo.comp_info[0].h_samp_factor,
@@ -180,11 +172,13 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
     cinfo.comp_info[2].v_samp_factor,
   };
 
-  FormatInfo *fmt = NULL;
+  FormatInfo * fmt = NULL;
+
   for (i=0; i < cti_table_size(known_formats); i++) {
     if (memcmp(samp_factors, known_formats[i].factors, sizeof(samp_factors)) == 0) {
       // dpf("Jpeg subsampling: %s\n", known_formats[i].label);
       fmt = &(known_formats[i]);
+      *pfmt = fmt;
       break;
     }
   }
@@ -367,7 +361,8 @@ RGB3_buffer * Jpeg_to_rgb3(Jpeg_buffer * jpeg)
   RGB3_buffer * rgb3 = NULL;
   YUV422P_buffer * yuv422p = NULL;
   YUV420P_buffer * yuv420p = NULL;
-  Jpeg_decompress(jpeg, &yuv420p, &yuv422p);
+  FormatInfo * fmt = NULL;
+  Jpeg_decompress(jpeg, &yuv420p, &yuv422p, &fmt);
   if (yuv420p) {
     rgb3 = YUV420P_to_RGB3(yuv420p);
     YUV420P_buffer_discard(yuv420p);

@@ -221,6 +221,7 @@ static void XMLMessageServer_tick(Instance *pi)
   if (FD_ISSET(priv->lsc.fd, &rfds)) {
     /* Handle client connection, then close it. */
     Comm comm = { .io.s = -1 };
+    comm.io.addrlen = sizeof(comm.io.addr);
     Node * resp = node_new("response");
     comm.io.s = accept(priv->lsc.fd, (struct sockaddr *)&comm.io.addr, &comm.io.addrlen);
     // fprintf(stderr, "%s: new connection!\n", __func__);
