@@ -9,7 +9,7 @@ PKGCONFIGDIR ?= /usr/lib/pkgconfig
 HOSTARCH=$(shell uname -m)-$(shell uname -s)
 
 ifeq ($(ARCH),$(HOSTARCH))
-LDFLAGS+=-Wl,-rpath,$(shell pwd)/../output/$(ARCH)/lib -lm
+LDFLAGS+=-Wl,-rpath,$(shell pwd)/../platform/$(ARCH)/lib -lm
 endif
 
 CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
@@ -26,9 +26,9 @@ endif
 endif
 endif
 # -std=c99
-CPPFLAGS += -I../output/$(ARCH)/include -I../jpeg-7
+CPPFLAGS += -I../platform/$(ARCH)/include -I../jpeg-7
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
-LDFLAGS += -L../output/$(ARCH)/lib -ljpeg -lpthread
+LDFLAGS += -L../platform/$(ARCH)/lib -ljpeg -lpthread
 ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 # rdynamic allows loaded .so files to see CTI global symbols.
@@ -151,7 +151,7 @@ OBJS= \
 	$(OBJDIR)/HTTPClient.o \
 	$(OBJDIR)/TunerControl.o \
 	$(OBJDIR)/$(MAIN) \
-	../output/$(ARCH)/jpeg-7/transupp.o
+	../platform/$(ARCH)/jpeg-7/transupp.o
 
 #	$(OBJDIR)/ScriptSession.o \
 
@@ -160,7 +160,7 @@ ifeq ($(OS),Linux)
 OBJS+=\
 	$(OBJDIR)/Uvc.o \
 	$(OBJDIR)/FFmpegEncode.o \
-	../output/$(ARCH)/jpeg-7/libjpeg.la
+	../platform/$(ARCH)/jpeg-7/libjpeg.la
 ifneq ($(ARCH),lpd)
 OBJS+=\
 	$(OBJDIR)/V4L2Capture.o \
