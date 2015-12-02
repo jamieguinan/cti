@@ -3,6 +3,9 @@
 #include <stdarg.h>
 #include <pthread.h>
 
+/* I prefer to extern this rather than define _GNU_SOURCE. */
+extern int vasprintf(char **strp, const char *fmt, va_list ap);
+
 #include "Log.h"
 #include "Cfg.h"
 
