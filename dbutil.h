@@ -31,5 +31,7 @@ extern int sql_exec_free_query(sqlite3 *pdb,
 			       void * data,
 			       char **errmsg);
 
+extern int sql_String_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers);
+
 
 #endif

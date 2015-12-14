@@ -26,7 +26,7 @@ endif
 endif
 endif
 # -std=c99
-CPPFLAGS += -I../platform/$(ARCH)/include -I../jpeg-7
+CPPFLAGS += -I../platform/$(ARCH)/include -I../external/jpeg-7
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
 LDFLAGS += -L../platform/$(ARCH)/lib -ljpeg -lpthread
 ifeq ($(OS),Linux)

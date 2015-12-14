@@ -8,7 +8,7 @@
 
 #include "bgprocess.h"
 
-void bgprocessv(char * args[], int * pidptr)
+void bgstartv(char * args[], int * pidptr)
 {
   pid_t newpid = fork();
   switch(newpid) {
@@ -27,7 +27,7 @@ void bgprocessv(char * args[], int * pidptr)
 
 }
 
-void bgprocess(const char * cmdline, int * pidptr)
+void bgstart(const char * cmdline, int * pidptr)
 {
   char *args[64];
   int cclen = strlen(cmdline)+1;
@@ -61,7 +61,7 @@ void bgprocess(const char * cmdline, int * pidptr)
 
   args[i+1] = NULL;
 
-  bgprocessv(args, pidptr);
+  bgstartv(args, pidptr);
 }
 
 
@@ -97,4 +97,35 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
 void bgstop(int * pidptr)
 {
   bgstopsigtimeout(pidptr, SIGTERM, 3);
+}
+
+
+void bgstart_pidfile(const char * cmd, const char *pidfile)
+{
+  int pid;
+  FILE * f = fopen(pidfile, "w");
+  if (!f) {
+    fprintf(stderr, "%s: could not open pidfile %s\n", __func__, pidfile);
+    return;
+  }
+  bgstart(cmd, &pid);
+  fprintf(f, "%d\n", pid);
+  fclose(f);
+}
+
+
+void bgstop_pidfile(const char *pidfile)
+{
+  char buffer[256] = {};
+  int pid;
+  FILE * f = fopen(pidfile, "r");
+  if (!f) {
+    fprintf(stderr, "%s: could not open pidfile %s\n", __func__, pidfile);
+    return;
+  }
+  fgets(buffer, sizeof(buffer), f);
+  if (sscanf(buffer, "%d", &pid) == 1) {
+    bgstop(&pid);
+  }
+  unlink(pidfile);
 }

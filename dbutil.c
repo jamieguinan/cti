@@ -27,7 +27,6 @@ int sql_exec_free_query(sqlite3 *pdb,
   return rc;
 }
 
-
 static int schema_check_callback(void *i_ptr, 
 				 int num_columns, char **column_strings, char **column_headers)
 {
@@ -164,4 +163,15 @@ int db_check(sqlite3 *db, const char * table_name,
   String_free(&sdc.common_columns);
 
   return rc;
+}
+
+int sql_String_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers)
+{
+  String * s = i_ptr;
+  if (num_columns != 1) {
+    fprintf(stderr, "%s: expected only 1 column in results\n", __func__);
+    return 1;
+  }
+  String_set_local(s, column_strings[0]);
+  return 0;
 }
