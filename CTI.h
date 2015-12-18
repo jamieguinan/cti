@@ -5,9 +5,7 @@
 #include <stddef.h>
 
 #include "dpf.h"
-
-#define cti_min(a, b)  ( (a) < (b) ? (a) : (b) )
-#define cti_max(a, b)  ( (a) > (b) ? (a) : (b) )
+#include "cti_utils.h"
 
 #include "locks.h"
 

@@ -21,7 +21,7 @@ int sql_exec_free_query(sqlite3 *pdb,
   //printf("%s\n", query);
   int rc = sqlite3_exec(pdb, query, callback, data, errmsg);
   if (rc != 0) {
-    printf("%s rc=%d error=%s\n", query,  rc, sqlite3_errmsg(pdb));
+    fprintf(stderr, "%s rc=%d error=%s\n", query,  rc, sqlite3_errmsg(pdb));
   }
   sqlite3_free(query);
   return rc;
@@ -44,24 +44,24 @@ static int schema_check_callback(void *i_ptr,
   }
 
   if (sdc->index >= sdc->num_columns) {
-    printf("too many columns\n");
+    fprintf(stderr, "too many columns\n");
     sdc->error = 1;
     goto out;
   }
 
   if (!streq(sdc->columns[sdc->index].name, existing_column_name)) {
-    printf("column name mismatch: %s %s\n", sdc->columns[sdc->index].name, existing_column_name);
+    fprintf(stderr, "column name mismatch: %s %s\n", sdc->columns[sdc->index].name, existing_column_name);
     sdc->error = 2;
     goto out;
   }
 
   if (!streq(sdc->columns[sdc->index].type, existing_column_type)) {
-    printf("column type mismatch: %s %s\n", sdc->columns[sdc->index].type, existing_column_type);
+    fprintf(stderr, "column type mismatch: %s %s\n", sdc->columns[sdc->index].type, existing_column_type);
     sdc->error = 3;
     goto out;
   }
 
-  if (v) printf("%s %s matches (%d %s)\n",
+  if (v) fprintf(stderr, "%s %s matches (%d %s)\n",
 	 sdc->columns[sdc->index].name,
 	 sdc->columns[sdc->index].type,
 	 sdc->index, 
@@ -106,13 +106,13 @@ int db_check(sqlite3 *db, const char * table_name,
 			   no_errmsg);
 
   if (sdc.index != sdc.num_columns) {
-    printf("schema has %d columns, table has %d\n", sdc.num_columns, sdc.index);
+    fprintf(stderr, "schema has %d columns, table has %d\n", sdc.num_columns, sdc.index);
     sdc.error = 4;
   }
 
   if (sdc.index > 0) {
-    if (v) printf("existing_schema: %s\n", s(sdc.existing_schema));
-    if (v) printf("common_columns: %s\n", s(sdc.common_columns));
+    if (v) fprintf(stderr, "existing_schema: %s\n", s(sdc.existing_schema));
+    if (v) fprintf(stderr, "common_columns: %s\n", s(sdc.common_columns));
   }
 
   if (sdc.error) {
@@ -130,14 +130,14 @@ int db_check(sqlite3 *db, const char * table_name,
 
     if (sdc.index == 0) {
       /* Table was not found */
-      printf("Creating table %s\n", table_name);
+      fprintf(stderr, "Creating table %s\n", table_name);
       sql_exec_free_query(db, sqlite3_mprintf("CREATE TABLE %s (%s);", 
 					      table_name, s(table_schema)),
 			  no_callback, 0, no_errmsg);
     }
     else {
       /* Table exists, but schema has changed. */
-      printf("Regenerating table '%s'\n", table_name);
+      fprintf(stderr, "Regenerating table '%s'\n", table_name);
       // db_push_verbose(1);
       sql_exec_free_query(db, sqlite3_mprintf("DROP TABLE backup_tbl"),
 			  no_callback, 0, no_errmsg);		
