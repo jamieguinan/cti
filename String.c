@@ -551,8 +551,8 @@ String * String_list_get(String_list *slst, int index)
     return _String_none;
   }
   else if (index < 0) {
-    // printf("-index=%d slst->len=%d<br>\n", -index, slst->len);
-    if ((-index) < slst->len) {
+    // fprintf(stderr, "-index=%d slst->len=%d\n", -index, slst->len);
+    if ((-index) <= (slst->len)) {
       /* Return from top. */
       return slst->_strings[slst->len + index];
     }

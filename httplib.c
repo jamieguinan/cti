@@ -21,13 +21,10 @@ String * cookie_value(String_list * cookies, String * cookie_key)
   /* Using the result of cookies_from_env(), return the value of a particular cookie. */
   int i;
   for (i=0; i < String_list_len(cookies); i++) {
-    int end = 0;
     String * kv = String_list_get(cookies, i);
-    //printf("String_find(%s, %d, %s, end@%p\n", s(kv), 0, s(cookie_key), &end);
-    int start = String_find(kv, 0, s(cookie_key), &end);
-    //printf("start=%d end=%d\n", start, end);
-    if (start == 0 && end > 0 && s(kv)[end] == '=') {
-      return String_new(s(cookie_key)+end);
+    String_list * k_v = String_split(kv, "=");
+    if (String_list_len(k_v) == 2 && String_eq(String_list_get(k_v, 0), cookie_key)) {
+      return String_list_get(k_v, 1);
     }
   }
   return String_value_none();
@@ -44,7 +41,7 @@ String * cookie_generate()
 
   uint32_t values[4];
   if (fread(values, 1, sizeof(values), f) == sizeof(values)) {
-    result = String_sprintf("%04x%04x%04x%04x", values[0], values[1], values[2], values[3]);
+    result = String_sprintf("%08x%08x%08x%08x", values[0], values[1], values[2], values[3]);
   }
 
   fclose(f);
