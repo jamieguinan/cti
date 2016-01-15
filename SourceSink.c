@@ -671,9 +671,11 @@ void Comm_write_string_with_byte(Comm * comm, String *str, char byteval)
 
 void Comm_free(Comm **comm)
 {
-  Comm_close(*comm);
-  Mem_free(*comm);
-  *comm = 0L;
+  if (comm && *comm) {
+    Comm_close(*comm);
+    Mem_free(*comm);
+    *comm = 0L;
+  }
 }
 
 
