@@ -10,6 +10,7 @@
 typedef struct {
   const char * name;
   const char * type;
+  const char * constraints;
 } SchemaColumn;
 
 typedef struct {

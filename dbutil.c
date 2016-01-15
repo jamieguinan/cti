@@ -123,6 +123,9 @@ int db_check(sqlite3 *db, const char * table_name,
       if (i > 0) { String_cat1(table_schema, ", "); }
       String_cat2(table_schema, schema[i].name, " ");
       String_cat1(table_schema, schema[i].type);
+      if (schema[i].constraints) {
+	String_cat2(table_schema, " ", schema[i].constraints);
+      }
     }
     if (constraints && !streq(constraints, "")) {
       String_cat2(table_schema, ", ", constraints);
