@@ -36,7 +36,7 @@ extern int sql_exec_free_query(sqlite3 *pdb,
 extern int sql_String_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers);
 
 typedef struct {
-  int i;
+  int i0;
   String * s;
   int count;
 } db_int_String;

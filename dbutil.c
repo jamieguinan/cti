@@ -188,7 +188,7 @@ int db_int_string_callback(void *i_ptr, int num_columns, char **column_strings, 
     return 1;
   }
   db_int_String * p = i_ptr;
-  if (sscanf(column_strings[0], "%d", &p->i) != 1) {
+  if (sscanf(column_strings[0], "%d", &p->i0) != 1) {
     fprintf(stderr, "%s: result is not an integer\n", __func__);
     return 1;
   }
