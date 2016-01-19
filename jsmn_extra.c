@@ -4,7 +4,7 @@
  */
 #include <stdio.h>		/* printf */
 #include "String.h"
-#include "String_jsmn.h"
+#include "jsmn_extra.h"
 
 int String_eq_jsmn(String * json_text, jsmntok_t token, const char *target)
 {
@@ -24,6 +24,25 @@ String * String_dup_jsmn(String * json_text, jsmntok_t token)
   char temp[slen + 1];
   strncpy(temp, s(json_text)+token.start, slen);  temp[slen] = 0;
   return String_new(temp);
+}
+
+int jsmn_get_int(String * json_text, jsmntok_t token, int * result)
+{
+  int i;
+  int x = 0;
+  for (i=token.start; i < token.end; i++) {
+    int c = s(json_text)[i];
+    if (c < '0' || c > '9') {
+      return JSMN_ERROR_INVAL;
+    }
+    else {
+      x = (x * 10) + (c - '0');
+    }
+  }
+
+  *result = x;
+
+  return 0;
 }
 
 static const char * jsmn_type_map[] = {
