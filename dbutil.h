@@ -32,6 +32,23 @@ extern int sql_exec_free_query(sqlite3 *pdb,
 			       void * data,
 			       char **errmsg);
 
+/* Convenience structures and generic callbacks. */
+typedef struct {
+  int i;
+  String * s;
+  int count;
+} db_int_String;
+
+extern int db_int_string_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers);
+
+typedef struct {
+  int i0;
+  int i1;
+  int count;
+} db_int_int;
+
+extern int db_int_int_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers);
+
 extern int sql_String_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers);
 
 

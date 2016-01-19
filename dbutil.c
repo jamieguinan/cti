@@ -178,3 +178,44 @@ int sql_String_callback(void *i_ptr, int num_columns, char **column_strings, cha
   String_set_local(s, column_strings[0]);
   return 0;
 }
+
+
+int db_int_string_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers)
+{
+  int expected_columns = 2;
+  if (num_columns != expected_columns) {
+    fprintf(stderr, "%s: expected %d columns in result\n", __func__, expected_columns);
+    return 1;
+  }
+  db_int_String * p = i_ptr;
+  if (sscanf(column_strings[0], "%d", &p->i) != 1) {
+    fprintf(stderr, "%s: result is not an integer\n", __func__);
+    return 1;
+  }
+  String_set(&p->s, column_strings[1]);
+  p->count += 1;
+  return 0;
+}
+
+int db_int_int_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers)
+{
+  int expected_columns = 2;
+  if (num_columns != expected_columns) {
+    fprintf(stderr, "%s: expected %d columns in result\n", __func__, expected_columns);
+    return 1;
+  }
+
+  db_int_int * p = i_ptr;
+  if (sscanf(column_strings[0], "%d", &p->i0) != 1) {
+    fprintf(stderr, "%s: result is not an integer\n", __func__);
+    return 1;
+  }
+
+  if (sscanf(column_strings[1], "%d", &p->i1) != 1) {
+    fprintf(stderr, "%s: result is not an integer\n", __func__);
+    return 1;
+  }
+
+  p->count += 1;
+  return 0;
+}

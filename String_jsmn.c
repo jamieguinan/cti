@@ -4,7 +4,6 @@
  */
 #include <stdio.h>		/* printf */
 #include "String.h"
-#include "jsmn.h"		/* Use -I cpp flag to find header. */
 #include "String_jsmn.h"
 
 int String_eq_jsmn(String * json_text, jsmntok_t token, const char *target)
@@ -39,6 +38,6 @@ void jsmn_dump(jsmntok_t * tokens, int num_tokens, int limit)
 {
   int i;
   for (i=0; i < num_tokens && (limit == 0 || i < limit); i++) {
-    printf("type %s size %d\n", jsmn_type_map[tokens[i].type], tokens[i].size);
+    fprintf(stderr, "type %s size %d\n", jsmn_type_map[tokens[i].type], tokens[i].size);
   }
 }
