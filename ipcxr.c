@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "SourceSink.h"
 #include "File.h"
-#include "ipc.h"
+#include "cti_ipc.h"
 
 int main(int argc, char * argv[])
 {
@@ -34,17 +34,17 @@ int main(int argc, char * argv[])
   
   int rc;
 
-  rc =ipc_send(c->io.s, msg->data, msg->len, timeout_ms);
+  rc =cti_ipc_send(c->io.s, msg->data, msg->len, timeout_ms);
   if (rc != 0) {
-    printf("ipc_send failed\n");
+    printf("cti_ipc_send failed\n");
     return 1;
   }
 
   uint8_t * response = NULL;
   uint32_t response_length = 0;
-  ipc_recv(c->io.s, &response, &response_length, timeout_ms);
+  cti_ipc_recv(c->io.s, &response, &response_length, timeout_ms);
   if (rc != 0) {
-    printf("ipc_recv failed\n");
+    printf("cti_ipc_recv failed\n");
     return 1;
   }
 

@@ -5,6 +5,7 @@
 #include "sqlite3.h"
 
 #define no_callback NULL
+#define no_data NULL
 #define no_errmsg NULL
 
 typedef struct {

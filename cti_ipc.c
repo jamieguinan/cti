@@ -10,11 +10,11 @@
 #include <sys/uio.h>		/* writev */
 #include <poll.h>		/* poll */
 
-#include "ipc.h"
+#include "cti_ipc.h"
 
-int ipc_debug_recv_checksum;
+int cti_ipc_debug_recv_checksum;
 
-int writable(int fd, int timeout_ms)
+static int writable(int fd, int timeout_ms)
 {
   struct pollfd fds[1] = { { .fd = fd, .events = POLLOUT } } ;
   int rc = poll(fds, 1, timeout_ms);
@@ -24,7 +24,7 @@ int writable(int fd, int timeout_ms)
   return 1;
 }
 
-int readable(int fd, int timeout_ms)
+static int readable(int fd, int timeout_ms)
 {
   struct pollfd fds[1] = { { .fd = fd, .events = POLLIN } };
   int rc = poll(fds, 1, timeout_ms);
@@ -34,7 +34,7 @@ int readable(int fd, int timeout_ms)
   return 1;
 }
 
-int ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout_ms)
+int cti_ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout_ms)
 {
   int message_written = 0;
   int n;
@@ -87,7 +87,7 @@ int ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout_ms)
 }
 
 
-int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_ms)
+int cti_ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_ms)
 {
   uint8_t buffer[32000];
   uint8_t code;
@@ -143,7 +143,7 @@ int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_
     message_read += n;
   }
 
-  if (ipc_debug_recv_checksum) { 
+  if (cti_ipc_debug_recv_checksum) { 
     int i;
     int chksum = 0;
     for (i=0; i < result_length; i++) {
@@ -159,7 +159,7 @@ int ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int timeout_
 }
 
 
-void ipc_free(uint8_t ** message, uint32_t * message_length)
+void cti_ipc_free(uint8_t ** message, uint32_t * message_length)
 {
   if (message && *message) {
     free(*message);
