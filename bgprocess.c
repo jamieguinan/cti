@@ -5,8 +5,10 @@
 #include <sys/types.h>		/* kill, wait */
 #include <signal.h>		/* kill */
 #include <sys/wait.h>		/* wait */
+#include <errno.h>		/* errno */
 
 #include "bgprocess.h"
+#include "cti_utils.h"
 
 void bgstartv(char * args[], int * pidptr)
 {
@@ -70,26 +72,75 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
   int pid = *pidptr;
   int status = 0;
   int i;
+  int ischild = 1;
   int rc=-1;
+  char procpath[1+4+1+24+1];
+  sprintf(procpath, "/proc/%d", pid);
 
-  kill(pid, signal);
-  for (i=0; i<timeout_seconds; i++) {
-    rc = waitpid(pid, &status, WNOHANG);
-    if (rc == -1) {
-      perror("waitpid");
-    }
-    else if (rc == pid) {
-      break; 
-    }
-    sleep(1);
+  /* Use 1/10 second sleeps in loop. */
+  int msleep_period = 10;
+  int msleep_count = timeout_seconds * 100;
+
+  /* First, do a waitpid and see if the process has already changed state. */
+  rc = waitpid(pid, &status, WNOHANG);
+
+  /* We can use the same results of waitpid() to detect if the
+     process detached via setsid or something. */
+  if (rc == -1 && errno == ECHILD) {
+    ischild = 0;
   }
 
-  if (i == timeout_seconds && rc != -1) {
+  /* Is the process even there? */
+  if (access(procpath, R_OK) == -1) { 
+    fprintf(stderr, "pid %d is already gone\n", pid);
+    goto out; 
+  }
+
+  /* Deliver the signal */
+  fprintf(stderr, "delivering signal %d to pid %d\n", signal, pid);
+  kill(pid, signal);
+
+  for (i=0; i < msleep_count; i++) {
+    /* Sleep at the top of the loop to give the process a token amount of
+       time to clean up and exit. */
+    cti_msleep(msleep_period);
+
+    if (ischild) {
+      rc = waitpid(pid, &status, WNOHANG);
+      if (rc == pid) {
+	if (WIFEXITED(status)) { 
+	  fprintf(stderr, "pid %d has exited\n", pid);
+	  break;
+	}
+	else {
+	  fprintf(stderr, "pid %d changed state but is still active\n", pid);	  
+	}
+      }
+    }
+    else {
+      /* There is a race condition here, where if the process table numbering
+	 has looped around, another process could have filled in the slot. 
+	 But this is the case where we're waiting for non-child processes
+	 anyway, so its already a grey area. */
+      if (access(procpath, R_OK) == -1) { 
+	fprintf(stderr, "%s is gone\n", procpath);
+	break; 
+      }
+    }
+  }
+
+  fprintf(stderr, "i=%d\n", i);
+
+  if (i == msleep_count) {
     fprintf(stderr, "pid %d did not exit after %d seconds, sending SIGKILL\n", pid, timeout_seconds);
     kill(pid, SIGKILL);
-    waitpid(pid, &status, 0);
+    if (ischild) {
+      cti_msleep(msleep_period);
+      waitpid(pid, &status, 0);
+    }
   }
 
+ out:
   *pidptr = -1;
 }
 
@@ -128,4 +179,17 @@ void bgstop_pidfile(const char *pidfile)
     bgstop(&pid);
   }
   unlink(pidfile);
+}
+
+
+void bgreap(void)
+{
+  int status;
+  int rc;
+  do {
+    rc = waitpid(-1, &status, WNOHANG);
+    if (rc > 0) {
+      fprintf(stderr, "reaped pid %d\n", rc);
+    }
+  } while (rc != 0);
 }

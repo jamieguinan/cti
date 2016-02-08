@@ -2,12 +2,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef USE_STACK_DEBUG
 #include "StackDebug.h"
+#endif
 
 void Lock_init(Lock *lock)
 {
 #ifdef __linux__
   pthread_mutex_init(&lock->mlock, NULL);
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -15,6 +19,8 @@ void Lock_destroy(Lock *lock)
 {
 #ifdef __linux__
   pthread_mutex_destroy(&lock->mlock);
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -25,8 +31,13 @@ void Lock_acquire(Lock *lock)
   rc = pthread_mutex_lock(&lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_mutex_lock returned %d\n", rc);
-    StackDebug(); exit(1);
+#ifdef USE_STACK_DEBUG
+    StackDebug();
+#endif
+    exit(1);
   }
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -37,8 +48,13 @@ void Lock_release(Lock *lock)
   rc = pthread_mutex_unlock(&lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_mutex_unlock returned %d\n", rc);
-    StackDebug(); exit(1);
+#ifdef USE_STACK_DEBUG
+    StackDebug();
+#endif
+ exit(1);
   }
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -49,8 +65,13 @@ void Lock_release__event_wait__lock_acquire(Lock *lock, Event *event)
   rc = pthread_cond_wait(&event->event, &lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_cond_wait returned %d\n", rc);
-    StackDebug(); exit(1);
+#ifdef USE_STACK_DEBUG
+    StackDebug(); 
+#endif
+    exit(1);
   }
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -59,6 +80,8 @@ void Event_init(Event *ev)
 {
 #ifdef __linux__
   pthread_cond_init(&ev->event, NULL);
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -67,6 +90,8 @@ void Event_destroy(Event *ev)
 {
 #ifdef __linux__
   pthread_cond_destroy(&ev->event);
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -75,6 +100,8 @@ void Event_signal(Event *ev)
 {
 #ifdef __linux__
   pthread_cond_broadcast(&ev->event);
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -90,6 +117,8 @@ void Sem_init(Sem *sem)
     perror("sem_init");
     exit(1);
   }
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -98,6 +127,8 @@ void Sem_post(Sem *sem)
 {
 #ifdef __linux__
   if (sem_post(&sem->sem) != 0) { perror("sem_post"); }
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -106,6 +137,8 @@ void Sem_wait(Sem *sem)
 {
 #ifdef __linux__
   if (sem_wait(&sem->sem) != 0) { perror("sem_wait"); }
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 
@@ -114,6 +147,8 @@ void Sem_destroy(Sem *sem)
 {
 #ifdef __linux__
   if (sem_destroy(&sem->sem) != 0) { perror("sem_destroy"); }
+#else
+#error __func__ is not defined for this platform.
 #endif
 }
 

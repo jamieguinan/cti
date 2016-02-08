@@ -15,7 +15,7 @@
 #include "String.h"
 #include "Mem.h"
 
-static char unset_string[] = "unset string or empty result";
+static char unset_string[] = "unset_string_or_empty_result";
 
 static String __String_none = {
   .bytes = unset_string,
