@@ -30,8 +30,12 @@ int jsmn_get_int(String * json_text, jsmntok_t token, int * result)
 {
   int i;
   int x = 0;
+  int m = 1;
   for (i=token.start; i < token.end; i++) {
     int c = s(json_text)[i];
+    if (i == 0 && c == '-') {
+      m = -1;
+    }
     if (c < '0' || c > '9') {
       return JSMN_ERROR_INVAL;
     }
@@ -40,7 +44,7 @@ int jsmn_get_int(String * json_text, jsmntok_t token, int * result)
     }
   }
 
-  *result = x;
+  *result = (x*m);
 
   return 0;
 }
@@ -58,7 +62,7 @@ void jsmn_dump(jsmntok_t * tokens, int num_tokens, int limit)
   int i;
   fprintf(stderr, "%d jsmn tokens\n", num_tokens);
   for (i=0; i < num_tokens && (limit == 0 || i < limit); i++) {
-    fprintf(stderr, "tokens[%d] type %s\n", i, jsmn_type_map[tokens[i].type]);
-    fprintf(stderr, "tokens[%d] size %d\n", i, tokens[i].size);
+    fprintf(stderr, "&& tokens[%d].type == %s\n", i, jsmn_type_map[tokens[i].type]);
+    fprintf(stderr, "&& tokens[%d].size == %d\n", i, tokens[i].size);
   }
 }

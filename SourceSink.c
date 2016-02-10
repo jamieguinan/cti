@@ -83,8 +83,10 @@ static void io_open(IO_common *io, const char *mode)
       }
   #endif
       rc = connect(io->s, rp->ai_addr, rp->ai_addrlen);
-      //fprintf(stderr, "rc=%d io->s=%d ai_addrlen=%d, errno=%d\n", rc, io->s, rp->ai_addrlen, errno);
+      //fprintf(stderr, "rc=%d io->s=%d family=%d socktype=%d protocol=%d addrlen=%d, errno=%d\n", 
+      //  rc, io->s, rp->ai_family, rp->ai_socktype, rp->ai_protocol, rp->ai_addrlen, errno);
       if (rc == 0) {
+        fprintf(stderr, "connect Ok\n");
 	break;
       }
       if (rc == -1) {

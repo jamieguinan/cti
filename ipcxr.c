@@ -34,7 +34,7 @@ int main(int argc, char * argv[])
   
   int rc;
 
-  rc =cti_ipc_send(c->io.s, msg->data, msg->len, timeout_ms);
+  rc = cti_ipc_send(c->io.s, msg->data, msg->len, timeout_ms);
   if (rc != 0) {
     printf("cti_ipc_send failed\n");
     return 1;

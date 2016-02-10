@@ -60,6 +60,7 @@ extern void String_set_sprintf(String **s, const char *fmt, ...);
 /* These return new strings. */
 extern String * String_sprintf(const char *fmt, ...);
 extern String * String_dup(String *s);
+extern String * String_from_u8(unsigned char * init, int init_size);
 
 /* These functions work in-place on s, although s->bytes can be reallocated. */
 extern void String_cat1(String *s, const char *s1);

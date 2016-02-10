@@ -35,18 +35,20 @@ void set_cloexec(int fd)
 int listen_socket_setup(listen_common *lsc)
 {
   int rc;
+  int family = AF_INET6;
 
-  lsc->fd = socket(AF_INET, SOCK_STREAM, 0);
+  lsc->fd = socket(family, SOCK_STREAM, 0);
+
+  if (lsc->fd == -1) {
+    /* Maybe IPv6 isn't supported, fall back to IPv4. */
+    family = AF_INET;
+    lsc->fd = socket(family, SOCK_STREAM, 0);
+  }
 
   if (lsc->fd == -1) {
     perror("socket");
     return 1;
   }
-
-  struct sockaddr_in sa = { .sin_family = AF_INET,
-			    .sin_port = htons(lsc->port),
-			    .sin_addr = { .s_addr = htonl(INADDR_ANY)}
-  };
 
   if (set_reuseaddr) {
     int reuse = 1;
@@ -60,7 +62,31 @@ int listen_socket_setup(listen_common *lsc)
 
   set_cloexec(lsc->fd);
 
-  rc = bind(lsc->fd, (struct sockaddr *)&sa, sizeof(sa));
+
+  if (family == AF_INET6) {
+    /* http://stackoverflow.com/questions/1618240/how-to-support-both-ipv4-and-ipv6-connections */
+    int x = 0;
+    rc = setsockopt(lsc->fd, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&x, sizeof(x));
+    if (rc == -1) { 
+      perror("IPPROTO_IPV6\n"); 
+    }
+
+    struct sockaddr_in6 sa6 = {
+      .sin6_family = family,
+      .sin6_port = htons(lsc->port),
+      .sin6_addr = IN6ADDR_ANY_INIT
+    };
+    rc = bind(lsc->fd, (struct sockaddr *)&sa6, sizeof(sa6));
+  }
+  else {
+    struct sockaddr_in sa = {
+      .sin_family = family,
+      .sin_port = htons(lsc->port),
+      .sin_addr.s_addr = htonl(INADDR_ANY)
+    };
+    rc = bind(lsc->fd, (struct sockaddr *)&sa, sizeof(sa));
+  }
+
   if (rc == -1) { 
     perror("bind"); 
     close(lsc->fd); lsc->fd = -1;

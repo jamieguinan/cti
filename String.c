@@ -336,6 +336,17 @@ void String_append_bytes(String *s, const char *bytes, int count)
 
 }
 
+String * String_from_u8(unsigned char * init, int init_size)
+{
+  int i;
+  String *s = String_new("");
+  for (i=0; i < init_size; i++) {
+    if (init[i] == 0) { break; }
+  }
+  String_append_bytes(s, (const char *)init, i);
+  return s;
+}
+
 
 String *String_replace(String *s, const char *old, const char *new)
 {
