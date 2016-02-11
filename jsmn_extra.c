@@ -33,8 +33,9 @@ int jsmn_get_int(String * json_text, jsmntok_t token, int * result)
   int m = 1;
   for (i=token.start; i < token.end; i++) {
     int c = s(json_text)[i];
-    if (i == 0 && c == '-') {
+    if (i == token.start && c == '-') {
       m = -1;
+      continue;
     }
     if (c < '0' || c > '9') {
       return JSMN_ERROR_INVAL;

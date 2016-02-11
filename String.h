@@ -58,7 +58,10 @@ extern void String_clear(String **s);
 extern void String_set_sprintf(String **s, const char *fmt, ...);
 
 /* These return new strings. */
-extern String * String_sprintf(const char *fmt, ...);
+extern String * 
+__attribute__ ((format (printf, 1, 2))) /* gcc format checking */
+String_sprintf(const char *fmt, ...);
+
 extern String * String_dup(String *s);
 extern String * String_from_u8(unsigned char * init, int init_size);
 
