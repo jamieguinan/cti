@@ -67,3 +67,17 @@ void jsmn_dump(jsmntok_t * tokens, int num_tokens, int limit)
     fprintf(stderr, "&& tokens[%d].size == %d\n", i, tokens[i].size);
   }
 }
+
+void jsmn_dump_verbose(String * json_text, jsmntok_t * tokens, int num_tokens, int limit)
+{
+  int i;
+  fprintf(stderr, "%d jsmn tokens\n", num_tokens);
+  for (i=0; i < num_tokens && (limit == 0 || i < limit); i++) {
+    fprintf(stderr, "&& tokens[%d].type == %s", i, jsmn_type_map[tokens[i].type]);
+    if (tokens[i].type == JSMN_STRING) {
+      fprintf(stderr, " /* %.*s */", jsf(s(json_text), tokens[i]));
+    }
+    fprintf(stderr, "\n");
+    fprintf(stderr, "&& tokens[%d].size == %d\n", i, tokens[i].size);
+  }
+}
