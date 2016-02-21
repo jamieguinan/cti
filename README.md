@@ -14,7 +14,7 @@ The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc`
 	Things I need right now, for getting config values and ranges, are
 	strings, lists of strings, maybe automatic cleanup.
 
-The core concept in CTI is that there are a set of static **C** structures, with camel-case names like `SocketServer`, that are used as **T**emplates. Any number of them can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which usually blocks until it has something to do. Most instances have a set of Input and Output members, which can be connected in a many-to-one Output-to-Input graph, of sorts. Instances may thus pass (loosely runtime-typed) messages to other instances, and that is how a CTI "application" works. Also, each instance has a table of configuration parameters that can be set using key/value strings.
+The core concept in CTI is that there are a set of static **C** structures, with camel-case names like `SocketServer`, that are used as **T**emplates. Any number of them can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which usually blocks until it has something to do. Most instances have a set of Input and Output members, which can be connected in a many-to-one Output-to-Input graph, of sorts. Instances may thus pass (loosely runtime-typed) messages to other instances, and that is how a CTI "application" is built. Also, each instance has a table of configuration parameters that can be set using key/value strings.
 
 So, CTI is *a modular, multi-threaded, message-passing, runtime-configurable program for video and audio capture and processing, networking, and various other applications*. That sounds impressive, but I chose to open this document describing it as a "hobby project", because I don't want to lose track of where it came from, I don't expect it to become a popular project, and I'm not looking to compete with other more developed projects in the same space. CTI exists primarily for my own use and entertainment, and as an exercise in programming.
 
@@ -26,7 +26,7 @@ If you're looking for established projects in the same space, that let you insta
 
 And you could probably find some interesting applications built on [Node.js](https://nodejs.org/).
 
-I am of course aware of C++, and I spent a few years as a serious aficiando of the language, but I came back to C and have mostly stuck with it. I won't get into the C vs. C++ debate here, but I do acknowledge that several features in CTI could have been implemented more concisely in C++. My philosophy is "each to his own", whatever tools and language a developer is most familiar and comfortable with, are the best.
+I am of course aware of C++, and I spent a few years as a serious aficionado of the language, but I came back to C and have mostly stuck with it. I won't get into the C vs. C++ debate here, but I do acknowledge that several features in CTI could have been implemented more concisely in C++. My philosophy is "each to his own", whatever tools and language a developer is most familiar and comfortable with, are the best.
 
 ### An example
 
@@ -34,7 +34,7 @@ CTI has a number of compiled-in Templates, each implemented in a separate C file
 
     Instance * Instantiate(const char *label);
 
-where `label` is the name associated with the Template. While CTI could be used as a library, and applications hard-coded to call `Instantiate()`, my main design goal of CTI was to allow runtime configurability, so I came up with a simple configuration language. Thinking that I would probably come up with something better later on, but not wanting to break previous applications, I implemented it in a file named `ScriptV00.c`, allowing for later versions named `ScriptV01`, `ScriptV02`, etc. But as is often the case, the original worked good enough for my needs, and I haven't added any other versions. Despite the name, it doesn't have looping constructs and it is not turing complete, so I would not call it an actual *scripting* language.
+where `label` is the name associated with the Template. While CTI could be used as a library, and applications hard-coded to call `Instantiate()`, my main design goal of CTI was to allow runtime configurability, so I came up with a simple configuration and command language. Thinking that I would probably come up with something better later on, but not wanting to break previous applications, I implemented it in a file named `ScriptV00.c`, allowing for later versions named `ScriptV01`, `ScriptV02`, etc. But as is often the case, the original worked good enough for my needs, and I haven't added any other versions. Despite the name, it doesn't have looping constructs and it is not turing complete, so I would not call it an actual *scripting* language.
 
 Ok, now an example. `logitech.cmd` is a simple camera viewer application. It assumes a [UVC](https://en.wikipedia.org/wiki/USB_video_device_class) compatible USB camera is available on the computer. Oh, and since I hadn't mentioned it thus far, CTI is pretty Linux-centric, although I have occasionally ported it to other platforms, with mixed success.
 
@@ -78,8 +78,13 @@ CTI (via the ScriptV00 module) will present a `cti> ` prompt after the file is l
 
 ### Some notes about the code
 
-`String.c` takes care of one the more error-prone areas of C programming, handling strings and lists of strings. My favorite function there is `String_sprintf()`, which does pretty much what you would expect. There is a special value returned by the function `String_value_none()`, which can be used for initializing `String *` variables, returned by functions that failed to produced a result, and used for comparison via the function `String_is_none()`. The advantage over using `NULL` is that it points to a legitimate `String` structure, so code that accidentally accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
+Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget`.
 
+`String.c` takes care of one the more error-prone areas of C programming, handling strings and lists of strings. My favorite function there is `String_sprintf()`, which does pretty much what you would expect. There is a special value returned by the function `String_value_none()`, which can be used for initializing `String *` variables, as a return value from functions that failed to produce a result, and for comparison via the function `String_is_none()`. The advantage over using `NULL` is that it points to a legitimate `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
+
+Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function where you may find `String_clear()` calls for each of the `String *` variables in said function.
+
+I had an experimental project called "modc" in the late 2000s, which implemented garbage collection by means of reference-counting allocations, keeping track of types, and leveraging the descending property of stack variable addresses (on most platforms) to periodically clean up dynamically allocated objects. It worked great, and I even wrote an sshfs-compatible (but non-encrypted) SFTP server completely from scratch with it, but the other goals of the modc project didn't pan out, so I abandoned it. I might try reviving some of the modc concepts in CTI one day.
 
 ### Using individual modules outside of CTI
 
