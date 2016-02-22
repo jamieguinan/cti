@@ -831,7 +831,9 @@ YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p)
     }
   }
 
+#if 0
  out:
+#endif
   // printf("n=%d\n", n);
   return yuv422p;
 }

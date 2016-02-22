@@ -3,9 +3,9 @@
 #include <stdlib.h>		/* abs */
 #include "jpeglib.h"
 
-#include "cdjpeg.h"
-#include "wrmem.h"
-#include "jmemsrc.h"
+//#include "cdjpeg.h"
+//#include "wrmem.h"
+//#include "jmemsrc.h"
 
 #include "CTI.h"
 #include "MotionDetect.h"

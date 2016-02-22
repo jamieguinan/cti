@@ -39,10 +39,11 @@ static void M3U8_reset(M3U8_private *priv)
   }
 }
 
-
+#if 0
 static void handle_http_complete(M3U8_private *priv)
 {
 }
+#endif
 
 
 static int set_url(Instance *pi, const char *value)

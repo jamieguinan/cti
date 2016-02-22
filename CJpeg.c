@@ -1,11 +1,12 @@
 /* Jpeg compression using IJPEG library. */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "jpeglib.h"
 
-#include "cdjpeg.h"
-#include "jmemdst.h"
+//#include "cdjpeg.h"
+//#include "jmemdst.h"
 
 #include "CTI.h"
 #include "CJpeg.h"
@@ -140,8 +141,10 @@ static void compress_and_post(Instance *pi,
 					this may cause the program to call exit()! */
   jpeg_create_compress(&cinfo);
 
-  /*  Leave enough space for 100% of original size, plus some header. */
-  jpeg_out = Jpeg_buffer_new(width*height*3+16384, 0L); 
+  /* jpeg_mem_dest will save &(jpeg_out->data) as "dest->outbuffer"
+     internally, and re-allocate it to expand as needed, so start with
+     same minimum size that libjpeg uses. */
+  jpeg_out = Jpeg_buffer_new(4096, 0L); 
   jpeg_out->width = width;
   jpeg_out->height = height;
   
@@ -164,7 +167,7 @@ static void compress_and_post(Instance *pi,
     // jpeg_out->tv = y422p_in->tv;
   }
 
-  jpeg_mem_dest(&cinfo, jpeg_out->data, jpeg_out->data_length, &jpeg_out->encoded_length);
+  jpeg_mem_dest(&cinfo, &jpeg_out->data, &jpeg_out->encoded_length);
 
   /* NOTE: It turns out there is actually no need for jinit_read_mem()
      [rdmem.c], just set the pointers in the encode loop! */
@@ -261,7 +264,10 @@ static void compress_and_post(Instance *pi,
   }
     
   jpeg_finish_compress(&cinfo);
+
   jpeg_destroy_compress(&cinfo);
+
+  // fprintf(stderr, "jpeg_out->encoded_length=%lu\n", jpeg_out->encoded_length);
 
   if (pi->outputs[OUTPUT_JPEG].destination) {
     PostData(jpeg_out, pi->outputs[OUTPUT_JPEG].destination);

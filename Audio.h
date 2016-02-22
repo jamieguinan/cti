@@ -59,7 +59,7 @@ typedef struct {
   uint8_t header[44];
   int header_length;
   void *data;
-  int data_length;
+  unsigned long data_length;
   double timestamp;
   /* The "params" are somewhat redundant, since they are also in the header,
      but here they are easily accessible and native-endian. */
@@ -86,7 +86,7 @@ extern Wav_buffer *Wav_ref(Wav_buffer *wav);
 /* AAC buffers.  */
 typedef struct {
   uint8_t *data;
-  int data_length;
+  unsigned long data_length;
   double timestamp;
   double nominal_period;
 } AAC_buffer;

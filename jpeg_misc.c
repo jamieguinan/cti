@@ -7,9 +7,9 @@
 #include "ArrayU8.h"
 #include "jpeglib.h"
 
-#include "cdjpeg.h"
-#include "wrmem.h"
-#include "jmemsrc.h"
+//#include "cdjpeg.h"
+//#include "wrmem.h"
+//#include "jmemsrc.h"
 #include "jpeghufftables.h"
 #include "jpeg_misc.h"
 
@@ -66,7 +66,7 @@ static FormatInfo known_formats[] = {
    Images.c because this module includes jpeglib.h, and if I'm
    building on a system without the jpeg library, I still want
    Images.c to build, without requiring a bunch of #ifdefs */
-Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c)
+Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, unsigned long data_length, Image_common *c)
 {
   Jpeg_buffer *jpeg = 0L;
   struct jpeg_decompress_struct cinfo;

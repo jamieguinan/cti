@@ -4,17 +4,19 @@
  * Also adds standard quantization tables if absent.
  */
 #include <stdio.h>		
+#include <stdlib.h>		/* exit */
 #include <string.h>
 #include <setjmp.h>
 
-#include "cdjpeg.h"
+#include <jpeglib.h>
+//#include "cdjpeg.h"
 #include "transupp.h"
 
 #include "CTI.h"
 #include "JpegTran.h"
 #include "Images.h"
-#include "jmemsrc.h"
-#include "jmemdst.h"
+//#include "jmemsrc.h"
+//#include "jmemdst.h"
 #include "jpeghufftables.h"
 
 static void Config_handler(Instance *pi, void *data);
@@ -181,13 +183,15 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
 
   /* Specify data destination for compression */
 
-  /*  Leave enough space for 100% of original size, plus some header. */
-  jpeg_out = Jpeg_buffer_new(srcinfo.image_width*srcinfo.image_height*3+16384, &jpeg_in->c); 
+  /* jpeg_mem_dest will save &(jpeg_out->data) as "dest->outbuffer"
+     internally, and re-allocate it to expand as needed, so start with
+     same minimum size that libjpeg uses. */
+  jpeg_out = Jpeg_buffer_new(4096, &jpeg_in->c); 
 
   //jpeg_out->c.tv.tv_sec = 0L;
   //jpeg_out->c.tv.tv_usec = 0L;
 
-  jpeg_mem_dest(&dstinfo, jpeg_out->data, jpeg_out->data_length, &jpeg_out->encoded_length);
+  jpeg_mem_dest(&dstinfo, &jpeg_out->data, &jpeg_out->encoded_length);
 
   /* Start compressor (note no image data is actually written here) */
   jpeg_write_coefficients(&dstinfo, dst_coef_arrays);

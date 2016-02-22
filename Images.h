@@ -158,9 +158,9 @@ typedef struct {
   int width;
   int height;
   uint8_t *data;
-  int data_length;		/* Provisional. */
-  int encoded_length;		/* Actual encoded jpeg size. */
-  int has_huffman_tables;	/* Set by Jpeg_fix(). */
+  unsigned long data_length;	  /* Provisional. */
+  unsigned long encoded_length;	  /* Actual encoded jpeg size. */
+  int has_huffman_tables;	  /* Set by Jpeg_fix(). */
 
   Image_common c;
 } Jpeg_buffer;
@@ -172,8 +172,8 @@ typedef struct {
   int width;
   int height;
   uint8_t *data;
-  int data_length;		/* Provisional. */
-  int encoded_length;		/* Actual encoded size. */
+  unsigned long data_length;		/* Provisional. */
+  unsigned long encoded_length;		/* Actual encoded size. */
 
   Image_common c;
 } O511_buffer;
@@ -249,7 +249,7 @@ extern YUV422P_buffer *BGR3_toYUV422P(BGR3_buffer *bgr);
 extern YUV420P_buffer *RGB3_to_YUV420P(RGB3_buffer *rgb);
 
 extern Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c);
-extern Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, int data_length, Image_common *c); /* DJpeg.c */
+extern Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, unsigned long data_length, Image_common *c);
 extern void Jpeg_buffer_discard(Jpeg_buffer *jpeg);
 extern Jpeg_buffer *Jpeg_buffer_ref(Jpeg_buffer *jpeg);
 extern void Jpeg_fix(Jpeg_buffer *jpeg);

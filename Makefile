@@ -1,6 +1,17 @@
-default: default1
+default: test-requirements cti_main
 
-include ../build/platforms.make
+test-requirements:
+	@test -d ../jpeg-9/.libs || ( echo "Need compiled libjpeg in ../jpeg-9" ; false )
+
+# include ../build/platforms.make
+
+CC=gcc
+CFLAGS=-O2
+SHARED_FLAGS=-shared -fPIC
+NM=nm
+OS=Linux
+STRIP=strip
+ARCH:=$(shell uname -m)-$(shell uname -s)
 
 MAIN=main.o
 
@@ -26,9 +37,13 @@ endif
 endif
 endif
 # -std=c99
-CPPFLAGS += -I../platform/$(ARCH)/include -I../external/jpeg-7
+CPPFLAGS += -I/usr/include
+#CPPFLAGS += -I../platform/$(ARCH)/include
+CPPFLAGS += -I ../jpeg-9
 CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
-LDFLAGS += -L../platform/$(ARCH)/lib -ljpeg -lpthread
+#LDFLAGS += -L../platform/$(ARCH)/lib -ljpeg
+LDFLAGS += -L../jpeg-9/.libs -ljpeg -Wl,-rpath,../jpeg-9/.libs
+LDFLAGS += -lpthread
 ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
 # rdynamic allows loaded .so files to see CTI global symbols.
@@ -45,7 +60,8 @@ endif
 
 OBJDIR ?= .
 
-default1:  $(OBJDIR)/cti$(EXEEXT)
+cti_main: $(OBJDIR)/cti$(EXEEXT)
+	@echo Done.
 
 #	@echo wd=$(shell pwd)
 #	@echo VPATH=$(VPATH)
@@ -61,10 +77,7 @@ OBJS= \
 	$(OBJDIR)/ArrayU8.o \
 	$(OBJDIR)/Range.o \
 	$(OBJDIR)/File.o \
-	$(OBJDIR)/jmemsrc.o \
-	$(OBJDIR)/jmemdst.o \
 	$(OBJDIR)/jpeghufftables.o \
-	$(OBJDIR)/wrmem.o \
 	$(OBJDIR)/CJpeg.o \
 	$(OBJDIR)/DJpeg.o \
 	$(OBJDIR)/jpeg_misc.o \
@@ -150,17 +163,20 @@ OBJS= \
 	$(OBJDIR)/M3U8.o \
 	$(OBJDIR)/HTTPClient.o \
 	$(OBJDIR)/TunerControl.o \
-	$(OBJDIR)/$(MAIN) \
-	../platform/$(ARCH)/jpeg-7/transupp.o
+	../jpeg-9/transupp.o \
+	$(OBJDIR)/$(MAIN) 
 
 #	$(OBJDIR)/ScriptSession.o \
+#	$(OBJDIR)/jmemsrc.o \
+#	$(OBJDIR)/jmemdst.o \
+#	$(OBJDIR)/wrmem.o \
 
 
 ifeq ($(OS),Linux)
 OBJS+=\
 	$(OBJDIR)/Uvc.o \
-	$(OBJDIR)/FFmpegEncode.o \
-	../platform/$(ARCH)/jpeg-7/libjpeg.la
+	$(OBJDIR)/FFmpegEncode.o
+#	../platform/$(ARCH)/jpeg-7/libjpeg.la
 ifneq ($(ARCH),lpd)
 OBJS+=\
 	$(OBJDIR)/V4L2Capture.o \
@@ -306,7 +322,7 @@ $(OBJDIR)/cti$(EXEEXT): \
 	$(OBJS) \
 	$(OBJDIR)/cti_app.o
 	@echo LINK
-#	@echo $(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
+	@echo $(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@echo Generating map
 	$(NM) $@ | sort > $@.map

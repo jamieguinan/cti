@@ -77,7 +77,7 @@ static void junk(O511_buffer *o511_in, YUV420P_buffer *y420p_out)
 
 /* From libv4l-0.6.4/libv4lconvert/ov511-decomp.c:
    Remove all 0 blocks from input */
-static void remove0blocks(unsigned char *pIn, int *inSize)
+static void remove0blocks(unsigned char *pIn, unsigned long *inSize)
 {
   long long *in = (long long *)pIn;
   long long *out = (long long *)pIn;

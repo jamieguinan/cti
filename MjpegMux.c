@@ -93,7 +93,7 @@ static const char part_format[] =
   "%sContent-Type: %s\r\n"
   "Timestamp:%.6f\r\n"
   "%s"				/* extra headers... */
-  "Content-Length: %d\r\n\r\n";
+  "Content-Length: %lu\r\n\r\n";
 
 static void Jpeg_handler(Instance *pi, void *data)
 {
@@ -111,7 +111,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     period = String_sprintf("Period:%.6f\r\n", jpeg_in->c.nominal_period);
   }
   else {
-    period = String_sprintf("");
+    period = String_new("");
   }
 
   String *header = String_sprintf(part_format,

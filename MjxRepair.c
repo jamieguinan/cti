@@ -73,7 +73,7 @@ static const char part_format[] =
   "%s\r\nContent-Type: %s\r\n"
   "Timestamp:%.6f\r\n"  	/* very important to use six digits for microseconds! :) */
   "%s"				/* extra headers... */
-  "Content-Length: %d\r\n\r\n";
+  "Content-Length: %lu\r\n\r\n";
 
 static void Jpeg_handler(Instance *pi, void *data)
 {

@@ -11,7 +11,8 @@
  */
 
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
-#include "jinclude.h"
+#include <stdio.h>		/* FILE in jpeglib.h, fprintf */
+#include <string.h>		/* memcpy */
 #include "jpeglib.h"
 #include "jerror.h"
 
@@ -60,7 +61,7 @@ init_destination (j_compress_ptr cinfo)
   /* Allocate the output buffer --- it will be released when done with image */
   dest->local_buffer = (JOCTET *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-				  OUTPUT_BUF_SIZE * SIZEOF(JOCTET));
+				  OUTPUT_BUF_SIZE * sizeof(JOCTET));
 
   dest->pub.next_output_byte = dest->local_buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
@@ -151,7 +152,7 @@ jpeg_mem_dest (j_compress_ptr cinfo, JOCTET * buffer, int buffer_length, int *fi
   if (cinfo->dest == NULL) {	/* first time for this JPEG object? */
     cinfo->dest = (struct jpeg_destination_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  SIZEOF(my_destination_mgr));
+				  sizeof(my_destination_mgr));
   }
 
   dest = (my_dest_ptr) cinfo->dest;

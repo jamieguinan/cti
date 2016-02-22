@@ -2,14 +2,11 @@
  * Jpeg decompression module.
  */
 #include <stdio.h>
+#include <stdlib.h>		/* exit */
 #include <string.h>
 #include <setjmp.h>
+#include <jpeglib.h>
 
-#include "jpeglib.h"
-
-#include "cdjpeg.h"
-#include "wrmem.h"
-#include "jmemsrc.h"
 #include "jpeghufftables.h"
 
 #include "CTI.h"

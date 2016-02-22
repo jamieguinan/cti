@@ -1,4 +1,5 @@
-#include "cdjpeg.h"
+#include <stdio.h>
+#include <jpeglib.h>
 #include "jpeghufftables.h"
 
 /* Default huffman tables.  From "jcparam.c", and verified in "mjpeg-notes.txt".*/

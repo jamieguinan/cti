@@ -1,7 +1,7 @@
 CTI
 ===
 
-CTI is a hobby project I've been working on since 2010. During the 2000s, I had written several of one-off programs involving simple video and audio capture and processing, and network services. Applications included: birdfeeder webcam, recording analog TV programs, converting DV tapes, and other such things. Every time I needed a new, slightly different application, I'd copy and rename the previous one and change it accordingly. I would add features to the new programs, and the old ones would [bit rot](https://en.wikipedia.org/wiki/Software_rot). This bothered me, so I came up with the idea of having *one* program that could be configured at runtime to handle any of the applications I might come up with, and if I fixed a bug or added a feature, it would be immediately included and available in all of these applications. This was the impetus for CTI.
+CTI is a hobby project I've been working on since 2010. During the 2000s, I had written several of one-off programs involving simple video and audio capture and processing, and network services. Applications included: birdfeeder webcam, recording analog TV programs, converting DV tapes, and other such things. Every time I needed a new, slightly different application, I'd copy and rename the previous one and change it slightly. I would add features to the new programs, and the old ones would [bit rot](https://en.wikipedia.org/wiki/Software_rot). This bothered me, so I came up with the idea of having *one* program that could be configured at runtime to handle any of the applications I might come up with, and if I fixed a bug or added a feature, it would be immediately included and available in all of these applications. This was the impetus for CTI.
 
 The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc` stood for, maybe something to do with `netcat`. From my notes,
 
@@ -14,7 +14,7 @@ The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc`
 	Things I need right now, for getting config values and ranges, are
 	strings, lists of strings, maybe automatic cleanup.
 
-The core concept in CTI is that there are a set of static **C** structures, with camel-case names like `SocketServer`, that are used as **T**emplates. Any number of them can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which usually blocks until it has something to do. Most instances have a set of Input and Output members, which can be connected in a many-to-one Output-to-Input graph, of sorts. Instances may thus pass (loosely runtime-typed) messages to other instances, and that is how a CTI "application" is built. Also, each instance has a table of configuration parameters that can be set using key/value strings.
+The core concept in CTI is that there are a set of static **C** structures, with camel-case labels like `SocketServer`, that are used as **T**emplates. Any number of them can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which usually blocks until it has something to do. Most instances have a set of Input and Output members, which can be connected in a many-to-one Output-to-Input graph, of sorts. Instances may thus pass (loosely runtime-typed) messages to other instances, and that is how a CTI "application" is built. Also, each instance has a table of configuration parameters that can be set using key/value strings.
 
 So, CTI is *a modular, multi-threaded, message-passing, runtime-configurable program for video and audio capture and processing, networking, and various other applications*. That sounds impressive, but I chose to open this document describing it as a "hobby project", because I don't want to lose track of where it came from, I don't expect it to become a popular project, and I'm not looking to compete with other more developed projects in the same space. CTI exists primarily for my own use and entertainment, and as an exercise in programming.
 
@@ -39,35 +39,37 @@ where `label` is the name associated with the Template. While CTI could be used 
 Ok, now an example. `logitech.cmd` is a simple camera viewer application. It assumes a [UVC](https://en.wikipedia.org/wiki/USB_video_device_class) compatible USB camera is available on the computer. Oh, and since I hadn't mentioned it thus far, CTI is pretty Linux-centric, although I have occasionally ported it to other platforms, with mixed success.
 
     # Make instances for video capture, Jpeg decompression, and display using SDL.
-	# Each instance can be referenced by label, namely: vc, dj, sdl.
-	new V4L2Capture vc
-	new DJpeg dj
-	new SDLstuff sdl
+    # syntax: new template-name instance-label
+    new V4L2Capture vc
+    new DJpeg dj
+    new SDLstuff sdl
 
     # Connect outputs to inputs using runtime-tested labels. The generic
-    # syntax is: config source-instance message-type destination-instance
-	connect vc Jpeg_buffer dj
-	connect dj RGB3_buffer sdl
+    # syntax: config source-instance message-type destination-instance
+    connect vc Jpeg_buffer dj
+    connect dj RGB3_buffer sdl
 
     # Configure the video capture instance.
-	config vc device UVC
-	config vc format MJPG
-	config vc size 640x480
-	config vc fps 30
+    # syntax: instance-label key value
+    config vc device UVC
+    config vc format MJPG
+    config vc size 640x480
+    config vc fps 30
 
     # Connect the SDL keyboard to the sdl instance itself to allow quitting with 'q',
-	# and to the video capture instance, which uses 's' for snapshots.
-	connect sdl:Keycode_msg sdl:Keycode_msg
-	connect sdl:Keycode_msg_2 vc:Keycode_msg
+    # and to the video capture instance, which uses 's' for snapshots.
+    # Alternative connect syntax: connect source-label:message-type destination-label:message-type
+    connect sdl:Keycode_msg sdl:Keycode_msg
+    connect sdl:Keycode_msg_2 vc:Keycode_msg
 
-	# Use OVERLAY mode for SDL. Other options are SOFTWARE and GL.
-	config sdl mode OVERLAY
+    # Use OVERLAY mode for SDL. Other options are SOFTWARE and GL.
+    config sdl mode OVERLAY
 
     # Some extra video capture parameters.
-	config vc Exposure,.Auto.Priority 0
-	config vc autoexpose 3
+    config vc Exposure,.Auto.Priority 0
+    config vc autoexpose 3
 
-    # Start the video device capturing.
+    # Start the video device capturing, which will set the whole set of instances running.
     config vc enable 1
 
 The file can be loaded and run with,
@@ -80,9 +82,15 @@ CTI (via the ScriptV00 module) will present a `cti> ` prompt after the file is l
 
 Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget`.
 
-`String.c` takes care of one the more error-prone areas of C programming, handling strings and lists of strings. My favorite function there is `String_sprintf()`, which does pretty much what you would expect. There is a special value returned by the function `String_value_none()`, which can be used for initializing `String *` variables, as a return value from functions that failed to produce a result, and for comparison via the function `String_is_none()`. The advantage over using `NULL` is that it points to a legitimate `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
+`String.c` takes care of one the more error-prone areas of C programming, handling strings and lists of strings. My favorite function there is `String_sprintf()`, which does pretty much what you would expect. There is a special value returned by the function `String_value_none()`, which can be used for,
 
-Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function where you may find `String_clear()` calls for each of the `String *` variables in said function.
+ * initializing `String *` variables
+ * as a return value from functions that failed to produce a result, and
+ * for comparison via the function `String_is_none()`
+
+The advantage over using `NULL` is that it points to a legitimate `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
+
+Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function, where you may find `String_clear()` calls for each of the `String *` variables in said function.
 
 I had an experimental project called "modc" in the late 2000s, which implemented garbage collection by means of reference-counting allocations, keeping track of types, and leveraging the descending property of stack variable addresses (on most platforms) to periodically clean up dynamically allocated objects. It worked great, and I even wrote an sshfs-compatible (but non-encrypted) SFTP server completely from scratch with it, but the other goals of the modc project didn't pan out, so I abandoned it. I might try reviving some of the modc concepts in CTI one day.
 

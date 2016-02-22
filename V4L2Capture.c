@@ -1529,7 +1529,7 @@ static void V4L2Capture_tick(Instance *pi)
       j->encoded_length = priv->vbuffer.bytesused;
       if (priv->fix) { Jpeg_fix(j); }
       if (j->encoded_length < 1000) {
-	printf("encoded_length=%d, probably isochronous error!\n", j->encoded_length);
+	printf("encoded_length=%lu, probably isochronous error!\n", j->encoded_length);
 	Jpeg_buffer_discard(j);
       }
       else {
@@ -1551,7 +1551,7 @@ static void V4L2Capture_tick(Instance *pi)
       o->encoded_length = priv->vbuffer.bytesused;
 
       if (o->encoded_length < 1000) {
-	printf("encoded_length=%d, probably isochronous error!\n", o->encoded_length);
+	printf("encoded_length=%lu, probably isochronous error!\n", o->encoded_length);
 	O511_buffer_discard(o);
       }
       else {
