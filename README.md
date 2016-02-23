@@ -80,6 +80,11 @@ The file can be loaded and run with,
 
 CTI (via the ScriptV00 module) will present a `cti> ` prompt after the file is loaded, from which further `new`, `config`, and other commands can be entered. `ctrl-d` or `exit` will quit the program.
 
+### More examples.
+
+The `cmd/` subfolder here contains many experimental CTI "applications". I've had good experience with Logitech cameras, specifically models 9000 and C310, so there are several `logitech.*` files. But they should work with most(?) UVC compatible cameras.
+
+
 ### Some notes about the code
 
 Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget`. And `NVidiaCUDA.c`, yeah, never did anything with that.
