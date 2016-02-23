@@ -1522,7 +1522,7 @@ static void V4L2Capture_tick(Instance *pi)
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
       getdoubletime(&j->c.timestamp);
-      j->c.label = String_new("/snapshot.jpg");
+      j->c.label = String_new("/snapshot.jpg"); /* For VirtualStorage */
       FPS_update_timestamp(&priv->calculated_fps, j->c.timestamp);
       j->c.nominal_period = priv->nominal_period;
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);

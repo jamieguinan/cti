@@ -12,6 +12,7 @@
 #include "Audio.h"
 #include "ArrayU8.h"
 #include "Mem.h"
+#include "String.h"
 #include "Cfg.h"
 #include "dpf.h"
 
@@ -23,11 +24,26 @@
 #define table_size(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
+static void Image_common_copy(Image_common *src, Image_common *dest)
+{
+  *dest = *src;
+  if (src->label) {
+    dest->label = String_new(s(src->label));
+  }
+}
+
+static void Image_common_cleanup(Image_common *c)
+{
+  if (c->label) {
+    String_free(&c->label);
+  }
+}
+
 Gray_buffer *Gray_buffer_new(int width, int height, Image_common *c)
 {
   Gray_buffer *gray = Mem_calloc(1, sizeof(Gray_buffer));
   if (c) {
-    gray->c = *c;
+    Image_common_copy(&gray->c, c);
   }
   gray->width = width;
   gray->height = height;
@@ -169,7 +185,7 @@ Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c)
 {
   Gray32_buffer *gray32 = Mem_calloc(1, sizeof(Gray32_buffer));
   if (c) {
-    gray32->c = *c;
+    Image_common_copy(&gray32->c, c);
   }
   gray32->width = width;
   gray32->height = height;
@@ -190,7 +206,7 @@ RGB3_buffer *RGB3_buffer_new(int width, int height, Image_common *c)
 {
   RGB3_buffer *rgb = Mem_calloc(1, sizeof(*rgb));
   if (c) {
-    rgb->c = *c;
+    Image_common_copy(&rgb->c, c);
   }
   rgb->width = width;
   rgb->height = height;
@@ -295,7 +311,7 @@ BGR3_buffer *BGR3_buffer_new(int width, int height, Image_common *c)
 {
   BGR3_buffer *bgr = Mem_calloc(1, sizeof(BGR3_buffer));
   if (c) {
-    bgr->c = *c;
+    Image_common_copy(&bgr->c, c);
   }
   bgr->width = width;
   bgr->height = height;
@@ -349,7 +365,7 @@ YUV422P_buffer * YUV422P_buffer_new(int width, int height, Image_common *c)
 {
   YUV422P_buffer * yuv422p = Mem_calloc(1, sizeof(*yuv422p));
   if (c) {
-    yuv422p->c = *c;
+    Image_common_copy(&yuv422p->c, c);
   }
   yuv422p->width = width;
   yuv422p->height = height;
@@ -723,7 +739,7 @@ YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
 {
   YUV420P_buffer * yuv420p = Mem_calloc(1, sizeof(*yuv420p));
   if (c) {
-    yuv420p->c = *c;
+    Image_common_copy(&yuv420p->c, c);
   }
   yuv420p->width = width;
   yuv420p->height = height;
@@ -949,7 +965,7 @@ Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c)
 {
   Jpeg_buffer *jpeg = Mem_calloc(1, sizeof(Jpeg_buffer));
   if (c) {
-    jpeg->c = *c;
+    Image_common_copy(&jpeg->c, c);
   }
   jpeg->width = -1;
   jpeg->height = -1;
@@ -965,11 +981,8 @@ void Jpeg_buffer_discard(Jpeg_buffer *jpeg)
   int count;
   LockedRef_decrement(&jpeg->c.ref, &count);
   if (count == 0) {
+    Image_common_cleanup(&(jpeg->c));
     Mem_free(jpeg->data);
-    if (jpeg->c.label) {
-      /* FIXME: maybe move this into new function Image_common_cleanup() */
-      String_free(&jpeg->c.label);
-    }
     memset(jpeg, 0, sizeof(*jpeg));
     Mem_free(jpeg);
   }
@@ -988,7 +1001,7 @@ O511_buffer *O511_buffer_new(int width, int height, Image_common *c)
 {
   O511_buffer *o511 = Mem_calloc(1, sizeof(O511_buffer));
   if (c) {
-    o511->c = *c;
+    Image_common_copy(&o511->c, c);
   }
   o511->width = width;
   o511->height = height;
@@ -1002,7 +1015,7 @@ O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int hei
 {
   O511_buffer *o511 = Mem_calloc(1, sizeof(O511_buffer));
   if (c) {
-    o511->c = *c;
+    Image_common_copy(&o511->c, c);
   }
   o511->width = width;
   o511->height = height;
@@ -1026,7 +1039,7 @@ H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int hei
 {
   H264_buffer *h264 = Mem_calloc(1, sizeof(H264_buffer));
   if (c) {
-    h264->c = *c;
+    Image_common_copy(&h264->c, c);
   }
   h264->width = width;
   h264->height = height;
@@ -1041,11 +1054,11 @@ H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int hei
 
 void H264_buffer_discard(H264_buffer *h264)
 {
+  Image_common_cleanup(&h264->c);
   Mem_free(h264->data);
   memset(h264, 0, sizeof(*h264));
   Mem_free(h264);
 }
-
 
 
 ImageType Image_guess_type(uint8_t *data, int len)

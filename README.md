@@ -18,8 +18,9 @@ The core concept in CTI is that there are a set of static **C** structures, with
 
 So, CTI is *a modular, multi-threaded, message-passing, runtime-configurable program for video and audio capture and processing, networking, and various other applications*. That sounds impressive, but I chose to open this document describing it as a "hobby project", because I don't want to lose track of where it came from, I don't expect it to become a popular project, and I'm not looking to compete with other more developed projects in the same space. CTI exists primarily for my own use and entertainment, and as an exercise in programming.
 
-If you're looking for established projects in the same space, that let you instantiate and plug parts together to do things, here are a few that come to mind,
+If you're looking for bigger, well-established projects in the same space, that let you instantiate and plug parts together to do things, here are a few that come to mind,
 
+* [gstreamer](https://gstreamer.freedesktop.org/)
 * [ecasound](http://eca.cx/ecasound/index.php)
 * [Processing](https://processing.org/)
 * [Scratch](https://scratch.mit.edu/)
@@ -39,13 +40,13 @@ where `label` is the name associated with the Template. While CTI could be used 
 Ok, now an example. `logitech.cmd` is a simple camera viewer application. It assumes a [UVC](https://en.wikipedia.org/wiki/USB_video_device_class) compatible USB camera is available on the computer. Oh, and since I hadn't mentioned it thus far, CTI is pretty Linux-centric, although I have occasionally ported it to other platforms, with mixed success.
 
     # Make instances for video capture, Jpeg decompression, and display using SDL.
-    # syntax: new template-name instance-label
+    # syntax: new template-label instance-label
     new V4L2Capture vc
     new DJpeg dj
     new SDLstuff sdl
 
-    # Connect outputs to inputs using runtime-tested labels. The generic
-    # syntax: config source-instance message-type destination-instance
+    # Connect outputs to inputs using runtime-tested labels.
+    # syntax: config source-instance-label message-type-label destination-instance-label
     connect vc Jpeg_buffer dj
     connect dj RGB3_buffer sdl
 
@@ -58,7 +59,8 @@ Ok, now an example. `logitech.cmd` is a simple camera viewer application. It ass
 
     # Connect the SDL keyboard to the sdl instance itself to allow quitting with 'q',
     # and to the video capture instance, which uses 's' for snapshots.
-    # Alternative connect syntax: connect source-label:message-type destination-label:message-type
+    # Alternative connect syntax:
+    #    connect source-label:message-type-label destination-label:message-type-label
     connect sdl:Keycode_msg sdl:Keycode_msg
     connect sdl:Keycode_msg_2 vc:Keycode_msg
 
@@ -80,7 +82,11 @@ CTI (via the ScriptV00 module) will present a `cti> ` prompt after the file is l
 
 ### Some notes about the code
 
-Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget`.
+Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget`. And `NVidiaCUDA.c`, yeah, never did anything with that.
+
+There are a few C files that aren't part of CTI, which I wrote for testing, and may or may not have compiled in a long time, but I keep them in the project for possible future reference.
+
+Since I use CTI modules in other projects, it has also become convenient place for modules that aren't (yet) built into CTI, but are used in more than one external project. `jsmn_misc.c`, `dbutil.c`, and a few others.
 
 `String.c` takes care of one the more error-prone areas of C programming, handling strings and lists of strings. My favorite function there is `String_sprintf()`, which does pretty much what you would expect. There is a special value returned by the function `String_value_none()`, which can be used for,
 
@@ -89,6 +95,8 @@ Many of the built-in template modules are incomplete, or just empty skeletons. F
  * for comparison via the function `String_is_none()`
 
 The advantage over using `NULL` is that it points to a legitimate `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
+
+The `Makefile` isn't very tidy. There is some scaffolding and artifacts left over from different Linux platforms that I've experimented with.
 
 Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function, where you may find `String_clear()` calls for each of the `String *` variables in said function.
 

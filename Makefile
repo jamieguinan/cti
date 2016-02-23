@@ -23,7 +23,8 @@ ifeq ($(ARCH),$(HOSTARCH))
 LDFLAGS+=-Wl,-rpath,$(shell pwd)/../platform/$(ARCH)/lib -lm
 endif
 
-CFLAGS += -Os -Wall $(CMDLINE_CFLAGS)
+CFLAGS += -Wall $(CMDLINE_CFLAGS)
+#CFLAGS += -Os 
 #CFLAGS += -Werror
 #CFLAGS += -O0 -ggdb
 #CFLAGS += -Os -ggdb
@@ -40,7 +41,7 @@ endif
 CPPFLAGS += -I/usr/include
 #CPPFLAGS += -I../platform/$(ARCH)/include
 CPPFLAGS += -I ../jpeg-9
-CPPFLAGS += -MMD -MP -MF $(OBJDIR)/$(subst .c,.dep,$<)
+CPPFLAGS += -MMD -MP -MF $(subst .c,.dep,$<)
 #LDFLAGS += -L../platform/$(ARCH)/lib -ljpeg
 LDFLAGS += -L../jpeg-9/.libs -ljpeg -Wl,-rpath,../jpeg-9/.libs
 LDFLAGS += -lpthread
@@ -60,7 +61,7 @@ endif
 
 OBJDIR ?= .
 
-cti_main: $(OBJDIR)/cti$(EXEEXT)
+cti_main: cti$(EXEEXT)
 	@echo Done.
 
 #	@echo wd=$(shell pwd)
@@ -68,136 +69,136 @@ cti_main: $(OBJDIR)/cti$(EXEEXT)
 
 # Another app.
 OBJS= \
-	$(OBJDIR)/CTI.o \
-	$(OBJDIR)/locks.o \
-	$(OBJDIR)/Mem.o \
-	$(OBJDIR)/Index.o \
-	$(OBJDIR)/Cfg.o \
-	$(OBJDIR)/Log.o \
-	$(OBJDIR)/ArrayU8.o \
-	$(OBJDIR)/Range.o \
-	$(OBJDIR)/File.o \
-	$(OBJDIR)/jpeghufftables.o \
-	$(OBJDIR)/CJpeg.o \
-	$(OBJDIR)/DJpeg.o \
-	$(OBJDIR)/jpeg_misc.o \
-	$(OBJDIR)/DO511.o \
-	$(OBJDIR)/ov511_decomp.o \
-	$(OBJDIR)/Images.o \
-	$(OBJDIR)/JpegFiler.o \
-	$(OBJDIR)/JpegTran.o \
-	$(OBJDIR)/PGMFiler.o \
-	$(OBJDIR)/MotionDetect.o \
-	$(OBJDIR)/MjpegMux.o \
-	$(OBJDIR)/MjpegDemux.o \
-	$(OBJDIR)/SourceSink.o \
-	$(OBJDIR)/String.o \
-	$(OBJDIR)/CSV.o \
-	$(OBJDIR)/ScriptV00.o \
-	$(OBJDIR)/Wav.o \
-	$(OBJDIR)/Audio.o \
-	$(OBJDIR)/Numbers.o \
-	$(OBJDIR)/Null.o \
-	$(OBJDIR)/Control.o \
-	$(OBJDIR)/Effects01.o \
-	$(OBJDIR)/SocketRelay.o \
-	$(OBJDIR)/SocketServer.o \
-	$(OBJDIR)/VSmoother.o \
-	$(OBJDIR)/Y4MInput.o \
-	$(OBJDIR)/Y4MOutput.o \
-	$(OBJDIR)/JpegSource.o \
-	$(OBJDIR)/RGB3Source.o \
-	$(OBJDIR)/HalfWidth.o \
-	$(OBJDIR)/Mp2Enc.o \
-	$(OBJDIR)/Mpeg2Enc.o \
-	$(OBJDIR)/VFilter.o \
-	$(OBJDIR)/AudioLimiter.o \
-	$(OBJDIR)/Cryptor.o \
-	$(OBJDIR)/MpegTSMux.o \
-	$(OBJDIR)/MpegTSDemux.o \
-	$(OBJDIR)/Tap.o \
-	$(OBJDIR)/Keycodes.o \
-	$(OBJDIR)/Pointer.o \
-	$(OBJDIR)/ResourceMonitor.o \
-	$(OBJDIR)/TV.o \
-	$(OBJDIR)/DTV.o \
-	$(OBJDIR)/ChannelMaps.o \
-	$(OBJDIR)/Spawn.o \
-	$(OBJDIR)/XPlaneControl.o \
-	$(OBJDIR)/FaceTracker.o \
-	$(OBJDIR)/Position.o \
-	$(OBJDIR)/UI001.o \
-	$(OBJDIR)/WavOutput.o \
-	$(OBJDIR)/MjxRepair.o \
-	$(OBJDIR)/GdkCapture.o \
-	$(OBJDIR)/MjpegLocalBuffer.o \
-	$(OBJDIR)/MjpegStreamBuffer.o \
-	$(OBJDIR)/ImageLoader.o \
-	$(OBJDIR)/Images.o \
-	$(OBJDIR)/FPS.o \
-	$(OBJDIR)/NScale.o \
-	$(OBJDIR)/Y4MSource.o \
-	$(OBJDIR)/Splitter.o \
-	$(OBJDIR)/cti_main.o \
-	$(OBJDIR)/AVIDemux.o \
-	$(OBJDIR)/RawSource.o \
-	$(OBJDIR)/ImageOutput.o \
-	$(OBJDIR)/SubProc.o \
-	$(OBJDIR)/ExecProc.o \
-	$(OBJDIR)/dpf.o \
-	$(OBJDIR)/XMLMessageServer.o \
-	$(OBJDIR)/XMLMessageRelay.o \
-	$(OBJDIR)/socket_common.o \
-	$(OBJDIR)/XmlSubset.o \
-	$(OBJDIR)/nodetree.o \
-	$(OBJDIR)/Stats.o \
-	$(OBJDIR)/AudioFilter.o \
-	$(OBJDIR)/HTTPServer.o \
-	$(OBJDIR)/VirtualStorage.o \
-	$(OBJDIR)/ATSCTuner.o \
-	$(OBJDIR)/Y4MOverlay.o \
-	$(OBJDIR)/LinuxEvent.o \
-	$(OBJDIR)/VMixer.o \
-	$(OBJDIR)/crc.o \
-	$(OBJDIR)/Array.o \
-	$(OBJDIR)/M3U8.o \
-	$(OBJDIR)/HTTPClient.o \
-	$(OBJDIR)/TunerControl.o \
+	CTI.o \
+	locks.o \
+	Mem.o \
+	Index.o \
+	Cfg.o \
+	Log.o \
+	ArrayU8.o \
+	Range.o \
+	File.o \
+	jpeghufftables.o \
+	CJpeg.o \
+	DJpeg.o \
+	jpeg_misc.o \
+	DO511.o \
+	ov511_decomp.o \
+	Images.o \
+	JpegFiler.o \
+	JpegTran.o \
+	PGMFiler.o \
+	MotionDetect.o \
+	MjpegMux.o \
+	MjpegDemux.o \
+	SourceSink.o \
+	String.o \
+	CSV.o \
+	ScriptV00.o \
+	Wav.o \
+	Audio.o \
+	Numbers.o \
+	Null.o \
+	Control.o \
+	Effects01.o \
+	SocketRelay.o \
+	SocketServer.o \
+	VSmoother.o \
+	Y4MInput.o \
+	Y4MOutput.o \
+	JpegSource.o \
+	RGB3Source.o \
+	HalfWidth.o \
+	Mp2Enc.o \
+	Mpeg2Enc.o \
+	VFilter.o \
+	AudioLimiter.o \
+	Cryptor.o \
+	MpegTSMux.o \
+	MpegTSDemux.o \
+	Tap.o \
+	Keycodes.o \
+	Pointer.o \
+	ResourceMonitor.o \
+	TV.o \
+	DTV.o \
+	ChannelMaps.o \
+	Spawn.o \
+	XPlaneControl.o \
+	FaceTracker.o \
+	Position.o \
+	UI001.o \
+	WavOutput.o \
+	MjxRepair.o \
+	GdkCapture.o \
+	MjpegLocalBuffer.o \
+	MjpegStreamBuffer.o \
+	ImageLoader.o \
+	Images.o \
+	FPS.o \
+	NScale.o \
+	Y4MSource.o \
+	Splitter.o \
+	cti_main.o \
+	AVIDemux.o \
+	RawSource.o \
+	ImageOutput.o \
+	SubProc.o \
+	ExecProc.o \
+	dpf.o \
+	XMLMessageServer.o \
+	XMLMessageRelay.o \
+	socket_common.o \
+	XmlSubset.o \
+	nodetree.o \
+	Stats.o \
+	AudioFilter.o \
+	HTTPServer.o \
+	VirtualStorage.o \
+	ATSCTuner.o \
+	Y4MOverlay.o \
+	LinuxEvent.o \
+	VMixer.o \
+	crc.o \
+	Array.o \
+	M3U8.o \
+	HTTPClient.o \
+	TunerControl.o \
 	../jpeg-9/transupp.o \
-	$(OBJDIR)/$(MAIN) 
+	$(MAIN) 
 
-#	$(OBJDIR)/ScriptSession.o \
-#	$(OBJDIR)/jmemsrc.o \
-#	$(OBJDIR)/jmemdst.o \
-#	$(OBJDIR)/wrmem.o \
+#	ScriptSession.o \
+#	jmemsrc.o \
+#	jmemdst.o \
+#	wrmem.o \
 
 
 ifeq ($(OS),Linux)
 OBJS+=\
-	$(OBJDIR)/Uvc.o \
-	$(OBJDIR)/FFmpegEncode.o
+	Uvc.o \
+	FFmpegEncode.o
 #	../platform/$(ARCH)/jpeg-7/libjpeg.la
 ifneq ($(ARCH),lpd)
 OBJS+=\
-	$(OBJDIR)/V4L2Capture.o \
-	$(OBJDIR)/ALSAio.o \
-	$(OBJDIR)/ALSAMixer.o
+	V4L2Capture.o \
+	ALSAio.o \
+	ALSAMixer.o
 LDFLAGS+=-lasound
 CPPFLAGS+=-DHAVE_PRCTL
 endif
 
-#OBJS+=$(OBJDIR)/SonyPTZ.o
+#OBJS+=SonyPTZ.o
 #CPPFLAGS+=-DHAVE_VISCA
 #LDFLAGS+=-lvisca
 
 ifeq ($(ARCH),lpd)
-OBJS+=$(OBJDIR)/V4L1Capture.o
+OBJS+=V4L1Capture.o
 LDFLAGS+=-lm
 endif
 
 ifeq ($(ARCH),armeb)
 CPPFLAGS+=-DHAVE_V4L1
-OBJS+=$(OBJDIR)/V4L1Capture.o
+OBJS+=V4L1Capture.o
 endif
 
 endif
@@ -205,18 +206,18 @@ endif
 
 # SDL on OSX
 ifeq ($(ARCH),i386-Darwin)
-OBJS+=$(OBJDIR)/sdl_main.o
-OBJS+=$(OBJDIR)/SDLMain.o
+OBJS+=sdl_main.o
+OBJS+=SDLMain.o
 endif
 
 # Signals
 #ifneq ($(ARCH),armeb)
-OBJS+=$(OBJDIR)/Signals.o
+OBJS+=Signals.o
 #endif
 
 # Lirc
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../liblirc_client.so 2> /dev/null ))
-OBJS+= $(OBJDIR)/Lirc.o
+OBJS+= Lirc.o
 CPPFLAGS+=-DHAVE_LIRC
 LDFLAGS+=-llirc_client
 endif
@@ -225,7 +226,7 @@ endif
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
 ifeq (0,$(shell (sdl-config --cflags > /dev/null 2> /dev/null; echo $$?)))
-OBJS+=$(OBJDIR)/SDLstuff.o
+OBJS+=SDLstuff.o
 CPPFLAGS+=$$(sdl-config --cflags) -I/usr/include/GL
 LDFLAGS+=$$(sdl-config --libs) $$(pkg-config glu --libs)
 CPPFLAGS+=-DHAVE_SDL
@@ -238,7 +239,7 @@ ifneq ($(ARCH),i386-Darwin)
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
 ifeq (0,$(shell (pkg-config cairo --cflags > /dev/null 2> /dev/null; echo $$?)))
-OBJS+=	$(OBJDIR)/CairoContext.o
+OBJS+=	CairoContext.o
 CPPFLAGS+=$$(pkg-config cairo --cflags)
 LDFLAGS+=$$(pkg-config cairo --libs)
 # This is a new requirement to resolve undefined reference to `pixman_*' errors
@@ -251,7 +252,7 @@ endif
 
 # libdv
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libdv.pc  2> /dev/null ))
-OBJS+=	$(OBJDIR)/LibDV.o
+OBJS+=	LibDV.o
 CPPFLAGS+=$$(pkg-config libdv --cflags)
 LDFLAGS+=$$(pkg-config libdv --libs)
 CPPFLAGS+=-DHAVE_LIBDV
@@ -259,7 +260,7 @@ endif
 
 # libpng
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libpng.pc  2> /dev/null ))
-OBJS+=	$(OBJDIR)/LibPng.o
+OBJS+=	LibPng.o
 CPPFLAGS+=$$(pkg-config libpng --cflags)
 LDFLAGS+=$$(pkg-config libpng --libs)
 CPPFLAGS+=-DHAVE_LIBPNG
@@ -267,7 +268,7 @@ endif
 
 # libmpeg2
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libmpeg2.pc  2> /dev/null ))
-OBJS+=	$(OBJDIR)/Mpeg2Dec.o
+OBJS+=	Mpeg2Dec.o
 CPPFLAGS+=$$(pkg-config libmpeg2 --cflags)
 LDFLAGS+=$$(pkg-config libmpeg2 --libs)
 CPPFLAGS+=-DHAVE_LIBMPEG2
@@ -275,7 +276,7 @@ endif
 
 # Quicktime
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/libquicktime.pc  2> /dev/null ))
-OBJS+=$(OBJDIR)/LibQuickTimeOutput.o
+OBJS+=LibQuickTimeOutput.o
 CPPFLAGS+=$$(pkg-config libquicktime --cflags)
 LDFLAGS+=$$(pkg-config libquicktime --libs) -lpixman-1
 CPPFLAGS+=-DHAVE_LIBQUICKTIME
@@ -284,7 +285,7 @@ endif
 # Ogg
 ifneq ($(ARCH),pentium3-Linux)
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/vorbisenc.pc 2> /dev/null ))
-OBJS+=$(OBJDIR)/OggOutput.o
+OBJS+=OggOutput.o
 CPPFLAGS+=$$(pkg-config vorbisenc theoraenc --cflags)
 LDFLAGS+=$$(pkg-config vorbisenc theoraenc --libs)
 CPPFLAGS+=-DHAVE_OGGOUTPUT
@@ -294,7 +295,7 @@ endif
 # H264
 ifneq ($(ARCH),pentium3-Linux)
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc 2> /dev/null ))
-OBJS+=$(OBJDIR)/H264.o
+OBJS+=H264.o
 CPPFLAGS+=$$(pkg-config x264 --cflags)
 LDFLAGS+=$$(pkg-config x264 --libs)
 CPPFLAGS+=-DHAVE_H264
@@ -303,7 +304,7 @@ endif
 
 # AAC
 ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../../include/faac.h  2> /dev/null ))
-OBJS+=$(OBJDIR)/AAC.o
+OBJS+=AAC.o
 LDFLAGS+=-lfaac
 CPPFLAGS+=-DHAVE_AAC
 endif
@@ -311,57 +312,57 @@ endif
 # CUDA
 ifeq ($(ARCH),x86_64-Linux)
 ifneq (,$(shell /bin/ls /opt/cuda/bin/nvcc  2> /dev/null ))
-OBJS+=$(OBJDIR)/NVidiaCUDA.o
+OBJS+=NVidiaCUDA.o
 LDFLAGS +=
 CPPFLAGS+=
 endif
 endif
 
 
-$(OBJDIR)/cti$(EXEEXT): \
+cti$(EXEEXT): \
 	$(OBJS) \
-	$(OBJDIR)/cti_app.o
+	cti_app.o
 	@echo LINK
 	@echo $(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@echo Generating map
 	$(NM) $@ | sort > $@.map
-	@echo STRIP
-	@$(STRIP) $@
+#	@echo STRIP
+#	@$(STRIP) $@
 
 
 SHARED_OBJS=$(subst .o,.so,$(OBJS))
 
-$(OBJDIR)/ctis$(EXEEXT) : \
+ctis$(EXEEXT) : \
 	$(SHARED_OBJS)
 	@echo All shared objects are built.
 
 
-$(OBJDIR)/mjplay$(EXEEXT): \
+mjplay$(EXEEXT): \
 	$(OBJS) \
-	$(OBJDIR)/mjplay.o
+	mjplay.o
 	@echo LINK
 	$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 #	$(STRIP) $@
 
 
-$(OBJDIR)/%.o: %.c Makefile
+%.o: %.c Makefile
 	@echo CC $<
 #	@echo $(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 	@$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-$(OBJDIR)/%.so: %.c Makefile
+%.so: %.c Makefile
 	@echo 'CC (dll)' $<
 	@$(CC) $(CPPFLAGS) $(CFLAGS) $(SHARED_FLAGS) -DCTI_SHARED $< -o $@
 
-$(OBJDIR)/%.o: %.m Makefile
+%.o: %.m Makefile
 	@echo CC $<
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -vf $(OBJDIR)/*.o  $(OBJDIR)/*.dep $(OBJDIR)/cti
+	rm -vf *.o  *.dep cti
 
-DEPS=$(wildcard $(OBJDIR)/*.dep)
+DEPS=$(wildcard *.dep)
 ifneq ($(DEPS),)
 include $(DEPS)
 endif

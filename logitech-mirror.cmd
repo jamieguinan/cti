@@ -32,10 +32,9 @@ config vc fps 30
 # Mirror
 config jt transform FLIP_H
 
-#config vc autoexpose 3
-
-config vc autoexpose 1
-config vc exposure 300
+config vc autoexpose 3
+#config vc autoexpose 1
+#config vc exposure 300
 
 connect sdl:Keycode_msg vc:Keycode_msg
 
