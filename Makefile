@@ -1,3 +1,6 @@
+# Scale build to multiple cores if possible.
+MAKEFLAGS=j$(shell grep processor /proc/cpuinfo | wc -l)
+
 default: test-requirements cti_main
 
 test-requirements:
@@ -24,6 +27,7 @@ LDFLAGS+=-Wl,-rpath,$(shell pwd)/../platform/$(ARCH)/lib -lm
 endif
 
 CFLAGS += -Wall $(CMDLINE_CFLAGS)
+CFLAGS += -O2
 #CFLAGS += -Os 
 #CFLAGS += -Werror
 #CFLAGS += -O0 -ggdb
