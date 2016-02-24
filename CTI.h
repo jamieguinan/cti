@@ -222,13 +222,13 @@ typedef struct {
 
 extern Config_buffer *Config_buffer_new(const char *label, const char *value);
 extern Config_buffer *Config_buffer_vrreq_new(const char *label, const char *value, Value *vreq, Range *rreq, Event *event);
-extern void Config_buffer_discard(Config_buffer **cb);
+extern void Config_buffer_release(Config_buffer **cb);
 
 typedef struct {
   String *value;
 } Line_msg;
 extern Line_msg *Line_msg_new(const char *value);
-extern void Line_msg_discard(Line_msg **lm);
+extern void Line_msg_release(Line_msg **lm);
 
 
 extern void Generic_config_handler(Instance *pi, void *data, Config *config_table, int config_table_size);
@@ -336,14 +336,14 @@ typedef struct _RawData_node {
 } RawData_node;
 
 extern RawData_buffer *RawData_buffer_new(int size);
-extern void RawData_buffer_discard(RawData_buffer *raw);
+extern void RawData_buffer_release(RawData_buffer *raw);
 
 /* Feedback */
 typedef struct {
   int seq;
 } Feedback_buffer;
 extern Feedback_buffer *Feedback_buffer_new(void);
-extern void Feedback_buffer_discard(Feedback_buffer *raw);
+extern void Feedback_buffer_release(Feedback_buffer *raw);
 
 extern void getdoubletime(double *tdest);
 

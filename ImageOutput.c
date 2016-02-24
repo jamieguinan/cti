@@ -42,7 +42,7 @@ static void YUV422P_handler(Instance *pi, void *data)
   // ImageOutput_private * priv = (ImageOutput_private*) pi;
   YUV422P_buffer *y422p_in = data;
   
-  YUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_release(y422p_in);
 }
 
 

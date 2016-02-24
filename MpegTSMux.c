@@ -583,7 +583,7 @@ static void H264_handler(Instance *pi, void *msg)
       );
   packetize(priv, 258, ArrayU8_temp_const(h264->data, h264->encoded_length));
 
-  H264_buffer_discard(h264);
+  H264_buffer_release(h264);
 }
 
 
@@ -597,7 +597,7 @@ static void AAC_handler(Instance *pi, void *msg)
   dpf("aac->data_length=%d aac->timestamp=%.6f aac->nominal_period=%.6f es_duration=%" PRIu64"\n",
 	 aac->data_length, aac->timestamp,  aac->nominal_period, priv->streams[1].es_duration );
   packetize(priv, 257, ArrayU8_temp_const(aac->data, aac->data_length) );
-  AAC_buffer_discard(&aac);
+  AAC_buffer_release(&aac);
 }
 
 
@@ -610,7 +610,7 @@ static void MP3_handler(Instance *pi, void *msg)
      interleaved with video packets. */
   
   /* Discard MP3 data. */
-  //MP3_buffer_discard(&mp3);
+  //MP3_buffer_release(&mp3);
 }
 
 

@@ -432,7 +432,7 @@ static void SocketServer_tick(Instance *pi)
     priv->total_buffered_data -= raw_tmp->buffer->data_length;
     // printf("* priv->total_buffered_data=%d\n", priv->total_buffered_data);
   
-    RawData_buffer_discard(raw_tmp->buffer);
+    RawData_buffer_release(raw_tmp->buffer);
     Mem_free(raw_tmp);
   }
 }

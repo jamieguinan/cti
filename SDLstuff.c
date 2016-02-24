@@ -791,7 +791,7 @@ static void YUV420P_handler(Instance *pi, void *data)
     {
       rgb3 = YUV420P_to_RGB3(yuv420p);
       render_frame_gl(priv, rgb3);
-      RGB3_buffer_discard(rgb3);
+      RGB3_buffer_release(rgb3);
     }
     break;
   case RENDER_MODE_OVERLAY: 
@@ -811,15 +811,15 @@ static void YUV420P_handler(Instance *pi, void *data)
 
 
   if (rgb3) {
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
   }
 
   if (yuv420p) {
-    YUV420P_buffer_discard(yuv420p);
+    YUV420P_buffer_release(yuv420p);
   }
 
   if (bgr3) {
-    BGR3_buffer_discard(bgr3);
+    BGR3_buffer_release(bgr3);
   }
 }
 
@@ -841,7 +841,7 @@ static void YUV422P_handler(Instance *pi, void *data)
     {
       rgb3 = YUV422P_to_RGB3(yuv422p);
       render_frame_gl(priv, rgb3);
-      RGB3_buffer_discard(rgb3);
+      RGB3_buffer_release(rgb3);
     }
     break;
   case RENDER_MODE_OVERLAY: 
@@ -862,15 +862,15 @@ static void YUV422P_handler(Instance *pi, void *data)
 
 
   if (bgr3) {
-    BGR3_buffer_discard(bgr3);
+    BGR3_buffer_release(bgr3);
   }
 
   if (rgb3) {
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
   }
 
   if (yuv420p) {
-    YUV420P_buffer_discard(yuv420p);
+    YUV420P_buffer_release(yuv420p);
   }
 
   if (yuv422p) {
@@ -878,7 +878,7 @@ static void YUV422P_handler(Instance *pi, void *data)
       PostData(YUV422P_buffer_ref(yuv422p), pi->outputs[OUTPUT_YUV422P].destination);
       priv->snapshot = 0;
     }
-    YUV422P_buffer_discard(yuv422p);
+    YUV422P_buffer_release(yuv422p);
   }
 
 }
@@ -932,15 +932,15 @@ static void RGB3_handler(Instance *pi, void *data)
   post_render_frame(pi);
 
   if (rgb3) {
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
   }
 
   if (yuv420p) {
-    YUV420P_buffer_discard(yuv420p);
+    YUV420P_buffer_release(yuv420p);
   }
 
   if (bgr3) {
-    BGR3_buffer_discard(bgr3);
+    BGR3_buffer_release(bgr3);
   }
 
 }
@@ -978,15 +978,15 @@ static void BGR3_handler(Instance *pi, void *data)
   post_render_frame(pi);  
 
   if (rgb3) {
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
   }
 
   if (yuv420p) {
-    YUV420P_buffer_discard(yuv420p);
+    YUV420P_buffer_release(yuv420p);
   }
 
   if (bgr3) {
-    BGR3_buffer_discard(bgr3);
+    BGR3_buffer_release(bgr3);
   }
 }
 
@@ -1040,11 +1040,11 @@ static void GRAY_handler(Instance *pi, void *data)
   post_render_frame(pi);  
 
   if (gray) {
-    Gray_buffer_discard(gray);
+    Gray_buffer_release(gray);
   }
 
   if (rgb3) {
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
   }
 
   if (yuv420p) {
@@ -1052,11 +1052,11 @@ static void GRAY_handler(Instance *pi, void *data)
       PostData(YUV420P_buffer_ref(yuv420p), pi->outputs[OUTPUT_YUV420P].destination);
       priv->snapshot = 0;
     }
-    YUV420P_buffer_discard(yuv420p);
+    YUV420P_buffer_release(yuv420p);
   }
 
   if (bgr3) {
-    BGR3_buffer_discard(bgr3);
+    BGR3_buffer_release(bgr3);
   }
 }
 

@@ -12,39 +12,39 @@
 static void Jpeg_handler(Instance *pi, void *data)
 {
   Jpeg_buffer *jpeg_in = data;
-  Jpeg_buffer_discard(jpeg_in);
+  Jpeg_buffer_release(jpeg_in);
 }
 
 
 static void Gray_handler(Instance *pi, void *data)
 {
   Gray_buffer *jpeg_in = data;
-  Gray_buffer_discard(jpeg_in);
+  Gray_buffer_release(jpeg_in);
 }
 
 
 static void RGB3_handler(Instance *pi, void *data)
 {
   RGB3_buffer *rgb3_in = data;
-  RGB3_buffer_discard(rgb3_in);
+  RGB3_buffer_release(rgb3_in);
 }
 
 static void YUV422P_handler(Instance *pi, void *data)
 {
   YUV422P_buffer *y422p_in = data;
-  YUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_release(y422p_in);
 }
 
 static void YUV420P_handler(Instance *pi, void *data)
 {
   YUV420P_buffer *y420p_in = data;
-  YUV420P_buffer_discard(y420p_in);
+  YUV420P_buffer_release(y420p_in);
 }
 
 static void O511_handler(Instance *pi, void *data)
 {
   O511_buffer *o511_in = data;
-  O511_buffer_discard(o511_in);
+  O511_buffer_release(o511_in);
 }
 
 static void Wav_handler(Instance *pi, void *data)
@@ -56,25 +56,25 @@ static void Wav_handler(Instance *pi, void *data)
 static void Audio_handler(Instance *pi, void *data)
 {
   Audio_buffer *audio_in = data;
-  Audio_buffer_discard(&audio_in);
+  Audio_buffer_release(&audio_in);
 }
 
 static void H264_handler(Instance *pi, void *data)
 {
   H264_buffer *h264 = data;
-  H264_buffer_discard(h264);
+  H264_buffer_release(h264);
 }
 
 static void AAC_handler(Instance *pi, void *data)
 {
   AAC_buffer *aac = data;
-  AAC_buffer_discard(&aac);
+  AAC_buffer_release(&aac);
 }
 
 static void RawData_handler(Instance *pi, void *data)
 { 
   RawData_buffer *raw = data;
-  RawData_buffer_discard(raw);
+  RawData_buffer_release(raw);
 }
 
 static Config config_table[] = {

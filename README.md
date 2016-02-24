@@ -103,7 +103,7 @@ The advantage over using `NULL` is that it points to a legitimate `String` struc
 
 The `Makefile` isn't very tidy. There is some scaffolding and artifacts left over from different Linux platforms that I've experimented with.
 
-Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function, where you may find `String_clear()` calls for each of the `String *` variables in said function.
+Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function, where you may find `String_clear()` calls for each of the local `String *` variables in said function.
 
 I had an experimental project called "modc" in the late 2000s, which implemented garbage collection by means of reference-counting allocations, keeping track of types, and leveraging the descending property of stack variable addresses (on most platforms) to periodically clean up dynamically allocated objects. It worked great, and I even wrote an sshfs-compatible (but non-encrypted) SFTP server completely from scratch with it, but the other goals of the modc project didn't pan out, so I abandoned it. I might try reviving some of the modc concepts in CTI one day.
 

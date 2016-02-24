@@ -7,6 +7,6 @@ typedef struct {
 } Control_msg;
 
 extern Control_msg * Control_msg_new(String *label, Value *value);
-extern void Control_msg_discard(Control_msg * msg);
+extern void Control_msg_release(Control_msg * msg);
 
 #endif

@@ -12,7 +12,7 @@ Control_msg * Control_msg_new(String *label, Value *value)
 }
 
 
-void Control_msg_discard(Control_msg * msg)
+void Control_msg_release(Control_msg * msg)
 {
   if (msg->label) {
     String_free(&msg->label);

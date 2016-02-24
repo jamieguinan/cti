@@ -104,7 +104,7 @@ static void YUV422P_handler(Instance *pi, void *data)
   Sink_write(priv->sink, y422p_in->cr, y422p_in->cr_length);
 
  out:
-  YUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_release(y422p_in);
 }
 
 
@@ -143,7 +143,7 @@ static void YUV420P_handler(Instance *pi, void *data)
   Sink_write(priv->sink, y420p->cr, y420p->cr_length);
 
  out:
-  YUV420P_buffer_discard(y420p);
+  YUV420P_buffer_release(y420p);
 }
 
 
@@ -153,7 +153,7 @@ static void RGB3_handler(Instance *pi, void *data)
   YUV422P_buffer *y4m = RGB3_to_YUV422P(rgb3_in);
 
   YUV422P_handler(pi, y4m);
-  RGB3_buffer_discard(rgb3_in);
+  RGB3_buffer_release(rgb3_in);
 }
 
 static void BGR3_handler(Instance *pi, void *data)
@@ -162,7 +162,7 @@ static void BGR3_handler(Instance *pi, void *data)
   YUV422P_buffer *y4m = BGR3_toYUV422P(bgr3_in);
 
   YUV422P_handler(pi, y4m);
-  BGR3_buffer_discard(bgr3_in);
+  BGR3_buffer_release(bgr3_in);
 }
 
 static void Y4MOutput_tick(Instance *pi)

@@ -53,7 +53,7 @@ static void cleanup(void *old_data)
   Resource * r = old_data;
   if (streq(r->mime_type, "image/jpeg")) {
     Jpeg_buffer * old_jpeg = r->container;
-    Jpeg_buffer_discard(old_jpeg);
+    Jpeg_buffer_release(old_jpeg);
   }
   else {
     fprintf(stderr, "cleanup: can't handle type %s\n", r->mime_type);
@@ -69,7 +69,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   
   if (!jpeg->c.label || String_is_none(jpeg->c.label)) {
     fprintf(stderr, "VirtualStorage requires c.label to be set for Jpegs\n");
-    Jpeg_buffer_discard(jpeg);
+    Jpeg_buffer_release(jpeg);
     return;
   }
 
@@ -78,7 +78,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   r->container = jpeg;
   r->data = jpeg->data;
   r->size = jpeg->data_length;
-  /* Setting the mime_type allows Jpeg_buffer_discard() to be called later, so memory
+  /* Setting the mime_type allows Jpeg_buffer_release() to be called later, so memory
      leaks are avoided. */
   r->mime_type = "image/jpeg";
 

@@ -50,7 +50,7 @@ static void y422p_handler(Instance *pi, void *data)
     y422p_out->c.timestamp = y422p_in->c.timestamp;
     PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
-  YUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_release(y422p_in);
 }
 
 

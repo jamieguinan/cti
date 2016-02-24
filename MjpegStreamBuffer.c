@@ -93,7 +93,7 @@ static void RawData_handler(Instance *pi, void *data)
     priv->get += 1;
   }
   
-  RawData_buffer_discard(raw);
+  RawData_buffer_release(raw);
 }
 
 
@@ -102,7 +102,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   Jpeg_buffer *jpeg = data;
   /* Update record state.  */
   /* if recording, pass along to MjpegMux output, else discard. */
-  Jpeg_buffer_discard(jpeg);
+  Jpeg_buffer_release(jpeg);
 }
 
 

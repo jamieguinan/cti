@@ -173,7 +173,7 @@ Gray_buffer *Gray_buffer_from(uint8_t *data, int width, int height, Image_common
 }
 
 
-void Gray_buffer_discard(Gray_buffer *gray)
+void Gray_buffer_release(Gray_buffer *gray)
 {
   Mem_free(gray->data);
   memset(gray, 0, sizeof(*gray));
@@ -194,7 +194,7 @@ Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c)
   return gray32;
 }
 
-void Gray32_buffer_discard(Gray32_buffer *gray32)
+void Gray32_buffer_release(Gray32_buffer *gray32)
 {
   Mem_free(gray32->data);
   memset(gray32, 0, sizeof(*gray32));
@@ -295,7 +295,7 @@ void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int heigh
 }
 
 
-void RGB3_buffer_discard(RGB3_buffer *rgb)
+void RGB3_buffer_release(RGB3_buffer *rgb)
 {
   int count;
   LockedRef_decrement(&rgb->c.ref, &count);
@@ -321,7 +321,7 @@ BGR3_buffer *BGR3_buffer_new(int width, int height, Image_common *c)
   return bgr;
 }
 
-void BGR3_buffer_discard(BGR3_buffer *bgr)
+void BGR3_buffer_release(BGR3_buffer *bgr)
 {
   int count;
   LockedRef_decrement(&bgr->c.ref, &count);
@@ -430,7 +430,7 @@ YUV422P_buffer *YUV422P_buffer_from(uint8_t *data, int len, Image_common *c)
 }
 
 
-void YUV422P_buffer_discard(YUV422P_buffer *yuv422p)
+void YUV422P_buffer_release(YUV422P_buffer *yuv422p)
 {
   int count;
   LockedRef_decrement(&yuv422p->c.ref, &count);
@@ -781,7 +781,7 @@ YUV420P_buffer *YUV420P_buffer_from(uint8_t *data, int width, int height, Image_
   return yuv;
 }
 
-void YUV420P_buffer_discard(YUV420P_buffer *yuv420p)
+void YUV420P_buffer_release(YUV420P_buffer *yuv420p)
 {
   int count;
   LockedRef_decrement(&yuv420p->c.ref, &count);
@@ -976,7 +976,7 @@ Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c)
 }
 
 
-void Jpeg_buffer_discard(Jpeg_buffer *jpeg)
+void Jpeg_buffer_release(Jpeg_buffer *jpeg)
 {
   int count;
   LockedRef_decrement(&jpeg->c.ref, &count);
@@ -1027,7 +1027,7 @@ O511_buffer *O511_buffer_from(uint8_t *data, int data_length, int width, int hei
   return o511;
 }
 
-void O511_buffer_discard(O511_buffer *o511)
+void O511_buffer_release(O511_buffer *o511)
 {
   Mem_free(o511->data);
   memset(o511, 0, sizeof(*o511));
@@ -1052,7 +1052,7 @@ H264_buffer *H264_buffer_from(uint8_t *data, int data_length, int width, int hei
 }
 
 
-void H264_buffer_discard(H264_buffer *h264)
+void H264_buffer_release(H264_buffer *h264)
 {
   Image_common_cleanup(&h264->c);
   Mem_free(h264->data);

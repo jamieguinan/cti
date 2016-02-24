@@ -307,7 +307,7 @@ static void rgb3_handler(Instance *pi, void *msg)
     PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
   }
   else {
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
   }
 }
 
@@ -334,19 +334,19 @@ static void y422p_handler(Instance *pi, void *msg)
     temp = YUV422P_copy(y422p, 0, 0, priv->width, priv->height);
     rgb3 = YUV422P_to_RGB3(temp);
     rgb3->c.timestamp = y422p->c.timestamp;	/* Preserve timestamp! */
-    YUV422P_buffer_discard(temp);
+    YUV422P_buffer_release(temp);
     apply_commands(priv, rgb3);
     temp = RGB3_to_YUV422P(rgb3);
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
     YUV422P_paste(y422p, temp, 0, 0, priv->width, priv->height);
-    YUV422P_buffer_discard(temp);
+    YUV422P_buffer_release(temp);
   }
   
   if (pi->outputs[OUTPUT_YUV422P].destination) {
     PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
-    YUV422P_buffer_discard(y422p);
+    YUV422P_buffer_release(y422p);
   }
 }
 

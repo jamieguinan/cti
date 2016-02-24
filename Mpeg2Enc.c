@@ -134,7 +134,7 @@ static void Y422p_handler(Instance *pi, void *msg)
   }
   
  out:
-  YUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_release(y422p_in);
 }
 
 

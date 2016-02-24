@@ -94,7 +94,7 @@ static void Jpeg_handler(Instance *pi, void *msg)
   }
 
   /* Discard input buffer. */
-  Jpeg_buffer_discard(jpeg_in);
+  Jpeg_buffer_release(jpeg_in);
   pi->counter += 1;
 }
 

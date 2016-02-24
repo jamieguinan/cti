@@ -218,7 +218,7 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
 
   if (jpeg_out) {
     if (error) {
-      Jpeg_buffer_discard(jpeg_out);
+      Jpeg_buffer_release(jpeg_out);
       /* Caller should checl for result being NULL. */
       jpeg_out = 0L;
     }
@@ -248,7 +248,7 @@ static void jpeg_handler(Instance *pi, void *msg)
     }
   }
   
-  Jpeg_buffer_discard(jpeg_in);
+  Jpeg_buffer_release(jpeg_in);
 }
 
 

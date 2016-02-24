@@ -59,7 +59,7 @@ static void position_handler(Instance *pi, void *msg)
   // XPlaneControl_private *priv = (XPlaneControl_private *)pi;  
   Position_message *pos = msg;
 
-  Position_message_discard(pos);
+  Position_message_release(pos);
 }
 
 

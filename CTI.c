@@ -369,7 +369,7 @@ Line_msg *Line_msg_new(const char *value)
 }
 
 
-void Line_msg_discard(Line_msg **lm)
+void Line_msg_release(Line_msg **lm)
 {
   if ((*lm)->value) {
     String_free(&(*lm)->value);
@@ -401,7 +401,7 @@ Config_buffer *Config_buffer_vrreq_new(const char *label, const char *value, Val
 }
 
 
-void Config_buffer_discard(Config_buffer **cb)
+void Config_buffer_release(Config_buffer **cb)
 {
   String_free(&(*cb)->label);
   if ((*cb)->value) {
@@ -451,7 +451,7 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
     }
   }
   
-  Config_buffer_discard(&cb_in);
+  Config_buffer_release(&cb_in);
 }
 
 
@@ -746,7 +746,7 @@ RawData_buffer *RawData_buffer_new(int size)
   return raw;
 }
 
-void RawData_buffer_discard(RawData_buffer *raw)
+void RawData_buffer_release(RawData_buffer *raw)
 {
   Mem_free(raw->data);
   memset(raw, 0, sizeof(*raw));
@@ -761,7 +761,7 @@ Feedback_buffer *Feedback_buffer_new(void)
   return fb;
 }
 
-void Feedback_buffer_discard(Feedback_buffer *fb)
+void Feedback_buffer_release(Feedback_buffer *fb)
 {
   Mem_free(fb);
 }

@@ -405,7 +405,7 @@ static void YUV420P_handler(Instance *pi, void *msg)
     exit(0);
   }
 
-  YUV420P_buffer_discard(y420);
+  YUV420P_buffer_release(y420);
 }
 
 static void YUV422P_handler(Instance *pi, void *msg)
@@ -416,7 +416,7 @@ static void YUV422P_handler(Instance *pi, void *msg)
   YUV422P_buffer *y422 = msg;
   YUV420P_buffer *y420 = YUV422P_to_YUV420P(y422);
   YUV420P_handler(pi, y420);
-  YUV422P_buffer_discard(y422);
+  YUV422P_buffer_release(y422);
 }
 
 

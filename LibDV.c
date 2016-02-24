@@ -160,7 +160,7 @@ static void Feedback_handler(Instance *pi, void *data)
 
   priv->pending_feedback -= 1;
   // printf("feedback - %d\n", priv->pending_feedback);
-  Feedback_buffer_discard(fb);
+  Feedback_buffer_release(fb);
 }
 
 

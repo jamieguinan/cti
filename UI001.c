@@ -155,7 +155,7 @@ static void pointer_handler(Instance *pi, void *msg)
     }
   } 
 
-  Pointer_event_discard(p);
+  Pointer_event_release(p);
 }
 
 

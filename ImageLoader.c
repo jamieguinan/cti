@@ -111,7 +111,7 @@ static int set_file(Instance *pi, const char *value)
       if (pi->outputs[OUTPUT_GRAY].destination) {
 	gray = Gray_buffer_from(y422p->y, y422p->width, y422p->height, 0L);
 	PostDataGetResult(gray, pi->outputs[OUTPUT_GRAY].destination, &result);
-	// Gray_buffer_discard();
+	// Gray_buffer_release();
       }
       if (pi->outputs[OUTPUT_YUV422P].destination) {
 	PostDataGetResult(y422p, pi->outputs[OUTPUT_YUV422P].destination, &result);

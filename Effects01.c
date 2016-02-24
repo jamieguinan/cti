@@ -128,7 +128,7 @@ static void Y420p_handler(Instance *pi, void *data)
   YUV420P_buffer *y420p = data;
 
   if (!pi->outputs[OUTPUT_YUV420P].destination) {
-    YUV420P_buffer_discard(y420p);
+    YUV420P_buffer_release(y420p);
     return;
   }
 
@@ -141,7 +141,7 @@ static void Y420p_handler(Instance *pi, void *data)
     rotate_single_90(y420p->y, y420p_new->y, y420p->width, y420p->height);
     rotate_single_90(y420p->cr, y420p_new->cr, y420p->cr_width, y420p->cr_height);
     rotate_single_90(y420p->cb, y420p_new->cb, y420p->cb_width, y420p->cb_height);
-    YUV420P_buffer_discard(y420p);
+    YUV420P_buffer_release(y420p);
     y420p = y420p_new;
   }
 
@@ -150,7 +150,7 @@ static void Y420p_handler(Instance *pi, void *data)
     rotate_single_270(y420p->y, y420p_new->y, y420p->width, y420p->height);
     rotate_single_270(y420p->cr, y420p_new->cr, y420p->cr_width, y420p->cr_height);
     rotate_single_270(y420p->cb, y420p_new->cb, y420p->cb_width, y420p->cb_height);
-    YUV420P_buffer_discard(y420p);
+    YUV420P_buffer_release(y420p);
     y420p = y420p_new;
   }
 
@@ -164,7 +164,7 @@ static void RGB3_handler(Instance *pi, void *data)
   RGB3_buffer *rgb3_in = data;
 
   if (!pi->outputs[OUTPUT_RGB3].destination) {
-    RGB3_buffer_discard(rgb3_in);
+    RGB3_buffer_release(rgb3_in);
     return;
   }
 
@@ -175,13 +175,13 @@ static void RGB3_handler(Instance *pi, void *data)
   if (priv->rotate == 90) {
     RGB3_buffer *rgb3_new = RGB3_buffer_new(rgb3_in->height, rgb3_in->width, &rgb3_in->c);
     rotate_rgb_90(rgb3_in->data, rgb3_new->data, rgb3_in->width, rgb3_in->height);
-    RGB3_buffer_discard(rgb3_in);
+    RGB3_buffer_release(rgb3_in);
     rgb3_in = rgb3_new;
   }
   if (priv->rotate == 270) {
     RGB3_buffer *rgb3_new = RGB3_buffer_new(rgb3_in->height, rgb3_in->width, &rgb3_in->c);
     rotate_rgb_270(rgb3_in->data, rgb3_new->data, rgb3_in->width, rgb3_in->height);
-    RGB3_buffer_discard(rgb3_in);
+    RGB3_buffer_release(rgb3_in);
     rgb3_in = rgb3_new;
   }
   PostData(rgb3_in, pi->outputs[OUTPUT_RGB3].destination);

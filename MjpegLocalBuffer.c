@@ -108,7 +108,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     PostData(jpeg, pi->outputs[OUTPUT_JPEG].destination);    
   }
   else {
-    Jpeg_buffer_discard(jpeg);
+    Jpeg_buffer_release(jpeg);
   }
 }
 

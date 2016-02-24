@@ -56,7 +56,7 @@ static void Gray_handler(Instance *pi, void *msg)
   }
 
   /* Discard input buffer. */
-  Gray_buffer_discard(gray_in);
+  Gray_buffer_release(gray_in);
   pi->counter += 1;
 }
 

@@ -341,7 +341,7 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
       *yuv420p_result = yuv420p;
     }
     else {
-      YUV420P_buffer_discard(yuv420p);
+      YUV420P_buffer_release(yuv420p);
     }
   }
 
@@ -350,7 +350,7 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
       *yuv422p_result = yuv422p;
     }
     else {
-      YUV422P_buffer_discard(yuv422p);
+      YUV422P_buffer_release(yuv422p);
     }
   }
 }
@@ -365,11 +365,11 @@ RGB3_buffer * Jpeg_to_rgb3(Jpeg_buffer * jpeg)
   Jpeg_decompress(jpeg, &yuv420p, &yuv422p, &fmt);
   if (yuv420p) {
     rgb3 = YUV420P_to_RGB3(yuv420p);
-    YUV420P_buffer_discard(yuv420p);
+    YUV420P_buffer_release(yuv420p);
   }
   else if (yuv422p) {
     rgb3 = YUV422P_to_RGB3(yuv422p);
-    YUV422P_buffer_discard(yuv422p);
+    YUV422P_buffer_release(yuv422p);
   }
   return rgb3;
 }

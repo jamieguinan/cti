@@ -55,7 +55,7 @@ static void Jpeg_handler(Instance *pi, void *msg)
   }
   else {
     /* No output, discard buffer! */
-    Jpeg_buffer_discard(jpeg);
+    Jpeg_buffer_release(jpeg);
   }
 }
 

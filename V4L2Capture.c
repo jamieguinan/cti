@@ -1193,7 +1193,7 @@ static void Config_handler(Instance *pi, void *data)
     priv->msg_handled = 1;
   }
   
-  Config_buffer_discard(&cb_in);
+  Config_buffer_release(&cb_in);
 }
 
 static void Keycode_handler(Instance *pi, void *msg)
@@ -1530,7 +1530,7 @@ static void V4L2Capture_tick(Instance *pi)
       if (priv->fix) { Jpeg_fix(j); }
       if (j->encoded_length < 1000) {
 	printf("encoded_length=%lu, probably isochronous error!\n", j->encoded_length);
-	Jpeg_buffer_discard(j);
+	Jpeg_buffer_release(j);
       }
       else {
 	if (priv->snapshot > 0) {
@@ -1552,7 +1552,7 @@ static void V4L2Capture_tick(Instance *pi)
 
       if (o->encoded_length < 1000) {
 	printf("encoded_length=%lu, probably isochronous error!\n", o->encoded_length);
-	O511_buffer_discard(o);
+	O511_buffer_release(o);
       }
       else {
 	PostData(o, pi->outputs[OUTPUT_O511].destination);

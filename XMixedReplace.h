@@ -14,6 +14,6 @@ typedef struct {
 } XMixedReplace_buffer;
 
 extern XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, const char *mime_type);
-extern void XMixedReplace_buffer_discard(XMixedReplace_buffer *buffer);
+extern void XMixedReplace_buffer_release(XMixedReplace_buffer *buffer);
 
 #endif

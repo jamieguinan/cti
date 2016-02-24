@@ -181,15 +181,15 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   /* Discard/unref buffers. */
   if (yuv422p) {
-    YUV422P_buffer_discard(yuv422p);
+    YUV422P_buffer_release(yuv422p);
   }
 
   if (yuv420p) {
-    YUV420P_buffer_discard(yuv420p);
+    YUV420P_buffer_release(yuv420p);
   }
 
   if (rgb3) {
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
   }
 
  out:
@@ -198,7 +198,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     PostData(jpeg_in, pi->outputs[OUTPUT_JPEG].destination);
   }
   else {
-    Jpeg_buffer_discard(jpeg_in);
+    Jpeg_buffer_release(jpeg_in);
   }
   pi->counter += 1;
 

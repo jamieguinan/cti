@@ -92,7 +92,7 @@ static void y420p_handler(Instance *pi, void *data)
 
   if (y420p_in) {
     /* There were no outputs. */
-    YUV420P_buffer_discard(y420p_in);
+    YUV420P_buffer_release(y420p_in);
   }
 }
 
@@ -131,7 +131,7 @@ static void y422p_handler(Instance *pi, void *data)
 
   if (y422p_in) {
     /* There were no outputs. */
-    YUV422P_buffer_discard(y422p_in);
+    YUV422P_buffer_release(y422p_in);
   }
 }
 
@@ -170,7 +170,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   if (jpeg_in) {
     /* There were no outputs. */
-    Jpeg_buffer_discard(jpeg_in);
+    Jpeg_buffer_release(jpeg_in);
   }
 }
 

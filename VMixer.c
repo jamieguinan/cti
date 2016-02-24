@@ -56,7 +56,7 @@ static void YUV422P_common_handler(Instance *pi, YUV422P_buffer *buffer, int ind
     return;
   }
   if (priv->bufs[index]) {
-    YUV422P_buffer_discard(priv->bufs[index]);
+    YUV422P_buffer_release(priv->bufs[index]);
   }
   priv->bufs[index] = buffer;
   priv->mask |= (1<<index);

@@ -36,7 +36,7 @@ typedef struct {
 } Audio_buffer;
 
 extern Audio_buffer *Audio_buffer_new(int rate, int channels, Audio_type t);
-extern void Audio_buffer_discard(Audio_buffer **buffer);
+extern void Audio_buffer_release(Audio_buffer **buffer);
 extern void Audio_buffer_add_samples(Audio_buffer *audio, uint8_t *data, int data_len);
 
 extern int Audio_sample_size(Audio_type);
@@ -92,7 +92,7 @@ typedef struct {
 } AAC_buffer;
 
 extern AAC_buffer *AAC_buffer_from(uint8_t *data, int data_length);
-extern void AAC_buffer_discard(AAC_buffer **buffer);
+extern void AAC_buffer_release(AAC_buffer **buffer);
 
 
 /* MP3 buffers.  */
@@ -103,7 +103,7 @@ typedef struct {
 } MP3_buffer;
 
 extern MP3_buffer *MP3_buffer_from(uint8_t *data, int data_length);
-extern void MP3_buffer_discard(MP3_buffer **buffer);
+extern void MP3_buffer_release(MP3_buffer **buffer);
 
 
 #endif

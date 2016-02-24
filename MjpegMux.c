@@ -147,7 +147,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   String_free(&header);
 
  out:
-  Jpeg_buffer_discard(jpeg_in);
+  Jpeg_buffer_release(jpeg_in);
 }
 
 
@@ -179,7 +179,7 @@ static void O511_handler(Instance *pi, void *data)
 
   String_free(&dimensions);
   String_free(&header);
-  O511_buffer_discard(o511_in);
+  O511_buffer_release(o511_in);
 }
 
 
@@ -247,7 +247,7 @@ static void AAC_handler(Instance *pi, void *data)
   }
 
   String_free(&header);
-  AAC_buffer_discard(&aac);
+  AAC_buffer_release(&aac);
 }
 
 

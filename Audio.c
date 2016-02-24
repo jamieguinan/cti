@@ -58,7 +58,7 @@ void Audio_buffer_add_samples(Audio_buffer *audio, uint8_t *data, int data_len)
 }
 
 
-void Audio_buffer_discard(Audio_buffer **audio)
+void Audio_buffer_release(Audio_buffer **audio)
 {
   Audio_buffer *w = *audio;
   if (w->data) {
@@ -305,7 +305,7 @@ AAC_buffer *AAC_buffer_from(uint8_t *data, int data_length)
   return aac;
 }
 
-void AAC_buffer_discard(AAC_buffer **buffer)
+void AAC_buffer_release(AAC_buffer **buffer)
 {
   AAC_buffer *aac = *buffer;
   if (aac->data) {

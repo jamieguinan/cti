@@ -394,7 +394,7 @@ static void Feedback_handler(Instance *pi, void *data)
 
   priv->pending_feedback -= 1;
   //printf("feedback - %d\n", priv->pending_feedback);
-  Feedback_buffer_discard(fb);
+  Feedback_buffer_release(fb);
 }
 
 static void notify_outputs_eof(Instance *pi)
@@ -738,7 +738,7 @@ static void MjpegDemux_tick(Instance *pi)
       }
     }
     else {
-      Jpeg_buffer_discard(j);
+      Jpeg_buffer_release(j);
     }
 
   }

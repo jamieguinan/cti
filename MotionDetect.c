@@ -72,7 +72,7 @@ static void gray_handler(Instance *pi, void *msg)
       (priv->accum->width != gray->width ||
        priv->accum->height != gray->height)) {
     /* Size has changed.  Discard accumulator buffer. */
-    Gray_buffer_discard(priv->accum); priv->accum = 0L;
+    Gray_buffer_release(priv->accum); priv->accum = 0L;
   }
 		    
   if (!priv->accum) {
@@ -125,7 +125,7 @@ static void gray_handler(Instance *pi, void *msg)
     PostData(md, pi->outputs[ OUTPUT_MOTIONDETECT].destination);
   }
 
-  Gray_buffer_discard(gray);
+  Gray_buffer_release(gray);
   // printf("MotionDetect sum=%d\n", sum);
 }
 
@@ -134,7 +134,7 @@ static void mask_handler(Instance *pi, void *msg)
 {
   MotionDetect_private *priv = (MotionDetect_private *)pi;
   if (priv->mask) {
-    Gray_buffer_discard(priv->mask);
+    Gray_buffer_release(priv->mask);
   }
   priv->mask = msg;
 }
@@ -182,7 +182,7 @@ MotionDetect_result *MotionDetect_result_new(void)
 }
 
 
-void MotionDetect_result_discard(MotionDetect_result **md)
+void MotionDetect_result_release(MotionDetect_result **md)
 {
   Mem_free(*md);
   *md = 0L;

@@ -224,7 +224,7 @@ static void BGR3_handler(Instance *pi, void *data)
 
   
   ycc = BGR3_toYUV422P(bgr);
-  BGR3_buffer_discard(bgr);
+  BGR3_buffer_release(bgr);
 
   if (frame < frame_limit) {
     fprintf(stdout, "\rYUV422P frame %d", frame+1);
@@ -238,7 +238,7 @@ static void BGR3_handler(Instance *pi, void *data)
 
   frame += 1;
 
-  YUV422P_buffer_discard(ycc);
+  YUV422P_buffer_release(ycc);
 #endif
 
 #if 1
@@ -259,7 +259,7 @@ static void BGR3_handler(Instance *pi, void *data)
 
   frame += 1;
 
-  RGB3_buffer_discard(rgb);
+  RGB3_buffer_release(rgb);
 #endif
 }
 

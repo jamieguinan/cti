@@ -96,7 +96,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   
   String_free(&header);
 
-  Jpeg_buffer_discard(jpeg_in);
+  Jpeg_buffer_release(jpeg_in);
 }
 
 

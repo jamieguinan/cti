@@ -301,7 +301,7 @@ static void Config_handler(Instance *pi, void *data)
 static void Line_handler(Instance *pi, void *data)
 {
   Line_msg *lm = data;
-  Line_msg_discard(&lm);
+  Line_msg_release(&lm);
 }
 
 

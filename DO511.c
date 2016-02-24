@@ -154,10 +154,10 @@ static void O511_handler(Instance *pi, void *data)
   }
 
   if (y420p_out) {
-    YUV420P_buffer_discard(y420p_out); y420p_out = 0L;
+    YUV420P_buffer_release(y420p_out); y420p_out = 0L;
   }
 
-  O511_buffer_discard(o511_in);
+  O511_buffer_release(o511_in);
 }
 
 

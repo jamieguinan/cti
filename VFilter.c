@@ -381,7 +381,7 @@ static void Y420p_handler(Instance *pi, void *msg)
 {
   YUV420P_buffer *y420p_in = msg;
   YUV422P_buffer * y422p_out = YUV420P_to_YUV422P(y420p_in);
-  YUV420P_buffer_discard(y420p_in);
+  YUV420P_buffer_release(y420p_in);
   Y422p_handler(pi, y422p_out);
 }
 
@@ -400,7 +400,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     memcpy(y422p_out->y, y422p_src->y+(y422p_src->width * priv->top_crop), y422p_out->width*y422p_out->height);
     memcpy(y422p_out->cb, y422p_src->cb+(y422p_src->width * priv->top_crop)/2, y422p_out->width*y422p_out->height/2);
     memcpy(y422p_out->cr, y422p_src->cr+(y422p_src->width * priv->top_crop)/2, y422p_out->width*y422p_out->height/2);
-    YUV422P_buffer_discard(y422p_src);
+    YUV422P_buffer_release(y422p_src);
   }
 
   if (priv->bottom_crop) {
@@ -409,7 +409,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     memcpy(y422p_out->y, y422p_src->y, y422p_out->width*y422p_out->height);
     memcpy(y422p_out->cb, y422p_src->cb, y422p_out->width*y422p_out->height/2);
     memcpy(y422p_out->cr, y422p_src->cr, y422p_out->width*y422p_out->height/2);
-    YUV422P_buffer_discard(y422p_src);
+    YUV422P_buffer_release(y422p_src);
   }
 
   if (priv->left_right_crop) {
@@ -424,7 +424,7 @@ static void Y422p_handler(Instance *pi, void *msg)
       memcpy(y422p_out->y, y422p_src->y+priv->left_right_crop, y422p_out->width);
       memcpy(y422p_out->cb, y422p_src->cb+(priv->left_right_crop/2), y422p_out->width/2);
       memcpy(y422p_out->cr, y422p_src->cr+(priv->left_right_crop/2), y422p_out->width/2);
-      YUV422P_buffer_discard(y422p_src);
+      YUV422P_buffer_release(y422p_src);
     }
   }
 
@@ -435,7 +435,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     single_y3blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     memcpy(y422p_out->cb, y422p_src->cb, y422p_src->width*y422p_src->height/2);
     memcpy(y422p_out->cr, y422p_src->cr, y422p_src->width*y422p_src->height/2);
-    YUV422P_buffer_discard(y422p_src);
+    YUV422P_buffer_release(y422p_src);
   }
 
   if (priv->adaptive3point) {
@@ -443,7 +443,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     y422p_src = y422p_out ? y422p_out : y422p_in;
     y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     adaptive3point_filter(y422p_src, y422p_out);
-    YUV422P_buffer_discard(y422p_src);
+    YUV422P_buffer_release(y422p_src);
   }
 
   if (priv->horizontal_filter_enabled) {
@@ -453,7 +453,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     single_horizontal_filter(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     memcpy(y422p_out->cb, y422p_src->cb, y422p_src->width*y422p_src->height/2);
     memcpy(y422p_out->cr, y422p_src->cr, y422p_src->width*y422p_src->height/2);
-    YUV422P_buffer_discard(y422p_src);
+    YUV422P_buffer_release(y422p_src);
   }
 
   if (priv->linear_blend) {
@@ -463,7 +463,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     single_121_linear_blend(y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
     single_121_linear_blend(y422p_src->cb, y422p_out->cb, y422p_src->width/2, y422p_src->height);
     single_121_linear_blend(y422p_src->cr, y422p_out->cr, y422p_src->width/2, y422p_src->height);
-    YUV422P_buffer_discard(y422p_src);
+    YUV422P_buffer_release(y422p_src);
   }
 
   if (priv->trim) {
@@ -471,7 +471,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     y422p_src = y422p_out ? y422p_out : y422p_in;
     y422p_out = YUV422P_buffer_new(y422p_src->width, y422p_src->height, &y422p_src->c);
     single_trim(priv, y422p_src->y, y422p_out->y, y422p_src->width, y422p_src->height);
-    YUV422P_buffer_discard(y422p_src);
+    YUV422P_buffer_release(y422p_src);
   }
 
   if (!y422p_out) {
@@ -489,7 +489,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
-    YUV422P_buffer_discard(y422p_out);
+    YUV422P_buffer_release(y422p_out);
   }
   
 }
@@ -507,14 +507,14 @@ static void RGB3_handler(Instance *pi, void *msg)
   if (priv->top_crop) {
     RGB3_buffer *tmp = RGB3_buffer_new(rgb3->width, rgb3->height - priv->top_crop, &rgb3->c);
     memcpy(tmp->data, rgb3->data+(rgb3->width*priv->top_crop*3), tmp->data_length);
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
     rgb3 = tmp;
   }
 
   if (priv->bottom_crop) {
     RGB3_buffer *tmp = RGB3_buffer_new(rgb3->width, rgb3->height - priv->bottom_crop, &rgb3->c);
     memcpy(tmp->data, rgb3->data, tmp->width * 3 * tmp->height);
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
     rgb3 = tmp;
   }
 
@@ -522,7 +522,7 @@ static void RGB3_handler(Instance *pi, void *msg)
     PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
   }
   else {
-    RGB3_buffer_discard(rgb3);
+    RGB3_buffer_release(rgb3);
   }
 
   

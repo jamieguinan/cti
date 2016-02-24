@@ -363,7 +363,7 @@ static void gray_handler(Instance *pi, void *msg)
     PostData(gray, pi->outputs[OUTPUT_GRAY].destination);
   }
   else {
-    Gray_buffer_discard(gray);
+    Gray_buffer_release(gray);
   }
 }
 
@@ -381,7 +381,7 @@ static void y422p_handler(Instance *pi, void *msg)
     PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
-    YUV422P_buffer_discard(y422p);
+    YUV422P_buffer_release(y422p);
   }
 }
 

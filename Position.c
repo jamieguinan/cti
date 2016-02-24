@@ -8,7 +8,7 @@ Position_message *Position_message_new(void)
 }
 
 
-void Position_message_discard(Position_message *p)
+void Position_message_release(Position_message *p)
 {
   Mem_free(p);
 }

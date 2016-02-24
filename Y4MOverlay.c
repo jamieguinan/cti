@@ -189,7 +189,7 @@ static void y420p_handler(Instance *pi, void *msg)
     PostData(buf, pi->outputs[OUTPUT_YUV420P].destination);
   }
   else {
-    YUV420P_buffer_discard(buf);
+    YUV420P_buffer_release(buf);
   }
 }
 

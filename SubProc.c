@@ -267,7 +267,7 @@ static void RawData_handler(Instance *pi, void *data)
     Sink_write(priv->proc_stdin, raw->data, raw->data_length);
   }
 
-  RawData_buffer_discard(raw);
+  RawData_buffer_release(raw);
 }
 
 

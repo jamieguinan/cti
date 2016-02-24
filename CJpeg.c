@@ -274,7 +274,7 @@ static void compress_and_post(Instance *pi,
   }
   else {
     /* Discard output buffer! */  
-    Jpeg_buffer_discard(jpeg_out);
+    Jpeg_buffer_release(jpeg_out);
   }
 
   jpeg_out = 0L;		/* Clear output buffer copy. */
@@ -331,7 +331,7 @@ static void rgb3_handler(Instance *pi, void *data)
 		    rgb3_in->data, 0L, 0L,
 		    &rgb3_in->c,
 		    COMPRESS_RGB);
-  RGB3_buffer_discard(rgb3_in);
+  RGB3_buffer_release(rgb3_in);
 }
 
 static void bgr3_handler(Instance *pi, void *data)
@@ -344,7 +344,7 @@ static void bgr3_handler(Instance *pi, void *data)
 		    rgb3_in->data, 0L, 0L,
 		    &rgb3_in->c,
 		    COMPRESS_RGB);
-  RGB3_buffer_discard(rgb3_in);
+  RGB3_buffer_release(rgb3_in);
 }
 
 static void y422p_handler(Instance *pi, void *data)
@@ -355,7 +355,7 @@ static void y422p_handler(Instance *pi, void *data)
 		    y422p_in->y, y422p_in->cb, y422p_in->cr,
 		    &y422p_in->c,
 		    COMPRESS_Y422);
-  YUV422P_buffer_discard(y422p_in);
+  YUV422P_buffer_release(y422p_in);
 }
 
 static void y420p_handler(Instance *pi, void *data)
@@ -366,7 +366,7 @@ static void y420p_handler(Instance *pi, void *data)
 		    y420p_in->y, y420p_in->cb, y420p_in->cr,
 		    &y420p_in->c,
 		    COMPRESS_Y420);
-  YUV420P_buffer_discard(y420p_in);
+  YUV420P_buffer_release(y420p_in);
 }
 
 static void CJpeg_tick(Instance *pi)

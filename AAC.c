@@ -214,7 +214,7 @@ static void Audio_handler(Instance *pi, void *msg)
   //printf("AAC done with audio buffer\n");
 
  out:
-  Audio_buffer_discard(&audio);
+  Audio_buffer_release(&audio);
 }
 
 

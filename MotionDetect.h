@@ -6,7 +6,7 @@ typedef struct {
 } MotionDetect_result;
 
 MotionDetect_result *MotionDetect_result_new(void);
-void MotionDetect_result_discard(MotionDetect_result **md);
+void MotionDetect_result_release(MotionDetect_result **md);
 
 extern void MotionDetect_init(void);
 

@@ -41,7 +41,7 @@ XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, cons
   return buffer;
 }
 
-void XMixedReplace_buffer_discard(XMixedReplace_buffer *buffer)
+void XMixedReplace_buffer_release(XMixedReplace_buffer *buffer)
 {
   if (buffer->data) {
     Mem_free(buffer->data);

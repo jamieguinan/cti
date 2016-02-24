@@ -7,7 +7,7 @@ typedef struct {
 } Position_message;
 
 Position_message *Position_message_new(void);
-void Position_message_discard(Position_message *pm);
+void Position_message_release(Position_message *pm);
 
 
 #endif
