@@ -81,3 +81,23 @@ void jsmn_dump_verbose(String * json_text, jsmntok_t * tokens, int num_tokens, i
     fprintf(stderr, "&& tokens[%d].size == %d\n", i, tokens[i].size);
   }
 }
+
+void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_tokens, int skip, FILE * dest)
+{
+  int i;
+  fprintf(stderr, "jsmn_copy_skip...\n");
+  const char * separator = "";
+  for (i=skip; (i+1) < num_tokens; i+=2) {
+    fprintf(stderr, "tokens %d and %d\n", i, i+1);
+    if (tokens[i].type != JSMN_STRING) { break;  }
+    if (tokens[i].size != 1) { break; }
+    if (tokens[i+1].size != 0) { break; }
+    fprintf(dest, "%s\"%.*s\":", separator, jsf(s(json_text), tokens[i]));
+    switch (tokens[i+1].type) {
+    case JSMN_STRING: fprintf(dest, "\"%.*s\"", jsf(s(json_text), tokens[i+1])); break;
+    case JSMN_PRIMITIVE: fprintf(dest, "%.*s", jsf(s(json_text), tokens[i+1])); break;
+    default: fprintf(dest, "\"\"");
+    }
+    separator = ",";
+  }
+}

@@ -8,6 +8,7 @@ extern String * String_dup_jsmn(String * json_text, jsmntok_t token);
 extern int jsmn_get_int(String * json_text, jsmntok_t token, int * result);
 extern void jsmn_dump(jsmntok_t * tokens, int num_tokens, int limit);
 extern void jsmn_dump_verbose(String * json_text, jsmntok_t * tokens, int num_tokens, int limit);
+extern void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_tokens, int skip, FILE * dest);
 
 #define jsf(s, t) ((t).end-(t).start),((s)+(t).start)
 
