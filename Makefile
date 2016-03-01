@@ -1,5 +1,5 @@
 # Scale build to multiple cores if possible.
-MAKEFLAGS=j$(shell grep processor /proc/cpuinfo | wc -l)
+MAKEFLAGS=j$(shell grep '^processor' /proc/cpuinfo | wc -l)
 
 default: test-requirements cti_main
 
