@@ -408,6 +408,8 @@ static void print_usage(apr_pool_t *pool)
     puts("-r <header:value> Use <header:value> as request header");
 }
 
+static int initialized = 0;
+
 int serf_get_main(int argc, const char **argv)
 {
     apr_status_t status;
@@ -431,8 +433,11 @@ int serf_get_main(int argc, const char **argv)
     char opt_c;
     const char *opt_arg;
 
-    apr_initialize();
-    atexit(apr_terminate);
+    if (!initialized) {
+      apr_initialize();
+      atexit(apr_terminate);
+      initialized = 1;
+    }
 
     apr_pool_create(&pool, NULL);
     /* serf_initialize(); */
@@ -463,7 +468,7 @@ int serf_get_main(int argc, const char **argv)
             break;
         case 'h':
             print_usage(pool);
-            exit(0);
+            return(0);
             break;
         case 'H':
             print_headers = 1;
@@ -516,7 +521,7 @@ int serf_get_main(int argc, const char **argv)
             break;
         case 'v':
             puts("Serf version: " SERF_VERSION_STRING);
-            exit(0);
+            return(0);
         default:
             break;
         }
@@ -524,7 +529,7 @@ int serf_get_main(int argc, const char **argv)
 
     if (opt->ind != opt->argc - 1) {
         print_usage(pool);
-        exit(-1);
+        return(-1);
     }
 
     raw_url = argv[opt->ind];
@@ -567,21 +572,21 @@ int serf_get_main(int argc, const char **argv)
         {
             printf("Cannot parse proxy hostname/port: %d\n", status);
             apr_pool_destroy(pool);
-            exit(1);
+            return(1);
         }
 
         if (!proxy_host)
         {
             printf("Proxy hostname must be specified\n");
             apr_pool_destroy(pool);
-            exit(1);
+            return(1);
         }
 
         if (!proxy_port)
         {
             printf("Proxy port must be specified\n");
             apr_pool_destroy(pool);
-            exit(1);
+            return(1);
         }
 
         status = apr_sockaddr_info_get(&proxy_address, proxy_host, APR_UNSPEC,
@@ -591,7 +596,7 @@ int serf_get_main(int argc, const char **argv)
         {
             printf("Cannot resolve proxy address '%s': %d\n", proxy_host, status);
             apr_pool_destroy(pool);
-            exit(1);
+            return(1);
         }
 
         serf_config_proxy(context, proxy_address);
@@ -619,7 +624,7 @@ int serf_get_main(int argc, const char **argv)
     if (status) {
         printf("Error creating connection: %d\n", status);
         apr_pool_destroy(pool);
-        exit(1);
+        return(1);
     }
 
     handler_ctx.completed_requests = 0;
@@ -665,7 +670,7 @@ int serf_get_main(int argc, const char **argv)
 
             printf("Error running context: (%d) %s\n", status, err_string);
             apr_pool_destroy(pool);
-            exit(1);
+            return(1);
         }
         if (apr_atomic_read32(&handler_ctx.completed_requests) >= count) {
             break;
