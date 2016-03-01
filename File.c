@@ -81,3 +81,23 @@ int File_exists(String *path)
 {
   return access(s(path), R_OK) == 0 ? 1 : 0;
 }
+
+
+int File_load_int(String * path, int * result)
+{
+  int rc = 0;
+  String * contents = File_load_text(path);
+  if (String_is_none(contents)) {
+    fprintf(stderr, "Could not read number from %s\n", s(path));
+    rc = -1;
+  }
+  else {
+    String_trim_right(contents);
+    if (sscanf(s(contents), "%d", result) != 1) {
+      fprintf(stderr, "%s does not seem to contain an integer\n", s(path));
+      rc = -1;
+    }
+  }
+  String_clear(&contents);
+  return rc;
+}
