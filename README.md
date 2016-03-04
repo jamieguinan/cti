@@ -80,16 +80,34 @@ The file can be loaded and run with,
 
 CTI (via the ScriptV00 module) will present a `cti> ` prompt after the file is loaded, from which further `new`, `config`, and other commands can be entered. `ctrl-d` or `exit` will quit the program.
 
-### More examples.
+### More examples
 
 The `cmd/` subfolder here contains `logitech.cmd` and many other experimental files. I've had good experiences with Logitech cameras, specifically models 9000 and C310, so there are several `logitech-*.cmd` files. But they should work with most UVC compatible cameras.
+
+### External C modules
+
+There are a few files that I've imported into CTI that I did not write.
+
+ * `serf_get.c` for handling HTTP and HTTPS operations. Writing an
+   HTTP client is easy enough, but HTTPS is a big can of worms, so I'm
+   using this example source from [Apache Serf](https://serf.apache.org/), 
+   with some small modifications (use `return` instead of `exit()`, only
+   initialize once). It works great, and is significantly faster than
+   calling `system("wget ...")` on Raspberry Pi (85ms versus 300ms).
+
+ * `OggOutput.c` is mostly `encoder_example.c` from the [Xiph Theora](https://www.theora.org/)
+    library, with some wrapper code around it. I experimented with this 
+    a few years ago, but Ogg Theora video never really caught on, and the
+    only decent client support was in Firefox. Side note, if you say
+    "Ogg Theora" to someone, even most tech-savvy people, they'll
+    probably look at you funny.
 
 
 ### Some notes about the code
 
 Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget`. And `NVidiaCUDA.c`, yeah, never did anything with that.
 
-There are a few C files that aren't part of CTI, which I wrote for testing, and may or may not have compiled in a long time, but I keep them in the project for possible future reference.
+There are a few C files that aren't part of CTI, which I wrote for testing, and may or may not have compiled in a long time, but I keep them in the project for possible future reference. I moved some of them into the `basement/` subfolder.
 
 Since I use CTI modules in other projects, it has also become convenient place for modules that aren't (yet) built into CTI, but are used in more than one external project. `jsmn_misc.c`, `dbutil.c`, and a few others.
 
