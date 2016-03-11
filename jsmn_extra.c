@@ -3,6 +3,8 @@
  * program, but used by other programs.
  */
 #include <stdio.h>		/* printf */
+#include <stdlib.h>		/* malloc, realloc */
+#include "Mem.h"
 #include "String.h"
 #include "jsmn_extra.h"
 
@@ -99,5 +101,78 @@ void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_tokens, int 
     default: fprintf(dest, "\"\"");
     }
     separator = ",";
+  }
+}
+
+
+void jsmn_dispatch(const char * json_text, size_t json_text_length, 
+		   const char * cmdkey, JsmnDispatchHandler * handlers, int num_handlers)
+{
+  jsmn_parser parser;
+  int num_tokens = 8;
+  jsmntok_t * tokens = malloc(num_tokens * sizeof(*tokens));
+  int n;
+  String * val1 = String_value_none();
+  String * json_str = String_from_char(json_text, json_text_length);
+
+  while (1) {
+    jsmn_init(&parser);
+    n = jsmn_parse(&parser, json_text, json_text_length, tokens, num_tokens);
+    if (n >= 0) {
+      //fprintf(stderr, "jsmn_dispatch sees %d tokens\n", n);
+      break;
+    }
+    else if (n == JSMN_ERROR_NOMEM) {
+      num_tokens *= 2;
+      //fprintf(stderr, "num_tokens=%d\n", num_tokens);
+      tokens = realloc(tokens, num_tokens * sizeof(*tokens));
+    }
+    else {
+      fprintf(stderr, "jsmn_parse error %d\n", n);
+      goto out;
+    }
+  }
+  
+  //jsmn_dump_verbose(json_str, tokens, n, n);
+  
+  if (n >= 3
+      && tokens[0].type == JSMN_OBJECT
+      && tokens[1].type == JSMN_STRING
+      && tokens[1].size == 1
+      && tokens[2].type == JSMN_STRING
+      && tokens[2].size == 0
+      && String_eq_jsmn(json_str, tokens[1], cmdkey)) {
+    int i;
+    for (i=0; i < num_handlers; i++) {
+      if (String_eq_jsmn(json_str, tokens[2], handlers[i].cmdval)) {
+	if (n == 3 
+	    && handlers[i].num_args == 0
+	    && handlers[i].handler0
+	    ) {
+	  handlers[i].handler0();
+	  break;
+	}
+	else if (n == 5 
+		 && handlers[i].num_args == 1
+		 && handlers[i].key1
+		 && handlers[i].handler1
+		 && tokens[3].type == JSMN_STRING
+		 && tokens[3].size == 1
+		 && tokens[4].type == JSMN_STRING
+		 && tokens[4].size == 0) {
+	  val1 = String_dup_jsmn(json_str, tokens[4]);
+	  handlers[i].handler1(s(val1));
+	  break;
+	}
+      }
+    }
+  }
+
+  
+ out:
+  String_clear(&json_str);
+  String_clear(&val1);
+  if (tokens) {
+    free(tokens);
   }
 }

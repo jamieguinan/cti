@@ -32,6 +32,8 @@ typedef struct {
 /* "Upcast" a char* to a String for easy access to the functions here. */
 #define S(x) (& (String){ .bytes = x, .len = strlen(x), .available = 0} )
 #define SC(x) (& (StringConst){ .bytes = x, .len = strlen(x), .available = 0} )
+#define Sl(x, l) (& (String){ .bytes = x, .len = l, .available = 0} )
+#define SCl(x, l) (& (StringConst){ .bytes = x, .len = l, .available = 0} )
 
 /* _new and _free are for free-standing strings that might be passed around independently */
 extern String * String_new(const char *init);
@@ -63,7 +65,9 @@ __attribute__ ((format (printf, 1, 2))) /* gcc format checking */
 String_sprintf(const char *fmt, ...);
 
 extern String * String_dup(String *s);
-extern String * String_from_u8(unsigned char * init, int init_size);
+extern String * String_from_char(const char * init, int init_size);
+extern String * String_from_uchar(const unsigned char * init, int init_size);
+#define String_from_u8 String_from_uchar
 
 /* These functions work in-place on s, although s->bytes can be reallocated. */
 extern void String_cat1(String *s, const char *s1);
