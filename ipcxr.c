@@ -5,16 +5,21 @@
 
 int main(int argc, char * argv[])
 {
-  unsigned int timeout_ms = 1000;
+  int argn;
+  int timeout_ms = 1000;
+  int waitreply = 1;
+  int seconds;
 
   if (argc < 3) {
-    printf("Usage: %s file host:port [ timeout_seconds ]\n", argv[0]);
+    printf("Usage: %s file host:port [nowaitreply] [ timeout_seconds ]\n", argv[0]);
     return 1;
   }
-  
-  if (argc == 4) {
-    int seconds;
-    if (sscanf(argv[3], "%d", &seconds) == 1) {
+
+  for (argn = 3; argn < argc; argn++) {
+    if (streq(argv[argn], "nowaitreply")) {
+      waitreply = 0;
+    }
+    else if (sscanf(argv[argn], "%d", &seconds) == 1) {
       timeout_ms = seconds * 1000;
     }
   }
@@ -40,17 +45,19 @@ int main(int argc, char * argv[])
     return 1;
   }
 
-  uint8_t * response = NULL;
-  uint32_t response_length = 0;
-  cti_ipc_recv(c->io.s, &response, &response_length, timeout_ms);
-  if (rc != 0) {
-    printf("cti_ipc_recv failed\n");
-    return 1;
-  }
-
-  int i;
-  for (i=0; i < response_length; i++) {
-    putchar((char)response[i]);
+  if (waitreply) {
+    uint8_t * response = NULL;
+    uint32_t response_length = 0;
+    cti_ipc_recv(c->io.s, &response, &response_length, timeout_ms);
+    if (rc != 0) {
+      printf("cti_ipc_recv failed\n");
+      return 1;
+    }
+    
+    int i;
+    for (i=0; i < response_length; i++) {
+      putchar((char)response[i]);
+    }
   }
 
   return 0;
