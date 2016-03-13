@@ -702,3 +702,23 @@ void String_list_trim(String_list * slst)
     String_free(&tmp);
   }
 }
+
+
+IntStr * IntStr_new(void)
+{
+  IntStr * istr = Mem_calloc(1, sizeof(*istr));  
+  istr->str = String_value_none();
+  return istr;
+}
+
+void IntStr_free(IntStr **pistr)
+{
+  if (*pistr) {
+    IntStr * istr = *pistr;
+    if (istr->str && !String_is_none(istr->str)) {
+      String_free(&(istr->str));
+    }
+    free(istr);
+    *pistr = NULL;
+  }
+}

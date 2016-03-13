@@ -105,8 +105,8 @@ void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_tokens, int 
 }
 
 
-void jsmn_dispatch(const char * json_text, size_t json_text_length, 
-		   const char * cmdkey, JsmnDispatchHandler * handlers, int num_handlers)
+IntStr * jsmn_dispatch(const char * json_text, size_t json_text_length, 
+		       const char * cmdkey, JsmnDispatchHandler * handlers, int num_handlers)
 {
   jsmn_parser parser;
   int num_tokens = 8;
@@ -114,6 +114,7 @@ void jsmn_dispatch(const char * json_text, size_t json_text_length,
   int n;
   String * val1 = String_value_none();
   String * json_str = String_from_char(json_text, json_text_length);
+  IntStr * result = NULL;
 
   while (1) {
     jsmn_init(&parser);
@@ -133,7 +134,7 @@ void jsmn_dispatch(const char * json_text, size_t json_text_length,
     }
   }
   
-  //jsmn_dump_verbose(json_str, tokens, n, n);
+  jsmn_dump_verbose(json_str, tokens, n, n);
   
   if (n >= 3
       && tokens[0].type == JSMN_OBJECT
@@ -149,7 +150,7 @@ void jsmn_dispatch(const char * json_text, size_t json_text_length,
 	    && handlers[i].num_args == 0
 	    && handlers[i].handler0
 	    ) {
-	  handlers[i].handler0();
+	  result = handlers[i].handler0();
 	  break;
 	}
 	else if (n == 5 
@@ -161,7 +162,7 @@ void jsmn_dispatch(const char * json_text, size_t json_text_length,
 		 && tokens[4].type == JSMN_STRING
 		 && tokens[4].size == 0) {
 	  val1 = String_dup_jsmn(json_str, tokens[4]);
-	  handlers[i].handler1(s(val1));
+	  result = handlers[i].handler1(s(val1));
 	  break;
 	}
       }
@@ -175,4 +176,5 @@ void jsmn_dispatch(const char * json_text, size_t json_text_length,
   if (tokens) {
     free(tokens);
   }
+  return result;
 }

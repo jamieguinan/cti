@@ -124,4 +124,12 @@ extern void String_list_trim(String_list * slst);
 
 #define String_eq(s1, s2)  streq((s1)->bytes, (s2)->bytes)
 
+typedef struct {
+  int value;
+  String * str;
+} IntStr;
+
+extern IntStr * IntStr_new(void);
+extern void IntStr_free(IntStr **istr);
+
 #endif

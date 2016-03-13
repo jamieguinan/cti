@@ -15,14 +15,14 @@ extern void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_token
 typedef struct {
   const char * cmdval;
   int num_args;
-  int (*handler0)(void);
+  IntStr * (*handler0)(void);
   const char * key1;
-  int (*handler1)(const char * value1);
+  IntStr * (*handler1)(const char * value1);
   const char * key2;
-  int (*handler2)(const char  * value1, const char * value2);
+  IntStr * (*handler2)(const char  * value1, const char * value2);
 } JsmnDispatchHandler;
 
-extern void jsmn_dispatch(const char * json_text, size_t json_text_length, 
-			  const char * cmdkey, JsmnDispatchHandler * handlers, int num_handlers);
+extern IntStr * jsmn_dispatch(const char * json_text, size_t json_text_length, 
+			      const char * cmdkey, JsmnDispatchHandler * handlers, int num_handlers);
 
 #endif
