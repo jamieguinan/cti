@@ -107,6 +107,7 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
 
     if (ischild) {
       rc = waitpid(pid, &status, WNOHANG);
+      // printf("waitpid(%d) returns %d, status=%d\n", pid, rc, status);
       if (rc == pid) {
 	if (WIFEXITED(status)) { 
 	  fprintf(stderr, "pid %d has exited\n", pid);
@@ -115,6 +116,10 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
 	else {
 	  fprintf(stderr, "pid %d changed state but is still active\n", pid);	  
 	}
+      }
+      else if (rc == -1) {
+	fprintf(stderr, "pid %d is gone\n", pid);
+	break;
       }
     }
     else {
