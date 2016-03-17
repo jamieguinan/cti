@@ -178,3 +178,74 @@ String * jsmn_dispatch(const char * json_text, size_t json_text_length,
   }
   return result;
 }
+
+
+String * jsmn_lookup_string(const char * key, String * json_text, jsmntok_t * tokens, int num_tokens)
+{
+  int i;
+  for (i=2; i < (num_tokens-1); i++) {
+    if (String_eq_jsmn(json_text, tokens[i], key)
+	&& tokens[i+1].type == JSMN_STRING) {
+      return String_dup_jsmn(json_text, tokens[i+1]);
+    }
+  }
+  return String_value_none();
+}
+
+
+String * jsmn_dispatch2(const char * json_text, size_t json_text_length, 
+			const char * mainkey, JsmnDispatchHandler2 * handlers, int num_handlers)
+{
+  jsmn_parser parser;
+  int num_tokens = 8;
+  jsmntok_t * tokens = malloc(num_tokens * sizeof(*tokens));
+  int n;
+  String * val1 = String_value_none();
+  String * json_str = String_from_char(json_text, json_text_length);
+  String * result = String_value_none();
+
+  while (1) {
+    jsmn_init(&parser);
+    n = jsmn_parse(&parser, json_text, json_text_length, tokens, num_tokens);
+    if (n >= 0) {
+      //fprintf(stderr, "jsmn_dispatch sees %d tokens\n", n);
+      break;
+    }
+    else if (n == JSMN_ERROR_NOMEM) {
+      num_tokens *= 2;
+      //fprintf(stderr, "num_tokens=%d\n", num_tokens);
+      tokens = realloc(tokens, num_tokens * sizeof(*tokens));
+    }
+    else {
+      fprintf(stderr, "jsmn_parse error %d\n", n);
+      goto out;
+    }
+  }
+  
+  // jsmn_dump_verbose(json_str, tokens, n, n);
+  
+  if (n >= 3
+      && tokens[0].type == JSMN_OBJECT
+      && tokens[1].type == JSMN_STRING
+      && tokens[1].size == 1
+      && tokens[2].type == JSMN_STRING
+      && tokens[2].size == 0
+      && String_eq_jsmn(json_str, tokens[1], mainkey)) {
+    int i;
+    for (i=0; i < num_handlers; i++) {
+      if (String_eq_jsmn(json_str, tokens[2], handlers[i].mainkey)) {
+	result = handlers[i].handler(json_str, tokens, n);
+	break;
+      }
+    }
+  }
+
+  
+ out:
+  String_clear(&json_str);
+  String_clear(&val1);
+  if (tokens) {
+    free(tokens);
+  }
+  return result;
+}
