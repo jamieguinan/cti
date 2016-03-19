@@ -35,7 +35,7 @@ void argsplit1(const char * cmdline)
 
   args[i+1] = NULL;
 
-  for (j=0; j < i; j++) {
+  for (j=0; j <= i; j++) {
     printf("argvs[%d]: %s\n", j, args[j]);
   }
 }
@@ -77,14 +77,13 @@ void argsplit2(const char * cmdline)
     }
     p++;
   }
-  //printf("%d: %s\n", i, args[i]);
 
   if (i==63) {
     fprintf(stderr, "%s: maximum 64 cmdline components\n", __func__);
     return;
   }
 
-  args[i+1] = NULL;
+  args[i] = NULL;
 
   for (j=0; j < i; j++) {
     printf("argvs[%d]: %s\n", j, args[j]);
@@ -99,6 +98,15 @@ int main()
     " 'https://youtube.com/watch?v=yaddayaddayadda'"
     " best";
   argsplit1(cmd);
+  puts("");
   argsplit2(cmd);
+  puts("");
+
+  cmd = "/platform/rpi/bin/azap.jsg -j azap.json -c azap.conf -q -r 1.2";
+  argsplit1(cmd);
+  puts("");
+  argsplit2(cmd);
+  puts("");
+
   return 0;
 }
