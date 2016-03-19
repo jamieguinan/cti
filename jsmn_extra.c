@@ -183,9 +183,16 @@ String * jsmn_dispatch(const char * json_text, size_t json_text_length,
 String * jsmn_lookup_string(const char * key, String * json_text, jsmntok_t * tokens, int num_tokens)
 {
   int i;
-  for (i=2; i < (num_tokens-1); i++) {
+  for (i=3; i < (num_tokens-1); i+=2) {
+    printf("%s: %.*s (want %s) %.*s (%d %d)\n",
+	   __func__, 
+	   jsf(s(json_text), tokens[i]), 
+	   key,
+	   jsf(s(json_text), tokens[i+1]),
+	   tokens[i+1].type, JSMN_STRING);
     if (String_eq_jsmn(json_text, tokens[i], key)
 	&& tokens[i+1].type == JSMN_STRING) {
+      printf("found!\n");
       return String_dup_jsmn(json_text, tokens[i+1]);
     }
   }
