@@ -15,6 +15,9 @@ int Regex_match(const char * input, const char * pattern)
   }
 
   rc = regexec(&reg, input, 3, matches, 0);
+
+  regfree(&reg);
+
   if (rc == REG_NOMATCH) {
     return 0;
   }
