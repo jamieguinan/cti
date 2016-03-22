@@ -48,7 +48,7 @@ int main(int argc, char * argv[])
   if (waitreply) {
     uint8_t * response = NULL;
     uint32_t response_length = 0;
-    cti_ipc_recv(c->io.s, &response, &response_length, timeout_ms);
+    rc = cti_ipc_recv(c->io.s, &response, &response_length, timeout_ms);
     if (rc != 0) {
       printf("cti_ipc_recv failed\n");
       return 1;

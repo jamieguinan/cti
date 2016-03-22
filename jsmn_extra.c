@@ -6,6 +6,9 @@
 #include "Mem.h"
 #include "String.h"
 #include "jsmn_extra.h"
+#include "localptr.h"
+
+int jsmn_extra_verbose = 0;
 
 int String_eq_jsmn(String * json_text, jsmntok_t token, const char *target)
 {
@@ -107,7 +110,12 @@ void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_tokens, int 
 String * jsmn_lookup_string(const char * key, String * json_text, jsmntok_t * tokens, int num_tokens)
 {
   int i;
-  for (i=3; i < (num_tokens-1); i+=2) {
+
+  if (jsmn_extra_verbose) {
+    jsmn_dump_verbose(json_text, tokens, num_tokens, num_tokens);
+  }
+
+  for (i=1; i < (num_tokens-1); i+=2) {
     printf("%s: %.*s (want %s) %.*s (%d %d)\n",
 	   __func__, 
 	   jsf(s(json_text), tokens[i]), 
@@ -127,7 +135,7 @@ String * jsmn_lookup_string(const char * key, String * json_text, jsmntok_t * to
 int jsmn_lookup_int(const char * key, String * json_text, jsmntok_t * tokens, int num_tokens, int * value)
 {
   int i;
-  for (i=3; i < (num_tokens-1); i+=2) {
+  for (i=1; i < (num_tokens-1); i+=2) {
     printf("%s: %.*s (want %s) %.*s (%d %d)\n",
 	   __func__, 
 	   jsf(s(json_text), tokens[i]), 
@@ -143,7 +151,7 @@ int jsmn_lookup_int(const char * key, String * json_text, jsmntok_t * tokens, in
 }
 
 
-int jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_tokens_ptr)
+void jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_tokens_ptr)
 {
   jsmn_parser parser;
   int num_tokens = 8;
@@ -156,7 +164,7 @@ int jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_token
     if (n >= 0) {
       //fprintf(stderr, "jsmn_dispatch sees %d tokens\n", n);
       *tokens_ptr = tokens;
-      *num_tokens_ptr = num_tokens;
+      *num_tokens_ptr = n;
       break;
     }
     else if (n == JSMN_ERROR_NOMEM) {
@@ -169,7 +177,6 @@ int jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_token
       break;
     }
   }
-  return n;
 }
 
 void jsmn_parse_free(jsmntok_t ** tokens_ptr, int * num_tokens_ptr)
@@ -257,6 +264,81 @@ void JsmnContext_free(JsmnContext ** pjc)
       Mem_free(jc->tokens);
     }
     String_clear(&jc->result);
+    *pjc = NULL;
   }
-  *pjc = NULL;
 }
+
+void jsmn_dispatch3(JsmnContext * jc, const char * firstkey,
+		    JsmnDispatchHandler3 * handlers, int num_handlers)
+{
+  localptr(String, val1) = String_value_none();
+  localptr(String, result) = String_value_none();
+  jsmn_parser parser;
+  int n;
+
+  jc->num_tokens = 8;
+  jc->tokens = Mem_malloc(jc->num_tokens * sizeof(*jc->tokens));
+
+  while (1) {
+    jsmn_init(&parser);
+    n = jsmn_parse(&parser, s(jc->js_str), String_len(jc->js_str), jc->tokens, jc->num_tokens);
+    if (n >= 0) {
+      //fprintf(stderr, "jsmn_dispatch sees %d tokens\n", n);
+      break;
+    }
+    else if (n == JSMN_ERROR_NOMEM) {
+      jc->num_tokens *= 2;
+      //fprintf(stderr, "num_tokens=%d\n", num_tokens);
+      jc->tokens = Mem_realloc(jc->tokens, jc->num_tokens * sizeof(*jc->tokens));
+    }
+    else {
+      fprintf(stderr, "jsmn_parse error %d\n", n);
+      break;
+    }
+  }
+  
+  // jsmn_dump_verbose(json_str, tokens, n, n);
+  
+  if (n >= 3
+      && jc->tokens[0].type == JSMN_OBJECT
+      && jc->tokens[1].type == JSMN_STRING
+      && jc->tokens[1].size == 1
+      && jc->tokens[2].type == JSMN_STRING
+      && jc->tokens[2].size == 0
+      && String_eq_jsmn(jc->js_str, jc->tokens[1], firstkey)) {
+    int i;
+    for (i=0; i < num_handlers; i++) {
+      if (String_eq_jsmn(jc->js_str, jc->tokens[2], handlers[i].firstkey)) {
+	handlers[i].handler(jc);
+	break;
+      }
+    }
+  }
+}
+
+
+String * jsmn_lookup_string3(JsmnContext * jc, const char * key)
+{
+  int i;
+
+  if (jsmn_extra_verbose) {
+    jsmn_dump_verbose(jc->js_str, jc->tokens, jc->num_tokens, jc->num_tokens);
+  }
+
+  for (i=1; i < (jc->num_tokens-1); i+=2) {
+    printf("%s: %.*s (want %s) %.*s (%d %d)\n",
+	   __func__, 
+	   jsf(s(jc->js_str), jc->tokens[i]), 
+	   key,
+	   jsf(s(jc->js_str), jc->tokens[i+1]),
+	   jc->tokens[i+1].type, JSMN_STRING);
+    if (String_eq_jsmn(jc->js_str, jc->tokens[i], key)
+	&& jc->tokens[i+1].type == JSMN_STRING) {
+      printf("found!\n");
+      return String_dup_jsmn(jc->js_str, jc->tokens[i+1]);
+    }
+  }
+  return String_value_none();
+  
+}
+

@@ -246,6 +246,9 @@ int String_find(String *s, int offset, const char *s1, int *end)
 
 String *String_dup(String *s)
 {
+  if (String_is_none(s)) {
+    return String_value_none();
+  }
   return String_new(s->bytes);
 }
 
