@@ -143,18 +143,13 @@ void String_clear_local(String *s)
 
 void String_free(String **s)
 {
-  if (String_is_none(*s)) {
-    fprintf(stderr, "%s: cannot free special NONE string!\n", __func__);
-    return;
-  }
   if (*s) {
-    String_clear_local(*s);
-    Mem_free(*s);
+    if (!String_is_none(*s)) {
+      String_clear_local(*s);
+      Mem_free(*s);
+    }
   }
-  else {
-    fprintf(stderr, "%s: string is already free\n", __func__);
-  }
-  *s = 0L;
+  *s = String_value_none();
 }
 
 
@@ -213,12 +208,7 @@ String * String_sprintf(const char *fmt, ...)
 /* 2014-Jun-10 --> How did I not have these before?? */
 void String_clear(String **s)
 {
-  if (*s) {
-    if (!String_is_none(*s)) {
-      String_free(s);
-    }
-  }
-  *s = String_value_none();
+  String_free(s);
 }
 
 
