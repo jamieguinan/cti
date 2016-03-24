@@ -111,12 +111,11 @@ int jsmn_lookup_int(JsmnContext * jc, const char * key, int * value)
 {
   int i;
   for (i=1; i < (jc->num_tokens-1); i+=2) {
-    printf("%s: %.*s (want %s) %.*s (%d %d)\n",
-	   __func__, 
-	   jsf(s(jc->js_str), jc->tokens[i]), 
-	   key,
-	   jsf(s(jc->js_str), jc->tokens[i+1]),
-	   jc->tokens[i+1].type, JSMN_PRIMITIVE);
+    if (jsmn_extra_verbose) {
+      fprintf(stderr, "%s: %.*s (want %s) %.*s (%d %d)\n",
+	     __func__, jsf(s(jc->js_str), jc->tokens[i]), key, 
+	     jsf(s(jc->js_str), jc->tokens[i+1]), jc->tokens[i+1].type, JSMN_PRIMITIVE);
+    }
     if (String_eq_jsmn(jc->js_str, jc->tokens[i], key)
 	&& jc->tokens[i+1].type == JSMN_PRIMITIVE) {
       return jsmn_get_int(jc->js_str, jc->tokens[i+1], value);
@@ -241,15 +240,14 @@ String * jsmn_lookup_string(JsmnContext * jc, const char * key)
   }
 
   for (i=1; i < (jc->num_tokens-1); i+=2) {
-    printf("%s: %.*s (want %s) %.*s (%d %d)\n",
-	   __func__, 
-	   jsf(s(jc->js_str), jc->tokens[i]), 
-	   key,
-	   jsf(s(jc->js_str), jc->tokens[i+1]),
-	   jc->tokens[i+1].type, JSMN_STRING);
+    if (jsmn_extra_verbose) {
+      fprintf(stderr, "%s: %.*s (want %s) %.*s (%d %d)\n",
+	      __func__,  jsf(s(jc->js_str), jc->tokens[i]), 
+	   key, jsf(s(jc->js_str), jc->tokens[i+1]), jc->tokens[i+1].type, JSMN_STRING);
+    }
     if (String_eq_jsmn(jc->js_str, jc->tokens[i], key)
 	&& jc->tokens[i+1].type == JSMN_STRING) {
-      printf("found!\n");
+      if (jsmn_extra_verbose) { fprintf(stderr, "found!\n"); }
       return String_dup_jsmn(jc->js_str, jc->tokens[i+1]);
     }
   }

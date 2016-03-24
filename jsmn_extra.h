@@ -24,6 +24,9 @@ typedef struct {
   jsmntok_t * tokens;
   int num_tokens;
   String * result;
+  /* Auxillary file descriptors and flags. */
+  int fd1;
+  int flag1;
 } JsmnContext;
 
 extern JsmnContext * JsmnContext_new(void);
