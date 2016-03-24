@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# Generate time-based histogram data form zwave installation log files.
+# Generate time-based histogram data from zwave installation log files.
 # Plot with gnuplot.
 # Fill style reference,
 #   http://gnuplot.sourceforge.net/demo/fillstyle.html

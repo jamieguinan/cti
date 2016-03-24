@@ -36,6 +36,7 @@ config vc autoexpose 3
 #config vc autoexpose 1
 #config vc exposure 300
 
-connect sdl:Keycode_msg vc:Keycode_msg
+connect sdl:Keycode_msg sdl:Keycode_msg
+connect sdl:Keycode_msg_2 vc:Keycode_msg
 
 config vc enable 1
