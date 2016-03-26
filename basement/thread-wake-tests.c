@@ -1,6 +1,5 @@
 /* 
- * This program manages a media playback program (omxplayer, mplayer),
- * and related auxilliary programs.
+ * Clean this up for testing eventd, inotify, and pipe for intra-process communication.
  */
 #include <stdlib.h>		/* getenv */
 #include <unistd.h>		/* chdir */
