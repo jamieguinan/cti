@@ -24,6 +24,7 @@
 #include <apr_version.h>
 
 #include "serf.h"
+#include "serf_get.h"
 
 /* Add Connection: close header to each request. */
 /* #define CONNECTION_CLOSE_HDR */
@@ -214,6 +215,7 @@ typedef struct {
     const char *method;
     const char *path;
     const char *req_body_path;
+    const char *req_body_string;
     const char *username;
     const char *password;
     int auth_attempts;
@@ -264,6 +266,12 @@ static apr_status_t setup_request(serf_request_t *request,
 
         body_bkt = serf_bucket_file_create(file,
                                            serf_request_get_alloc(request));
+    }
+    else if (ctx->req_body_string) {
+	body_bkt = serf_bucket_simple_copy_create(ctx->req_body_string,
+						  strlen(ctx->req_body_string),
+						  serf_request_get_alloc(request));
+					     
     }
     else {
         body_bkt = NULL;
@@ -424,6 +432,7 @@ int serf_get_main(int argc, const char **argv)
     apr_uri_t url;
     const char *proxy = NULL;
     const char *raw_url, *method, *req_body_path = NULL;
+    const char *req_body_string = NULL;
     int count, inflight;
     int i;
     int print_headers;
@@ -453,7 +462,7 @@ int serf_get_main(int argc, const char **argv)
 
     apr_getopt_init(&opt, pool, argc, argv);
 
-    while ((status = apr_getopt(opt, "U:P:f:hHm:n:vp:x:r:", &opt_c, &opt_arg)) ==
+    while ((status = apr_getopt(opt, "U:P:f:s:hHm:n:vp:x:r:", &opt_c, &opt_arg)) ==
            APR_SUCCESS) {
 
         switch (opt_c) {
@@ -465,6 +474,9 @@ int serf_get_main(int argc, const char **argv)
             break;
         case 'f':
             req_body_path = opt_arg;
+            break;
+        case 's':
+            req_body_string = opt_arg;
             break;
         case 'h':
             print_usage(pool);
@@ -643,6 +655,7 @@ int serf_get_main(int argc, const char **argv)
     handler_ctx.auth_attempts = 0;
 
     handler_ctx.req_body_path = req_body_path;
+    handler_ctx.req_body_string = req_body_string;
 
     handler_ctx.acceptor = accept_response;
     handler_ctx.acceptor_baton = &app_ctx;
