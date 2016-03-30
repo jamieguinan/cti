@@ -25,6 +25,7 @@
 
 #include "serf.h"
 #include "serf_get.h"
+#include "localptr.h"
 
 /* Add Connection: close header to each request. */
 /* #define CONNECTION_CLOSE_HDR */
@@ -205,6 +206,7 @@ typedef struct {
 #endif
     int print_headers;
     apr_file_t *output_file;
+    String * output_string;
 
     serf_response_acceptor_t acceptor;
     app_baton_t *acceptor_baton;
@@ -338,7 +340,12 @@ static apr_status_t handle_response(serf_request_t *request,
 
         /* got some data. print it out. */
         if (vecs_read) {
-            apr_file_writev(ctx->output_file, vecs, vecs_read, &bytes_written);
+	    if (ctx->output_string) {
+		String_catv(ctx->output_string, vecs, vecs_read);
+	    }
+	    else {
+		apr_file_writev(ctx->output_file, vecs, vecs_read, &bytes_written);
+	    }
         }
 
         /* are we done yet? */
@@ -354,8 +361,13 @@ static apr_status_t handle_response(serf_request_t *request,
                         return status;
 
                     if (vecs_read) {
-                        apr_file_writev(ctx->output_file, vecs, vecs_read,
-                                        &bytes_written);
+			if (ctx->output_string) {
+			    String_catv(ctx->output_string, vecs, vecs_read);
+			}
+			else {
+			    apr_file_writev(ctx->output_file, vecs, vecs_read,
+					    &bytes_written);
+			}
                     }
                     if (APR_STATUS_IS_EOF(status)) {
                         break;
@@ -418,7 +430,8 @@ static void print_usage(apr_pool_t *pool)
 
 static int initialized = 0;
 
-int serf_get_main(int argc, const char **argv)
+/* serf_get is a modification of main() from the original program. */
+int serf_get(int argc, const char **argv, String * output_string)
 {
     apr_status_t status;
     apr_pool_t *pool;
@@ -641,7 +654,12 @@ int serf_get_main(int argc, const char **argv)
 
     handler_ctx.completed_requests = 0;
     handler_ctx.print_headers = print_headers;
-    apr_file_open_stdout(&handler_ctx.output_file, pool);
+    if (output_string) {
+	handler_ctx.output_string = output_string;
+    } 
+    else {
+	apr_file_open_stdout(&handler_ctx.output_file, pool);
+    }
 
     handler_ctx.host = url.hostinfo;
     handler_ctx.method = method;
@@ -696,4 +714,28 @@ int serf_get_main(int argc, const char **argv)
 
     apr_pool_destroy(pool);
     return 0;
+}
+
+/* This is the first interface I had, before I added the output_string
+   parameter. */
+int serf_get_main(int argc, const char **argv)
+{
+    return serf_get(argc, argv, NULL);
+}
+
+/* Setting up the arguments for serf_get() requires some setup, so I
+   put a wrapper around it. Pass NULL for output_string if not expecting
+   a result. */
+int serf_get_command(String * command, String * output_string)
+{
+    localptr(String_list, args) = String_list_value_none();
+    args = String_split(command, " ");
+    int n = String_list_len(args);
+    const char *argv[n];
+    int i;
+    for (i=0; i < n; i++) {
+	argv[i] = s(String_list_get(args, i));
+	// fprintf(stderr, "  argv[%d]: %s\n", i, argv[i]);
+    }
+    return serf_get(n, argv, output_string);
 }
