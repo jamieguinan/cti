@@ -10,6 +10,7 @@
 /* Please see accompanying String.licence for copyright and licensing information. */
 
 #include <string.h>		/* strlen */
+#include <sys/uio.h>		/* struct iovec */
 
 
 typedef struct {
@@ -73,6 +74,7 @@ extern String * String_from_uchar(const unsigned char * init, int init_size);
 extern void String_cat1(String *s, const char *s1);
 extern void String_cat2(String *s, const char *s1, const char *s2);
 extern void String_cat3(String *s, const char *s1, const char *s2, const char *s3);
+extern void String_catv(String *s, struct iovec * vecs, int vecs_read);
 extern void String_trim_right(String *s);
 extern void String_shorten(String *s, int newlength);
 extern void String_append_bytes(String *s, const char *bytes, int count);

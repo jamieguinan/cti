@@ -99,6 +99,15 @@ void String_cat3(String *s, const char *s1, const char *s2, const char *s3)
   s->len = len;
 }
 
+void String_catv(String *s, struct iovec * vecs, int vecs_read)
+{
+  int i;
+  for (i=0; i < vecs_read; i++) {
+    String_append_bytes(s, vecs[i].iov_base, vecs[i].iov_len);
+  }
+}
+
+
 
 void String_set_local(String *s, const char *init)
 {
