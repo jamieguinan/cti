@@ -431,7 +431,7 @@ static void print_usage(apr_pool_t *pool)
 static int initialized = 0;
 
 /* serf_get is a modification of main() from the original program. */
-int serf_get(int argc, const char **argv, String * output_string)
+int serf_get_post(int argc, const char **argv, String * output_string)
 {
     apr_status_t status;
     apr_pool_t *pool;
@@ -459,6 +459,14 @@ int serf_get(int argc, const char **argv, String * output_string)
       apr_initialize();
       atexit(apr_terminate);
       initialized = 1;
+    }
+
+    if (0) {
+      int i;
+      puts("");
+      for (i=0; i < argc; i++) {
+	fprintf(stderr, "  argv[%d]: %s\n", i, argv[i]);
+      }
     }
 
     apr_pool_create(&pool, NULL);
@@ -658,6 +666,7 @@ int serf_get(int argc, const char **argv, String * output_string)
 	handler_ctx.output_string = output_string;
     } 
     else {
+	handler_ctx.output_string = NULL;
 	apr_file_open_stdout(&handler_ctx.output_file, pool);
     }
 
@@ -718,24 +727,42 @@ int serf_get(int argc, const char **argv, String * output_string)
 
 /* This is the first interface I had, before I added the output_string
    parameter. */
-int serf_get_main(int argc, const char **argv)
+int serf_main(int argc, const char **argv)
 {
-    return serf_get(argc, argv, NULL);
+    return serf_get_post(argc, argv, NULL);
 }
 
 /* Setting up the arguments for serf_get() requires some setup, so I
    put a wrapper around it. Pass NULL for output_string if not expecting
    a result. */
-int serf_get_command(String * command, String * output_string)
+int serf_command_get(String * command, String * url, String * output_string)
 {
     localptr(String_list, args) = String_list_value_none();
     args = String_split(command, " ");
     int n = String_list_len(args);
-    const char *argv[n];
+    const char *argv[n+1];
     int i;
     for (i=0; i < n; i++) {
 	argv[i] = s(String_list_get(args, i));
-	// fprintf(stderr, "  argv[%d]: %s\n", i, argv[i]);
     }
-    return serf_get(n, argv, output_string);
+    argv[i] = s(url);
+    return serf_get_post(n+1, argv, output_string);
+}
+
+int serf_command_post_data_string(String * command, String * url, String * post_data, String * output_string)
+{
+    localptr(String_list, args) = String_list_value_none();
+    args = String_split(command, " ");
+    int n = String_list_len(args);
+    const char *argv[n+5];
+    int i;
+    for (i=0; i < n; i++) {
+	argv[i] = s(String_list_get(args, i));
+    }
+    argv[i++] = "-m";
+    argv[i++] = "POST";
+    argv[i++] = "-s";
+    argv[i++] = s(post_data);
+    argv[i++] = s(url);
+    return serf_get_post(n+5, argv, output_string);
 }
