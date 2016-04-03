@@ -17,6 +17,16 @@ int app_code(int argc, char *argv[])
 
   // Template_list(0);
 
+  /* Overwrite argv[0] if ARGV0 is set in the environment and there is
+     enough room in argv[0]. This works for "ps" listings, "pidof",
+     but does not work for "killall". */
+  char * alt_argv0 = getenv("ARGV0");
+  if (alt_argv0 && strlen(alt_argv0) <= strlen(argv[0])) {
+    memset(argv[0], 0, strlen(argv[0]));
+    strcpy(argv[0], alt_argv0);
+    printf("argv[0]:%s\n", argv[0]);
+  }
+
   /* Set up the callback before starting anything else. */
   ui_callback = Callback_new();
 
