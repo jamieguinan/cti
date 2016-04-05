@@ -14,7 +14,8 @@ extern void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_token
 
 #define jsf(s, t) ((t).end-(t).start),((s)+(t).start)
 
-extern void jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_tokens_ptr);
+extern void jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_tokens_ptr,
+			     int * allocated_tokens_ptr);
 extern void jsmn_parse_free(jsmntok_t ** tokens_ptr, int * num_tokens_ptr);
 
 typedef struct {
@@ -22,6 +23,7 @@ typedef struct {
      during parsing and dispatch. */
   String * js_str;
   jsmntok_t * tokens;
+  int allocated_tokens;
   int num_tokens;
   String * result;
   /* Auxillary file descriptors and flags. */

@@ -125,26 +125,28 @@ int jsmn_lookup_int(JsmnContext * jc, const char * key, int * value)
 }
 
 
-void jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_tokens_ptr)
+void jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_tokens_ptr,
+		      int * allocated_tokens_ptr)
 {
   jsmn_parser parser;
-  int num_tokens = 8;
-  jsmntok_t * tokens = Mem_malloc(num_tokens * sizeof(*tokens));
+  int allocated_tokens = 8;
+  jsmntok_t * tokens = Mem_malloc(allocated_tokens * sizeof(*tokens));
   int n;
 
   while (1) {
     jsmn_init(&parser);
-    n = jsmn_parse(&parser, s(json_str), String_len(json_str), tokens, num_tokens);
+    n = jsmn_parse(&parser, s(json_str), String_len(json_str), tokens, allocated_tokens);
     if (n >= 0) {
       //fprintf(stderr, "jsmn_dispatch sees %d tokens\n", n);
       *tokens_ptr = tokens;
       *num_tokens_ptr = n;
+      *allocated_tokens_ptr = allocated_tokens;
       break;
     }
     else if (n == JSMN_ERROR_NOMEM) {
-      num_tokens *= 2;
-      //fprintf(stderr, "num_tokens=%d\n", num_tokens);
-      tokens = Mem_realloc(tokens, num_tokens * sizeof(*tokens));
+      allocated_tokens *= 2;
+      //fprintf(stderr, "allocated_tokens=%d\n", allocated_tokens);
+      tokens = Mem_realloc(tokens, allocated_tokens * sizeof(*tokens));
     }
     else {
       fprintf(stderr, "jsmn_parse error %d\n", n);
@@ -164,7 +166,7 @@ JsmnContext * JsmnContext_new(void)
 void JsmnContext_parse(JsmnContext *jc, String * js)
 {
   jc->js_str = String_dup(js);
-  jsmn_parse_alloc(js, &jc->tokens, &jc->num_tokens);
+  jsmn_parse_alloc(js, &jc->tokens, &jc->num_tokens,  &jc->allocated_tokens);
 }
 
 
@@ -190,20 +192,21 @@ void jsmn_dispatch(JsmnContext * jc, const char * firstkey,
   jsmn_parser parser;
   int n;
 
-  jc->num_tokens = 8;
-  jc->tokens = Mem_malloc(jc->num_tokens * sizeof(*jc->tokens));
+  jc->allocated_tokens = 8;
+  jc->tokens = Mem_malloc(jc->allocated_tokens * sizeof(*jc->tokens));
 
   while (1) {
     jsmn_init(&parser);
-    n = jsmn_parse(&parser, s(jc->js_str), String_len(jc->js_str), jc->tokens, jc->num_tokens);
+    n = jsmn_parse(&parser, s(jc->js_str), String_len(jc->js_str), jc->tokens, jc->allocated_tokens);
     if (n >= 0) {
       //fprintf(stderr, "jsmn_dispatch sees %d tokens\n", n);
+      jc->num_tokens = n;
       break;
     }
     else if (n == JSMN_ERROR_NOMEM) {
-      jc->num_tokens *= 2;
-      //fprintf(stderr, "num_tokens=%d\n", num_tokens);
-      jc->tokens = Mem_realloc(jc->tokens, jc->num_tokens * sizeof(*jc->tokens));
+      jc->allocated_tokens *= 2;
+      //fprintf(stderr, "allocated_tokens=%d\n", allocated_tokens);
+      jc->tokens = Mem_realloc(jc->tokens, jc->allocated_tokens * sizeof(*jc->tokens));
     }
     else {
       fprintf(stderr, "jsmn_parse error %d\n", n);
@@ -213,7 +216,7 @@ void jsmn_dispatch(JsmnContext * jc, const char * firstkey,
   
   // jsmn_dump_verbose(json_str, tokens, n, n);
   
-  if (n >= 3
+  if (jc->num_tokens  >= 3
       && jc->tokens[0].type == JSMN_OBJECT
       && jc->tokens[1].type == JSMN_STRING
       && jc->tokens[1].size == 1
@@ -238,7 +241,7 @@ String * jsmn_lookup_string(JsmnContext * jc, const char * key)
   if (jsmn_extra_verbose) {
     jsmn_dump_verbose(jc->js_str, jc->tokens, jc->num_tokens, jc->num_tokens);
   }
-
+  fprintf(stderr, "%s:%d num_tokens=%d\n", __func__, __LINE__, jc->num_tokens);
   for (i=1; i < (jc->num_tokens-1); i+=2) {
     if (jsmn_extra_verbose) {
       fprintf(stderr, "%s: %.*s (want %s) %.*s (%d %d)\n",
