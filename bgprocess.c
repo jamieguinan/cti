@@ -212,5 +212,8 @@ void bgreap(void)
     if (rc > 0) {
       fprintf(stderr, "reaped pid %d\n", rc);
     }
-  } while (rc != 0);
+    else if (rc == -1) {
+      perror("waitpid");
+    }
+  } while (rc >= 0);
 }
