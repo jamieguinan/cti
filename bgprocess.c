@@ -2,6 +2,7 @@
 #include <unistd.h>		/* fork */
 #include <string.h>		/* strlen, strcpy */
 #include <stdio.h>		/* fprintf, NULL */
+#include <stdlib.h>		/* exit */
 #include <sys/types.h>		/* kill, wait */
 #include <signal.h>		/* kill */
 #include <sys/wait.h>		/* wait */
@@ -20,6 +21,9 @@ void bgstartv(char * args[], int * pidptr)
   case 0:
     /* child */
     execvp(args[0], args);
+    fprintf(stderr, "*** failed to exec %s\n", args[0]);
+    perror("execvp");
+    exit(1);
     break;
   default:
     /* parent */
@@ -34,7 +38,7 @@ void bgstart(const char * cmdline, int * pidptr)
 {
   char *args[64];
   int cclen = strlen(cmdline)+1;
-  //printf("cmdcopy is %d bytes\n", cclen);
+  //fprintf(stderr, "cmdcopy is %d bytes\n", cclen);
   char cmdcopy[cclen];
   strcpy(cmdcopy, cmdline);
   char *p = cmdcopy;
@@ -76,7 +80,7 @@ void bgstart(const char * cmdline, int * pidptr)
 
   int j;
   for (j=0; j < i; j++) {
-    printf("argvs[%d]: %s\n", j, args[j]);
+    fprintf(stderr, "argvs[%d]: %s\n", j, args[j]);
   }
 
   bgstartv(args, pidptr);
@@ -123,7 +127,7 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
 
     if (ischild) {
       rc = waitpid(pid, &status, WNOHANG);
-      // printf("waitpid(%d) returns %d, status=%d\n", pid, rc, status);
+      // fprintf(stderr, "waitpid(%d) returns %d, status=%d\n", pid, rc, status);
       if (rc == pid) {
 	if (WIFEXITED(status)) { 
 	  fprintf(stderr, "pid %d has exited\n", pid);
