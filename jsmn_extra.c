@@ -241,7 +241,6 @@ String * jsmn_lookup_string(JsmnContext * jc, const char * key)
   if (jsmn_extra_verbose) {
     jsmn_dump_verbose(jc->js_str, jc->tokens, jc->num_tokens, jc->num_tokens);
   }
-  fprintf(stderr, "%s:%d num_tokens=%d\n", __func__, __LINE__, jc->num_tokens);
   for (i=1; i < (jc->num_tokens-1); i+=2) {
     if (jsmn_extra_verbose) {
       fprintf(stderr, "%s: %.*s (want %s) %.*s (%d %d)\n",
