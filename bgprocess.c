@@ -215,5 +215,5 @@ void bgreap(void)
     else if (rc == -1) {
       perror("waitpid");
     }
-  } while (rc >= 0);
+  } while (rc > 0);
 }
