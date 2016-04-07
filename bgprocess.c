@@ -221,3 +221,14 @@ void bgreap(void)
     }
   } while (rc > 0);
 }
+
+int bgreap_one(void)
+{
+  int status;
+  int rc;
+  rc = waitpid(-1, &status, WNOHANG);
+  if (rc > 0) {
+    fprintf(stderr, "reaped pid %d\n", rc);
+  }
+  return rc;
+}
