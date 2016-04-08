@@ -103,7 +103,6 @@ OBJS= \
 	Audio.o \
 	Numbers.o \
 	Null.o \
-	Control.o \
 	Effects01.o \
 	SocketRelay.o \
 	SocketServer.o \
