@@ -89,8 +89,8 @@ static int set_show_text(Instance *pi, const char *value)
 {
   CairoContext_private *priv = (CairoContext_private *)pi;
 
-  if (priv->text) {
-    String_free(&priv->text);
+  if (!String_is_none(priv->text)) {
+    String_clear(&priv->text);
   }
   //priv->text = String_new(value);
   priv->text = String_unescape(SC(value));
@@ -385,6 +385,8 @@ static void CairoContext_tick(Instance *pi)
 
 static void CairoContext_instance_init(Instance *pi)
 {
+  CairoContext_private *priv = (CairoContext_private *)pi;
+  priv->text = String_value_none();
 }
 
 

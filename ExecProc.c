@@ -34,9 +34,7 @@ static int set_proc(Instance *pi, const char *value)
 {
   ExecProc_private *priv = (ExecProc_private *)pi;
 
-  if (priv->proc) {
-    String_free(&priv->proc);
-  }
+  String_free(&priv->proc);
 
   fprintf(stderr, "%s(%s)\n", __func__, value);
   priv->proc = String_new(value);
