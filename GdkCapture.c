@@ -98,6 +98,7 @@ static void check_files(Instance *pi)
   
   /* Poll for file, because I don't have a good IPC mechanism yet. */
   if (priv->filename == 0L || 
+      String_is_none(priv->filename) || 
       access(priv->filename->bytes, R_OK) != 0) {
     nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/100}, NULL);
     return;
