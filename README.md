@@ -104,7 +104,7 @@ There are a few files that I've imported into CTI that I did not write.
 
 ### Some notes about the code
 
-Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget`. And `NVidiaCUDA.c`, yeah, never did anything with that.
+Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget` (and then later importing `serf_get.c`). And `NVidiaCUDA.c`, yeah, never did anything with that.
 
 There are a few C files that aren't part of CTI, which I wrote for testing, and may or may not have compiled in a long time, but I keep them in the project for possible future reference. I moved some of them into the `basement/` subfolder.
 
