@@ -20,12 +20,11 @@ So, CTI is *a modular, multi-threaded, message-passing, runtime-configurable pro
 
 If you're looking for bigger, well-established projects in the same space, that let you instantiate and plug parts together to do things, here are a few that come to mind,
 
+* [PureData](https://puredata.info/)
 * [gstreamer](https://gstreamer.freedesktop.org/)
 * [ecasound](http://eca.cx/ecasound/index.php)
 * [Processing](https://processing.org/)
 * [Scratch](https://scratch.mit.edu/)
-
-And you could probably find some interesting applications built on [Node.js](https://nodejs.org/).
 
 I am of course aware of C++, and I spent a few years as a serious aficionado of the language, but I came back to C and have mostly stuck with it. I won't get into the C vs. C++ debate here, but I do acknowledge that several features in CTI could have been implemented more concisely in C++. My philosophy is "each to his own", whatever tools and language a developer is most familiar and comfortable with, are the best.
 
@@ -111,17 +110,46 @@ There are a few C files that aren't part of CTI, which I wrote for testing, and 
 
 Since I use CTI modules in other projects, it has also become convenient place for modules that aren't (yet) built into CTI, but are used in more than one external project. `jsmn_misc.c`, `dbutil.c`, and a few others.
 
-`String.c` takes care of one the more error-prone areas of C programming, handling strings and lists of strings. My favorite function there is `String_sprintf()`, which does pretty much what you would expect. There is a special value returned by the function `String_value_none()`, which can be used for,
+`String.c` handles strings and lists of strings. My favorite function there is `String_sprintf()`, which does pretty much what you would expect. There is a special value returned by the function `String_value_none()`, which can be used for,
 
  * initializing `String *` variables
  * as a return value from functions that failed to produce a result, and
  * for comparison via the function `String_is_none()`
 
-The advantage over using `NULL` is that it points to a legitimate `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
+The advantage over using `NULL` is that it points to an existing fixed `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
 
-The `Makefile` isn't very tidy. There is some scaffolding and artifacts left over from different Linux platforms that I've experimented with.
+This is similar in some ways to [NSULL](https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSNull_Class/index.html#//apple_ref/occ/cl/NSNull) in Apple's Objective-C libraries. It provides a singleton object that can be assigned, and compared against. In my case, it protects me from segfaults in my imperfect code, and in Apple's case, it can be used in instances where `NULL` or `nil` is not allowed.
 
-Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function, where you may find `String_clear()` calls for each of the local `String *` variables in said function.
+<del>Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function, where you may find `String_clear()` calls for each of the local `String *` variables in said function.</del>
+
+In early 2016, I [read about](https://plus.google.com/+LennartPoetteringTheOneAndOnly/posts/jHPAdLJiw23) a C extension that allows code to define "cleanup" functions for local variables. Its been available in GCC probably for decades, and is also supported in CLANG. For my purposes, I came up with a one-line macro that I put in a header file called `localptr.h`,
+
+    #define localptr(_type, _var) _type * _var __attribute__ ((__cleanup__( _type ## _free )))
+
+and I use it to declare variables like this,
+
+    localptr(String, result) = String_value_none();
+
+which expands to,
+
+    String * result __attribute__ ((__cleanup__( String_free ))) = String_value_none();
+
+where previously I had done,
+
+    String * result = String_value_none();
+    /* ... */
+    /* Code, possibly including 'goto out;' */
+    /* ... */
+    out:
+    String_free(&result);
+
+For `String *` variables, I simply need to provide this function,
+
+    void String_free(String **s)
+
+I love this. I still keep my code simple and close to the left margin, but I no longer have to use goto's and *one explicit cleanup call per local variable*. I sometimes think about writing a blog post explaing why I choose to use C over C++, I'll write more about this if I get around to it.
+
+Moving on, the `Makefile` isn't very tidy. There is some scaffolding and artifacts left over from different Linux platforms that I've experimented with.
 
 I had an experimental project called "modc" in the late 2000s, which implemented garbage collection by means of reference-counting allocations, keeping track of types, and leveraging the descending property of stack variable addresses (on most platforms) to periodically clean up dynamically allocated objects. It worked great, and I even wrote an sshfs-compatible (but non-encrypted) SFTP server completely from scratch with it, but the other goals of the modc project didn't pan out, so I abandoned it. I might try reviving some of the modc concepts in CTI one day.
 
