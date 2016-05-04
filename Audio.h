@@ -29,8 +29,9 @@ typedef struct {
 
 typedef struct {
   Audio_params header;
+  uint8_t *data;		/* Might be better if this was `void *` */
   uint64_t data_length;
-  uint8_t *data;
+  uint64_t num_frames;		/* convenience member */
   double timestamp;
   int seq;
 } Audio_buffer;
