@@ -50,6 +50,7 @@ static int channels[] = {
   12,				/* envy24 output (note: input is 10 channels) */
 };
 
+/* Note that formats table here does *not* define number of channels. */
 static struct {
   const char *label;
   snd_pcm_format_t value;
@@ -72,11 +73,60 @@ typedef struct {
 static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rate, int channels, const char * format,
 			       snd_pcm_stream_t mode)
 {
+  int rc;
+  int i;
+
   String_free(&aic->device);
   aic->device = String_new(device);
   aic->rate = rate;
   aic->channels = channels;
   aic->mode = mode;
+
+  if (aic->handle) {
+    fprintf(stderr, "%s: handle should be initialized NULL\n", __func__);
+    return;
+  }
+
+  rc = snd_pcm_open(&aic->handle, device, aic->mode, 0);
+  if (rc < 0) {
+    fprintf(stderr, "*** snd_pcm_open %s: %s\n", device, snd_strerror(rc));
+    return;
+  }
+
+  rc = snd_pcm_hw_params_set_rate(aic->handle, aic->hwparams, aic->rate, 0);
+  if (rc == 0) {
+    fprintf(stderr, "rate set to %d\n", rate);
+  }
+  else {
+    fprintf(stderr, "*** error setting rate %d (%s)\n", rate, snd_strerror(rc));
+  }
+  
+  rc = snd_pcm_hw_params_set_channels(aic->handle, aic->hwparams, channels);
+  
+  if (rc == 0) {
+    fprintf(stderr, "channels set to %d\n", channels);
+    aic->channels = channels;
+  }
+  else {
+    fprintf(stderr, "*** error setting channels %d (%s)\n", channels, snd_strerror(rc));
+  }
+
+  for (i=0; i < table_size(formats); i++) {
+    if (streq(formats[i].label, format)) {
+      rc = snd_pcm_hw_params_set_format(aic->handle, aic->hwparams, formats[i].value);
+      if (rc < 0) {
+	fprintf(stderr, "*** snd_pcm_hw_params_set_format %s: %s\n", s(aic->device), snd_strerror(rc));
+      }
+      else {
+	fprintf(stderr, "format set to %s\n", format);
+	aic->format = formats[i].value;
+	aic->atype = formats[i].atype;
+	aic->format_bytes = formats[i].bytes;
+      }
+      break;
+    }
+  }  
+
 }
 			       
 void ALSAio_open_playback(ALSAio_common * aic, const char * device, int rate, int channels, const char * format)
@@ -101,24 +151,49 @@ static const char * state_str[] = {
   [SND_PCM_STATE_DISCONNECTED] = "SND_PCM_STATE_DISCONNECTED",
 };
 
-Audio_buffer * ALSAio_get_samples(ALSAio_common * aic)
+
+static void ALSA_buffer_io(ALSAio_common * aic, 
+			   uint8_t * buffer,
+			   int buffer_size,
+			   int * bytes_transferred,
+			   ALSAio_rw_enum rw)
 {
-  /* Read a block of audio data. */
   int rc;
   snd_pcm_sframes_t n;
   int state;
-  snd_pcm_uframes_t frames = aic->frames_per_io;
-  int dir = 0;
+  int dir = 0;			/* Returned by *_near() calls. */
+
+  *bytes_transferred = 0;	/* Start with 0, for simple return on error. */
+
+  if (!aic->rate) {
+    fprintf(stderr, "%s: error - rate is 0!\n", __func__);
+    aic->enable = 0;
+    return;
+  }
+
+  if (!aic->channels) {
+    fprintf(stderr, "%s: error - channels is 0!\n", __func__);
+    aic->enable = 0;
+    return;
+  }
+
+  if (!aic->format_bytes) {
+    fprintf(stderr, "%s: error - format_bytes is 0!\n", __func__);
+    aic->enable = 0;
+    return;
+  }
 
   state = snd_pcm_state(aic->handle);
 
-  dpf("%s: state=%d\n", __func__, state_str[state]);
-
   if (state == SND_PCM_STATE_OPEN || state == SND_PCM_STATE_SETUP) {
-    /* One time capture setup. */
+    /* One time setup. */
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
+    snd_pcm_uframes_t frames = aic->frames_per_io;
 
     rc = snd_pcm_hw_params_set_period_size_near(aic->handle, aic->hwparams, &frames, &dir);
-    fprintf(stderr, "%s: set_period_size_near returns %d (frames=%d)\n", __func__, rc, (int)frames);
+    fprintf(stderr, "%s: set_period_size_near returns %d (frames %d -> %d) dir=%d\n", 
+	    __func__, rc, (int)aic->frames_per_io, (int)frames, dir);
+    aic->frames_per_io = frames;
 
     rc = snd_pcm_hw_params(aic->handle, aic->hwparams);
     if (rc < 0) {
@@ -126,87 +201,69 @@ Audio_buffer * ALSAio_get_samples(ALSAio_common * aic)
     }
 
     state = snd_pcm_state(aic->handle);
-    fprintf(stderr, "%s: state=%d\n", __func__, state);
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
 
     rc = snd_pcm_prepare(aic->handle);
     state = snd_pcm_state(aic->handle);
-    fprintf(stderr, "%s: state=%d\n", __func__, state);
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
 
     /* Initialize running_timestamp. */
     getdoubletime(&aic->running_timestamp);
   }
 
-  snd_pcm_hw_params_get_period_size(aic->hwparams, &frames, &dir);
-  int size = frames * aic->format_bytes * aic->channels;
+  if (state != SND_PCM_STATE_PREPARED) {
+    fprintf(stderr, "%s: error - wrong state %s\n", __func__, state_str[state]);
+    aic->enable = 0;
+    return;
+  }
 
-  if (!size) {
-    // This can happen if channels or format_bytes was not set...
-    fprintf(stderr, "%s: size error - %ld * %d * %d\n", __func__, frames , aic->format_bytes , aic->channels);
-    while (1) {
-      sleep(1);
+  snd_pcm_uframes_t frames_to_transfer = 0;
+
+  if (rw == ALSAIO_READ) {
+    rc = snd_pcm_hw_params_get_period_size(aic->hwparams, &frames_to_transfer, &dir);
+    if (rc != 0) {
+      fprintf(stderr, "*** %s: %s\n", __func__, snd_strerror(rc));
+      return;
     }
-  }
 
-  if (!aic->rate) {
-    fprintf(stderr, "%s: error - rate is 0!\n", __func__);
-    while (1) {
-      sleep(1);
+    if (frames_to_transfer * aic->format_bytes * aic->channels > buffer_size) {
+      fprintf(stderr, "*** %s: buffer_size %d is too small!\n",
+	      __func__, buffer_size);
+      return;
     }
+    n = snd_pcm_readi(aic->handle, buffer, frames_to_transfer);
+  }
+  else if (rw == ALSAIO_WRITE) {
+    frames_to_transfer = buffer_size/(aic->format_bytes * aic->channels);;
+    /* Using blocking mode. */
+    n = snd_pcm_writei(aic->handle, buffer, frames_to_transfer);
   }
 
-  /* Allocate buffer for PCM samples. */
-  uint8_t *buffer = Mem_malloc(size+1);
-  buffer[size] = 0x55;
-
-  //int val = hwparams->rate;
-  //snd_pcm_hw_params_get_period_time(params, &val, &dir);
-
-  /* Read the data. */
-  n = snd_pcm_readi(aic->handle, buffer, frames);
-
-  if (buffer[size] != 0x55)  {
-    fprintf(stderr, "*** overwrote audio buffer!\n");
-  }
-
-  if (n != frames) {
-    fprintf(stderr, "*** snd_pcm_readi %s: %s\n", s(aic->device), snd_strerror((int)n));
+  if (n != frames_to_transfer) {
+    fprintf(stderr, "*** snd_pcm_%s %s: %s\n",
+	    rw == ALSAIO_READ ? "readi":"writei",
+	    s(aic->device), 
+	    snd_strerror((int)n));
     fprintf(stderr, "*** attempting snd_pcm_prepare() to correct...\n");
     snd_pcm_prepare(aic->handle);
   }
   else {
-    // fprintf(stderr, "*** read %d frames\n", (int) n);
-
-    double calculated_period = frames*1.0/(aic->rate);
-
-    aic->running_timestamp += calculated_period;
-    
-    double tnow;
-    getdoubletime(&tnow);
-
-    /* Do coarse adjustment if necessary, this can happen after a
-       system date change via ntp or htpdate. */
-    if (fabs(aic->running_timestamp - tnow) > 5.0) {
-      fprintf(stderr, "coarse timestamp adjustment, %.3f -> %.3f\n",
-	     aic->running_timestamp, tnow);
-      aic->running_timestamp = tnow;
-    }
-
-    /* Adjust running timestamp if it slips too far either way.  Smoothing, I guess. */
-    if (aic->running_timestamp - tnow > calculated_period) {
-      fprintf(stderr, "- running timestamp\n");
-      fprintf(stderr, "aic->rate=%d,  %.3f - %.3f > %.5f : - running timestamp\n", 
-	     aic->rate, 
-	     aic->running_timestamp , tnow , calculated_period);
-      aic->running_timestamp -= (calculated_period/2.0);      
-    }
-    else if (tnow - aic->running_timestamp > calculated_period) {
-      fprintf(stderr, "aic->rate=%d, %.3f - %.3f > %.5f : + running timestamp\n",
-	     aic->rate, 
-	     tnow , aic->running_timestamp , calculated_period);
-      aic->running_timestamp += (calculated_period/2.0);
-    }
+    *bytes_transferred = (n * frames_to_transfer * aic->format_bytes);
   }
-  return NULL;
+}
+
+
+Audio_buffer * ALSAio_get_samples(ALSAio_common * aic)
+{
+  Audio_buffer * ab = NULL;
+  uint8_t buffer[32768];
+  int transferred = 0;
+  ALSA_buffer_io(aic, buffer, sizeof(buffer), &transferred, ALSAIO_READ);
+  if (transferred) {
+    ab = Audio_buffer_new(aic->rate, aic->channels, aic->atype);
+    Audio_buffer_add_samples(ab, buffer, transferred);
+  }
+  return ab;
 }
 
 
@@ -314,7 +371,7 @@ static void get_device_range(Instance *pi, Range *range)
       }
       desc = File_load_text(s);
 
-      fprintf(stderr, "%s %s -> %s\n", hw->bytes, s->bytes, desc->bytes);
+      fprintf(stderr, "%s %s -> %s", hw->bytes, s->bytes, desc->bytes);
 
       String_free(&s);
 
@@ -584,6 +641,7 @@ static void Wav_handler(Instance *pi, void *data)
   }
 
   state = snd_pcm_state(priv->c.handle);
+  dpf("%s: state(1)=%s\n", __func__, state_str[state]);
 
   if (state == SND_PCM_STATE_OPEN || state == SND_PCM_STATE_SETUP) {
     /* One time playback setup. */
@@ -593,7 +651,7 @@ static void Wav_handler(Instance *pi, void *data)
        work? */
     snd_pcm_uframes_t frames =  priv->c.frames_per_io;
 
-    fprintf(stderr, "state=%d\n", state);
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
 
     rc = snd_pcm_hw_params_set_period_size_near(priv->c.handle, priv->c.hwparams, &frames, &dir);
     fprintf(stderr, "set_period_size_near returns %d (frames=%d)\n", rc, (int)frames);
@@ -611,12 +669,14 @@ static void Wav_handler(Instance *pi, void *data)
     }
 
     state = snd_pcm_state(priv->c.handle);
-    fprintf(stderr, "state=%d\n", state);
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
 
     rc = snd_pcm_prepare(priv->c.handle);
     state = snd_pcm_state(priv->c.handle);
-    fprintf(stderr, "state=%d\n", state);
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
   }
+
+  dpf("%s: state(2)=%s\n", __func__, state_str[state]);
 
   int out_frames = wav_in->data_length / (priv->c.channels * priv->c.format_bytes);
   int frames_written = 0;
@@ -781,12 +841,15 @@ static void ALSACapture_tick(Instance *pi)
 
   state = snd_pcm_state(priv->c.handle);
 
+  dpf("%s: state(1)=%s\n", __func__, state_str[state]);
+
   if (state == SND_PCM_STATE_OPEN || state == SND_PCM_STATE_SETUP) {
     /* One time capture setup. */
-    fprintf(stderr, "%s: state=%d\n", __func__, state);
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
 
     rc = snd_pcm_hw_params_set_period_size_near(priv->c.handle, priv->c.hwparams, &frames, &dir);
-    fprintf(stderr, "%s: set_period_size_near returns %d (frames=%d)\n", __func__, rc, (int)frames);
+    fprintf(stderr, "%s: set_period_size_near returns %d (frames %d:%d)\n", 
+	    __func__, rc, (int)priv->c.frames_per_io, (int)frames);
 
     rc = snd_pcm_hw_params(priv->c.handle, priv->c.hwparams);
     if (rc < 0) {
@@ -794,11 +857,11 @@ static void ALSACapture_tick(Instance *pi)
     }
 
     state = snd_pcm_state(priv->c.handle);
-    fprintf(stderr, "%s: state=%d\n", __func__, state);
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
 
     rc = snd_pcm_prepare(priv->c.handle);
     state = snd_pcm_state(priv->c.handle);
-    fprintf(stderr, "%s: state=%d\n", __func__, state);
+    fprintf(stderr, "%s: state=%s\n", __func__, state_str[state]);
 
     /* Initialize running_timestamp. */
     getdoubletime(&priv->c.running_timestamp);
@@ -840,72 +903,74 @@ static void ALSACapture_tick(Instance *pi)
     fprintf(stderr, "*** snd_pcm_readi %s: %s\n", s(priv->c.device), snd_strerror((int)n));
     fprintf(stderr, "*** attempting snd_pcm_prepare() to correct...\n");
     snd_pcm_prepare(priv->c.handle);
+    goto out;
   }
-  else {
-    // fprintf(stderr, "*** read %d frames\n", (int) n);
 
-    double calculated_period = frames*1.0/(priv->c.rate);
-
-    priv->c.running_timestamp += calculated_period;
-    
-    double tnow;
-    getdoubletime(&tnow);
-
-    /* Do coarse adjustment if necessary, this can happen after a
-       system date change via ntp or htpdate. */
-    if (fabs(priv->c.running_timestamp - tnow) > 5.0) {
-      fprintf(stderr, "coarse timestamp adjustment, %.3f -> %.3f\n",
-	     priv->c.running_timestamp, tnow);
-      priv->c.running_timestamp = tnow;
-    }
-
-    /* Adjust running timestamp if it slips too far either way.  Smoothing, I guess. */
-    if (priv->c.running_timestamp - tnow > calculated_period) {
-      fprintf(stderr, "- running timestamp\n");
-      fprintf(stderr, "priv->c.rate=%d,  %.3f - %.3f > %.5f : - running timestamp\n", 
-	     priv->c.rate, 
-	     priv->c.running_timestamp , tnow , calculated_period);
-      priv->c.running_timestamp -= (calculated_period/2.0);      
-    }
-    else if (tnow - priv->c.running_timestamp > calculated_period) {
-      fprintf(stderr, "priv->c.rate=%d, %.3f - %.3f > %.5f : + running timestamp\n",
-	     priv->c.rate, 
-	     tnow , priv->c.running_timestamp , calculated_period);
-      priv->c.running_timestamp += (calculated_period/2.0);
-    }
-
-    int buffer_bytes = n * priv->c.format_bytes * priv->c.channels;
-    if (pi->outputs[OUTPUT_AUDIO].destination) {
-      Audio_buffer * audio = Audio_buffer_new(priv->c.rate,
-					      priv->c.channels, priv->c.atype);
-      Audio_buffer_add_samples(audio, buffer, buffer_bytes);
-      audio->timestamp = priv->c.running_timestamp;
-      fprintf(stderr, "posting audio buffer %d bytes\n", buffer_bytes);
-      PostData(audio, pi->outputs[OUTPUT_AUDIO].destination);
-      /* TESTING: disable after posting once */
-      //pi->outputs[OUTPUT_AUDIO].destination = NULL;
-    }
-
-    if (pi->outputs[OUTPUT_WAV].destination) {
-      Wav_buffer *wav = Wav_buffer_new(priv->c.rate, priv->c.channels, priv->c.format_bytes);
-      wav->timestamp = priv->c.running_timestamp;
-
-      dpf("%s allocated wav @ %p\n", __func__, wav);
-      wav->data = buffer;  buffer = 0L;	/* Assign, do not free below. */
-      wav->data_length = buffer_bytes;
-      Wav_buffer_finalize(wav);
-
-      if (priv->c.analyze) {
-	analyze_rate(priv, wav);
-      }
-
-      PostData(wav, pi->outputs[OUTPUT_WAV].destination);
-      static int x = 0;
-      wav->seq = x++;
-      wav = 0L;
-    }
+  // fprintf(stderr, "*** read %d frames\n", (int) n);
+  
+  double calculated_period = frames*1.0/(priv->c.rate);
+  
+  priv->c.running_timestamp += calculated_period;
+  
+  double tnow;
+  getdoubletime(&tnow);
+  
+  /* Do coarse adjustment if necessary, this can happen after a
+     system date change via ntp or htpdate. */
+  if (fabs(priv->c.running_timestamp - tnow) > 5.0) {
+    fprintf(stderr, "coarse timestamp adjustment, %.3f -> %.3f\n",
+	    priv->c.running_timestamp, tnow);
+    priv->c.running_timestamp = tnow;
   }
   
+  /* Adjust running timestamp if it slips too far either way.  Smoothing, I guess. */
+  if (priv->c.running_timestamp - tnow > calculated_period) {
+    fprintf(stderr, "- running timestamp\n");
+    fprintf(stderr, "priv->c.rate=%d,  %.3f - %.3f > %.5f : - running timestamp\n", 
+	    priv->c.rate, 
+	    priv->c.running_timestamp , tnow , calculated_period);
+    priv->c.running_timestamp -= (calculated_period/2.0);      
+  }
+  else if (tnow - priv->c.running_timestamp > calculated_period) {
+    fprintf(stderr, "priv->c.rate=%d, %.3f - %.3f > %.5f : + running timestamp\n",
+	    priv->c.rate, 
+	    tnow , priv->c.running_timestamp , calculated_period);
+    priv->c.running_timestamp += (calculated_period/2.0);
+  }
+  
+  int buffer_bytes = n * priv->c.format_bytes * priv->c.channels;
+  
+  if (pi->outputs[OUTPUT_AUDIO].destination) {
+    Audio_buffer * audio = Audio_buffer_new(priv->c.rate,
+					    priv->c.channels, priv->c.atype);
+    Audio_buffer_add_samples(audio, buffer, buffer_bytes);
+    audio->timestamp = priv->c.running_timestamp;
+    //fprintf(stderr, "posting audio buffer %d bytes\n", buffer_bytes);
+    PostData(audio, pi->outputs[OUTPUT_AUDIO].destination);
+    /* TESTING: disable after posting once */
+    //pi->outputs[OUTPUT_AUDIO].destination = NULL;
+  }
+  
+  if (pi->outputs[OUTPUT_WAV].destination) {
+    Wav_buffer *wav = Wav_buffer_new(priv->c.rate, priv->c.channels, priv->c.format_bytes);
+    wav->timestamp = priv->c.running_timestamp;
+    
+    dpf("%s allocated wav @ %p\n", __func__, wav);
+    wav->data = buffer;  buffer = 0L;	/* Assign, do not free below. */
+    wav->data_length = buffer_bytes;
+    Wav_buffer_finalize(wav);
+    
+    if (priv->c.analyze) {
+      analyze_rate(priv, wav);
+    }
+    
+    PostData(wav, pi->outputs[OUTPUT_WAV].destination);
+    static int x = 0;
+    wav->seq = x++;
+    wav = 0L;
+  }
+
+ out:
   if (buffer) {
     Mem_free(buffer);
   }

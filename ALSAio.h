@@ -7,6 +7,8 @@
 
 extern void ALSAio_init(void);
 
+typedef enum { ALSAIO_READ=1, ALSAIO_WRITE } ALSAio_rw_enum;
+
 typedef struct {
   snd_pcm_t *handle;
   String * device;		/* "hw:0", etc. */
