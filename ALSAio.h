@@ -37,6 +37,8 @@ typedef struct {
   
 } ALSAio_common;
 
+extern const char * ALSAio_state_to_string(int state);
+extern int ALSAio_set_format_string(ALSAio_common * aic, const char * format);
 extern void ALSAio_open_playback(ALSAio_common * aic, const char * device, int rate, int channels, const char * format);
 extern void ALSAio_open_capture(ALSAio_common * aic, const char * device, int rate, int channels, const char * format);
 extern Audio_buffer * ALSAio_get_samples(ALSAio_common * aic);

@@ -74,7 +74,6 @@ static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rat
 			       snd_pcm_stream_t mode)
 {
   int rc;
-  int i;
 
   String_free(&aic->device);
   aic->device = String_new(device);
@@ -111,6 +110,13 @@ static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rat
     fprintf(stderr, "*** error setting channels %d (%s)\n", channels, snd_strerror(rc));
   }
 
+  rc = ALSAio_set_format_string(aic, format);
+}
+
+int ALSAio_set_format_string(ALSAio_common * aic, const char * format)
+{
+  int i;
+  int rc = -1;
   for (i=0; i < table_size(formats); i++) {
     if (streq(formats[i].label, format)) {
       rc = snd_pcm_hw_params_set_format(aic->handle, aic->hwparams, formats[i].value);
@@ -126,7 +132,7 @@ static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rat
       break;
     }
   }  
-
+  return rc;
 }
 			       
 void ALSAio_open_playback(ALSAio_common * aic, const char * device, int rate, int channels, const char * format)
@@ -151,6 +157,13 @@ static const char * state_str[] = {
   [SND_PCM_STATE_DISCONNECTED] = "SND_PCM_STATE_DISCONNECTED",
 };
 
+const char * ALSAio_state_to_string(int state)
+{
+  if (state < 0 || state > SND_PCM_STATE_LAST) {
+    return "UNKNOWN_STATE";
+  }
+  return state_str[state];
+}
 
 static void ALSA_buffer_io(ALSAio_common * aic, 
 			   uint8_t * buffer,
@@ -486,7 +499,6 @@ static void get_channels_range(Instance *pi, Range *range)
 
 static int set_format(Instance *pi, const char *value)
 {
-  int i;
   int rc = -1;
   ALSAio_private *priv = (ALSAio_private *)pi;
   char tmp[strlen(value)+1];
@@ -504,21 +516,7 @@ static int set_format(Instance *pi, const char *value)
     }
   }
 
-  for (i=0; i < table_size(formats); i++) {
-    if (streq(formats[i].label, tmp)) {
-      rc = snd_pcm_hw_params_set_format(priv->c.handle, priv->c.hwparams, formats[i].value);
-      if (rc < 0) {
-	fprintf(stderr, "*** snd_pcm_hw_params_set_format %s: %s\n", s(priv->c.device), snd_strerror(rc));
-      }
-      else {
-	fprintf(stderr, "format set to %s\n", value);
-	priv->c.format = formats[i].value;
-	priv->c.atype = formats[i].atype;
-	priv->c.format_bytes = formats[i].bytes;
-      }
-      break;
-    }
-  }  
+  rc = ALSAio_set_format_string(&priv->c, tmp);
   
   return rc;
 }
