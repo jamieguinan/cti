@@ -84,7 +84,7 @@ static void WavOutput_tick(Instance *pi)
 {
   Handler_message *hm;
 
-  dpf("WavOutput_tick\n", 0);
+  dpf("%s\n", __func__);
 
   hm = GetData(pi, 1);
   if (hm) {

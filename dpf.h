@@ -2,7 +2,7 @@
 #define _DPF_H_
 
 extern void cti_debug_printf_register(const char *file, int line, int *enabled, const char *fmt);
-extern void cti_debug_printf(const char *fmt, ...);
+extern void cti_debug_printf(const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 extern void cti_debug_printf_list(void);
 extern void cti_debug_printf_toggle(int index);
 

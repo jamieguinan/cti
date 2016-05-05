@@ -93,7 +93,7 @@ static void RawSource_move_data(Instance *pi)
     Source_reopen(priv->source);
   }
 
-  dpf("%s: %d bytes, %" PRIu64 " bytes total (%" PRIu64 "MB)\n", 
+  dpf("%s: %ld bytes, %" PRIu64 " bytes total (%" PRIu64 "MB)\n", 
       __func__, chunk->len, priv->bytes_total, (priv->bytes_total/(1024*1024)));
 
   if (chunk->len && pi->outputs[OUTPUT_AUDIO].destination && chunk->len >= 44) {
