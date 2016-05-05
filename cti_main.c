@@ -5,7 +5,7 @@
 #include <time.h>
 
 #include "CTI.h"
-#include "ALSAio.h"
+#include "ALSACapRec.h"
 #include "ALSAMixer.h"
 #include "CJpeg.h"
 #include "DJpeg.h"
@@ -101,7 +101,7 @@ int cti_main(int argc, char *argv[])
 #endif
 
 #ifdef __linux__
-  ALSAio_init();
+  ALSACapRec_init();
   ALSAMixer_init();
   V4L2Capture_init();
   Signals_init();

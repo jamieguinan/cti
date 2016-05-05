@@ -184,7 +184,7 @@ OBJS+=\
 ifneq ($(ARCH),lpd)
 OBJS+=\
 	V4L2Capture.o \
-	ALSAio.o \
+	ALSACapRec.o \
 	ALSAMixer.o
 LDFLAGS+=-lasound
 CPPFLAGS+=-DHAVE_PRCTL
