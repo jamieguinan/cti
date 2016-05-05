@@ -547,7 +547,7 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
     source->eof_flagged = 0;
     ArrayU8_append(chunk, newChunk);
     ArrayU8_cleanup(&newChunk);
-    dpf("needData = 0\n", NULL);
+    dpf("%s: needData = 0\n", __func__);
     *needData = 0;
   }
 }
