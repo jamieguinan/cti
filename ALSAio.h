@@ -3,9 +3,8 @@
 
 #include <alsa/asoundlib.h>	/* ALSA library */
 #include <stdint.h>
+#include "String.h"
 #include "Audio.h"		/*  Audio_type */
-
-extern void ALSAio_init(void);
 
 typedef enum { ALSAIO_READ=1, ALSAIO_WRITE } ALSAio_rw_enum;
 

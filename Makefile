@@ -167,6 +167,7 @@ OBJS= \
 	M3U8.o \
 	HTTPClient.o \
 	TunerControl.o \
+	cti_utils.o \
 	../jpeg-9/transupp.o \
 	$(MAIN) 
 
@@ -185,6 +186,7 @@ ifneq ($(ARCH),lpd)
 OBJS+=\
 	V4L2Capture.o \
 	ALSACapRec.o \
+	ALSAio.o \
 	ALSAMixer.o
 LDFLAGS+=-lasound
 CPPFLAGS+=-DHAVE_PRCTL
