@@ -15,6 +15,29 @@ static struct {
 };
 
 /* Common/library functions. */
+int ALSAio_set_format_string(ALSAio_common * aic, const char * format)
+{
+  int i;
+  int rc = -1;
+  for (i=0; i < cti_table_size(formats); i++) {
+    if (streq(formats[i].label, format)) {
+      rc = snd_pcm_hw_params_set_format(aic->handle, aic->hwparams, formats[i].value);
+      if (rc < 0) {
+	fprintf(stderr, "*** snd_pcm_hw_params_set_format %s: %s\n", s(aic->device), snd_strerror(rc));
+      }
+      else {
+	aic->format = formats[i].value;
+	aic->atype = formats[i].atype;
+	aic->format_bytes = formats[i].bytes;
+	fprintf(stderr, "format set to %s\n", format);
+      }
+      break;
+    }
+  }  
+  return rc;
+}
+			       
+
 static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rate, int channels, const char * format,
 			       snd_pcm_stream_t mode)
 {
@@ -35,6 +58,19 @@ static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rat
   if (rc < 0) {
     fprintf(stderr, "*** snd_pcm_open %s: %s\n", device, snd_strerror(rc));
     return;
+  }
+
+  snd_pcm_hw_params_malloc(&aic->hwparams);
+  rc = snd_pcm_hw_params_any(aic->handle, aic->hwparams);
+  if (rc < 0) {
+    fprintf(stderr, "*** snd_pcm_hw_params_any: %s %s\n", device, snd_strerror(rc));
+  }
+
+  rc = snd_pcm_hw_params_set_access(aic->handle, aic->hwparams,
+				    SND_PCM_ACCESS_RW_INTERLEAVED);
+
+  if (rc < 0) {
+    fprintf(stderr, "*** snd_pcm_hw_set_access: %s %s\n", device, snd_strerror(rc));
   }
 
   rc = snd_pcm_hw_params_set_rate(aic->handle, aic->hwparams, aic->rate, 0);
@@ -58,28 +94,6 @@ static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rat
   rc = ALSAio_set_format_string(aic, format);
 }
 
-int ALSAio_set_format_string(ALSAio_common * aic, const char * format)
-{
-  int i;
-  int rc = -1;
-  for (i=0; i < cti_table_size(formats); i++) {
-    if (streq(formats[i].label, format)) {
-      rc = snd_pcm_hw_params_set_format(aic->handle, aic->hwparams, formats[i].value);
-      if (rc < 0) {
-	fprintf(stderr, "*** snd_pcm_hw_params_set_format %s: %s\n", s(aic->device), snd_strerror(rc));
-      }
-      else {
-	fprintf(stderr, "format set to %s\n", format);
-	aic->format = formats[i].value;
-	aic->atype = formats[i].atype;
-	aic->format_bytes = formats[i].bytes;
-      }
-      break;
-    }
-  }  
-  return rc;
-}
-			       
 void ALSAio_open_playback(ALSAio_common * aic, const char * device, int rate, int channels, const char * format)
 {
   ALSAio_open_common(aic, device, rate, channels, format, SND_PCM_STREAM_PLAYBACK);
@@ -125,19 +139,16 @@ static void ALSA_buffer_io(ALSAio_common * aic,
 
   if (!aic->rate) {
     fprintf(stderr, "%s: error - rate is 0!\n", __func__);
-    aic->enable = 0;
     return;
   }
 
   if (!aic->channels) {
     fprintf(stderr, "%s: error - channels is 0!\n", __func__);
-    aic->enable = 0;
     return;
   }
 
   if (!aic->format_bytes) {
     fprintf(stderr, "%s: error - format_bytes is 0!\n", __func__);
-    aic->enable = 0;
     return;
   }
 
@@ -169,9 +180,8 @@ static void ALSA_buffer_io(ALSAio_common * aic,
     cti_getdoubletime(&aic->running_timestamp);
   }
 
-  if (state != SND_PCM_STATE_PREPARED) {
+  if (!(state == SND_PCM_STATE_PREPARED || state == SND_PCM_STATE_RUNNING)) {
     fprintf(stderr, "%s: error - wrong state %s\n", __func__, state_str[state]);
-    aic->enable = 0;
     return;
   }
 
@@ -206,7 +216,8 @@ static void ALSA_buffer_io(ALSAio_common * aic,
     snd_pcm_prepare(aic->handle);
   }
   else {
-    *bytes_transferred = (n * frames_to_transfer * aic->format_bytes);
+    *bytes_transferred = (n * aic->format_bytes * aic->channels);
+    // fprintf(stderr, "%02x %02x %02x %02x...\n", buffer[0], buffer[1], buffer[2], buffer[3]);
   }
 }
 
