@@ -71,6 +71,11 @@ void Audio_buffer_release(Audio_buffer **audio)
   *audio = 0L;
 }
 
+double Audio_buffer_period(Audio_buffer *audio)
+{
+  return (audio->num_frames * 1.0/audio->header.rate);
+}
+
 
 static uint8_t templateHeader[44] = {
   'R', 'I', 'F', 'F',		/* RIFF file format chunk id */

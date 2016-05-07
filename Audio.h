@@ -39,6 +39,7 @@ typedef struct {
 extern Audio_buffer *Audio_buffer_new(int rate, int channels, Audio_type t);
 extern void Audio_buffer_release(Audio_buffer **buffer);
 extern void Audio_buffer_add_samples(Audio_buffer *audio, uint8_t *data, int data_len);
+extern double Audio_buffer_period(Audio_buffer *audio);
 
 extern int Audio_sample_size(Audio_type);
 
