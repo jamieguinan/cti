@@ -24,12 +24,19 @@
 #define table_size(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
-static void Image_common_copy(Image_common *src, Image_common *dest)
+static void Image_common_copy(Image_common *dest, Image_common *src)
 {
-  *dest = *src;
+  dest->timestamp = src->timestamp;
+  dest->fps_numerator = src->fps_numerator;
+  dest->fps_denominator = src->fps_denominator;
+  dest->nominal_period = src->nominal_period;
+  dest->interlace_mode = src->interlace_mode;
+  dest->eof = src->eof;
+  /* Don't copy the ref struct! */
   if (src->label) {
     dest->label = String_new(s(src->label));
   }
+  
 }
 
 static void Image_common_cleanup(Image_common *c)
@@ -434,6 +441,7 @@ void YUV422P_buffer_release(YUV422P_buffer *yuv422p)
 {
   int count;
   LockedRef_decrement(&yuv422p->c.ref, &count);
+  fprintf(stderr, "count=%d\n", count);
   if (count == 0) {
     if (yuv422p->cb[yuv422p->cb_length] != 0x55) { fprintf(stderr, "cb buffer spilled!\n"); }
     Mem_free(yuv422p->cb);
