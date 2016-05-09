@@ -441,7 +441,6 @@ void YUV422P_buffer_release(YUV422P_buffer *yuv422p)
 {
   int count;
   LockedRef_decrement(&yuv422p->c.ref, &count);
-  fprintf(stderr, "count=%d\n", count);
   if (count == 0) {
     if (yuv422p->cb[yuv422p->cb_length] != 0x55) { fprintf(stderr, "cb buffer spilled!\n"); }
     Mem_free(yuv422p->cb);
