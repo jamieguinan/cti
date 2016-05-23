@@ -594,7 +594,7 @@ static void AAC_handler(Instance *pi, void *msg)
   if (!priv->seen_audio) { priv->seen_audio = 1; }
   priv->streams[1].pts_value = timestamp_to_90KHz(aac->timestamp);
   priv->streams[1].es_duration = timestamp_to_90KHz(aac->nominal_period);
-  dpf("aac->data_length=%d aac->timestamp=%.6f aac->nominal_period=%.6f es_duration=%" PRIu64"\n",
+  dpf("aac->data_length=%ld aac->timestamp=%.6f aac->nominal_period=%.6f es_duration=%" PRIu64"\n",
 	 aac->data_length, aac->timestamp,  aac->nominal_period, priv->streams[1].es_duration );
   packetize(priv, 257, ArrayU8_temp_const(aac->data, aac->data_length) );
   AAC_buffer_release(&aac);

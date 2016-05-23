@@ -11,5 +11,6 @@ extern void bgstart_pidfile(const char *cmdline, const char *pidfile);
 extern void bgstop_pidfile(const char *pidfile);
 
 extern void bgreap(void);
+extern int bgreap_one(void);
 
 #endif

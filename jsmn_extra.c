@@ -3,8 +3,12 @@
  * program, but used by other programs.
  */
 #include <stdio.h>		/* printf */
+#include "Mem.h"
 #include "String.h"
 #include "jsmn_extra.h"
+#include "localptr.h"
+
+int jsmn_extra_verbose = 0;
 
 int String_eq_jsmn(String * json_text, jsmntok_t token, const char *target)
 {
@@ -26,7 +30,7 @@ String * String_dup_jsmn(String * json_text, jsmntok_t token)
   return String_new(temp);
 }
 
-int jsmn_get_int(String * json_text, jsmntok_t token, int * result)
+int jsmn_get_int(String * json_text, jsmntok_t token, int * value)
 {
   int i;
   int x = 0;
@@ -45,7 +49,7 @@ int jsmn_get_int(String * json_text, jsmntok_t token, int * result)
     }
   }
 
-  *result = (x*m);
+  *value = (x*m);
 
   return 0;
 }
@@ -101,3 +105,155 @@ void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_tokens, int 
     separator = ",";
   }
 }
+
+
+int jsmn_lookup_int(JsmnContext * jc, const char * key, int * value)
+{
+  int i;
+  for (i=1; i < (jc->num_tokens-1); i+=2) {
+    if (jsmn_extra_verbose) {
+      fprintf(stderr, "%s: %.*s (want %s) %.*s (%d %d)\n",
+	     __func__, jsf(s(jc->js_str), jc->tokens[i]), key, 
+	     jsf(s(jc->js_str), jc->tokens[i+1]), jc->tokens[i+1].type, JSMN_PRIMITIVE);
+    }
+    if (String_eq_jsmn(jc->js_str, jc->tokens[i], key)
+	&& jc->tokens[i+1].type == JSMN_PRIMITIVE) {
+      return jsmn_get_int(jc->js_str, jc->tokens[i+1], value);
+    }
+  }
+  return -1;
+}
+
+
+void jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_tokens_ptr,
+		      int * allocated_tokens_ptr)
+{
+  jsmn_parser parser;
+  int allocated_tokens = 8;
+  jsmntok_t * tokens = Mem_malloc(allocated_tokens * sizeof(*tokens));
+  int n;
+
+  while (1) {
+    jsmn_init(&parser);
+    n = jsmn_parse(&parser, s(json_str), String_len(json_str), tokens, allocated_tokens);
+    if (n >= 0) {
+      //fprintf(stderr, "jsmn_dispatch sees %d tokens\n", n);
+      *tokens_ptr = tokens;
+      *num_tokens_ptr = n;
+      *allocated_tokens_ptr = allocated_tokens;
+      break;
+    }
+    else if (n == JSMN_ERROR_NOMEM) {
+      allocated_tokens *= 2;
+      //fprintf(stderr, "allocated_tokens=%d\n", allocated_tokens);
+      tokens = Mem_realloc(tokens, allocated_tokens * sizeof(*tokens));
+    }
+    else {
+      fprintf(stderr, "jsmn_parse error %d\n", n);
+      break;
+    }
+  }
+}
+
+JsmnContext * JsmnContext_new(void)
+{
+  JsmnContext * jc = Mem_calloc(1, sizeof(*jc));
+  jc->js_str = String_value_none();
+  jc->result = String_value_none();
+  return jc;
+}
+
+void JsmnContext_parse(JsmnContext *jc, String * js)
+{
+  jc->js_str = String_dup(js);
+  jsmn_parse_alloc(js, &jc->tokens, &jc->num_tokens,  &jc->allocated_tokens);
+}
+
+
+void JsmnContext_free(JsmnContext ** pjc)
+{
+  if (*pjc) {
+    JsmnContext * jc = *pjc;
+    String_clear(&jc->js_str);
+    if (jc->tokens) {
+      Mem_free(jc->tokens);
+    }
+    String_clear(&jc->result);
+    *pjc = NULL;
+  }
+}
+
+
+void jsmn_dispatch(JsmnContext * jc, const char * firstkey,
+		   JsmnDispatchHandler * handlers, int num_handlers)
+{
+  localptr(String, val1) = String_value_none();
+  localptr(String, result) = String_value_none();
+  jsmn_parser parser;
+  int n;
+
+  jc->allocated_tokens = 8;
+  jc->tokens = Mem_malloc(jc->allocated_tokens * sizeof(*jc->tokens));
+
+  while (1) {
+    jsmn_init(&parser);
+    n = jsmn_parse(&parser, s(jc->js_str), String_len(jc->js_str), jc->tokens, jc->allocated_tokens);
+    if (n >= 0) {
+      //fprintf(stderr, "jsmn_dispatch sees %d tokens\n", n);
+      jc->num_tokens = n;
+      break;
+    }
+    else if (n == JSMN_ERROR_NOMEM) {
+      jc->allocated_tokens *= 2;
+      //fprintf(stderr, "allocated_tokens=%d\n", allocated_tokens);
+      jc->tokens = Mem_realloc(jc->tokens, jc->allocated_tokens * sizeof(*jc->tokens));
+    }
+    else {
+      fprintf(stderr, "jsmn_parse error %d\n", n);
+      break;
+    }
+  }
+  
+  // jsmn_dump_verbose(json_str, tokens, n, n);
+  
+  if (jc->num_tokens  >= 3
+      && jc->tokens[0].type == JSMN_OBJECT
+      && jc->tokens[1].type == JSMN_STRING
+      && jc->tokens[1].size == 1
+      && jc->tokens[2].type == JSMN_STRING
+      && jc->tokens[2].size == 0
+      && String_eq_jsmn(jc->js_str, jc->tokens[1], firstkey)) {
+    int i;
+    for (i=0; i < num_handlers; i++) {
+      if (String_eq_jsmn(jc->js_str, jc->tokens[2], handlers[i].firstkey)) {
+	handlers[i].handler(jc);
+	break;
+      }
+    }
+  }
+}
+
+
+String * jsmn_lookup_string(JsmnContext * jc, const char * key)
+{
+  int i;
+
+  if (jsmn_extra_verbose) {
+    jsmn_dump_verbose(jc->js_str, jc->tokens, jc->num_tokens, jc->num_tokens);
+  }
+  for (i=1; i < (jc->num_tokens-1); i+=2) {
+    if (jsmn_extra_verbose) {
+      fprintf(stderr, "%s: %.*s (want %s) %.*s (%d %d)\n",
+	      __func__,  jsf(s(jc->js_str), jc->tokens[i]), 
+	   key, jsf(s(jc->js_str), jc->tokens[i+1]), jc->tokens[i+1].type, JSMN_STRING);
+    }
+    if (String_eq_jsmn(jc->js_str, jc->tokens[i], key)
+	&& jc->tokens[i+1].type == JSMN_STRING) {
+      if (jsmn_extra_verbose) { fprintf(stderr, "found!\n"); }
+      return String_dup_jsmn(jc->js_str, jc->tokens[i+1]);
+    }
+  }
+  return String_value_none();
+  
+}
+

@@ -103,7 +103,6 @@ OBJS= \
 	Audio.o \
 	Numbers.o \
 	Null.o \
-	Control.o \
 	Effects01.o \
 	SocketRelay.o \
 	SocketServer.o \
@@ -168,6 +167,7 @@ OBJS= \
 	M3U8.o \
 	HTTPClient.o \
 	TunerControl.o \
+	cti_utils.o \
 	../jpeg-9/transupp.o \
 	$(MAIN) 
 
@@ -185,6 +185,7 @@ OBJS+=\
 ifneq ($(ARCH),lpd)
 OBJS+=\
 	V4L2Capture.o \
+	ALSACapRec.o \
 	ALSAio.o \
 	ALSAMixer.o
 LDFLAGS+=-lasound

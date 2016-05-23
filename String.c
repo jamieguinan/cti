@@ -99,6 +99,15 @@ void String_cat3(String *s, const char *s1, const char *s2, const char *s3)
   s->len = len;
 }
 
+void String_catv(String *s, struct iovec * vecs, int vecs_read)
+{
+  int i;
+  for (i=0; i < vecs_read; i++) {
+    String_append_bytes(s, vecs[i].iov_base, vecs[i].iov_len);
+  }
+}
+
+
 
 void String_set_local(String *s, const char *init)
 {
@@ -143,18 +152,13 @@ void String_clear_local(String *s)
 
 void String_free(String **s)
 {
-  if (String_is_none(*s)) {
-    fprintf(stderr, "%s: cannot free special NONE string!\n", __func__);
-    return;
-  }
   if (*s) {
-    String_clear_local(*s);
-    Mem_free(*s);
+    if (!String_is_none(*s)) {
+      String_clear_local(*s);
+      Mem_free(*s);
+    }
   }
-  else {
-    fprintf(stderr, "%s: string is already free\n", __func__);
-  }
-  *s = 0L;
+  *s = String_value_none();
 }
 
 
@@ -213,12 +217,7 @@ String * String_sprintf(const char *fmt, ...)
 /* 2014-Jun-10 --> How did I not have these before?? */
 void String_clear(String **s)
 {
-  if (*s) {
-    if (!String_is_none(*s)) {
-      String_free(s);
-    }
-  }
-  *s = String_value_none();
+  String_free(s);
 }
 
 
@@ -256,6 +255,9 @@ int String_find(String *s, int offset, const char *s1, int *end)
 
 String *String_dup(String *s)
 {
+  if (String_is_none(s)) {
+    return String_value_none();
+  }
   return String_new(s->bytes);
 }
 
@@ -336,7 +338,18 @@ void String_append_bytes(String *s, const char *bytes, int count)
 
 }
 
-String * String_from_u8(unsigned char * init, int init_size)
+String * String_from_char(const char * init, int init_size)
+{
+  int i;
+  String *s = String_new("");
+  for (i=0; i < init_size; i++) {
+    if (init[i] == 0) { break; }
+  }
+  String_append_bytes(s, init, i);
+  return s;
+}
+
+String * String_from_uchar(const unsigned char * init, int init_size)
 {
   int i;
   String *s = String_new("");
@@ -346,7 +359,6 @@ String * String_from_u8(unsigned char * init, int init_size)
   String_append_bytes(s, (const char *)init, i);
   return s;
 }
-
 
 String *String_replace(String *s, const char *old, const char *new)
 {
@@ -690,5 +702,25 @@ void String_list_trim(String_list * slst)
     //printf("deleting trailing empty string<br>\n");
     tmp = String_list_pull_at(slst, -1);
     String_free(&tmp);
+  }
+}
+
+
+IntStr * IntStr_new(void)
+{
+  IntStr * istr = Mem_calloc(1, sizeof(*istr));  
+  istr->str = String_value_none();
+  return istr;
+}
+
+void IntStr_free(IntStr **pistr)
+{
+  if (*pistr) {
+    IntStr * istr = *pistr;
+    if (istr->str && !String_is_none(istr->str)) {
+      String_free(&(istr->str));
+    }
+    free(istr);
+    *pistr = NULL;
   }
 }

@@ -30,7 +30,8 @@ Audio_buffer * Audio_buffer_new(int rate, int channels, Audio_type t)
   audio->header.rate = rate;
   audio->header.channels = channels;
   audio->header.frame_size = channels * TypeMap[t].size;
-
+  audio->data = NULL;
+  audio->data_length = 0;
   return audio;
 }
 
@@ -55,6 +56,7 @@ void Audio_buffer_add_samples(Audio_buffer *audio, uint8_t *data, int data_len)
   }
   memcpy(audio->data + audio->data_length, data, data_len);
   audio->data_length = new_length;
+  audio->num_frames = audio->data_length/audio->header.frame_size;
 }
 
 
@@ -67,6 +69,11 @@ void Audio_buffer_release(Audio_buffer **audio)
   memset(w, 0, sizeof(*w));
   Mem_free(w);
   *audio = 0L;
+}
+
+double Audio_buffer_period(Audio_buffer *audio)
+{
+  return (audio->num_frames * 1.0/audio->header.rate);
 }
 
 

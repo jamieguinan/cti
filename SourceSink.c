@@ -34,7 +34,10 @@ static void io_close_current(IO_common *io)
     io->p = NULL;
   }
   else if (io->s != -1) {   
-    close(io->s);
+    /* I'm not a fan of superfluous shutdown() calls, but if I was going to
+     * use it, this is where it would be: */
+    // if (shutdown(io->s, SHUT_RDWR) != 0) { perror("shutdown"); }
+    if (close(io->s) != 0) { perror("close"); }
     io->s = -1;
   }
   io->state = IO_CLOSED;
@@ -77,11 +80,9 @@ static void io_open(IO_common *io, const char *mode)
       if (io->s == -1) {
         perror("socket"); continue;
       }
-  #if 0
-      if (fcntl(io->s, FD_CLOEXEC)) {
+      if (fcntl(io->s, F_SETFD, FD_CLOEXEC) != 0) {
         perror("FD_CLOEXEC");
       }
-  #endif
       rc = connect(io->s, rp->ai_addr, rp->ai_addrlen);
       //fprintf(stderr, "rc=%d io->s=%d family=%d socktype=%d protocol=%d addrlen=%d, errno=%d\n", 
       //  rc, io->s, rp->ai_family, rp->ai_socktype, rp->ai_protocol, rp->ai_addrlen, errno);
@@ -546,7 +547,7 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
     source->eof_flagged = 0;
     ArrayU8_append(chunk, newChunk);
     ArrayU8_cleanup(&newChunk);
-    dpf("needData = 0\n", NULL);
+    dpf("%s: needData = 0\n", __func__);
     *needData = 0;
   }
 }

@@ -2,6 +2,7 @@
 #include <unistd.h>		/* fork */
 #include <string.h>		/* strlen, strcpy */
 #include <stdio.h>		/* fprintf, NULL */
+#include <stdlib.h>		/* exit */
 #include <sys/types.h>		/* kill, wait */
 #include <signal.h>		/* kill */
 #include <sys/wait.h>		/* wait */
@@ -20,6 +21,9 @@ void bgstartv(char * args[], int * pidptr)
   case 0:
     /* child */
     execvp(args[0], args);
+    fprintf(stderr, "*** failed to exec %s\n", args[0]);
+    perror("execvp");
+    exit(1);
     break;
   default:
     /* parent */
@@ -29,39 +33,55 @@ void bgstartv(char * args[], int * pidptr)
 
 }
 
+#define SINGLE_QUOTE '\''
 void bgstart(const char * cmdline, int * pidptr)
 {
   char *args[64];
   int cclen = strlen(cmdline)+1;
-  //printf("cmdcopy is %d bytes\n", cclen);
+  //fprintf(stderr, "cmdcopy is %d bytes\n", cclen);
   char cmdcopy[cclen];
   strcpy(cmdcopy, cmdline);
-  int i;
   char *p = cmdcopy;
+  int in_quote = 0;
+  int in_arg = 0;
+  int i = 0;
 
-  for (i=0; i < 63; i++) {
-    args[i] = p;
-    p = strchr(p, ' ');
-    if (p) {
-      *p = 0;
-      p++;
-      if (*p == 0) {
-	break;
+  while (i < 63 && *p) {
+    if (*p == ' ') {
+      if (!in_quote) {
+	*p = 0;
+	in_arg = 0;
+      }
+    }
+    else if (*p == SINGLE_QUOTE) {
+      if (in_quote) {
+	*p = 0;
+	in_quote = 0;
+      }
+      else {
+	in_quote = 1;
       }
     }
     else {
-      break;
+      if (!in_arg) {
+	args[i++] = p;
+	in_arg = 1;
+      }
     }
-    //printf("%d: %s\n", i, args[i]);
+    p++;
   }
-  //printf("%d: %s\n", i, args[i]);
 
   if (i==63) {
     fprintf(stderr, "%s: maximum 64 cmdline components\n", __func__);
     return;
   }
 
-  args[i+1] = NULL;
+  args[i] = NULL;
+
+  int j;
+  for (j=0; j < i; j++) {
+    fprintf(stderr, "argvs[%d]: %s\n", j, args[j]);
+  }
 
   bgstartv(args, pidptr);
 }
@@ -107,6 +127,7 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
 
     if (ischild) {
       rc = waitpid(pid, &status, WNOHANG);
+      // fprintf(stderr, "waitpid(%d) returns %d, status=%d\n", pid, rc, status);
       if (rc == pid) {
 	if (WIFEXITED(status)) { 
 	  fprintf(stderr, "pid %d has exited\n", pid);
@@ -115,6 +136,10 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
 	else {
 	  fprintf(stderr, "pid %d changed state but is still active\n", pid);	  
 	}
+      }
+      else if (rc == -1) {
+	fprintf(stderr, "pid %d is gone\n", pid);
+	break;
       }
     }
     else {
@@ -191,5 +216,19 @@ void bgreap(void)
     if (rc > 0) {
       fprintf(stderr, "reaped pid %d\n", rc);
     }
-  } while (rc != 0);
+    else if (rc == -1) {
+      perror("waitpid");
+    }
+  } while (rc > 0);
+}
+
+int bgreap_one(void)
+{
+  int status;
+  int rc;
+  rc = waitpid(-1, &status, WNOHANG);
+  if (rc > 0) {
+    fprintf(stderr, "reaped pid %d\n", rc);
+  }
+  return rc;
 }

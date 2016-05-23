@@ -841,7 +841,6 @@ static void YUV422P_handler(Instance *pi, void *data)
     {
       rgb3 = YUV422P_to_RGB3(yuv422p);
       render_frame_gl(priv, rgb3);
-      RGB3_buffer_release(rgb3);
     }
     break;
   case RENDER_MODE_OVERLAY: 
@@ -859,7 +858,6 @@ static void YUV422P_handler(Instance *pi, void *data)
   }
 
   post_render_frame(pi);
-
 
   if (bgr3) {
     BGR3_buffer_release(bgr3);

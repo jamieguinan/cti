@@ -369,13 +369,12 @@ Line_msg *Line_msg_new(const char *value)
 }
 
 
-void Line_msg_release(Line_msg **lm)
+void Line_msg_release(Line_msg **plm)
 {
-  if ((*lm)->value) {
-    String_free(&(*lm)->value);
-  }
-  Mem_free(*lm);
-  *lm = 0L;
+  Line_msg *lm = *plm;
+  String_free(&lm->value);
+  Mem_free(lm);
+  *plm = 0L;
 }
 
 
@@ -403,7 +402,9 @@ Config_buffer *Config_buffer_vrreq_new(const char *label, const char *value, Val
 
 void Config_buffer_release(Config_buffer **cb)
 {
-  String_free(&(*cb)->label);
+  if ((*cb)->label) {
+    String_free(&(*cb)->label);
+  }
   if ((*cb)->value) {
     String_free(&(*cb)->value);
   }

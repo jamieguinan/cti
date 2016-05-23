@@ -24,6 +24,8 @@
 #include <apr_version.h>
 
 #include "serf.h"
+#include "serf_get.h"
+#include "localptr.h"
 
 /* Add Connection: close header to each request. */
 /* #define CONNECTION_CLOSE_HDR */
@@ -204,6 +206,7 @@ typedef struct {
 #endif
     int print_headers;
     apr_file_t *output_file;
+    String * output_string;
 
     serf_response_acceptor_t acceptor;
     app_baton_t *acceptor_baton;
@@ -214,6 +217,7 @@ typedef struct {
     const char *method;
     const char *path;
     const char *req_body_path;
+    const char *req_body_string;
     const char *username;
     const char *password;
     int auth_attempts;
@@ -264,6 +268,12 @@ static apr_status_t setup_request(serf_request_t *request,
 
         body_bkt = serf_bucket_file_create(file,
                                            serf_request_get_alloc(request));
+    }
+    else if (ctx->req_body_string) {
+	body_bkt = serf_bucket_simple_copy_create(ctx->req_body_string,
+						  strlen(ctx->req_body_string),
+						  serf_request_get_alloc(request));
+					     
     }
     else {
         body_bkt = NULL;
@@ -330,7 +340,12 @@ static apr_status_t handle_response(serf_request_t *request,
 
         /* got some data. print it out. */
         if (vecs_read) {
-            apr_file_writev(ctx->output_file, vecs, vecs_read, &bytes_written);
+	    if (ctx->output_string) {
+		String_catv(ctx->output_string, vecs, vecs_read);
+	    }
+	    else {
+		apr_file_writev(ctx->output_file, vecs, vecs_read, &bytes_written);
+	    }
         }
 
         /* are we done yet? */
@@ -346,8 +361,13 @@ static apr_status_t handle_response(serf_request_t *request,
                         return status;
 
                     if (vecs_read) {
-                        apr_file_writev(ctx->output_file, vecs, vecs_read,
-                                        &bytes_written);
+			if (ctx->output_string) {
+			    String_catv(ctx->output_string, vecs, vecs_read);
+			}
+			else {
+			    apr_file_writev(ctx->output_file, vecs, vecs_read,
+					    &bytes_written);
+			}
                     }
                     if (APR_STATUS_IS_EOF(status)) {
                         break;
@@ -410,7 +430,8 @@ static void print_usage(apr_pool_t *pool)
 
 static int initialized = 0;
 
-int serf_get_main(int argc, const char **argv)
+/* serf_get is a modification of main() from the original program. */
+int serf_get_post(int argc, const char **argv, String * output_string)
 {
     apr_status_t status;
     apr_pool_t *pool;
@@ -424,6 +445,7 @@ int serf_get_main(int argc, const char **argv)
     apr_uri_t url;
     const char *proxy = NULL;
     const char *raw_url, *method, *req_body_path = NULL;
+    const char *req_body_string = NULL;
     int count, inflight;
     int i;
     int print_headers;
@@ -437,6 +459,14 @@ int serf_get_main(int argc, const char **argv)
       apr_initialize();
       atexit(apr_terminate);
       initialized = 1;
+    }
+
+    if (0) {
+      int i;
+      puts("");
+      for (i=0; i < argc; i++) {
+	fprintf(stderr, "  argv[%d]: %s\n", i, argv[i]);
+      }
     }
 
     apr_pool_create(&pool, NULL);
@@ -453,7 +483,7 @@ int serf_get_main(int argc, const char **argv)
 
     apr_getopt_init(&opt, pool, argc, argv);
 
-    while ((status = apr_getopt(opt, "U:P:f:hHm:n:vp:x:r:", &opt_c, &opt_arg)) ==
+    while ((status = apr_getopt(opt, "U:P:f:s:hHm:n:vp:x:r:", &opt_c, &opt_arg)) ==
            APR_SUCCESS) {
 
         switch (opt_c) {
@@ -465,6 +495,9 @@ int serf_get_main(int argc, const char **argv)
             break;
         case 'f':
             req_body_path = opt_arg;
+            break;
+        case 's':
+            req_body_string = opt_arg;
             break;
         case 'h':
             print_usage(pool);
@@ -629,7 +662,13 @@ int serf_get_main(int argc, const char **argv)
 
     handler_ctx.completed_requests = 0;
     handler_ctx.print_headers = print_headers;
-    apr_file_open_stdout(&handler_ctx.output_file, pool);
+    if (output_string) {
+	handler_ctx.output_string = output_string;
+    } 
+    else {
+	handler_ctx.output_string = NULL;
+	apr_file_open_stdout(&handler_ctx.output_file, pool);
+    }
 
     handler_ctx.host = url.hostinfo;
     handler_ctx.method = method;
@@ -643,6 +682,7 @@ int serf_get_main(int argc, const char **argv)
     handler_ctx.auth_attempts = 0;
 
     handler_ctx.req_body_path = req_body_path;
+    handler_ctx.req_body_string = req_body_string;
 
     handler_ctx.acceptor = accept_response;
     handler_ctx.acceptor_baton = &app_ctx;
@@ -683,4 +723,46 @@ int serf_get_main(int argc, const char **argv)
 
     apr_pool_destroy(pool);
     return 0;
+}
+
+/* This is the first interface I had, before I added the output_string
+   parameter. */
+int serf_main(int argc, const char **argv)
+{
+    return serf_get_post(argc, argv, NULL);
+}
+
+/* Setting up the arguments for serf_get() requires some setup, so I
+   put a wrapper around it. Pass NULL for output_string if not expecting
+   a result. */
+int serf_command_get(String * command, String * url, String * output_string)
+{
+    localptr(String_list, args) = String_list_value_none();
+    args = String_split(command, " ");
+    int n = String_list_len(args);
+    const char *argv[n+1];
+    int i;
+    for (i=0; i < n; i++) {
+	argv[i] = s(String_list_get(args, i));
+    }
+    argv[i] = s(url);
+    return serf_get_post(n+1, argv, output_string);
+}
+
+int serf_command_post_data_string(String * command, String * url, String * post_data, String * output_string)
+{
+    localptr(String_list, args) = String_list_value_none();
+    args = String_split(command, " ");
+    int n = String_list_len(args);
+    const char *argv[n+5];
+    int i;
+    for (i=0; i < n; i++) {
+	argv[i] = s(String_list_get(args, i));
+    }
+    argv[i++] = "-m";
+    argv[i++] = "POST";
+    argv[i++] = "-s";
+    argv[i++] = s(post_data);
+    argv[i++] = s(url);
+    return serf_get_post(n+5, argv, output_string);
 }

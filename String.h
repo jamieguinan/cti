@@ -10,6 +10,7 @@
 /* Please see accompanying String.licence for copyright and licensing information. */
 
 #include <string.h>		/* strlen */
+#include <sys/uio.h>		/* struct iovec */
 
 
 typedef struct {
@@ -32,6 +33,8 @@ typedef struct {
 /* "Upcast" a char* to a String for easy access to the functions here. */
 #define S(x) (& (String){ .bytes = x, .len = strlen(x), .available = 0} )
 #define SC(x) (& (StringConst){ .bytes = x, .len = strlen(x), .available = 0} )
+#define Sl(x, l) (& (String){ .bytes = x, .len = l, .available = 0} )
+#define SCl(x, l) (& (StringConst){ .bytes = x, .len = l, .available = 0} )
 
 /* _new and _free are for free-standing strings that might be passed around independently */
 extern String * String_new(const char *init);
@@ -63,12 +66,15 @@ __attribute__ ((format (printf, 1, 2))) /* gcc format checking */
 String_sprintf(const char *fmt, ...);
 
 extern String * String_dup(String *s);
-extern String * String_from_u8(unsigned char * init, int init_size);
+extern String * String_from_char(const char * init, int init_size);
+extern String * String_from_uchar(const unsigned char * init, int init_size);
+#define String_from_u8 String_from_uchar
 
 /* These functions work in-place on s, although s->bytes can be reallocated. */
 extern void String_cat1(String *s, const char *s1);
 extern void String_cat2(String *s, const char *s1, const char *s2);
 extern void String_cat3(String *s, const char *s1, const char *s2, const char *s3);
+extern void String_catv(String *s, struct iovec * vecs, int vecs_read);
 extern void String_trim_right(String *s);
 extern void String_shorten(String *s, int newlength);
 extern void String_append_bytes(String *s, const char *bytes, int count);
@@ -119,5 +125,13 @@ extern void String_list_trim(String_list * slst);
 #endif
 
 #define String_eq(s1, s2)  streq((s1)->bytes, (s2)->bytes)
+
+typedef struct {
+  int value;
+  String * str;
+} IntStr;
+
+extern IntStr * IntStr_new(void);
+extern void IntStr_free(IntStr **istr);
 
 #endif
