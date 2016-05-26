@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <stdint.h>		/* uint16_t */
+#include <poll.h>		/* poll */
 
 typedef struct {
   int state;
@@ -24,6 +25,7 @@ void UDPA_client_go(UDPAckClient * uac)
   struct sockaddr_in xremote;
   unsigned int xremote_len = sizeof(xremote);
   ssize_t n1, n2;
+  long total = 0;
   while (1) {
     n1 = sendto(uac->udp_socket, message, sizeof(message), 0, (struct sockaddr *) &uac->remote, remote_len);
     if (n1 == -1) {
@@ -31,10 +33,20 @@ void UDPA_client_go(UDPAckClient * uac)
       break;
     }
 
+    struct pollfd fds[1] = { };
+    fds[0].fd = uac->udp_socket;
+    fds[0].events = POLLIN;
+
+    if (poll(fds, 1, 100) != 1) {
+      printf("*** retry\n");
+      continue;
+    }
+
     n2 = recvfrom(uac->udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &uac->remote, &remote_len);
     //printf("%s: %d n1=%ld\n", __func__, uac->seq, n1);
-    printf("%s: %d n2=%zu\n", __func__, uac->seq, n2);
+    printf("%s: %d n2=%zu total=%ld\n", __func__, uac->seq, n2, total);
     uac->seq += 1;
+    total += n2;
   }
 }
 
