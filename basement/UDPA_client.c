@@ -23,17 +23,17 @@ void UDPA_client_go(UDPAckClient * uac)
   uint8_t buffer[32000];
   struct sockaddr_in xremote;
   unsigned int xremote_len = sizeof(xremote);
-  ssize_t n;
+  ssize_t n1, n2;
   while (1) {
-    n = sendto(uac->udp_socket, message, sizeof(message), 0, (struct sockaddr *) &uac->remote, remote_len);
-    printf("%s: %d n=%ld\n", __func__, uac->seq, n);
-    if (n == -1) {
+    n1 = sendto(uac->udp_socket, message, sizeof(message), 0, (struct sockaddr *) &uac->remote, remote_len);
+    if (n1 == -1) {
       perror("sendto");
       break;
     }
 
-    n = recvfrom(uac->udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &uac->remote, &remote_len);
-    printf("%s: %d n=%zu\n", __func__, uac->seq, n);
+    n2 = recvfrom(uac->udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &uac->remote, &remote_len);
+    printf("%s: %d n1=%ld\n", __func__, uac->seq, n1);
+    printf("%s: %d n2=%zu\n", __func__, uac->seq, n2);
   }
 }
 
