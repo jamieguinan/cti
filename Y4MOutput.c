@@ -37,6 +37,8 @@ typedef struct {
   int height;
   int fps_nom;
   int fps_denom;
+  int raw;
+  int reduce;
 } Y4MOutput_private;
 
 
@@ -59,6 +61,8 @@ static Config config_table[] = {
   { "fps_nom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_nom) },
   { "fps_denom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_denom) },
   { "interlace", 0L, 0L, 0L, cti_set_string, offsetof(Y4MOutput_private, interlace) },
+  { "raw", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, raw) },
+  { "reduce", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, reduce) },
 };
 
 
@@ -79,25 +83,36 @@ static void YUV422P_handler(Instance *pi, void *data)
     priv->sink = NULL;
   }
 
+  if (priv->reduce) {
+    YUV420P_buffer *y420 = YUV422P_to_YUV420P(y422p_in);
+    YUV420P_handler(pi, y420);
+    goto out;
+  }
+
+
   if (!priv->sink) {
     goto out;
   }
 
-  if (priv->state == Y4MOUTPUT_STATE_INIT) {
-    priv->width = y422p_in->width;
-    priv->height = y422p_in->height;
-    snprintf(header, sizeof(header)-1, "YUV4MPEG2 W%d H%d C422 I%s F%d:%d A1:1\n",
-	     priv->width,
-	     priv->height,
-	     sl(priv->interlace),
-	     priv->fps_nom,
-	     priv->fps_denom);
-    Sink_write(priv->sink, header, strlen(header));
-    priv->state = Y4MOUTPUT_STATE_SENDING_DATA;
+  if (!priv->raw) {
+    if (priv->state == Y4MOUTPUT_STATE_INIT) {
+      priv->width = y422p_in->width;
+      priv->height = y422p_in->height;
+      snprintf(header, sizeof(header)-1, "YUV4MPEG2 W%d H%d C422 I%s F%d:%d A1:1\n",
+	       priv->width,
+	       priv->height,
+	       sl(priv->interlace),
+	       priv->fps_nom,
+	       priv->fps_denom);
+      Sink_write(priv->sink, header, strlen(header));
+      priv->state = Y4MOUTPUT_STATE_SENDING_DATA;
+    }
   }
-    
-  snprintf(header, sizeof(header)-1, "FRAME\n");
-  Sink_write(priv->sink, header, strlen(header));
+
+  if (!priv->raw) {
+    snprintf(header, sizeof(header)-1, "FRAME\n");
+    Sink_write(priv->sink, header, strlen(header));
+  }
   
   Sink_write(priv->sink, y422p_in->y, y422p_in->y_length);
   Sink_write(priv->sink, y422p_in->cb, y422p_in->cb_length);
@@ -123,20 +138,24 @@ static void YUV420P_handler(Instance *pi, void *data)
     goto out;
   }
   
-  if (priv->state == Y4MOUTPUT_STATE_INIT) {
-    priv->width = y420p->width;
-    priv->height = y420p->height;
-    snprintf(header, sizeof(header)-1, "YUV4MPEG2 W%d H%d C420jpeg Ip F%d:%d A1:1\n",
-	     priv->width,
-	     priv->height,
-	     priv->fps_nom,
-	     priv->fps_denom);
-    Sink_write(priv->sink, header, strlen(header));
-    priv->state = Y4MOUTPUT_STATE_SENDING_DATA;
+  if (!priv->raw) {
+    if (priv->state == Y4MOUTPUT_STATE_INIT) {
+      priv->width = y420p->width;
+      priv->height = y420p->height;
+      snprintf(header, sizeof(header)-1, "YUV4MPEG2 W%d H%d C420jpeg Ip F%d:%d A1:1\n",
+	       priv->width,
+	       priv->height,
+	       priv->fps_nom,
+	       priv->fps_denom);
+      Sink_write(priv->sink, header, strlen(header));
+      priv->state = Y4MOUTPUT_STATE_SENDING_DATA;
+    }
   }
-  
-  snprintf(header, sizeof(header)-1, "FRAME\n");
-  Sink_write(priv->sink, header, strlen(header));
+
+  if (!priv->raw) {  
+    snprintf(header, sizeof(header)-1, "FRAME\n");
+    Sink_write(priv->sink, header, strlen(header));
+  }
   
   Sink_write(priv->sink, y420p->y, y420p->y_length);
   Sink_write(priv->sink, y420p->cb, y420p->cb_length);
