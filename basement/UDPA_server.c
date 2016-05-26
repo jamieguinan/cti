@@ -1,5 +1,5 @@
 /* 
- * gcc -O -Wall -Wno-unused-result UDPA_server.c  -o UDPA_server
+   gcc -O -Wall -Wno-unused-result UDPA_server.c  -o UDPA_server
  */
 
 /* Client connection states. */
@@ -21,24 +21,26 @@ typedef struct {
   int seq;
 } UDPAckServer;
 
-void UDPA_send(UDPAckServer * uas, void * pkt, int length)
+void UDPA_server_go(UDPAckServer * uas)
 {
   while (1) {
-    /* Send one datagram. */
-    /* wait N ms for ack datagram. */
+    uint8_t buffer[32000];
+    unsigned int remote_len;
+    ssize_t n;
+    n = recvfrom(uas->udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &uas->remote, &remote_len);
+    printf("%s: %d n=%zu\n", __func__, uas->seq, n);
+    if (n <= 0) {
+      break;
+    }
+    uas->seq += 1;
+
+    n = sendto(uas->udp_socket, buffer, n, 0, (struct sockaddr *) &uas->remote, remote_len);
     
   }
 }
 
 void UDPA_accept(UDPAckServer * uas)
 {
-  /* wait for initial datagram. */
-  uint8_t buffer[32000];
-  unsigned int remote_len = sizeof(uas->remote);
-  ssize_t n;
-  n = recvfrom(uas->udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &uas->remote, &remote_len);
-  printf("%s: %d n=%zu\n", __func__, uas->seq, n);
-  uas->seq += 1;
 }
 
 void UDPA_init(UDPAckServer * uas, uint16_t port)
@@ -68,10 +70,7 @@ int main(int argc, char * argv[])
 
   system("netstat -uan | grep 6667");
 
-  while (1) {
-    UDPA_accept(&uas);
-  }
-
+  UDPA_server_go(&uas);
 
   return 0;
 }
