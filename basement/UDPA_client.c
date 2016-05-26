@@ -32,8 +32,9 @@ void UDPA_client_go(UDPAckClient * uac)
     }
 
     n2 = recvfrom(uac->udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &uac->remote, &remote_len);
-    printf("%s: %d n1=%ld\n", __func__, uac->seq, n1);
+    //printf("%s: %d n1=%ld\n", __func__, uac->seq, n1);
     printf("%s: %d n2=%zu\n", __func__, uac->seq, n2);
+    uac->seq += 1;
   }
 }
 
@@ -58,9 +59,14 @@ void UDPA_client_init(UDPAckClient * uac, const char * server, uint16_t port)
 
 int main(int argc, char * argv[])
 {
+  if (argc != 2) {
+    printf("Usage: %s ipaddr\n", argv[0]);
+    return 1;
+  }
   UDPAckClient uac = { };
-  UDPA_client_init(&uac, "192.168.2.8", 6667);
+  UDPA_client_init(&uac, argv[1], 6667);
   UDPA_client_go(&uac);
 
   return 0;
 }
+
