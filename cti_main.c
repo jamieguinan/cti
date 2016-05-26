@@ -81,6 +81,7 @@
 #include "VMixer.h"
 #include "M3U8.h"
 #include "TunerControl.h"
+#include "RPiH264Enc.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -146,6 +147,10 @@ int cti_main(int argc, char *argv[])
 
 #ifdef HAVE_LIRC
   Lirc_init();
+#endif
+
+#ifdef HAVE_RPIH264ENC
+  RPiH264Enc_init();
 #endif
 
   CJpeg_init();
