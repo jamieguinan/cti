@@ -22,6 +22,7 @@
 #include "Audio.h"
 #include "ArrayU8.h"
 #include "SourceSink.h"
+#include "localptr.h"
 
 /* From libavformat/mpegtsenc.c */
 static const uint32_t crc_table[256] = {
@@ -184,7 +185,7 @@ typedef struct {
 static int set_pmt_essd(Instance *pi, const char *value)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
-  String_list * parts = String_split_s(value, ":");
+  localptr(String_list, parts) = String_split_s(value, ":");
   
   if (String_list_len(parts) != 3) {
     fprintf(stderr, "%s expected essd as index:streamtype:pid\n", __func__);
@@ -214,7 +215,6 @@ static int set_pmt_essd(Instance *pi, const char *value)
   priv->PMT.ESSD[i].PID = pid;
   priv->PMT.ESSD[i].streamType = streamtype;
 
-  String_list_free(&parts);
   return 0;
 }
 
@@ -290,12 +290,12 @@ static void m3u8_files_update(MpegTSMux_private * priv)
     return;
   }
 
-  String * file_to_delete = String_value_none();
+  localptr(String, file_to_delete) = String_value_none();
   if (String_list_len(priv->m3u8_ts_files) > 6) {
     file_to_delete = String_list_pull_at(priv->m3u8_ts_files, 0);
   }
 
-  String * tmpname = String_sprintf("%s/prog_index.m3u8.tmp", sl(priv->index_dir));
+  localptr(String, tmpname) = String_sprintf("%s/prog_index.m3u8.tmp", sl(priv->index_dir));
   FILE * fpi = fopen(s(tmpname), "w");
   if (!fpi) {
     printf("%s: failed to open %s\n", __func__, s(tmpname));
@@ -321,25 +321,20 @@ static void m3u8_files_update(MpegTSMux_private * priv)
     String * fstr = String_list_get(priv->m3u8_ts_files, i);
     if (priv->verbose) { printf(":: %s\n", s(fstr)); }
     fprintf(fpi, "#EXTINF:%d,\n", priv->duration);
-    String * bname = String_basename(fstr);
+    localptr(String, bname) = String_basename(fstr);
     fprintf(fpi, "%s\n", s(bname));
-    String_free(&bname);
   }
 
   //fprintf(fpi, "#EXT-X-ENDLIST\n");  /* ONLY for VODs, not live... */
   fclose(fpi);
 
-  String * m3u8name = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
+  localptr(String, m3u8name) = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
   rename(s(tmpname), s(m3u8name));
 
  out:
   if (!String_is_none(file_to_delete)) {
     unlink(s(file_to_delete));
-    String_free(&file_to_delete);
   }
-
-  String_free(&m3u8name);
-  String_free(&tmpname);
 }
 
 
@@ -800,16 +795,14 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     if ( (pkt->estimated_timestamp - pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
       pat_pts_last = pkt->estimated_timestamp;
       TSPacket *pkt;
-      String * fname;
 
       /* PAT, pid 0 */
       pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
 
       if (priv->debug_outpackets) {
-	fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 0,
-			       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+	localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 0,
+						 pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
 	debug_outputpacket_write(pkt, fname);
-	String_free(&fname);
       }
 
       if (pi->outputs[OUTPUT_RAWDATA].destination) {
@@ -828,10 +821,9 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
       pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
 
       if (priv->debug_outpackets) {
-	fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 256,
-			       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+	localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 256,
+						 pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
 	debug_outputpacket_write(pkt, fname);
-	String_free(&fname);
       }
 
       if (pi->outputs[OUTPUT_RAWDATA].destination) {
@@ -850,11 +842,9 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     dpf("flush: et=%" PRIu64 " pid=%d\n", pkt->estimated_timestamp, stream->pid);
 
     if (priv->debug_outpackets) {
-      String * fname;
-      fname = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, stream->pid,
-			       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+      localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, stream->pid,
+					       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
       debug_outputpacket_write(pkt, fname);
-      String_free(&fname);
     }
 
     if (pi->outputs[OUTPUT_RAWDATA].destination) {
