@@ -82,6 +82,7 @@
 #include "M3U8.h"
 #include "TunerControl.h"
 #include "RPiH264Enc.h"
+#include "BinaryFiler.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -210,6 +211,7 @@ int cti_main(int argc, char *argv[])
   VMixer_init();
   M3U8_init();
   TunerControl_init();
+  BinaryFiler_init();
   //PCMSource_init();
 
   return app_code(argc, argv);
