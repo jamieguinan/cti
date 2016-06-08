@@ -62,6 +62,7 @@ static void Audio_handler(Instance *pi, void *data)
 static void H264_handler(Instance *pi, void *data)
 {
   H264_buffer *h264 = data;
+  dpf("%s: %d bytes\n", __func__, h264->encoded_length);
   H264_buffer_release(h264);
 }
 
