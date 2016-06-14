@@ -1,6 +1,18 @@
 # Scale build to multiple cores if possible.
 MAKEFLAGS=j$(shell grep '^processor' /proc/cpuinfo | wc -l)
 
+ifeq ($(shell arch),x86_64)
+ARCH=x86_64-Linux
+endif
+
+ifeq ($(shell arch),armv6l)
+ARCH=rpi
+endif
+
+ifeq ($(shell arch),armv7l)
+ARCH=rpi
+endif
+
 default: test-requirements cti_main
 
 test-requirements:
@@ -14,7 +26,7 @@ SHARED_FLAGS=-shared -fPIC
 NM=nm
 OS=Linux
 STRIP=strip
-ARCH:=$(shell uname -m)-$(shell uname -s)
+# ARCH:=$(shell uname -m)-$(shell uname -s)
 
 MAIN=main.o
 
