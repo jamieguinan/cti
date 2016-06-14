@@ -177,6 +177,7 @@ static void Y4MInput_tick(Instance *pi)
   int wait_flag;
 
   if (!priv->enable || !priv->source
+      || priv->source->eof
       || (priv->pending_feedback >= priv->feedback_threshold) ) {
     wait_flag = 1;
   }
