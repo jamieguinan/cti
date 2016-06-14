@@ -419,7 +419,7 @@ static void SocketServer_tick(Instance *pi)
  out:
 
   /* Delete raw data nodes if buffering limit exceeded. */
-  // printf("%d/%d\n", priv->total_buffered_data, priv->max_total_buffered_data);
+  dpf("%d/%d\n", priv->total_buffered_data, priv->max_total_buffered_data);
   while (priv->total_buffered_data > priv->max_total_buffered_data) {
     RawData_node *raw_tmp = priv->raw_first;
     priv->raw_first = priv->raw_first->next;
