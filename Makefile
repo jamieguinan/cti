@@ -300,7 +300,7 @@ endif
 
 # H264
 ifneq ($(ARCH),pentium3-Linux)
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/x264.pc 2> /dev/null ))
+ifeq ($(shell pkg-config --exists x264 && echo Y),Y)
 OBJS+=H264.o
 CPPFLAGS+=$$(pkg-config x264 --cflags)
 LDFLAGS+=$$(pkg-config x264 --libs)
@@ -309,7 +309,7 @@ endif
 endif
 
 # AAC
-ifneq (,$(shell /bin/ls $(PKGCONFIGDIR)/../../include/faac.h  2> /dev/null ))
+ifneq (,$(shell /bin/ls /usr/include/faac.h  2> /dev/null ))
 OBJS+=AAC.o
 LDFLAGS+=-lfaac
 CPPFLAGS+=-DHAVE_AAC
