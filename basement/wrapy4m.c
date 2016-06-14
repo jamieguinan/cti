@@ -36,7 +36,7 @@ int main(int argc, char * argv[])
   if ((ifp = fopen(ifname, "rb")) == NULL) { perror(ifname); return 1; }
   if ((ofp = fopen(ofname, "wb")) == NULL) { perror(ofname); return 1; }
 
-  if (fprintf(ofp, "YUV4MPEG2 W%d H%d F25:1 A1:1\n", width, height) < 0) {
+  if (fprintf(ofp, "YUV4MPEG2 W%d H%d F15:1 A1:1\n", width, height) < 0) {
     perror("fprintf");
     return 1;
   }
