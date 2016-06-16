@@ -337,11 +337,11 @@ endif
 endif
 
 # OMX H264 encoder
-../rpi-openmax-demos/rpi-encode-yuv.o: ../rpi-openmax-demos/rpi-encode-yuv.c
+../rpi-openmax-demos/cti-rpi-encode-yuv.o: ../rpi-openmax-demos/rpi-encode-yuv.c
 	$(MAKE) -C ../rpi-openmax-demos cti_modules
 
 ifeq ($(ARCH),rpi)
-OBJS+=RPiH264Enc.o ../rpi-openmax-demos/rpi-encode-yuv.o
+OBJS+=RPiH264Enc.o ../rpi-openmax-demos/cti-rpi-encode-yuv.o
 LDFLAGS += -L/opt/vc/lib -lopenmaxil -lbcm_host -lvcos -lpthread -lm
 CPPFLAGS+=-DHAVE_RPIH264ENC
 endif
@@ -355,6 +355,7 @@ cti$(EXEEXT): \
 	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@echo Generating map
 	$(NM) $@ | sort > $@.map
+	@cp -v $@ /platform/$(ARCH)/bin/
 #	@echo STRIP
 #	@$(STRIP) $@
 
