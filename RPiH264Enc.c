@@ -18,7 +18,8 @@ extern void do_frame_io(struct appctx * ctx,
 			uint8_t * y_in, int y_size,
 			uint8_t * u_in, int u_size,
 			uint8_t * v_in, int v_size,
-			uint8_t ** encoded_out, int * encoded_len);
+			uint8_t ** encoded_out, int * encoded_len,
+			int * keyframe);
 extern void encode_cleanup(struct appctx * ctx);
 extern int rpi_encode_yuv_c__analysis_enabled;
 #define NAL_type(p) ((p)[4] & 31)
@@ -51,7 +52,6 @@ typedef struct {
   int video_framerate;
   int gop_seconds;
   int video_bitrate;
-  ArrayU8 * header;
 } RPiH264Enc_private;
 
 static Config config_table[] = {
@@ -69,6 +69,7 @@ static void y420p_handler(Instance *pi, void *msg)
 {
   RPiH264Enc_private *priv = (RPiH264Enc_private *)pi;
   YUV420P_buffer *y420p = msg;
+  int keyframe = 0;
   
   if (!priv->initialized) {
     priv->video_width = y420p->width;
@@ -94,23 +95,14 @@ static void y420p_handler(Instance *pi, void *msg)
 	      y420p->y, y_size,
 	      y420p->cb, u_size,
 	      y420p->cr, v_size,
-	      &output, &output_size);
+	      &output, &output_size,
+	      &keyframe);
 
   if (output) {
-    if (NAL_type(output) == 7
-	|| NAL_type(output) == 8) {
-      ArrayU8_append(priv->header, ArrayU8_temp_const(output,output_size));
-    }
-    else {
-      if (pi->outputs[OUTPUT_H264].destination) {
-	if (output_size > 4 && NAL_type(output) == 5) {
-	  H264_buffer *hout = H264_buffer_from(priv->header->data, priv->header->len, y420p->width, y420p->height, &y420p->c);
-	  hout->keyframe = 1;
-	  PostData(hout, pi->outputs[OUTPUT_H264].destination);      
-	}
-	H264_buffer *hout = H264_buffer_from(output, output_size, y420p->width, y420p->height, &y420p->c);
-	PostData(hout, pi->outputs[OUTPUT_H264].destination);      
-      }
+    if (pi->outputs[OUTPUT_H264].destination) {
+      H264_buffer *hout = H264_buffer_from(output, output_size, y420p->width, y420p->height, &y420p->c);
+      hout->keyframe = keyframe;
+      PostData(hout, pi->outputs[OUTPUT_H264].destination);      
     }
     free(output);
   }
@@ -150,7 +142,6 @@ static void RPiH264Enc_instance_init(Instance *pi)
   priv->gop_seconds = 5;
 
   // rpi_encode_yuv_c__analysis_enabled = 1;
-  priv->header = ArrayU8_new();
 }
 
 
