@@ -127,9 +127,10 @@ void PostDataGetResult(void *data, Input *input, int * result)
   while (input->parent->pending_messages > 100) {
     /* This one indicates a configuration problem or misestimation, so 
        make it an fprintf instead of a dpf. */
-    fprintf(stderr, "sleeping to drain %s message queue (%p)\n", 
+    fprintf(stderr, "sleeping to drain %s message queue (%p) (%d)\n", 
 	    input->parent->label,
-	    input);
+	    input,
+	    input->parent->pending_messages);
     sleep(1);
   }
 
