@@ -28,13 +28,13 @@ void UDPA_server_go(UDPAckServer * uas)
     unsigned int remote_len;
     ssize_t n;
     n = recvfrom(uas->udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr *) &uas->remote, &remote_len);
-    printf("%s: %d n=%zu\n", __func__, uas->seq, n);
+    nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/100}, NULL);
     if (n <= 0) {
       break;
     }
     uas->seq += 1;
 
-    n = sendto(uas->udp_socket, buffer, n, 0, (struct sockaddr *) &uas->remote, remote_len);
+    n = sendto(uas->udp_socket, buffer, 1401, 0, (struct sockaddr *) &uas->remote, remote_len);
     
   }
 }

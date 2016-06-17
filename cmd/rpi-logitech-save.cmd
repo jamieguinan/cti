@@ -1,5 +1,6 @@
 new V4L2Capture vc
 new Y4MOutput yo
+new ALSACapture ac
 
 connect vc YUV422P_buffer yo
 
