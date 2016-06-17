@@ -181,7 +181,7 @@ static void Audio_handler(Instance *pi, void *msg)
 				(int32_t*)(priv->chunk->data), priv->samplesToInput,
 				priv->output_buffer, priv->maxOutputBytes);
     
-    if (1) { 
+    if (0) { 
       static FILE *f = NULL;
       if (!f) {
 	f = fopen("test.aac", "wb");
