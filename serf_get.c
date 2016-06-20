@@ -694,6 +694,9 @@ int serf_get_post(int argc, const char **argv, String * output_string)
     for (i = 0; i < count; i++) {
         request = serf_connection_request_create(connection, setup_request,
                                                  &handler_ctx);
+	if (!request) {
+	  fprintf(stderr, "huh, null request.\n");
+	}
     }
 
     while (1) {
@@ -763,6 +766,24 @@ int serf_command_post_data_string(String * command, String * url, String * post_
     argv[i++] = "POST";
     argv[i++] = "-s";
     argv[i++] = s(post_data);
+    argv[i++] = s(url);
+    return serf_get_post(n+5, argv, output_string);
+}
+
+int serf_command_post_data_file(String * command, String * url, String * file_path, String * output_string)
+{
+    localptr(String_list, args) = String_list_value_none();
+    args = String_split(command, " ");
+    int n = String_list_len(args);
+    const char *argv[n+5];
+    int i;
+    for (i=0; i < n; i++) {
+	argv[i] = s(String_list_get(args, i));
+    }
+    argv[i++] = "-m";
+    argv[i++] = "POST";
+    argv[i++] = "-f";
+    argv[i++] = s(file_path);
     argv[i++] = s(url);
     return serf_get_post(n+5, argv, output_string);
 }
