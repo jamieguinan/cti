@@ -27,6 +27,8 @@
 #include "serf_get.h"
 #include "localptr.h"
 
+int serf_ssl_verbose = 0;
+
 /* Add Connection: close header to each request. */
 /* #define CONNECTION_CLOSE_HDR */
 
@@ -54,6 +56,10 @@ static void closed_connection(serf_connection_t *conn,
 
 static void print_ssl_cert_errors(int failures)
 {
+    if (!serf_ssl_verbose) {
+	return;
+    }
+
     if (failures) {
         fprintf(stderr, "INVALID CERTIFICATE:\n");
         if (failures & SERF_SSL_CERT_NOTYETVALID)
@@ -96,6 +102,10 @@ static apr_status_t print_certs(void *data, int failures, int error_depth,
 {
     apr_pool_t *pool;
     const serf_ssl_certificate_t *current;
+
+    if (!serf_ssl_verbose) {
+      return APR_SUCCESS;
+    }
 
     apr_pool_create(&pool, NULL);
 
@@ -162,7 +172,8 @@ static apr_status_t conn_setup(apr_socket_t *skt,
         }
         serf_ssl_server_cert_chain_callback_set(ctx->ssl_ctx, 
                                                 ignore_all_cert_errors, 
-                                                print_certs, NULL);
+                                                print_certs, 
+						NULL);
         serf_ssl_set_hostname(ctx->ssl_ctx, ctx->hostinfo);
 
         *output_bkt = serf_bucket_ssl_encrypt_create(*output_bkt, ctx->ssl_ctx,
