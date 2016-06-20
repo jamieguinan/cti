@@ -1,10 +1,14 @@
 system rm -vf /dev/shm/hls1/*.ts
-
+system mkdir -pv /dev/shm/hls1
+system cp hls-stream.html /dev/shm/hls1/test.html
+system cp hls-stream.m3u8 /dev/shm/hls1/stream.m3u8
+	
 new V4L2Capture vc
 new ALSACapture ac
 new RPiH264Enc enc
 new AAC aenc
 new MpegTSMux tsm
+new PushQueue pq
 
 connect vc YUV422P_buffer enc
 connect enc H264_buffer tsm
@@ -34,5 +38,12 @@ config ac channels 1
 config ac format signed.16-bit.little.endian
 config ac frames_per_io 256
 
+config pq uri http://bluebutton.com/ws/postdata
+config pq service_key /home/pi/etc/hls_service_key
+
+connect tsm Push_data pq
+
 config vc enable 1
 config ac enable 1
+
+ignoreeof 1
