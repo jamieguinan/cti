@@ -182,6 +182,7 @@ OBJS= \
 	cti_utils.o \
 	../jpeg-9/transupp.o \
 	BinaryFiler.o \
+	PushQueue.o \
 	$(MAIN) 
 
 #	ScriptSession.o \
@@ -318,6 +319,14 @@ CPPFLAGS+=$$(pkg-config x264 --cflags)
 LDFLAGS+=$$(pkg-config x264 --libs)
 CPPFLAGS+=-DHAVE_H264
 endif
+endif
+
+# Apache Serf
+ifeq ($(shell pkg-config --exists serf-1 && echo Y),Y)
+OBJS+=serf_get.o
+CPPFLAGS+=$$(pkg-config serf-1 --cflags) $$(pkg-config --cflags apr-1) $$(pkg-config --cflags apr-util-1)
+LDFLAGS+=$$(pkg-config --libs serf-1) $$(pkg-config --libs apr-1) $$(pkg-config --libs apr-util-1)
+CPPFLAGS+=-DHAVE_SERF
 endif
 
 # AAC
