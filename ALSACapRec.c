@@ -705,20 +705,19 @@ static void ALSACapture_tick(Instance *pi)
   
   /* Adjust running timestamp if it slips too far either way.  Smoothing, I guess. */
   if (priv->c.running_timestamp - tnow > calculated_period) {
-    fprintf(stderr, "- running timestamp\n");
-    fprintf(stderr, "priv->c.rate=%d,  %.3f - %.3f (%.5f) > %.5f : - running timestamp\n", 
-	    priv->c.rate, 
-	    priv->c.running_timestamp, tnow,
-	    (tnow - priv->c.running_timestamp),
-	    calculated_period);
+    dpf("priv->c.rate=%d,  %.3f - %.3f (%.5f) > %.5f : - running timestamp\n", 
+	priv->c.rate, 
+	priv->c.running_timestamp, tnow,
+	(tnow - priv->c.running_timestamp),
+	calculated_period);
     priv->c.running_timestamp -= (calculated_period/2.0);      
   }
   else if (tnow - priv->c.running_timestamp > calculated_period) {
-    fprintf(stderr, "priv->c.rate=%d, %.3f - %.3f (%.5f) > %.5f : + running timestamp\n",
-	    priv->c.rate, 
-	    tnow, priv->c.running_timestamp, 
-	    (tnow - priv->c.running_timestamp),
-	    calculated_period);
+    dpf("priv->c.rate=%d, %.3f - %.3f (%.5f) > %.5f : + running timestamp\n",
+	priv->c.rate, 
+	tnow, priv->c.running_timestamp, 
+	(tnow - priv->c.running_timestamp),
+	calculated_period);
     priv->c.running_timestamp += (calculated_period/2.0);
   }
   
