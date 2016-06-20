@@ -481,9 +481,14 @@ void cti_set_ulong(void *addr, const char *value)
 }
 
 
-void cti_set_string(void *addr, const char *value)
+void cti_set_string_local(void *addr, const char *value)
 {
   String_set_local((String *)addr, value);
+}
+
+void cti_set_string(void *addr, const char *value)
+{
+  String_set((String **)addr, value);
 }
 
 

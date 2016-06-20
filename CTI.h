@@ -236,6 +236,7 @@ extern void cti_set_int(void *addr, const char *value);
 extern void cti_set_uint(void *addr, const char *value);
 extern void cti_set_long(void *addr, const char *value);
 extern void cti_set_ulong(void *addr, const char *value);
+extern void cti_set_string_local(void *addr, const char *value);
 extern void cti_set_string(void *addr, const char *value);
 
 extern int SetConfig(Instance *pi, const char *label, const char *value);
