@@ -22,6 +22,7 @@
 #include "Audio.h"
 #include "ArrayU8.h"
 #include "SourceSink.h"
+#include "PushQueue.h"
 #include "localptr.h"
 
 /* From libavformat/mpegtsenc.c */
@@ -97,9 +98,10 @@ static Input MpegTSMux_inputs[] = {
   [ INPUT_MP3 ] = { .type_label = "MP3_buffer", .handler = MP3_handler },
 };
 
-enum { OUTPUT_RAWDATA };
+enum { OUTPUT_RAWDATA, OUTPUT_PUSH_DATA };
 static Output MpegTSMux_outputs[] = {
   [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
+  [ OUTPUT_PUSH_DATA ] = { .type_label = "Push_data", .destination = 0L },
 };
 
 int v = 0;
@@ -282,8 +284,10 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-static void m3u8_files_update(MpegTSMux_private * priv)
+static void m3u8_files_update(Instance *pi)
 {
+  MpegTSMux_private * priv = (MpegTSMux_private *)pi;
+
   if (String_list_len(priv->m3u8_ts_files) <= 1) {
     /* The last file is "being generated" so don't make a list if
        only a single file. */
@@ -330,6 +334,14 @@ static void m3u8_files_update(MpegTSMux_private * priv)
 
   localptr(String, m3u8name) = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
   rename(s(tmpname), s(m3u8name));
+
+  if (pi->outputs[OUTPUT_PUSH_DATA].destination) {
+    PushQueue_message * msg = PushQueue_message_new();
+    msg->local_path = String_dup(m3u8name);
+    msg->file_to_send = String_basename(m3u8name);
+    msg->file_to_delete = String_basename(file_to_delete);
+    PostData(msg, pi->outputs[OUTPUT_PUSH_DATA].destination);
+  }
 
  out:
   if (!String_is_none(file_to_delete)) {
@@ -750,10 +762,17 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
   if (priv->output_sink) {
     /* flush() always starts a new output segment. */
     Sink_close_current(priv->output_sink);
+    if (pi->outputs[OUTPUT_PUSH_DATA].destination
+	&& priv->output_sink->io.generated_path) {
+      PushQueue_message * msg = PushQueue_message_new();
+      msg->local_path = String_dup(priv->output_sink->io.generated_path);
+      msg->file_to_send = String_basename(msg->local_path);
+      PostData(msg, pi->outputs[OUTPUT_PUSH_DATA].destination);
+    }
     Sink_reopen(priv->output_sink);
     String *tmp = String_new(s(priv->output_sink->io.generated_path));
     String_list_add(priv->m3u8_ts_files, &tmp);
-    m3u8_files_update(priv);
+    m3u8_files_update(pi);
     priv->m3u8_pts_start = pts_now;
   }
 
