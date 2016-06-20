@@ -60,7 +60,7 @@ static Config config_table[] = {
   { "output", set_output, 0L, 0L },
   { "fps_nom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_nom) },
   { "fps_denom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_denom) },
-  { "interlace", 0L, 0L, 0L, cti_set_string, offsetof(Y4MOutput_private, interlace) },
+  { "interlace", 0L, 0L, 0L, cti_set_string_local, offsetof(Y4MOutput_private, interlace) },
   { "raw", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, raw) },
   { "reduce", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, reduce) },
 };
