@@ -29,13 +29,23 @@ static void analyze_segment(uint8_t * data, int start, int length)
 	fprintf(stderr, "not 0 0 0 1 or 0 0 1\n");
 	return;
     }
-    printf("F:%d NRI:%d Type:%d  start:%d length:%d \n",
+    int nal_type = (p[offset] >> 0) & 31;
+    printf("F:%d NRI:%d Type:%d  start:%d length:%d",
 	   (p[offset] >> 7) & 1,
 	   (p[offset] >> 5) & 3,
-	   (p[offset] >> 0) & 31,
+	   nal_type,
 	   start,
 	   length
 	   );
+
+    if (nal_type == 9) {
+      int i;
+      for (i=0; i < length; i++) {
+	printf(" %02x", p[i]);
+      }
+    }
+
+    printf("\n");
 }
 
 
