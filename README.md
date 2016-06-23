@@ -118,7 +118,7 @@ Since I use CTI modules in other projects, it has also become convenient place f
 
 The advantage over using `NULL` is that it points to an existing fixed `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
 
-This is similar in some ways to [NSULL](https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSNull_Class/index.html#//apple_ref/occ/cl/NSNull) in Apple's Objective-C libraries. It provides a singleton object that can be assigned, and compared against. In my case, it protects me from segfaults in my imperfect code, and in Apple's case, it can be used in instances where `NULL` or `nil` is not allowed.
+This is similar in some ways to [NSULL](https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSNull_Class/index.html#//apple_ref/occ/cl/NSNull) in Apple's Objective-C libraries. It provides a singleton object that can be assigned, and compared against. In my case, it protects me from segfaults in my code, and in Apple's case, it can be used in instances where `NULL` or `nil` is not allowed.
 
 <del>Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function, where you may find `String_clear()` calls for each of the local `String *` variables in said function.</del>
 
