@@ -339,7 +339,9 @@ static void m3u8_files_update(Instance *pi)
     PushQueue_message * msg = PushQueue_message_new();
     msg->local_path = String_dup(m3u8name);
     msg->file_to_send = String_basename(m3u8name);
-    msg->file_to_delete = String_basename(file_to_delete);
+    if (!String_is_none(file_to_delete)) {
+      msg->file_to_delete = String_basename(file_to_delete);
+    }
     PostData(msg, pi->outputs[OUTPUT_PUSH_DATA].destination);
   }
 
