@@ -182,7 +182,6 @@ OBJS= \
 	cti_utils.o \
 	../jpeg-9/transupp.o \
 	BinaryFiler.o \
-	PushQueue.o \
 	$(MAIN) 
 
 #	ScriptSession.o \
@@ -323,6 +322,7 @@ endif
 
 # Apache Serf
 ifeq ($(shell pkg-config --exists serf-1 && echo Y),Y)
+OBJS+=PushQueue.o
 OBJS+=serf_get.o
 CPPFLAGS+=$$(pkg-config serf-1 --cflags) $$(pkg-config --cflags apr-1) $$(pkg-config --cflags apr-util-1)
 LDFLAGS+=$$(pkg-config --libs serf-1) $$(pkg-config --libs apr-1) $$(pkg-config --libs apr-util-1)
