@@ -57,6 +57,7 @@ typedef struct {
 static Config config_table[] = {
   { "fps", 0L, 0L, 0L, cti_set_int, offsetof(RPiH264Enc_private, video_framerate) },
   { "bitrate", 0L, 0L, 0L, cti_set_int, offsetof(RPiH264Enc_private, video_bitrate) },
+  { "gop_seconds", 0L, 0L, 0L, cti_set_int, offsetof(RPiH264Enc_private, gop_seconds) },
 };
 
 
