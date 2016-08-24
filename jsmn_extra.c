@@ -110,15 +110,21 @@ void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_tokens, int 
 int jsmn_lookup_int(JsmnContext * jc, const char * key, int * value)
 {
   int i;
-  for (i=1; i < (jc->num_tokens-1); i+=2) {
-    if (jsmn_extra_verbose) {
-      fprintf(stderr, "%s: %.*s (want %s) %.*s (%d %d)\n",
-	     __func__, jsf(s(jc->js_str), jc->tokens[i]), key, 
-	     jsf(s(jc->js_str), jc->tokens[i+1]), jc->tokens[i+1].type, JSMN_PRIMITIVE);
+
+  for (i=0; i < (jc->num_tokens-1); i+=1) {
+    if (jc->tokens[i].type == JSMN_ARRAY) {
+      continue;
     }
-    if (String_eq_jsmn(jc->js_str, jc->tokens[i], key)
-	&& jc->tokens[i+1].type == JSMN_PRIMITIVE) {
-      return jsmn_get_int(jc->js_str, jc->tokens[i+1], value);
+
+    if (jc->tokens[i].type == JSMN_OBJECT) {
+      continue;
+    }
+
+    if (jc->tokens[i].type == JSMN_STRING) {
+      if (jc->tokens[i+1].type == JSMN_PRIMITIVE) {
+	return jsmn_get_int(jc->js_str, jc->tokens[i+1], value);
+      }
+      i+=1;
     }
   }
   return -1;
@@ -241,19 +247,25 @@ String * jsmn_lookup_string(JsmnContext * jc, const char * key)
   if (jsmn_extra_verbose) {
     jsmn_dump_verbose(jc->js_str, jc->tokens, jc->num_tokens, jc->num_tokens);
   }
-  for (i=1; i < (jc->num_tokens-1); i+=2) {
-    if (jsmn_extra_verbose) {
-      fprintf(stderr, "%s: %.*s (want %s) %.*s (%d %d)\n",
-	      __func__,  jsf(s(jc->js_str), jc->tokens[i]), 
-	   key, jsf(s(jc->js_str), jc->tokens[i+1]), jc->tokens[i+1].type, JSMN_STRING);
+
+  for (i=0; i < (jc->num_tokens-1); i+=1) {
+    if (jc->tokens[i].type == JSMN_ARRAY) {
+      continue;
     }
-    if (String_eq_jsmn(jc->js_str, jc->tokens[i], key)
-	&& jc->tokens[i+1].type == JSMN_STRING) {
-      if (jsmn_extra_verbose) { fprintf(stderr, "found!\n"); }
-      return String_dup_jsmn(jc->js_str, jc->tokens[i+1]);
+
+    if (jc->tokens[i].type == JSMN_OBJECT) {
+      continue;
+    }
+
+    if (jc->tokens[i].type == JSMN_STRING) {
+      if (jc->tokens[i+1].type == JSMN_STRING &&
+	  String_eq_jsmn(jc->js_str, jc->tokens[i], key)) {
+	if (jsmn_extra_verbose) { fprintf(stderr, "found!\n"); }
+	return String_dup_jsmn(jc->js_str, jc->tokens[i+1]);
+      }
+      i+=1;
     }
   }
   return String_value_none();
-  
 }
 
