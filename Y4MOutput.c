@@ -7,6 +7,7 @@
 #include "SourceSink.h"
 #include "Images.h"
 #include "Y4MOutput.h"
+#include "localptr.h"
 
 static void Config_handler(Instance *pi, void *msg);
 static void YUV422P_handler(Instance *pi, void *data);
@@ -76,7 +77,6 @@ static void YUV422P_handler(Instance *pi, void *data)
 {
   Y4MOutput_private *priv = (Y4MOutput_private *)pi;
   YUV422P_buffer *y422p_in = data;
-  char header[256];
 
   if (y422p_in->c.eof) {
     Sink_close_current(priv->sink);
@@ -98,20 +98,20 @@ static void YUV422P_handler(Instance *pi, void *data)
     if (priv->state == Y4MOUTPUT_STATE_INIT) {
       priv->width = y422p_in->width;
       priv->height = y422p_in->height;
-      snprintf(header, sizeof(header)-1, "YUV4MPEG2 W%d H%d C422 I%s F%d:%d A1:1\n",
+      localptr(String, header) = String_sprintf("YUV4MPEG2 W%d H%d C422 I%s F%d:%d A1:1\n",
 	       priv->width,
 	       priv->height,
 	       sl(priv->interlace),
 	       priv->fps_nom,
 	       priv->fps_denom);
-      Sink_write(priv->sink, header, strlen(header));
+      Sink_write(priv->sink, s(header), String_len(header));
       priv->state = Y4MOUTPUT_STATE_SENDING_DATA;
     }
   }
 
   if (!priv->raw) {
-    snprintf(header, sizeof(header)-1, "FRAME\n");
-    Sink_write(priv->sink, header, strlen(header));
+    localptr(String, header) = String_new("FRAME\n");
+    Sink_write(priv->sink, header, String_len(header));
   }
   
   Sink_write(priv->sink, y422p_in->y, y422p_in->y_length);
@@ -127,7 +127,6 @@ static void YUV420P_handler(Instance *pi, void *data)
 {
   Y4MOutput_private *priv = (Y4MOutput_private *)pi;
   YUV420P_buffer *y420p = data;
-  char header[256];
 
   if (y420p->c.eof) {
     Sink_close_current(priv->sink);
@@ -142,19 +141,19 @@ static void YUV420P_handler(Instance *pi, void *data)
     if (priv->state == Y4MOUTPUT_STATE_INIT) {
       priv->width = y420p->width;
       priv->height = y420p->height;
-      snprintf(header, sizeof(header)-1, "YUV4MPEG2 W%d H%d C420jpeg Ip F%d:%d A1:1\n",
+      localptr(String, header) = String_sprintf("YUV4MPEG2 W%d H%d C420jpeg Ip F%d:%d A1:1\n",
 	       priv->width,
 	       priv->height,
 	       priv->fps_nom,
 	       priv->fps_denom);
-      Sink_write(priv->sink, header, strlen(header));
+      Sink_write(priv->sink, s(header), String_len(header));
       priv->state = Y4MOUTPUT_STATE_SENDING_DATA;
     }
   }
 
-  if (!priv->raw) {  
-    snprintf(header, sizeof(header)-1, "FRAME\n");
-    Sink_write(priv->sink, header, strlen(header));
+  if (!priv->raw) {
+    localptr(String, header) = String_new("FRAME\n");    
+    Sink_write(priv->sink, header, String_len(header));
   }
   
   Sink_write(priv->sink, y420p->y, y420p->y_length);
