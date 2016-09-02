@@ -129,8 +129,11 @@ typedef enum {
 
 typedef struct _Instance {
   const char *label;		/* Copied from corresponding Template */
-  /* NO instance label!  Containers should hold label:instance mapping, do not put it here. */
 
+  String *instance_label;	/* Copied at instantiation. A
+				   container may also have a copy, but
+				   that's Ok. */
+  
   /* priv structure should include Instance as first member, priv_size is size of
      the enclosing structure. */
   size_t priv_size;		
@@ -208,9 +211,9 @@ extern int num_templates;
 extern void Template_register(Template *t);
 extern void Template_list(int verbose);
 
-extern Instance * Instantiate(const char *label);
+extern Instance * Instantiate(const char *label, String * instance_label);
 
-extern void Instantiate_and_run(const char *label);
+extern void Instantiate_and_run(const char *label, String * instance_label);
 
 typedef struct {
   String *label;

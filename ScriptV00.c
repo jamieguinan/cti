@@ -93,21 +93,32 @@ static void scan_file(ScriptV00_private *priv, const char *filename);
 
 static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
 {
-  char token1[256], token2[256], token3[256], token4[256];
+  char token0[256], token1[256], token2[256], token3[256];
+  int n = 0;
 
-  if ((sscanf(line->bytes, "new %255s %255s", token1, token2) == 2)) {
+  /* Commands with special formatting tested first. */
+  if ((sscanf(line->bytes, "connect %255[A-Za-z0-9._]:%255[A-Za-z0-9._] %255[A-Za-z0-9._]:%255[A-Za-z0-9._]", token0, token1, token2, token3) == 4)) {
+    /* instance:label, instance:label */
+    InstanceGroup_connect2(priv->g, String_new(token0), token1, String_new(token2), token3);
+    return;
+  }
+
+  /* The rest are tested based on a single sscanf. */
+  n = sscanf(line->bytes, "%255s %255s %255s %255s", token0, token1, token2, token3);
+
+  if (n == 3 && streq(token0, "new")) {
     /* template, label */
     InstanceGroup_add(priv->g, token1, String_new(token2));
+    return;
   }
-  else if ((sscanf(line->bytes, "connect %255[A-Za-z0-9._]:%255[A-Za-z0-9._] %255[A-Za-z0-9._]:%255[A-Za-z0-9._]", token1, token2, token3, token4) == 4)) {
-    /* instance:label, instance:label */
-    InstanceGroup_connect2(priv->g, String_new(token1), token2, String_new(token3), token4);
-  }
-  else if ((sscanf(line->bytes, "connect %255s %255s %255s", token1, token2, token3) == 3)) {
+
+  if (n == 4 && streq(token0, "connect")) {
     /* instance, label, instance */
     InstanceGroup_connect(priv->g, String_new(token1), token2, String_new(token3));
+    return;
   }
-  else if ((sscanf(line->bytes, "config %255s %255s %255s", token1, token2, token3) == 3)) {
+  
+  if (n == 4 && streq(token0, "config")) {
     /* label, key, value */
     Instance *inst = InstanceGroup_find(priv->g, String_new(token1));
     if (inst) {
@@ -128,43 +139,69 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       ScriptV00_Config(inst, token2, token3);
 #endif
     }
+    return;
   }
-  else if ((sscanf(line->bytes, "include %255s", token1) == 1)) {
+
+  if (n == 2 && streq(token0, "include")) {
     scan_file(priv, token1);
+    return;
   }
-  else if ((sscanf(line->bytes, "load %255s", token1) == 1)) {
+  
+  if (n == 2 && streq(token0, "load")) {
     load_module(priv, token1);
+    return;
   }
-  else if ((strstr(line->bytes, "system ") == line->bytes)) {
+  
+  if (streq(token0, "system")) {
     int rc = system(line->bytes + strlen("system "));
     if (rc == -1) {
       perror("system");
     }
+    return;
   }
-  /* These strstr() comparisons are sloppy.  I could tokenize them or something. */
-  else if ((strstr(line->bytes, "exit") == line->bytes)) {
+  
+  if (n == 1 && streq(token0, "exit")) {
     exit(1);
+    return;    
   }
-  else if ((strstr(line->bytes, "mt") == line->bytes)) {
+
+  if (n == 1 && streq(token0, "mt")) {
     cfg.mem_tracking = !cfg.mem_tracking;
+    return;
   }
-  else if ((strstr(line->bytes, "tlv") == line->bytes)) {
+  
+  if (n == 1 && streq(token0, "tlv")) {
     Template_list(1);
+    return;
   }
-  else if ((strstr(line->bytes, "tl") == line->bytes)) {
+
+  if (n == 1 && streq(token0, "tl")) {
     Template_list(0);
+    return;
   }
-  else if ((strstr(line->bytes, "il") == line->bytes)) {
+
+  if (n == 1 && streq(token0, "il")) {
     Instance_list(0);
+    return;
   }
-  else if ((strstr(line->bytes, "g_synchronous") == line->bytes)) {
+
+  if (n == 1 && streq(token0, "ilv")) {
+    Instance_list(1);
+    return;
+  }
+
+  if (n == 1 && streq(token0, "g_synchronous")) {
     g_synchronous = !g_synchronous;
+    return;
   }
-  else if ((strstr(line->bytes, "abort") == line->bytes)) {
+  
+  if (n == 1 && streq(token0, "abort")) {
     puts("");			/* Wrap line on console. */
     abort();
+    return;
   }
-  else if (streq(line->bytes, "p")) {
+  
+  if (n == 1 && streq(token0, "p")) {
     if (is_stdin) {
       cfg.pause = 1;
       /* Wait until newline then reset. */
@@ -173,41 +210,44 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       }
       cfg.pause = 0;
     }
-  }
-  else if ((strstr(line->bytes, "ignoreeof") == line->bytes)) {
-    priv->exit_on_eof = 0;
-    printf("exit_on_eof disabled!\n");
-  }
-  else if ((strstr(line->bytes, "dpl") == line->bytes)) {
-    cti_debug_printf_list();
-  }
-  else if ((sscanf(line->bytes, "%255s %255s", token1, token2) == 2)) {
-    if (streq(token1, "v")) {
-      cfg.verbosity  = atoi(token2);
-      if (is_stdin) {
-	/* Wait until newline then reset. */
-	if (fgets(token1, 255, stdin) == NULL) {
-	  fprintf(stderr, "note: got EOF after verbose toggle.\n");
-	}
-	cfg.verbosity = 0;
-      }
-    }
-    else if (streq(token1, "dpt")) {
-      int index = atoi(token2);
-      cti_debug_printf_toggle(index);
-      if (is_stdin) {
-	/* Wait until newline then reset. */
-	if (fgets(token1, 255, stdin) == NULL) {
-	  fprintf(stderr, "note: got EOF after dpt.\n");
-	}
-      }
-      cti_debug_printf_toggle(index);
-    }
-  }
-  else {
-    /* No match. */
+    return;
   }
   
+  if (n == 1 && streq(token0, "ignoreeof")) {
+    priv->exit_on_eof = 0;
+    printf("exit_on_eof disabled!\n");
+    return;
+  }
+  
+  if (n == 1 && streq(token0, "dpl")) {
+    cti_debug_printf_list();
+    return;
+  }
+  
+  if (n == 2 && streq(token0, "v")) {
+    cfg.verbosity = atoi(token1);
+    if (is_stdin) {
+      /* Wait until newline then reset. */
+      if (fgets(token1, 255, stdin) == NULL) {
+	fprintf(stderr, "note: got EOF after verbose toggle.\n");
+      }
+      cfg.verbosity = 0;
+    }
+    return;
+  }
+  
+  if (n == 2 && streq(token0, "dpt")) {
+    int index = atoi(token1);
+    cti_debug_printf_toggle(index);
+    if (is_stdin) {
+      /* Wait until newline then reset. */
+      if (fgets(token1, 255, stdin) == NULL) {
+	fprintf(stderr, "note: got EOF after dpt.\n");
+      }
+    }
+    cti_debug_printf_toggle(index);
+    return;
+  }
 }
 
 

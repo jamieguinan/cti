@@ -31,7 +31,7 @@ int app_code(int argc, char *argv[])
   ui_callback = Callback_new();
 
   /* Set up a scripting handler, and set up initial input. */
-  Instance *s = Instantiate("ScriptV00");
+  Instance *s = Instantiate("ScriptV00", S("cti_app"));
 
   while (argn < argc) {
     char temp_arg[strlen(argv[argn])+1];

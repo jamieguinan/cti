@@ -279,20 +279,41 @@ void Template_list(int verbose)
 
 static void Instance_print(Index_node *node)
 {
-  /* FIXME: Would like to be passed string key as well as instance pointer. */
   Instance * pi = node->value;
-  printf("  %s %s\n", s(node->stringKey), pi->label);
+  printf("  %s (%s)\n", s(node->stringKey), pi->label);
+}
+
+static void Instance_print_verbose(Index_node *node)
+{
+  int i;
+  Instance * pi = node->value;
+  printf("  %s (%s)\n", s(node->stringKey), pi->label);
+  for (i=0; i < pi->num_outputs; i++) {
+    if (pi->outputs[i].destination) {
+      printf("    %s.%s -> %s.%s\n"
+	     , s(node->stringKey)
+	     , pi->outputs[i].type_label
+	     , s(pi->outputs[i].destination->parent->instance_label)
+	     , pi->outputs[i].destination->type_label
+	     );
+    }
+  }
 }
 
 void Instance_list(int verbose)
 {
   /* List instances in global instance group. */
   if (gig->instances.index) {
-    Index_walk(gig->instances.index, Instance_print);
+    if (verbose) {
+      Index_walk(gig->instances.index, Instance_print_verbose);
+    }
+    else {
+      Index_walk(gig->instances.index, Instance_print);
+    }
   }
 }
 
-static Instance * _Instantiate_local(const char *label, int run)
+static Instance * _Instantiate_local(const char *label, String * instanceLabel, int run)
 {
   int i;
 
@@ -309,6 +330,7 @@ static Instance * _Instantiate_local(const char *label, int run)
       }
 
       pi->label = t->label;
+      pi->instance_label = String_dup(instanceLabel);
       pi->tick = t->tick;
       pi->priv_size = t->priv_size;
 
@@ -350,15 +372,15 @@ static Instance * _Instantiate_local(const char *label, int run)
 }
 
 
-void Instantiate_and_run(const char *label)
+void Instantiate_and_run(const char *label, String * instanceLabel)
 {
-  _Instantiate_local(label, 1);
+  _Instantiate_local(label, instanceLabel, 1);
 }
 
 
-Instance * Instantiate(const char *label)
+Instance * Instantiate(const char *label, String * instanceLabel)
 {
-  return _Instantiate_local(label, 0);
+  return _Instantiate_local(label, instanceLabel, 0);
 }
 
 
@@ -628,7 +650,7 @@ void InstanceGroup_add(InstanceGroup *g, const char *typeLabel, String *instance
     return;
   }
 
-  pi = Instantiate(typeLabel);
+  pi = Instantiate(typeLabel, instanceLabel);
 
   if (!pi) {
     return;
