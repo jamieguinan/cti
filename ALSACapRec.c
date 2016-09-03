@@ -389,6 +389,7 @@ static void Wav_handler(Instance *pi, void *data)
 
 #if 0
   if (!priv->c.rate) {
+    int i;
     /* Set rate. */
     char channels[32];
     char rate[32];
@@ -400,7 +401,7 @@ static void Wav_handler(Instance *pi, void *data)
     set_channels(pi, channels);
 
     /* Set format. */
-    for (i=0; i < table_size(formats); i++) {
+    for (i=0; i < cti_table_size(formats); i++) {
       if (formats[i].bytes * 8 == wav_in->params.bits_per_sample) {
 	priv->c.format = formats[i].value;
 	rc = snd_pcm_hw_params_set_format(priv->c.handle, priv->c.hwparams, priv->c.format);
@@ -412,7 +413,7 @@ static void Wav_handler(Instance *pi, void *data)
       }
     }
     
-    if (i == table_size(formats)) {
+    if (i == cti_table_size(formats)) {
       fprintf(stderr, "*** format for %d bits-per-sample not found!\n",
 	      wav_in->params.bits_per_sample);
     }
