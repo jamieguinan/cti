@@ -531,7 +531,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 					 // SDL_IYUV_OVERLAY, 
 					 priv->surface);
     if (!priv->overlay) {
-      fprintf(stderr, "SDL_error %s\n", SDL_GetError());
+      fprintf(stderr, "SDL_CreateYUVOverlay: SDL_error %s\n", SDL_GetError());
       exit(1);
     }
 
@@ -1098,7 +1098,7 @@ void sdl_event_loop(void)
     // printf("ev.type=%d\n", ev.type);
 
     if (!rc) {
-      fprintf(stderr, "SDL_error %d %s\n", rc, SDL_GetError());
+      fprintf(stderr, "SDL_WaitEvent: SDL_error %d %s\n", rc, SDL_GetError());
       exit(1);
       continue;
     }
