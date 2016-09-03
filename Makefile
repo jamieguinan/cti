@@ -59,7 +59,8 @@ CPPFLAGS += -I/usr/include
 CPPFLAGS += -I ../jpeg-9
 CPPFLAGS += -MMD -MP -MF $(subst .c,.dep,$<)
 #LDFLAGS += -L../platform/$(ARCH)/lib -ljpeg
-LDFLAGS += -L../jpeg-9/.libs -ljpeg -Wl,-rpath,../jpeg-9/.libs
+LDFLAGS += -L../jpeg-9/.libs -ljpeg -Wl,-rpath,../jpeg-9/.libs \
+  -Wl,-rpath,$(PWD)/../jpeg-9/.libs
 LDFLAGS += -lpthread
 ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
