@@ -1,5 +1,10 @@
+/*
+ * Run a subprogram recording stdin/stdout/stderr to files.
+ */
+
 #define _GNU_SOURCE
 #include <stdio.h>
+#include <string.h>
 #include <poll.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,13 +17,15 @@
 
 int main(int argc, char * argv[], char * envp[])
 {
+  int i;
+  
   /* "cat" is the default subprogram. */
-  char * cmd = "cat";
+  char * cmd = "/bin/cat";
 
   /* If a program of the same name with ".ori" suffix exists, run that as the subprogram. */
   char ori[strlen(argv[0]+16)];
   sprintf(ori, "%s.ori", argv[0]);
-  if (access(ori, X_OK)) {
+  if (access(ori, X_OK) == 0) {
     cmd = ori;
   }
 
@@ -39,17 +46,23 @@ int main(int argc, char * argv[], char * envp[])
   int pid = fork();
   if (pid > 0) {
     FILE * log = fopen("/tmp/gasket-log.txt", "w");
+    if (!log) { exit(1); }
     int logs[3];
-    logs[0] = open("/tmp/gasket-0.bin", O_CREAT|O_WRONLY|O_TRUNC, 0644);
-    logs[1] = open("/tmp/gasket-1.bin", O_CREAT|O_WRONLY|O_TRUNC, 0644);
-    logs[2] = open("/tmp/gasket-2.bin", O_CREAT|O_WRONLY|O_TRUNC, 0644);
-    
+    for (i=0; i < 3; i++) {
+      char logname[128];
+      sprintf(logname, "/tmp/gasket-%d.bin", i);
+      logs[i] = open(logname, O_CREAT|O_WRONLY|O_TRUNC, 0644);
+      if (logs[i] == -1) {
+	fprintf(log, "open(%s) failed\n", logname);
+	exit(1);
+      }
+    }
+
     /* Parent */
     close(pipe0[READ]);
     close(pipe1[WRITE]);
     close(pipe2[WRITE]);
     char buffer[1024];
-    int i;
     ssize_t rn, wn;
     int is_open[3] = { 1, 1, 1};
     while (1) {
@@ -57,6 +70,9 @@ int main(int argc, char * argv[], char * envp[])
       struct pollfd pfds[3] = {};
       int ofds[3] = {};
       int which_fd[3] = {};
+      /* I don't usually like code lines this wide, but in this case
+	 it helps to make sure everything is correct by visual
+	 inspection. */
       if (is_open[0]) { pfds[nfds].fd = 0;           ofds[nfds] = pipe0[WRITE]; pfds[nfds].events = POLLIN|POLLERR; which_fd[nfds] = 0; nfds++; }
       if (is_open[1]) { pfds[nfds].fd = pipe1[READ]; ofds[nfds] = 1;            pfds[nfds].events = POLLIN|POLLERR; which_fd[nfds] = 1; nfds++; }
       if (is_open[2]) { pfds[nfds].fd = pipe2[READ]; ofds[nfds] = 2;            pfds[nfds].events = POLLIN|POLLERR; which_fd[nfds] = 2; nfds++; }
@@ -130,7 +146,7 @@ int main(int argc, char * argv[], char * envp[])
     close(pipe2[READ]);  dup2(pipe2[WRITE], 2); close(pipe2[WRITE]);
     argv[0] = cmd;
     execvpe(cmd, argv, envp);
-    perror("execvpe");
+    fprintf(stderr, "execvpe error (%s)\n", argv[0]);
   }
   else {
     perror("fork");
