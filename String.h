@@ -95,6 +95,7 @@ extern String * String_unescape(StringConst *str);
 extern String * String_basename(String *str);
 extern int String_to_int(String * str, int * result);
 extern int String_to_long(String * str, long * result);
+extern String * String_replace(String *s, const char *old, const char *new);
 
 /* List of strings. */
 typedef struct {
