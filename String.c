@@ -442,6 +442,17 @@ String * String_basename(String *str)
   return String_new(str->bytes);
 }
 
+String * String_dirname(String *str)
+{
+  int i;
+  for (i=(str->len-2); i >= 0; i--) {
+    if (str->bytes[i] == '/') {
+      return String_from_char(s(str), i);
+    }
+  }
+  return String_new(str->bytes);
+}
+
 int String_to_int(String * str, int * result)
 {
   int i;
