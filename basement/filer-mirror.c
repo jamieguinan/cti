@@ -19,7 +19,7 @@ void get_file(String * host_port, String * path)
   localptr(String, outfile) = String_sprintf(".%s", s(path));
   localptr(String, url) = String_sprintf("%s%s", s(host_port), s(path));
   printf("Getting %s to %s\n", s(url), s(outfile));  
-  //serf_command_get(S("serf_get"), url, outfile);
+  serf_command_get(S("serf_get"), url, outfile);
 }
 
 void get_dir(String * host_port, String * path)
