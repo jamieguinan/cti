@@ -673,12 +673,30 @@ int serf_get_post(int argc, const char **argv, String * output_string)
 
     handler_ctx.completed_requests = 0;
     handler_ctx.print_headers = print_headers;
-    if (output_string) {
+    if (output_string && String_len(output_string) == 0) {
+	/* Append output to (initially empty) String object. */
 	handler_ctx.output_string = output_string;
     } 
     else {
 	handler_ctx.output_string = NULL;
-	apr_file_open_stdout(&handler_ctx.output_file, pool);
+	if (output_string) {
+	    /* Open output_string as a file. */
+	    localptr(String, dname) = String_dirname(output_string);
+	    apr_dir_make_recursive(s(dname), APR_FPROT_OS_DEFAULT, pool);
+	    apr_status_t status =
+		apr_file_open(&handler_ctx.output_file,
+			      s(output_string),
+			      APR_FOPEN_WRITE|APR_FOPEN_CREATE|APR_FOPEN_TRUNCATE|APR_FOPEN_BINARY,
+			      APR_FPROT_OS_DEFAULT,
+			      pool);
+	    if (status) {
+		printf("Error opening file (%s)\n", s(output_string));
+		return status;		
+	    }
+	}
+	else {
+	    apr_file_open_stdout(&handler_ctx.output_file, pool);
+	}
     }
 
     handler_ctx.host = url.hostinfo;
