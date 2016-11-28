@@ -41,9 +41,22 @@ void get_dir(String * host_port, String * path)
   }
 }
 
-int main()
+int main(int argc, char * argv[])
 {
-  get_dir(S("http://192.168.1.11:8080"), S("/Files/"));
+  if (argc != 2) {
+    printf("This program recursively copies files from the iOS \"Filer\" app.\n"
+	   "In the app, go to Settings, and set Web Sharing to On.\n"
+	   "Supply the indicated url (http://...) to this program.\n");
+    printf("Example usage: %s http://192.168.1.23:8080\n", argv[0]);
+    return 1;
+  }
+
+  if (!Regex_match(argv[1], "http:.*:")) {
+    printf("%s does not look like a valid Filer Web Sharing url.\n", argv[1]);
+    return 2;
+  }
+     
+  get_dir(S(argv[1]), S("/Files/"));
   
   return 0;
 }
