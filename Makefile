@@ -5,6 +5,10 @@ ifeq ($(shell arch),x86_64)
 ARCH=x86_64-Linux
 endif
 
+ifeq ($(shell arch),i686)
+ARCH=i686-Linux
+endif
+
 ifeq ($(shell arch),armv6l)
 ARCH=rpi
 endif
