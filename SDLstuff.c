@@ -148,6 +148,10 @@ typedef struct {
 
   /* Smoother */
   VSmoother *smoother;
+
+  /* Filter value(s) */
+  float iir_factor;
+
 } SDLstuff_private;
 
 static void _reset_video(SDLstuff_private *priv, const char *func);
@@ -339,6 +343,19 @@ static int set_snapshot_key(Instance *pi, const char *value)
   return 0;
 }
 
+static int set_iir_factor(Instance *pi, const char *value)
+{
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
+  float factor = atof(value);
+  if (0.01 < factor && factor < 0.99) {
+    priv->iir_factor = atof(value);
+  }
+  else {
+    fprintf(stderr, "SDL filter iir factor out of range\n");
+  }
+  return 0;
+}
+
 
 static Config config_table[] = {
   { "label", set_label, 0L, 0L},
@@ -349,6 +366,7 @@ static Config config_table[] = {
   { "smoother", set_smoother, 0L, 0L},
   { "rec_key", set_rec_key, 0L, 0L},
   { "snapshot_key", set_snapshot_key, 0L, 0L},
+  { "iir_factor", set_iir_factor, 0L, 0L},
 };
 
 
@@ -528,7 +546,7 @@ static void render_frame_gl(SDLstuff_private *priv, RGB3_buffer *rgb3_in)
 }
 
 
-static void filter_iir(YUV420P_buffer *yuv420p_in)
+static void filter_iir(SDLstuff_private * priv, YUV420P_buffer *yuv420p_in)
 {
   static uint8_t * ysave;
   int ysize = yuv420p_in->width * yuv420p_in->width;
@@ -542,7 +560,7 @@ static void filter_iir(YUV420P_buffer *yuv420p_in)
   uint8_t * yout = yuv420p_in->y;
 
   for (i=0; i < ysize; i++) {
-    yout[i]= (yout[i] * 0.75) + (ysave[i] * 0.25);
+    yout[i]= (yout[i] * priv->iir_factor) + (ysave[i] * (1.0 - priv->iir_factor));
   }
   memcpy(ysave, yout, ysize);
 }
@@ -616,18 +634,17 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     SDL_LockSurface(priv->surface);
     SDL_LockYUVOverlay(priv->overlay);
 
-    // filter_iir(yuv420p_in);
+    if (priv->iir_factor != 0.0) {
+      filter_iir(priv, yuv420p_in);
+    }
 
     /* Copy Y */
-    int img_pitch = priv->overlay->w;
-    if (0 && priv->overlay->pitches[0] == img_pitch) {
-      memcpy(priv->overlay->pixels[0], yuv420p_in->y, yuv420p_in->width*yuv420p_in->height);
-    }
-    else {
+    if (1) {
       /* Pitch may be different if width is not evenly divisible by 4.
 	 So its a bunch of smaller memcpys instead of a single bigger
 	 one. */
       int y;
+      int img_pitch = priv->overlay->w;
       unsigned char *src = yuv420p_in->y + (iy * img_pitch);
       unsigned char *dst = priv->overlay->pixels[0] + (iy * priv->overlay->pitches[0]);
       // printf("Copy Y: iy=%d h=%d dy=%d src=%p dst=%p\n", iy, priv->overlay->h, dy, src, dst);
@@ -1216,6 +1233,7 @@ static void SDLstuff_instance_init(Instance *pi)
   SDLstuff_private *priv = (SDLstuff_private *)pi;
   priv->rec_key = -1;
   priv->snapshot_key = -1;
+  priv->iir_factor = 0.0;
 
 #if 0
   extern Callback *ui_callback;	/* cti_app.c */
