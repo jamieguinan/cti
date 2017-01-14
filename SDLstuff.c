@@ -528,6 +528,26 @@ static void render_frame_gl(SDLstuff_private *priv, RGB3_buffer *rgb3_in)
 }
 
 
+static void filter_iir(YUV420P_buffer *yuv420p_in)
+{
+  static uint8_t * ysave;
+  int ysize = yuv420p_in->width * yuv420p_in->width;
+  int i;
+
+  if (!ysave) {
+    ysave = malloc(ysize);
+    memcpy(ysave, yuv420p_in->y, ysize);
+  }
+
+  uint8_t * yout = yuv420p_in->y;
+
+  for (i=0; i < ysize; i++) {
+    yout[i]= (yout[i] * 0.75) + (ysave[i] * 0.25);
+  }
+  memcpy(ysave, yout, ysize);
+}
+
+
 static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p_in)
 {
   if (!priv->overlay) {
@@ -596,6 +616,8 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     SDL_LockSurface(priv->surface);
     SDL_LockYUVOverlay(priv->overlay);
 
+    // filter_iir(yuv420p_in);
+
     /* Copy Y */
     int img_pitch = priv->overlay->w;
     if (0 && priv->overlay->pitches[0] == img_pitch) {
@@ -616,17 +638,17 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
       }
     }
 
+    /* Copy Cr, Cb */
     if (1) {
       int y, src_index, dst_index, src_width, src_height;
-      // printf("Copy Cr, Cb\n");
       src_width = yuv420p_in->width/2;
       src_height = yuv420p_in->height/2;
-      src_index = src_width * iy * 2;
+      src_index = src_width * iy;
       for (y=iy; y < src_height; y+=dy) {
 	dst_index = y * priv->overlay->pitches[1];
 	memcpy(&priv->overlay->pixels[1][dst_index], &yuv420p_in->cr[src_index], src_width);
 	memcpy(&priv->overlay->pixels[2][dst_index], &yuv420p_in->cb[src_index], src_width);
-	src_index += src_width;
+	src_index += (src_width * dy);
       }
     }
   
@@ -639,9 +661,14 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 
     n -= 1;
     if (1) {
-      // nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/80}, NULL);
+      clock_nanosleep(CLOCK_MONOTONIC,
+		      0,
+		      &(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/70}, 
+		      NULL);
       iy = next_iy;
     }
+
+    update_display_times();
 
   }
 }
@@ -685,8 +712,6 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
 {
   dpf("frame %d ready for display\n", priv->inFrames);
   int need_reset = 0;
-
-
 
   if (priv->toggle_fullscreen 
       && (global.display.width != 0) 
@@ -735,17 +760,10 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   }
 
   /* Handle frame delay timing. IN PROGRESS... */
-  double tnow;
-
   // x(c->tv, priv->frame_last);
   if (c) {
     // priv->frame_last = c->tv;
   }
-
-  getdoubletime(&tnow);
-  // nanosleep(tv_next - tv_now);
-
-  update_display_times();
 
   if (priv->smoother) {
     VSmoother_smooth(priv->smoother, 
