@@ -118,7 +118,11 @@ typedef struct {
   SDL_Surface *surface;
   int width;
   int height;
-  int hard_dimensions;
+
+  /* Match overlay size to screen aspect ratio. */
+  int screen_aspect;
+  int padLeft;
+  int padRight;
 
   /* For resize */
   int new_width;
@@ -356,12 +360,20 @@ static int set_iir_factor(Instance *pi, const char *value)
   return 0;
 }
 
+static int set_screen_aspect(Instance *pi, const char *value)
+{
+  SDLstuff_private *priv = (SDLstuff_private *)pi;
+  priv->screen_aspect = atoi(value);
+  return 0;
+}
+
 
 static Config config_table[] = {
   { "label", set_label, 0L, 0L},
   { "mode", set_mode, 0L, 0L},
   { "width", set_width, 0L, 0L},
   { "height", set_height, 0L, 0L},
+  { "screen_aspect", set_screen_aspect, 0L, 0L},
   { "fullscreen", set_fullscreen, 0L, 0L},
   { "smoother", set_smoother, 0L, 0L},
   { "rec_key", set_rec_key, 0L, 0L},
@@ -573,8 +585,22 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 
     /* FIXME: different video cards have many different overlay formats, some conversions
        (like 422->420) might be avoidable. */
+    int overlayWidth;
+    int overlayHeight = yuv420p_in->height;
 
-    priv->overlay = SDL_CreateYUVOverlay(yuv420p_in->width, yuv420p_in->height, 
+    if (priv->screen_aspect
+	&& (global.display.width != 0) 
+	&& (global.display.height != 0)) {
+      overlayWidth = yuv420p_in->height * (global.display.width/(global.display.height*1.0));
+      priv->padLeft = (overlayWidth - yuv420p_in->width)/2;
+      priv->padRight = overlayWidth - yuv420p_in->width - priv->padLeft;
+    }
+    else {
+      overlayWidth = yuv420p_in->width;
+      priv->padLeft = priv->padRight = 0;
+    }
+
+    priv->overlay = SDL_CreateYUVOverlay(overlayWidth, overlayHeight,
 					 SDL_YV12_OVERLAY, 
 					 // SDL_IYUV_OVERLAY, 
 					 priv->surface);
@@ -644,27 +670,42 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 	 So its a bunch of smaller memcpys instead of a single bigger
 	 one. */
       int y;
-      int img_pitch = priv->overlay->w;
-      unsigned char *src = yuv420p_in->y + (iy * img_pitch);
+      unsigned char *src = yuv420p_in->y + (iy * yuv420p_in->width);
       unsigned char *dst = priv->overlay->pixels[0] + (iy * priv->overlay->pitches[0]);
       // printf("Copy Y: iy=%d h=%d dy=%d src=%p dst=%p\n", iy, priv->overlay->h, dy, src, dst);
       for (y=iy; y < priv->overlay->h; y += dy) {
-	memcpy(dst, src, img_pitch);
-	src += img_pitch * dy;
+	memset(dst, 16, priv->padLeft);
+	memcpy(dst+priv->padLeft, src, yuv420p_in->width);
+	memset(dst+priv->padLeft+yuv420p_in->width, 16, priv->padRight);
+	src += yuv420p_in->width * dy;
 	dst += (priv->overlay->pitches[0] * dy);
       }
     }
 
     /* Copy Cr, Cb */
     if (1) {
-      int y, src_index, dst_index, src_width, src_height;
+      int y, src_index, dst_index, src_width, src_height, pad_left, pad_right;
       src_width = yuv420p_in->width/2;
       src_height = yuv420p_in->height/2;
       src_index = src_width * iy;
+      pad_left = priv->padLeft/2;
+      pad_right = priv->padRight/2;
       for (y=iy; y < src_height; y+=dy) {
 	dst_index = y * priv->overlay->pitches[1];
-	memcpy(&priv->overlay->pixels[1][dst_index], &yuv420p_in->cr[src_index], src_width);
-	memcpy(&priv->overlay->pixels[2][dst_index], &yuv420p_in->cb[src_index], src_width);
+
+	memset(&priv->overlay->pixels[1][dst_index], 128, pad_left);
+	memcpy(&priv->overlay->pixels[1][dst_index] + pad_left, 
+	       &yuv420p_in->cr[src_index], 
+	       src_width);
+	memset(&priv->overlay->pixels[1][dst_index]+pad_left+src_width, 128, pad_right);
+
+
+	memset(&priv->overlay->pixels[2][dst_index], 128, pad_left);
+	memcpy(&priv->overlay->pixels[2][dst_index] + pad_left,
+	       &yuv420p_in->cb[src_index], 
+	       src_width);
+	memset(&priv->overlay->pixels[2][dst_index]+pad_left+src_width, 128, pad_right);
+
 	src_index += (src_width * dy);
       }
     }
