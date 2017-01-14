@@ -16,6 +16,7 @@
 #include "Keycodes.h"
 #include "Pointer.h"
 #include "VSmoother.h"
+#include "Global.h"
 
 
 static int SDLtoCTI_Keymap[SDLK_LAST] = {
@@ -123,6 +124,10 @@ typedef struct {
   int new_width;
   int new_height;
 
+  /* For fullscreen toggle */
+  int save_width;
+  int save_height;
+
   String label;
   int label_set;
 
@@ -190,7 +195,7 @@ static void Keycode_handler(Instance *pi, void *msg)
   //   puts(__func__);
   
   if (km->keycode == CTI__KEY_F) {
-    // priv->toggle_fullscreen = 1;
+    priv->toggle_fullscreen = 1;
     handled = 1;
   }
   else if (km->keycode == CTI__KEY_PLUS || km->keycode == CTI__KEY_EQUALS) {
@@ -387,9 +392,14 @@ static void _reset_video(SDLstuff_private *priv, const char *func)
 
   SDL_putenv("SDL_VIDEO_CENTERED=center");
 
-  //if (priv->fullscreen) {
-  //  sdl_vid_flags |= SDL_FULLSCREEN;
-  //}
+  if (priv->fullscreen) {
+    sdl_vid_flags |= SDL_FULLSCREEN;
+    sdl_vid_flags |= SDL_NOFRAME;
+  }
+  else {
+    sdl_vid_flags &= ~SDL_FULLSCREEN;
+    sdl_vid_flags &= ~SDL_NOFRAME;
+  }
 
   if (priv->renderMode == RENDER_MODE_GL) {
     rc = SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -676,12 +686,25 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   dpf("frame %d ready for display\n", priv->inFrames);
   int need_reset = 0;
 
-  if (priv->toggle_fullscreen) {
-    // priv->fullscreen = (priv->fullscreen + 1) % 2;
-    //priv->old_width = priv->width;
-    //priv->old_height = priv->height;
-    //priv->toggle_fullscreen = 0;
-    // reset_video(priv);
+
+
+  if (priv->toggle_fullscreen 
+      && (global.display.width != 0) 
+      && (global.display.height != 0)) {
+    if (!priv->fullscreen) {
+      priv->fullscreen = 1;
+      priv->save_width = priv->width;
+      priv->save_height = priv->height;
+      priv->new_width = global.display.width;
+      priv->new_height = global.display.height;
+    }
+    else {
+      priv->fullscreen = 0;
+      priv->new_width = priv->save_width;
+      priv->new_height = priv->save_height;
+    }
+    priv->toggle_fullscreen = 0;
+    need_reset = 1;
   }
 
   if (priv->new_width && priv->new_height) {
@@ -693,8 +716,9 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
       need_reset = 1;
     }
   }
-  else if (width != priv->width ||
-	   height != priv->height) {
+  else if (!priv->fullscreen
+	   && width != priv->width 
+	   && height != priv->height) {
     /* Resize based on incoming frame. */
     priv->width = width;
     priv->height = height;
@@ -704,7 +728,6 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   if (need_reset) {
     reset_video(priv);
   }
-
 
   if (sl(priv->label) && !priv->label_set) {
     SDL_WM_SetCaption(sl(priv->label), NULL); //Sets the Window Title
