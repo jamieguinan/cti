@@ -84,6 +84,7 @@
 #include "RPiH264Enc.h"
 #include "BinaryFiler.h"
 #include "PushQueue.h"
+#include "Global.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -215,6 +216,7 @@ int cti_main(int argc, char *argv[])
   BinaryFiler_init();
   PushQueue_init();
   //PCMSource_init();
+  Global_init();
 
   return app_code(argc, argv);
 }

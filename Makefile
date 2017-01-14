@@ -187,12 +187,17 @@ OBJS= \
 	cti_utils.o \
 	../jpeg-9/transupp.o \
 	BinaryFiler.o \
+	Global.o \
 	$(MAIN) 
 
 #	ScriptSession.o \
 #	jmemsrc.o \
 #	jmemdst.o \
 #	wrmem.o \
+
+ifeq ($(OS),Linux)
+LDFLAGS += -lX11
+endif
 
 
 ifeq ($(OS),Linux)
