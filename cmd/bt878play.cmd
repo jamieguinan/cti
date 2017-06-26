@@ -10,7 +10,8 @@ config vc device BT878
 config vc format BGR3
 config vc std NTSC
 config vc size 640x480
-config vc input S-Video
+#config vc input S-Video
+config vc input Composite1
 config vc mute 0
 #config vc Contrast 63
 config vc enable 1
