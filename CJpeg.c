@@ -175,7 +175,7 @@ static void compress_and_post(Instance *pi,
   cinfo.image_width = jpeg_out->width;
   cinfo.image_height = jpeg_out->height;
   cinfo.input_components = 3;
-  cinfo.in_color_space = JCS_RGB; /* reset below if y422p */
+  cinfo.in_color_space = JCS_RGB; /* reset below if y422p or y420p*/
 
   jpeg_set_defaults(&cinfo);
 
@@ -241,13 +241,14 @@ static void compress_and_post(Instance *pi,
     else if (compress_mode == COMPRESS_Y420) {
       int n;
       /* Setup necessary for raw downsampled data.  */
+      // fprintf(stderr, "420 cinfo.next_scanline=%d\n", cinfo.next_scanline);
       JSAMPROW y[16];
       JSAMPROW cb[16];
       JSAMPROW cr[16];
       for (n=0; n < 16; n++) {
 	y[n] = c1 + ((cinfo.next_scanline+n)* width);
-	cb[n] = c2 + ((cinfo.next_scanline+n) * width / 4);
-	cr[n] = c3 + ((cinfo.next_scanline+n) * width / 4);
+	cb[n] = c2 + (((cinfo.next_scanline/2)+n) * width / 2);
+	cr[n] = c3 + (((cinfo.next_scanline/2)+n) * width / 2);
       }
 
       JSAMPARRAY array[3] = { y, cb, cr};
