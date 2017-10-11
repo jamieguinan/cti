@@ -387,9 +387,7 @@ static void Wav_handler(Instance *pi, void *data)
     return;
   }
 
-#if 0
   if (!priv->c.rate) {
-    int i;
     /* Set rate. */
     char channels[32];
     char rate[32];
@@ -400,26 +398,17 @@ static void Wav_handler(Instance *pi, void *data)
     sprintf(channels, "%d", wav_in->params.channels);
     set_channels(pi, channels);
 
-    /* Set format. */
-    for (i=0; i < cti_table_size(formats); i++) {
-      if (formats[i].bytes * 8 == wav_in->params.bits_per_sample) {
-	priv->c.format = formats[i].value;
-	rc = snd_pcm_hw_params_set_format(priv->c.handle, priv->c.hwparams, priv->c.format);
-	if (rc < 0) {
-	  fprintf(stderr, "*** %s: snd_pcm_hw_params_set_format %s: %s\n", __func__,
-		  s(priv->c.device), snd_strerror(rc));
-	}
-	break;
+    /* Set format */
+    snd_pcm_format_t format = ALSAio_bps_to_snd_fmt(wav_in->params.bits_per_sample);
+    if (format != SND_PCM_FORMAT_UNKNOWN) {
+      priv->c.format = format;
+      rc = snd_pcm_hw_params_set_format(priv->c.handle, priv->c.hwparams, priv->c.format);
+      if (rc < 0) {
+        fprintf(stderr, "*** %s: snd_pcm_hw_params_set_format %s: %s\n", __func__,
+                s(priv->c.device), snd_strerror(rc));
       }
     }
-    
-    if (i == cti_table_size(formats)) {
-      fprintf(stderr, "*** format for %d bits-per-sample not found!\n",
-	      wav_in->params.bits_per_sample);
-    }
-
   }
-#endif
 
   state = snd_pcm_state(priv->c.handle);
   dpf("%s: state(1)=%s\n", __func__, ALSAio_state_to_string(state));

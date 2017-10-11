@@ -41,5 +41,6 @@ extern int ALSAio_set_format_string(ALSAio_common * aic, const char * format);
 extern void ALSAio_open_playback(ALSAio_common * aic, const char * device, int rate, int channels, const char * format);
 extern void ALSAio_open_capture(ALSAio_common * aic, const char * device, int rate, int channels, const char * format);
 extern Audio_buffer * ALSAio_get_samples(ALSAio_common * aic);
+extern snd_pcm_format_t ALSAio_bps_to_snd_fmt(int bits_per_sample);
 
 #endif

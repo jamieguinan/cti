@@ -36,7 +36,6 @@ int ALSAio_set_format_string(ALSAio_common * aic, const char * format)
   }  
   return rc;
 }
-			       
 
 static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rate, int channels, const char * format,
 			       snd_pcm_stream_t mode)
@@ -233,4 +232,18 @@ Audio_buffer * ALSAio_get_samples(ALSAio_common * aic)
     Audio_buffer_add_samples(ab, buffer, transferred);
   }
   return ab;
+}
+
+snd_pcm_format_t ALSAio_bps_to_snd_fmt(int bits_per_sample)
+{
+  int i;
+  
+  for (i=0; i < cti_table_size(formats); i++) {
+    if (formats[i].bytes * 8 == bits_per_sample) {
+      return formats[i].value;
+    }
+  }
+  
+  fprintf(stderr, "*** format for %d bits-per-sample not found!\n", bits_per_sample);  
+  return SND_PCM_FORMAT_UNKNOWN;
 }
