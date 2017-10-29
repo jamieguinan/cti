@@ -229,6 +229,11 @@ static void Keycode_handler(Instance *pi, void *msg)
     exit(0);
   }
 
+  else if (km->keycode == CTI__KEY_Z) {
+    handled = 1;
+    exit(1);
+  }
+
   else if (km->keycode == priv->rec_key) {
     printf("REC\n");
   }
