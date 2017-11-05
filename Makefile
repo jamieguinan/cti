@@ -42,6 +42,9 @@ ifeq ($(ARCH),$(HOSTARCH))
 LDFLAGS+=-Wl,-rpath,$(shell pwd)/../platform/$(ARCH)/lib -lm
 endif
 
+# This enables files > 2GB on 32-bit Linux.
+CFLAGS += -D_FILE_OFFSET_BITS=64
+
 CFLAGS += -Wall $(CMDLINE_CFLAGS)
 CFLAGS += -O2
 #CFLAGS += -Os 
