@@ -229,6 +229,11 @@ static void Keycode_handler(Instance *pi, void *msg)
     exit(0);
   }
 
+  else if (km->keycode == CTI__KEY_Z) {
+    handled = 1;
+    exit(1);
+  }
+
   else if (km->keycode == priv->rec_key) {
     printf("REC\n");
   }
@@ -588,7 +593,8 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     int overlayWidth;
     int overlayHeight = yuv420p_in->height;
 
-    if (priv->screen_aspect
+    if (priv->fullscreen
+        && priv->screen_aspect
 	&& (global.display.width != 0) 
 	&& (global.display.height != 0)) {
       overlayWidth = yuv420p_in->height * (global.display.width/(global.display.height*1.0));

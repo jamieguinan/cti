@@ -26,6 +26,8 @@ config sdl mode OVERLAY
 #config sdl width 1440
 #config sdl height 960
 
+config sdl screen_aspect 1
+
 #connect dj RGB3_buffer vs
 #connect vs RGB3_buffer sdl
 #connect dj RGB3_buffer sdl
@@ -35,7 +37,7 @@ connect vf YUV422P_buffer sdl
 
 #config mjd input ./rcv
 # Port 6667 is full speed, port 6668 is every-other.
-config mjd input dell3000:5103
+config mjd input dell3000.local:5103
 #config mjd input 192.168.2.109:6668
 #config mjd input 127.0.0.1:5000:L
 
