@@ -598,6 +598,10 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 	&& (global.display.width != 0) 
 	&& (global.display.height != 0)) {
       overlayWidth = yuv420p_in->height * (global.display.width/(global.display.height*1.0));
+      while (overlayWidth % 4 != 0) {
+        /* Overlay should be a multiple of 4 to avoid green edge. */
+        overlayWidth += 1;
+      }
       priv->padLeft = (overlayWidth - yuv420p_in->width)/2;
       priv->padRight = overlayWidth - yuv420p_in->width - priv->padLeft;
     }
