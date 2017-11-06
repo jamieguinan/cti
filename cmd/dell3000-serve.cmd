@@ -40,3 +40,4 @@ config ac enable 1
 
 # config mjm output dell3000-%Y%m%d-%H%M%S.mjx
 
+ignoreeof 1
