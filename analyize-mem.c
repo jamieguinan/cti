@@ -3,22 +3,15 @@
  *
  * Compile command,
  
-  gcc analyize-mem.c -o analyize-mem -lpthread
+  gcc analyize-mem.c Index.c Array.c Cfg.c StackDebug.c Mem.c CTI.c locks.c dpf.c String.c -lpthread -o analyize-mem
 
   *
   */
+
+#include <stdio.h>
+
 #include "CTI.h"
 #include "StackDebug.h"
-
-#include "Index.c"
-#include "Mem.c"
-#include "Array.c"
-#include "Cfg.c"
-#include "String.c"
-#include "StackDebug.c"
-#include "CTI.c"
-#include "locks.c"
-#include "dpf.c"
 
 int leftovers = 0;
 InstanceGroup *gig;
@@ -151,10 +144,10 @@ int main(int argc, char *argv[])
 		       String_dup(stackpath), /* value */
 		       &err);
       allocations += 1;
-      // { printf("[%s] + err = %d\n", s(addr), err); }
       // Index_analyze(idx);
       // printf("allocations - frees = %d - %d = %d\n", allocations, frees, allocations - frees);
       if (err) {
+	{ printf("[%s] + err = %d\n", s(addr), err); }
 	Index_walk(idx, post_callback);
 	return 1;
       }
@@ -164,16 +157,17 @@ int main(int argc, char *argv[])
 		       addr,
 		       &err);
       frees += 1;
-      // { printf("[%s] - err = %d\n", s(addr), err); }
       // Index_analyze(idx);
       // printf("allocations - frees = %d - %d = %d\n", allocations, frees, allocations - frees);
       if (err) {
-	Index_walk(idx, post_callback);
-	return 1;
+	{ printf("[%s] - err = %d\n", s(addr), err); }
+	//Index_walk(idx, post_callback);
+	//return 1;
       }
     }
     String_list_free(&parts);
   }
+
 
   fclose(f);
 
