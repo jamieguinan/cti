@@ -39,4 +39,4 @@ config ac frames_per_io 512
 config ac enable 1
 
 # config mjm output dell3000-%Y%m%d-%H%M%S.mjx
-mt
+
