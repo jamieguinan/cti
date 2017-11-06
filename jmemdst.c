@@ -10,6 +10,8 @@
  *
  */
 
+#error Use jpeg-8 or greater library version instead.
+
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
 #include <stdio.h>		/* FILE in jpeglib.h, fprintf */
 #include <string.h>		/* memcpy */

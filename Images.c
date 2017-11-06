@@ -8,6 +8,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>		/* calloc, free */
 #include "Images.h"
 #include "Audio.h"
 #include "ArrayU8.h"
@@ -976,8 +977,14 @@ Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c)
   }
   jpeg->width = -1;
   jpeg->height = -1;
-  jpeg->data_length = size;
-  jpeg->data = Mem_calloc(1, jpeg->data_length);	/* Caller must fill in data! */
+  /* If size not specified, caller is assumed to call jpeg_mem_dest, which will
+     allocate a buffer. */
+  if (size) {
+    jpeg->data_length = size;
+    /* Caller must fill in data. Must use standard malloc/calloc here,
+       see comment in Jpeg_buffer_release below. */
+    jpeg->data = calloc(1, jpeg->data_length); 
+  }
   LockedRef_init(&jpeg->c.ref);
   return jpeg;
 }
@@ -989,7 +996,11 @@ void Jpeg_buffer_release(Jpeg_buffer *jpeg)
   LockedRef_decrement(&jpeg->c.ref, &count);
   if (count == 0) {
     Image_common_cleanup(&(jpeg->c));
-    Mem_free(jpeg->data);
+    if (jpeg->data) {
+      /* This may be allocated by Jpeg_buffer_new or libjpeg, so use
+	 standard malloc/calloc/free. */
+      free(jpeg->data);
+    }
     memset(jpeg, 0, sizeof(*jpeg));
     Mem_free(jpeg);
   }

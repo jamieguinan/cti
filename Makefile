@@ -75,11 +75,6 @@ LDFLAGS += -ldl -lrt
 LDFLAGS += -rdynamic
 endif
 
-# Enable these next 2 lines for debugging segfaults and
-# other errors.
-#CPPFLAGS += -DUSE_STACK_DEBUG
-#CPPFLAGS += -finstrument-functions
-
 # "-static" is a problem for alsa, and other things, so
 # don't use it.
 
@@ -193,10 +188,13 @@ OBJS= \
 	Global.o \
 	$(MAIN) 
 
-#	ScriptSession.o \
-#	jmemsrc.o \
-#	jmemdst.o \
-#	wrmem.o \
+
+# Uncomment these next few lines for debugging segfaults, memory leaks and
+# other issues.
+#CPPFLAGS += -DUSE_STACK_DEBUG
+#CPPFLAGS += -finstrument-functions
+#OBJS+=StackDebug.o
+
 
 ifeq ($(OS),Linux)
 LDFLAGS += -lX11
