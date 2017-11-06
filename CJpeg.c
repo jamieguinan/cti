@@ -141,10 +141,7 @@ static void compress_and_post(Instance *pi,
 					this may cause the program to call exit()! */
   jpeg_create_compress(&cinfo);
 
-  /* jpeg_mem_dest will save &(jpeg_out->data) as "dest->outbuffer"
-     internally, and re-allocate it to expand as needed, so start with
-     same minimum size that libjpeg uses. */
-  jpeg_out = Jpeg_buffer_new(4096, 0L); 
+  jpeg_out = Jpeg_buffer_new(0, 0L); /* Pass 0 to let libjpeg allocate output buffer */
   jpeg_out->width = width;
   jpeg_out->height = height;
   
