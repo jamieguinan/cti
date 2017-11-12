@@ -2,8 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "File.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 
+#include "File.h"
+#include "localptr.h"
 
 ArrayU8 * File_load_data(String * filename)
 {
@@ -100,4 +103,37 @@ int File_load_int(String * path, int * result)
   }
   String_clear(&contents);
   return rc;
+}
+
+
+int File_make_dir(String * path)
+{
+  struct stat st;
+  int rc;
+  rc = stat(s(path), &st);
+  if (rc == 0) {
+    if (S_ISDIR(st.st_mode)) {
+      /* Already exists and is a directory. My decision is that for
+         CTI semantics, this is not cause for warning or error. */
+      return 0;
+    }
+    else {
+      fprintf(stderr, "%s exists but is not a directory!\n", s(path));
+      return -1;
+    }
+  }
+  
+  return mkdir(s(path), 0777);
+}
+
+
+int File_set_owner_perms(String * path, int uid, int gid, int mode)
+{
+  return 0;
+}
+
+
+int File_copy(String * oldpath, String * newpath)
+{
+  return 0;
 }
