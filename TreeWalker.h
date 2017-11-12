@@ -1,7 +1,8 @@
 #ifndef _TREEWALKER_H_
 #define _TREEWALKER_H_
 
-extern void TreeWalker_init(void);
+// extern void TreeWalker_init(void);
+extern void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char dtype) );
 
 enum { TREEWALKER_DIR_ENTERING,  TREEWALKER_DIR_LEAVING };
 

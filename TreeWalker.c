@@ -16,6 +16,7 @@
 //#include "CTI.h"
 #include "TreeWalker.h"
 #include "String.h"
+#include "localptr.h"
 
 void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char dtype) )
 {
@@ -59,18 +60,20 @@ void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char 
 	  || streq(de->d_name, "..")) {
 	continue;
       }
-      String *nextdir = String_sprintf("%s/%s", s(dstr), de->d_name);
+      localptr(String, nextdir) = String_sprintf("%s/%s", s(dstr), de->d_name);
       int ignore = 0;
       if (callback) { ignore = callback(nextdir, DT_DIR); }
       if (ignore == 0) { 
 	TreeWalker_walk(nextdir, callback);
       }
-      String_free(&nextdir);
     }
     else if (d_type == DT_REG) {
-      String *fullname = String_sprintf("%s/%s", s(dstr), de->d_name);
-      if (callback) {  callback(fullname, DT_REG); }
-      String_free(&fullname);
+      localptr(String, fullname) = String_sprintf("%s/%s", s(dstr), de->d_name);
+      if (callback) { callback(fullname, DT_REG); }
+    }
+    else if (d_type == DT_LNK) {
+      localptr(String, fullname) = String_sprintf("%s/%s", s(dstr), de->d_name);
+      if (callback) { callback(fullname, DT_LNK); }
     }
   }
 
