@@ -135,5 +135,55 @@ int File_set_owner_perms(String * path, int uid, int gid, int mode)
 
 int File_copy(String * oldpath, String * newpath)
 {
-  return 0;
+  /* I'm not totally happy with this. I might be able to expose errors
+     better if I used lower level read/write. Also, it might be nice
+     if it made use of SourceSink.c instead of redudantly doing similar
+     things here. */
+  int ret = 0;
+  
+  FILE * fin = fopen(s(oldpath), "rb");
+  if (!fin) {
+    perror(s(oldpath));
+    return 1;
+  }
+
+  FILE * fout = fopen(s(newpath), "wb");
+  if (!fout) {
+    perror(s(newpath));
+    fclose(fin);
+    return 1;
+  }
+
+  while (1) {
+    uint8_t block[32000];
+    int rn = fread(block, 1, sizeof(block), fin);
+    // fprintf(stderr, "read %d\n", rn);
+    if (rn == 0) {
+      break;
+    }
+    int wn = fwrite(block, 1, rn, fout);
+    // fprintf(stderr, "wrote %d\n", wn);    
+    if (wn != rn) {
+      ret = 1;
+      break;
+    }
+  }
+
+  /* Since stdio buffers, errors like ENOSPC (disk full) won't show up
+     until a flush is attempted. */
+  if (fflush(fout) != 0) {
+    fprintf(stderr, "%s ", s(newpath));
+    perror("fflush");
+    ret = 1;
+  }
+
+  if (fclose(fout) != 0) {
+    fprintf(stderr, "%s ", s(newpath));
+    perror("fclose");
+    ret = 1;
+  }
+  
+  fclose(fin);
+  
+  return ret;
 }
