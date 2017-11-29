@@ -4,7 +4,8 @@
  * about it.
  */
 
-/* Please see accompanying String.licence for copyright and licensing information. */
+/* Please see accompanying String.licence for copyright and licensing
+   information. */
 
 #include "String.h"
 #include <string.h>
@@ -409,9 +410,29 @@ static inline int xval(char c)
   }
 }
 
+/* http://en.wikipedia.org/wiki/Percent-encoding */
+String * String_escape(String *str)
+{
+  int i;
+  String * escaped = String_new("");
+  for (i=0; i < String_len(str); i++) {
+    char ch = String_get_char(str, i);
+    if (('A' <= ch && ch <= 'Z')
+        || ('a' <= ch && ch <= 'a')
+        || ('0' <= ch && ch <= '9')
+        || strchr("/,.-_=", ch)) {
+      String_append_bytes(escaped, &ch, 1);
+    }
+    else {
+      char enc[4]; sprintf(enc, "%02x", (unsigned char)ch);
+      String_cat1(escaped, enc);
+    }
+  }
+  return escaped;
+}
+
 String * String_unescape(StringConst *str)
 {
-  /* http://en.wikipedia.org/wiki/Percent-encoding */
   String *rs = String_new("");
   const char *p = str->bytes;
   while (*p) {
