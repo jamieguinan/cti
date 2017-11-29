@@ -1,18 +1,10 @@
 #ifndef _TREEWALKER_H_
 #define _TREEWALKER_H_
 
+#include "String.h"
+
 // extern void TreeWalker_init(void);
-extern void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char dtype) );
-
-enum { TREEWALKER_DIR_ENTERING,  TREEWALKER_DIR_LEAVING };
-
-typedef struct {
-  int dtype;			/* dtype of current entry */
-  /* Only relevant for directories. */
-  int phase;
-  unsigned int total_subdirs;
-  unsigned int total_subfiles;
-  unsigned long counted_subsize;
-} TreeWalkerContext;
+extern int TreeWalker_walk(String *dstr,
+                           int (*callback)(String * path, unsigned char dtype) );
 
 #endif

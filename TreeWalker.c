@@ -12,26 +12,32 @@
 #include <dirent.h>		/* opendir, readdir */
 #include <sys/stat.h>		/* stat */
 #include <unistd.h>		/* stat */
+#include <errno.h>              /* errno */
 
 //#include "CTI.h"
 #include "TreeWalker.h"
 #include "String.h"
 #include "localptr.h"
 
-void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char dtype) )
+int TreeWalker_walk(String *dstr,
+                    int (*callback)(String * path, unsigned char dtype) )
 {
   DIR * d = opendir(s(dstr));
   if (!d) {
     perror(s(dstr));
-    return;
+    return errno;
   }
+
+  int ret = 0;
 
   struct dirent * de;
 
   while (1) {
+    errno = 0;
     de = readdir(d);
     if (de == NULL) {
       /* Note, could be end of directory or error. */
+      ret = errno;
       break;
     }
 
@@ -52,6 +58,9 @@ void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char 
 	else if (S_ISDIR(st.st_mode)) {
 	  d_type = DT_DIR;
 	}
+	else {
+	  d_type = DT_UNKNOWN;
+	}
       }
     }
 
@@ -64,20 +73,27 @@ void TreeWalker_walk(String *dstr, int (*callback)(String * path, unsigned char 
       int ignore = 0;
       if (callback) { ignore = callback(nextdir, DT_DIR); }
       if (ignore == 0) { 
-	TreeWalker_walk(nextdir, callback);
+	ret = TreeWalker_walk(nextdir, callback);
       }
     }
-    else if (d_type == DT_REG) {
+    else if (d_type == DT_REG || d_type == DT_LNK) {
       localptr(String, fullname) = String_sprintf("%s/%s", s(dstr), de->d_name);
-      if (callback) { callback(fullname, DT_REG); }
+      if (callback) {
+        ret = callback(fullname, d_type);
+      }
     }
-    else if (d_type == DT_LNK) {
-      localptr(String, fullname) = String_sprintf("%s/%s", s(dstr), de->d_name);
-      if (callback) { callback(fullname, DT_LNK); }
+    else {
+      fprintf(stderr, "skipping entry with d_type=%d\n", d_type);
+    }
+
+    if (ret) {
+      break;
     }
   }
 
   closedir(d);
+
+  return ret;
 }
 
 
