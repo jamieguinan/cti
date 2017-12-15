@@ -203,6 +203,15 @@ Sink *Sink_new(const char * path)
 }
 
 
+Sink *Sink_new_mode(const char * path, const char * mode)
+{
+  Sink *sink = Mem_calloc(1, sizeof(*sink));
+  String_set(&sink->io.path, path);
+  io_open(&sink->io, mode);
+  return sink;
+}
+
+
 int Sink_poll(Sink *sink, int timeout_ms)
 {
   struct pollfd fds[1];
