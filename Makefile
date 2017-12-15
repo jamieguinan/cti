@@ -21,6 +21,8 @@ default: test-requirements cti_main
 
 test-requirements:
 	@test -d ../jpeg-9/.libs || ( echo "Need compiled libjpeg in ../jpeg-9" ; false )
+	@pkg-config --exists libssl || ( echo "Need libssl for serf" ; false )
+	@pkg-config --exists libcrypto || ( echo "Need libcrypto for ssl" ; false )
 
 # include ../build/platforms.make
 
@@ -375,7 +377,7 @@ cti$(EXEEXT): \
 	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@echo Generating map
 	$(NM) $@ | sort > $@.map
-	@cp -v $@ /platform/$(ARCH)/bin/
+	@cp --remove-destination -v $@ /platform/$(ARCH)/bin/
 #	@echo STRIP
 #	@$(STRIP) $@
 
