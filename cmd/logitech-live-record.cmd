@@ -5,7 +5,7 @@ new MjpegMux mjm
 
 # The jpeg/rgb path can be there even if it isn't used.
 connect vc Jpeg_buffer dj
-connect dj RGB3_buffer sdl
+connect dj YUV420P_buffer sdl
 connect dj Jpeg_buffer mjm
 
 config vc device 081b
@@ -18,6 +18,9 @@ config vc fps 30
 
 config vc autoexpose 1
 config vc exposure 300
+
+# Set this for time-lapse recording.
+# config mjm every 30
 
 connect sdl:Keycode_msg vc:Keycode_msg
 
