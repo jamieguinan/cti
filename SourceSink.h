@@ -58,6 +58,7 @@ typedef struct {
 } Sink;
 
 extern Sink * Sink_new(const char * path);
+extern Sink * Sink_new_mode(const char * path, const char * mode);
 extern Sink * Sink_allocate(const char * path);
 extern void Sink_write(Sink *sink, void *data, int length);
 extern int Sink_poll(Sink *sink, int timeout_ms);

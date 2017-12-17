@@ -36,7 +36,7 @@ static int set_output(Instance *pi, const char *value)
     Sink_free(&priv->sink);
   }
 
-  priv->sink = Sink_new(value);
+  priv->sink = Sink_new_mode(value, "wb+");
 
   return 0;
 }

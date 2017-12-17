@@ -27,6 +27,9 @@ typedef struct {
 extern int db_check(sqlite3 *db, const char * table_name, 
 		    SchemaColumn * schema, int num_columns, const char * constraints);
 
+extern int db_schema_test(sqlite3 *db, const char * table_name,
+                          SchemaColumn * schema, int num_columns);
+
 extern int sql_exec_free_query(sqlite3 *pdb,
 			       char * query,
 			       int (*callback)(void*,int,char**,char**),

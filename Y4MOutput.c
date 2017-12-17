@@ -40,6 +40,7 @@ typedef struct {
   int fps_denom;
   int raw;
   int reduce;
+  int skip;
 } Y4MOutput_private;
 
 
@@ -59,6 +60,7 @@ static int set_output(Instance *pi, const char *value)
 
 static Config config_table[] = {
   { "output", set_output, 0L, 0L },
+  { "skip", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, skip) },
   { "fps_nom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_nom) },
   { "fps_denom", 0L, 0L, 0L, cti_set_int, offsetof(Y4MOutput_private, fps_denom) },
   { "interlace", 0L, 0L, 0L, cti_set_string_local, offsetof(Y4MOutput_private, interlace) },
@@ -89,7 +91,6 @@ static void YUV422P_handler(Instance *pi, void *data)
     goto out;
   }
 
-
   if (!priv->sink) {
     goto out;
   }
@@ -111,7 +112,7 @@ static void YUV422P_handler(Instance *pi, void *data)
 
   if (!priv->raw) {
     localptr(String, header) = String_new("FRAME\n");
-    Sink_write(priv->sink, header, String_len(header));
+    Sink_write(priv->sink, s(header), String_len(header));
   }
   
   Sink_write(priv->sink, y422p_in->y, y422p_in->y_length);
@@ -151,14 +152,19 @@ static void YUV420P_handler(Instance *pi, void *data)
     }
   }
 
-  if (!priv->raw) {
-    localptr(String, header) = String_new("FRAME\n");    
-    Sink_write(priv->sink, header, String_len(header));
+  if (priv->skip > 0) {
+    priv->skip -= 1;
   }
-  
-  Sink_write(priv->sink, y420p->y, y420p->y_length);
-  Sink_write(priv->sink, y420p->cb, y420p->cb_length);
-  Sink_write(priv->sink, y420p->cr, y420p->cr_length);
+  else {
+    if (!priv->raw) {
+      localptr(String, header) = String_new("FRAME\n");    
+      Sink_write(priv->sink, s(header), String_len(header));
+    }
+    
+    Sink_write(priv->sink, y420p->y, y420p->y_length);
+    Sink_write(priv->sink, y420p->cb, y420p->cb_length);
+    Sink_write(priv->sink, y420p->cr, y420p->cr_length);
+  }
 
  out:
   YUV420P_buffer_release(y420p);
