@@ -248,6 +248,13 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     cti_debug_printf_toggle(index);
     return;
   }
+
+  if (n == 2 && streq(token0, "mpm")) {
+    cfg.max_pending_messages = atoi(token1);
+    printf("max_pending_messages set to %d\n", cfg.max_pending_messages);
+    return;
+  }
+  
 }
 
 

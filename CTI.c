@@ -124,7 +124,7 @@ void PostDataGetResult(void *data, Input *input, int * result)
     Lock_release(&input->parent->inputs_lock);
   }
 
-  while (input->parent->pending_messages > 100) {
+  while (input->parent->pending_messages > cfg.max_pending_messages) {
     /* This one indicates a configuration problem or misestimation, so 
        make it an fprintf instead of a dpf. */
     fprintf(stderr, "sleeping to drain %s message queue (%p) (%d)\n", 
