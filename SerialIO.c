@@ -1,4 +1,4 @@
-/* Serial port module */
+/* Serial port module. Some code comes from my 2001 "pv-dv400" project. */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -8,11 +8,12 @@
 #include <unistd.h>             /* close */
 #include <termios.h>
 
+#include "localptr.h"
 #include "CTI.h"
 #include "SerialIO.h"
 #include "SourceSink.h"
 #include "String.h"
-#include "localptr.h"
+#include "File.h"
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -34,38 +35,37 @@ typedef struct {
   struct termios new_settings;
 } SerialIO_private;
 
-typedef struct {} CommandContext;
+typedef struct {} KV;
 extern void Command_add(const char * templateName, const char * command,
-                        void (*func)(Instance *pi, CommandContext * cctx));
-extern String * CommandContext_get_string(CommandContext * cctx, String * key);
-extern int CommandContext_get_int(CommandContext * cctx, String * key);
-extern String_list * Glob(String * pattern);
+                        void (*func)(Instance *pi, KV * args));
+extern int KV_get_int(KV * args, String * key);
+extern String * KV_get_string(KV * args, String * key);
 
 static Config config_table[] = {
   // { "...",    set_..., get_..., get_..._range },
 };
 
-static void SerialIO_open(Instance *pi, CommandContext * cctx)
+static void SerialIO_open(Instance *pi, KV * args)
 {
   int i;
   SerialIO_private *priv = (SerialIO_private*)pi;
   if (priv->fd != -1) {
     close(priv->fd);
   }
-  int rate = CommandContext_get_int(cctx, S("rate"));
+  int rate = KV_get_int(args, S("rate"));
   switch (rate) {
   case 9600: priv->baud = B9600; break;
   case 19200: priv->baud = B19200; break;
   case 38400: priv->baud = B38400; break;
   case 57600: priv->baud = B57600; break;
   case 115200: priv->baud = B115200; break;
-  default: puts("Invalid baud specified."); return;
+  default: fprintf(stderr, "Invalid baud specified.\n"); return;
   }
-    
-  localptr(String, devpattern) = CommandContext_get_string(cctx, S("device"));
+  
+  localptr(String, devpattern) = KV_get_string(args, S("device"));
   if (String_is_none(devpattern)) { return; }
   
-  localptr(String_list, devices) = Glob(devpattern);
+  localptr(String_list, devices) = Files_glob(S(""), devpattern);
   for (i=0; i < String_list_len(devices); i++) {
     localptr(String, device) = String_list_get(devices, i);
     priv->fd = open(s(device), O_RDWR);
@@ -74,17 +74,16 @@ static void SerialIO_open(Instance *pi, CommandContext * cctx)
     }
   }
   
-  if (priv->fd == -1) { return; }
+  if (priv->fd == -1) { fprintf(stderr, "Invalid baud specified.\n"); return; }
 
+  /* Warn on tc*attr() errors, but continue anyway. */
   if (tcgetattr(priv->fd, &priv->saved_settings) != 0) { perror("tcgetattr"); }
   priv->new_settings = priv->saved_settings;
   cfsetospeed(&priv->new_settings, priv->baud);
   cfsetispeed(&priv->new_settings, priv->baud);
   priv->new_settings.c_cflag &= ~(CSTOPB | PARENB | PARODD | HUPCL | CRTSCTS);
   if (tcsetattr(priv->fd, TCSANOW, &priv->new_settings) != 0) { perror("tcsetattr"); }
-  
 }
-
 
 static void Config_handler(Instance *pi, void *data)
 {
