@@ -237,11 +237,11 @@ void ReleaseMessage(Handler_message **msg, Instance *pi)
 }
 
 
-static ISet(Template) templates = {};
+static IndexedSet(Template) templates = {};
 
 void Template_register(Template *t)
 {
-  ISet_add(templates, t);
+  IndexedSet_add(templates, t);
 }
 
 void Template_list(int verbose)
@@ -659,7 +659,7 @@ void InstanceGroup_add(InstanceGroup *g, const char *typeLabel, String *instance
   /* Add pi to g's set of instances. */
   /* Pass "instanceLabel" as "key" parameter, for later lookup. */
   int err;
-  ISet_add_keyed(g->instances, instanceLabel, pi, &err);
+  IndexedSet_add_keyed(g->instances, instanceLabel, pi, &err);
 }
 
 
@@ -802,14 +802,14 @@ typedef struct {
   const char *value;
 } CmdlineParam;
 
-static ISet(CmdlineParam) cmdline_params;
+static IndexedSet(CmdlineParam) cmdline_params;
 
 void CTI_cmdline_add(const char *key, const char *value)
 {
   CmdlineParam *p = Mem_malloc(sizeof(*p));
   p->key = strdup(key);
   p->value = strdup(value);
-  ISet_add(cmdline_params, p);
+  IndexedSet_add(cmdline_params, p);
   // printf("%s: found %s=%s, count=%d\n", __func__, key, value, cmdline_params.count);
 }
 

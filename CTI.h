@@ -20,11 +20,11 @@ extern void instance_key_init(void); /* Call once at startup. */
 extern int g_synchronous;	     /* Make all message passing synchronous. */
 
 /* 
- * The ISet() macro is for declaring structures compatible with the
- * ISet_* macros.  "index" should initially be 0L, allocated and used
+ * The IndexedSet() macro is for declaring structures compatible with the
+ * IndexedSet_* macros.  "index" should initially be 0L, allocated and used
  * as needed.
  */
-#define ISet(type) struct { type **items; int avail; int count; Index *index; } 
+#define IndexedSet(type) struct { type **items; int avail; int count; Index *index; } 
 
 struct _Instance;
 
@@ -64,8 +64,8 @@ typedef struct {
 
 typedef struct {
   int type;			/* One of the enum values just above. */
-  ISet(String) strings;
-  ISet(String) descriptions;
+  IndexedSet(String) strings;
+  IndexedSet(String) descriptions;
   IntRange ints;
   FloatRange floats;
   Array(int) int_enums;
@@ -247,7 +247,7 @@ extern void GetConfigValue(Input *pi, const char *label, Value *vreq);
 extern void GetConfigRange(Input *pi, const char *label, Range *rreq);
 
 typedef struct {
-  ISet(Instance) instances;
+  IndexedSet(Instance) instances;
 } InstanceGroup;
 
 extern InstanceGroup *gig;		/* global instance group */
@@ -256,7 +256,7 @@ extern InstanceGroup *gig;		/* global instance group */
    On the other hand, data sets are typically huge compared to code
    size, compilers might be able to find and coalesce common code, and
    C++ has much other baggage that I'm happy to avoid. */
-#define ISet_add(iset, pitem) {  \
+#define IndexedSet_add(iset, pitem) {  \
   if (iset.items == 0L) { \
     iset.avail = 2; \
     iset.items = Mem_calloc(iset.avail, sizeof(pitem)); \
@@ -269,20 +269,20 @@ extern InstanceGroup *gig;		/* global instance group */
   iset.count += 1; \
 }
 
-#define ISet_add_keyed(iset, key, pitem, err) {	\
-  ISet_add(iset, pitem); \
+#define IndexedSet_add_keyed(iset, key, pitem, err) {	\
+  IndexedSet_add(iset, pitem); \
   if (!iset.index) iset.index = Index_new(); \
   Index_add_string(iset.index, key, pitem, err);	\
 }
 
-#define ISet_pop(iset, pitem) {  \
+#define IndexedSet_pop(iset, pitem) {  \
   pitem = iset.items[0]; \
   iset.count -= 1; \
   memmove(iset.items, &iset.items[1], iset.count * sizeof(iset.items[0])); \
   iset.items[iset.count] = 0; \
 }
 
-#define ISet_clear(iset) { \
+#define IndexedSet_clear(iset) { \
   if (iset.items) Mem_free(iset.items); \
   if (iset.index) Index_clear(&iset.index);	\
   memset(&iset, 0, sizeof(iset));	\
