@@ -2,6 +2,10 @@
  * but aims to be safer than raw <string.h> operations.  The automatic
  * size alloction for String_sprintf is one of my favorite things
  * about it.
+
+ * Resizing arrays of things is dangerous if accessor functions ever
+ * return things by address. But String and String_list only return 
+ * things by value,
  */
 
 /* Please see accompanying String.licence for copyright and licensing
@@ -696,7 +700,6 @@ String * String_list_pull_at(String_list * slst, int i)
   }  
 
   String * tmp = slst->_strings[i];
-
   int move_count = slst->len-i;
   memmove(&slst->_strings[i], &slst->_strings[i+1], sizeof(String *) * move_count);
   slst->len -= 1;
