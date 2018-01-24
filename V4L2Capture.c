@@ -251,8 +251,8 @@ static void get_device_range(Instance *pi, Range *range)
 
       printf("%s\n", desc->bytes);
 
-      ISet_add(range->strings, s); s = NULL;		/* ISet takes ownership. */
-      ISet_add(range->descriptions, desc); desc = NULL;		/* ISet takes ownership. */
+      IndexedSet_add(range->strings, s); s = NULL; /* IndexedSet takes ownership. */
+      IndexedSet_add(range->descriptions, desc); desc = NULL; /* IndexedSet takes ownership. */
     }
   }
 }

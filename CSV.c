@@ -62,7 +62,7 @@ CSV_table *CSV_load(String *path)
       //printf("%s\n", tmp);
 
 #if 1
-      ISet_add(csv->_entries, String_new(tmp));
+      IndexedSet_add(csv->_entries, String_new(tmp));
 #else
       { 
 	if (csv->_entries.items == 0L) {

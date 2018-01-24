@@ -26,7 +26,10 @@ typedef struct {
 } StringConst;
 
 
-/* Macros for quick access to bytes. */
+/* Macros for quick access to bytes. Note that the pointers returned
+   can be invalidated by many of the String_*() functions, because the
+   data pointers may be reallocated and moved. So these should only
+   be used in expressions and not held in variables. */
 #define s(x) ((x)->bytes)
 #define sl(x) ((x).bytes)  	/* sl for 's'tring 'l'ocal variable */
 
@@ -112,12 +115,16 @@ extern int String_list_is_none(String_list *slst);
 extern String_list * String_split_s(const char *src, const char *splitter);
 extern String_list * String_split(String *str, const char *splitter);
 extern int String_list_len(String_list *slst);
+/* Note that the get and find functions return a pointer to the String
+   in the list, not a copy. Use String_dup() on the result to get a new
+   String */
 extern String * String_list_get(String_list *slst, int n);
 extern String * String_list_find_val(String_list *slst, String *key, int skip);
 extern void String_list_add(String_list *slst, String **add);
 extern void String_list_append_s(String_list *slst, const char *s);
 extern String * String_list_find(String_list *slst, String *target);
 extern void String_list_free(String_list **slst);
+/* In contrast, pull and del remove from the list. */
 extern String * String_list_pull_at(String_list * slst, int i);
 extern void String_list_del_at(String_list * slst, int i);
 extern void String_list_trim(String_list * slst);

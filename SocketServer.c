@@ -81,7 +81,7 @@ typedef struct {
   RawData_node *raw_first;
   RawData_node *raw_last;
   int raw_seq;
-  ISet(Instance) notify_instances; 
+  IndexedSet(Instance) notify_instances; 
 } SocketServer_private;
 
 
@@ -129,7 +129,7 @@ static int set_notify(Instance *pi, const char *value)
     return 1;
   }
 
-  ISet_add(priv->notify_instances, px);
+  IndexedSet_add(priv->notify_instances, px);
   
   return 0;
 }

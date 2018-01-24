@@ -8,7 +8,7 @@ connect vc YUV422P_buffer sdl
 config sdl mode OVERLAY
 #config sdl mode SOFTWARE
 
-config vc device em28xx
+config vc device em2860
 config vc format YUYV
 #config vc input S-Video
 config vc input Composite1

@@ -25,7 +25,7 @@ static Output PushQueue_outputs[] = {
 
 typedef struct {
   Instance i;
-  ISet(PushQueue_message) messages;
+  IndexedSet(PushQueue_message) messages;
   String * uri;
   String * service_key;
 } PushQueue_private;
@@ -46,7 +46,7 @@ static void Push_data_handler(Instance *pi, void *msg)
   PushQueue_private *priv = (PushQueue_private *)pi;
   PushQueue_message *pqm = msg;
 
-  ISet_add(priv->messages, pqm);
+  IndexedSet_add(priv->messages, pqm);
 }
 
 static void run_queue(PushQueue_private *priv)
@@ -55,7 +55,7 @@ static void run_queue(PushQueue_private *priv)
     return;
   }
   localptr(PushQueue_message, pqm);
-  ISet_pop(priv->messages, pqm);
+  IndexedSet_pop(priv->messages, pqm);
 
   localptr(String, service_key_string) = File_load_text(priv->service_key);
   if (String_is_none(service_key_string)) {

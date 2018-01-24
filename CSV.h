@@ -6,7 +6,7 @@
 typedef struct {
   int _columns;
   int _rows;
-  ISet(String) _entries;
+  IndexedSet(String) _entries;
 } CSV_table;
 
 String * CSV_get(CSV_table *csv, int row, int column);

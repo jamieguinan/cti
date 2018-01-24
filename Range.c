@@ -33,8 +33,8 @@ Range *Range_new(int type)
 
 void Range_clear(Range *range)
 {
-  ISet_clear(range->strings);
-  ISet_clear(range->descriptions);
+  IndexedSet_clear(range->strings);
+  IndexedSet_clear(range->descriptions);
   memset(range, 0, sizeof(*range));
   Array_free(range->int_enums, int, NULL);
 }

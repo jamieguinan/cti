@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
   Instance i;
-  ISet(UIWidget) widgets;
+  IndexedSet(UIWidget) widgets;
   int down_flag, down_x, down_y;
 } UI001_private;
 
@@ -121,7 +121,7 @@ static int add_button(Instance *pi, const char *init)
     set_kv(w, key, value, p);
   }
 
-  ISet_add(priv->widgets, w);
+  IndexedSet_add(priv->widgets, w);
   return 0;
 }
 

@@ -165,8 +165,8 @@ static void get_device_range(Instance *pi, Range *range)
 
       String_free(&s);
 
-      ISet_add(range->strings, hw); hw = NULL;		/* ISet takes ownership. */
-      ISet_add(range->descriptions, desc); desc = NULL;		/* ISet takes ownership. */
+      IndexedSet_add(range->strings, hw); hw = NULL;		/* IndexedSet takes ownership. */
+      IndexedSet_add(range->descriptions, desc); desc = NULL;		/* IndexedSet takes ownership. */
     }
   }
 }
@@ -316,7 +316,7 @@ static void get_format_range(Instance *pi, Range *range)
     rc = snd_pcm_hw_params_test_format(priv->c.handle, priv->c.hwparams, formats[i].value);
     if (rc == 0) {
       fprintf(stderr, "  %s sampling available\n", formats[i].label);
-      ISet_add(range->strings, String_new(formats[i].label));
+      IndexedSet_add(range->strings, String_new(formats[i].label));
     }
   }
 #else
