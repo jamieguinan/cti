@@ -342,6 +342,13 @@ LDFLAGS+=$$(pkg-config --libs serf-1) $$(pkg-config --libs apr-1) $$(pkg-config 
 CPPFLAGS+=-DHAVE_SERF
 endif
 
+# libcurl
+ifneq (,$(shell /bin/ls /usr/include/curl/curl.h 2> /dev/null ))
+OBJS+=Curl.o
+LDFLAGS+=-lcurl
+CPPFLAGS+=-DHAVE_CURL
+endif
+
 # AAC
 ifneq (,$(shell /bin/ls /usr/include/faac.h  2> /dev/null ))
 OBJS+=AAC.o

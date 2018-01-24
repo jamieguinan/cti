@@ -85,6 +85,7 @@
 #include "BinaryFiler.h"
 #include "PushQueue.h"
 #include "Global.h"
+#include "Curl.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -154,6 +155,10 @@ int cti_main(int argc, char *argv[])
 
 #ifdef HAVE_RPIH264ENC
   RPiH264Enc_init();
+#endif
+
+#ifdef HAVE_CURL
+  Curl_init();
 #endif
 
   CJpeg_init();
