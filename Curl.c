@@ -20,6 +20,17 @@ static size_t write_callback(char *ptr, size_t size, size_t nmemb,
   return size*nmemb;
 }
 
+
+static size_t header_callback(char *buffer, size_t size, size_t nitems,
+                              void *userdata)
+{
+  String_list * headers = userdata;
+  localptr(String, header) = String_new("");
+  String_append_bytes(header, buffer, size*nitems);
+  String_list_append_s(headers, s(header));
+  return size*nitems;
+}
+
 void post(const char * uri, String_list * headers, String * data,
           void (*handler)(int code, String_list * headers, String * data))
 {
@@ -44,6 +55,10 @@ void post(const char * uri, String_list * headers, String * data,
   localptr(String, result) = String_new("");
   curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_callback);
   curl_easy_setopt(handle, CURLOPT_WRITEDATA, result);
+
+  localptr(String_list, out_headers) = String_list_new();
+  curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, header_callback);
+  curl_easy_setopt(handle, CURLOPT_HEADERDATA, out_headers);
   
   res = curl_easy_perform(handle);
   if (res != CURLE_OK) {
@@ -52,7 +67,7 @@ void post(const char * uri, String_list * headers, String * data,
   }
   else {
     // printf("%s\n", s(result));
-    handler(0, String_list_value_none(), result);
+    handler(0, out_headers, result);
   }
   curl_slist_free_all(chunk);  
 }
