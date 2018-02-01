@@ -1,7 +1,17 @@
 /*
  * This is a utility module, not normally built into the cti main
  * program, but used by other programs.
+ * 
+ * Jsmn (https://github.com/zserge/jsmn) is a wonderfully small,
+ * efficient JSON parser/tokenizer, and I am almost embarassed
+ * to wrap it in this layer, but it is necessary to connect
+ * it to my style and conventions with localptr().
+ *
+ * JsmnContext holds a set of the necessary variables for
+ * calling jsmn_parse, and the code here automatically sizes
+ * and allocates enough token space.
  */
+
 #include <stdio.h>		/* printf */
 #include "Mem.h"
 #include "String.h"
