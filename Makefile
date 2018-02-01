@@ -65,11 +65,9 @@ endif
 # -std=c99
 CPPFLAGS += -I/usr/include
 #CPPFLAGS += -I../platform/$(ARCH)/include
-CPPFLAGS += -I ../jpeg-9
 CPPFLAGS += -MMD -MP -MF $(subst .c,.dep,$<)
-#LDFLAGS += -L../platform/$(ARCH)/lib -ljpeg
-LDFLAGS += -L../jpeg-9/.libs -ljpeg -Wl,-rpath,../jpeg-9/.libs \
-  -Wl,-rpath,$(PWD)/../jpeg-9/.libs
+CPPFLAGS += -I ../jpeg-9
+LDFLAGS += $(PWD)/../jpeg-9/.libs/libjpeg.a
 LDFLAGS += -lpthread
 ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
@@ -196,11 +194,6 @@ OBJS= \
 #CPPFLAGS += -DUSE_STACK_DEBUG
 #CPPFLAGS += -finstrument-functions
 #OBJS+=StackDebug.o
-
-
-ifeq ($(OS),Linux)
-LDFLAGS += -lX11
-endif
 
 
 ifeq ($(OS),Linux)
@@ -375,6 +368,12 @@ LDFLAGS += -L/opt/vc/lib -lopenmaxil -lbcm_host -lvcos -lpthread -lm
 CPPFLAGS+=-DHAVE_RPIH264ENC
 endif
 
+# X11 globals
+ifeq ($(shell pkg-config --exists x11 && echo Y),Y)
+CPPFLAGS+=-DHAVE_X11
+LDFLAGS += -lX11
+endif
+
 
 cti$(EXEEXT): \
 	$(OBJS) \
@@ -384,7 +383,7 @@ cti$(EXEEXT): \
 	@$(CC) $(filter %.o, $^) -o $@ $(LDFLAGS)
 	@echo Generating map
 	$(NM) $@ | sort > $@.map
-	@cp --remove-destination -v $@ /platform/$(ARCH)/bin/
+#	@cp --remove-destination -v $@ /platform/$(ARCH)/bin/
 #	@echo STRIP
 #	@$(STRIP) $@
 
