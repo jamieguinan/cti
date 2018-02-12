@@ -36,7 +36,12 @@ typedef struct {
 static void expand(char token[256])
 {
   if (token[0] == '$') {
-    strcpy(token, getenv(token+1));
+    char * e = getenv(token+1);
+    if (!e) {
+      fprintf(stderr, "$%s is not defined, please set and try again.\n", token+1);
+      exit(1);
+    }
+    strcpy(token, e);
   }
   else if (token[0] == '%') {
     const char *value = CTI_cmdline_get(token+1);
