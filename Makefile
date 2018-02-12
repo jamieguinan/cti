@@ -186,6 +186,7 @@ OBJS= \
 	../jpeg-9/transupp.o \
 	BinaryFiler.o \
 	Global.o \
+	UDPBroadcast.o \
 	$(MAIN) 
 
 
