@@ -1,4 +1,5 @@
-/* Search and replace "UDPBroadcast" with new module name. */
+/* UDP transmitter. Should be able to do unicast, broadcst, or
+   multicast by setting addr. */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
@@ -6,6 +7,15 @@
 #include "CTI.h"
 #include "UDPBroadcast.h"
 #include "socket_common.h"	/* all the usual headers */
+
+typedef struct {
+  Instance i;
+  int socket;
+  uint16_t port;
+  String *addr;
+  struct sockaddr_in remote;  
+} UDPBroadcast_private;
+
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -19,14 +29,47 @@ static Output UDPBroadcast_outputs[] = {
   //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
 };
 
-typedef struct {
-  Instance i;
-  int socket;
-  uint16_t port;
-  struct sockaddr_in remote;  
-} UDPBroadcast_private;
+
+static int set_port(Instance *pi, const char *value)
+{
+  UDPBroadcast_private *priv = (UDPBroadcast_private *)pi;
+  priv->port = atoi(value);
+  return 0;
+}
+
+static int set_addr(Instance *pi, const char *value)
+{
+  UDPBroadcast_private *priv = (UDPBroadcast_private *)pi;
+
+  if (priv->port == 0) {
+    fprintf("%s %s: must set port first\n", __FILE__, __func__);
+    return 1;
+  }
+  
+  String_set(&priv->addr, value);
+
+  priv->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (priv->socket == -1) {
+    perror("socket");
+    return;
+  }
+    
+  priv->remote.sin_family = AF_INET;
+  priv->remote.sin_port = htons(priv->port);
+
+  if (inet_aton(s(priv->addr), &priv->remote.sin_addr) == 0) {
+    perror("inet_aton");
+    return;
+  }
+
+  fprintf(stderr, "%s: socket init successful\n", pi->label);
+  
+  return 0;  
+}
 
 static Config config_table[] = {
+  {"port", set_port, 0L, 0L}
+  , {"addr", set_addr, 0L, 0L}
 };
 
 
@@ -59,24 +102,7 @@ static void UDPBroadcast_tick(Instance *pi)
 static void UDPBroadcast_instance_init(Instance *pi)
 {
   UDPBroadcast_private *priv = (UDPBroadcast_private *)pi;
-
-  priv->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (priv->socket == -1) {
-    perror("socket");
-    return;
-  }
-    
-  priv->port = 6679;
-
-  priv->remote.sin_family = AF_INET;
-  priv->remote.sin_port = htons(priv->port);
-
-  if (inet_aton("224.0.0.1", &priv->remote.sin_addr) == 0) {
-    perror("inet_aton");
-    return;
-  }
-
-  fprintf(stderr, "%s: socket init successful\n", pi->label);
+  priv->addr = String_value_none();
 }
 
 
