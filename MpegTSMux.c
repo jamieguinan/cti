@@ -181,6 +181,8 @@ typedef struct {
 
   int verbose;			/* For certain printfs. */
 
+  int always_flush;		/* For timely UDP broadcast. */
+
 } MpegTSMux_private;
 
 
@@ -575,7 +577,7 @@ static void H264_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
 
-  if (h264->keyframe) {
+  if (h264->keyframe || priv->always_flush) {
     /* Note, flush BEFORE packetize, so that next batch begins with keyframe. */
     flush(pi, timestamp_to_90KHz(h264->c.timestamp));
   }
@@ -929,6 +931,9 @@ static void MpegTSMux_instance_init(Instance *pi)
   priv->media_sequence = 0;
   priv->pcr_lag_ms = 200;
   String_set_local(&priv->index_dir, ".");
+
+  priv->always_flush = 1;
+  priv->verbose = 0;
 }
 
 
