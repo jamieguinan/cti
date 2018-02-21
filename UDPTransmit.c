@@ -3,6 +3,7 @@
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
+#include <unistd.h>		/* sleep */
 
 #include "CTI.h"
 #include "UDPTransmit.h"
@@ -18,10 +19,12 @@ typedef struct {
 
 
 static void Config_handler(Instance *pi, void *msg);
+static void RawData_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG };
+enum { INPUT_CONFIG, INPUT_RAWDATA };
 static Input UDPTransmit_inputs[] = {
-  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
+  [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler }
+  , [ INPUT_RAWDATA ] = { .type_label = "RawData_buffer", .handler = RawData_handler }
 };
 
 //enum { /* OUTPUT_... */ };
@@ -42,7 +45,7 @@ static int set_addr(Instance *pi, const char *value)
   UDPTransmit_private *priv = (UDPTransmit_private *)pi;
 
   if (priv->port == 0) {
-    fprintf("%s %s: must set port first\n", __FILE__, __func__);
+    fprintf(stderr, "%s %s: must set port first\n", __FILE__, __func__);
     return 1;
   }
   
@@ -51,7 +54,7 @@ static int set_addr(Instance *pi, const char *value)
   priv->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (priv->socket == -1) {
     perror("socket");
-    return;
+    return 1;
   }
     
   priv->remote.sin_family = AF_INET;
@@ -59,7 +62,7 @@ static int set_addr(Instance *pi, const char *value)
 
   if (inet_aton(s(priv->addr), &priv->remote.sin_addr) == 0) {
     perror("inet_aton");
-    return;
+    return 1;
   }
 
   fprintf(stderr, "%s: socket init successful\n", pi->label);
@@ -72,6 +75,19 @@ static Config config_table[] = {
   , {"addr", set_addr, 0L, 0L}
 };
 
+static void RawData_handler(Instance *pi, void *data)
+{
+  UDPTransmit_private *priv = (UDPTransmit_private *)pi;
+  RawData_buffer *raw = data;
+
+  int n = sendto(priv->socket, raw->data, raw->data_length, 0,
+		 (struct sockaddr *) &priv->remote, sizeof(priv->remote));
+  if (n == -1) {
+    perror("sendto");
+  }
+
+  RawData_buffer_release(raw);
+}
 
 static void Config_handler(Instance *pi, void *data)
 {
@@ -80,23 +96,12 @@ static void Config_handler(Instance *pi, void *data)
 
 static void UDPTransmit_tick(Instance *pi)
 {
-  UDPTransmit_private *priv = (UDPTransmit_private *)pi;
   Handler_message *hm;
 
-  hm = GetData(pi, 0);
-  if (hm) {
+  while ((hm = GetData(pi, 1))) {
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm,pi);
   }
-
-  uint8_t message[1401] = { 0 };
-  int n = sendto(priv->socket, message, sizeof(message), 0,
-		 (struct sockaddr *) &priv->remote, sizeof(priv->remote));
-  if (n == -1) {
-    perror("sendto");
-  }
-
-  pi->counter++;
 }
 
 static void UDPTransmit_instance_init(Instance *pi)
@@ -119,5 +124,5 @@ static Template UDPTransmit_template = {
 
 void UDPTransmit_init(void)
 {
-  Template_register(&UDPTransmity_template);
+  Template_register(&UDPTransmit_template);
 }
