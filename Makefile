@@ -344,9 +344,10 @@ CPPFLAGS+=-DHAVE_CURL
 endif
 
 # AAC
-ifneq (,$(shell /bin/ls /usr/include/faac.h  2> /dev/null ))
+ifneq (,$(shell /bin/ls /usr/include/faac.h /usr/lib/libfaac.a 2> /dev/null ))
 OBJS+=AAC.o
-LDFLAGS+=-lfaac
+#LDFLAGS+=-lfaac
+LDFLAGS+=/usr/lib/libfaac.a
 CPPFLAGS+=-DHAVE_AAC
 endif
 
