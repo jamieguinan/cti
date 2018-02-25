@@ -16,7 +16,7 @@
 #include <sys/mman.h>		/* mmap */
 #include <poll.h>		/* poll */
 
-/* open() an other things... */
+/* open() and other things... */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -124,6 +124,10 @@ typedef struct  {
   int snapshot;
   int msg_handled;
 
+  int exit_on_error;
+
+  String * label;
+
 } V4L2Capture_private;
 
 
@@ -172,6 +176,10 @@ static int set_device(Instance *pi, const char *value)
 
   if (priv->fd == -1) {
     perror(s(priv->devpath));
+    if (priv->exit_on_error) {
+      fprintf(stderr, "%s:%s open() failed, exiting\n", __FILE__, __func__);
+      exit(1);
+    }
     goto out;
   }
 
@@ -1002,6 +1010,13 @@ static int set_drivermatch(Instance *pi, const char *value)
   return 0;
 }
 
+static int set_label(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  String_set(&priv->label, value);
+  return 0;
+}
+
 
 static Config config_table[] = {
   /* NOTE: cti_set_int does not work here.  This module uses a custom
@@ -1023,7 +1038,8 @@ static Config config_table[] = {
   { "fps",        set_fps,   0L, 0L},
   { "frequency",  set_frequency,  0L, 0L},
   { "fix",        set_fix, 0L, 0L}, 
-  { "timeout_ms", set_timeout_ms, 0L, 0L}, 
+  { "timeout_ms", set_timeout_ms, 0L, 0L},
+  { "label",      set_label, 0L, 0L},
 };
 
 
@@ -1388,6 +1404,13 @@ static void V4L2Capture_tick(Instance *pi)
   dpf("capture on buffer %d Ok [ priv->format=%s, counter=%d ]\n", priv->wait_on, s(priv->format),
       pi->counter);
 
+  Image_common c = {
+    .label = priv->label,
+    .nominal_period = priv->nominal_period
+  };
+  getdoubletime(&c.timestamp);
+  FPS_update_timestamp(&priv->calculated_fps, c.timestamp);
+
   pi->counter += 1;
 
   /* Check for lack of sync.  I suspect the BTTV would set V4L2_IN_ST_NO_H_LOCK, but cx88 does not,
@@ -1407,7 +1430,7 @@ static void V4L2Capture_tick(Instance *pi)
   }
   else if (streq(s(priv->format), "BGR3")) {
     if (pi->outputs[OUTPUT_BGR3].destination) {
-      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, 0L);
+      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, &c);
       memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
       if (priv->snapshot > 0) {
 	bgr3_snapshot(pi, bgr3);
@@ -1416,7 +1439,7 @@ static void V4L2Capture_tick(Instance *pi)
     }
     if (pi->outputs[OUTPUT_RGB3].destination) {
       RGB3_buffer *rgb3 = 0L;
-      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, 0L);
+      BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, &c);
       memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
       if (priv->snapshot > 0) {
 	bgr3_snapshot(pi, bgr3);
@@ -1427,11 +1450,8 @@ static void V4L2Capture_tick(Instance *pi)
   }
   else if (streq(s(priv->format), "422P")) {
     if (pi->outputs[OUTPUT_YUV422P].destination) {
-      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
+      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, &c);
       Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
-      getdoubletime(&y422p->c.timestamp);
-      FPS_update_timestamp(&priv->calculated_fps, y422p->c.timestamp);
-      y422p->c.nominal_period = priv->nominal_period;
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y422p->cb, 
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 
@@ -1447,18 +1467,15 @@ static void V4L2Capture_tick(Instance *pi)
     }
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
-      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, &c);
       memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);      
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
   else if (streq(s(priv->format), "YU12")) {
     if (pi->outputs[OUTPUT_YUV420P].destination) {
-      YUV420P_buffer *y420p = YUV420P_buffer_new(priv->width, priv->height, 0L);
+      YUV420P_buffer *y420p = YUV420P_buffer_new(priv->width, priv->height, &c);
       dpf("%s allocated y420p @ %p", __func__, y420p);
-      getdoubletime(&y420p->c.timestamp);
-      FPS_update_timestamp(&priv->calculated_fps, y420p->c.timestamp);
-      y420p->c.nominal_period = priv->nominal_period;
       memcpy(y420p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y420p->cb, 
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 
@@ -1474,7 +1491,7 @@ static void V4L2Capture_tick(Instance *pi)
     }
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
-      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, &c);
       memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);      
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
@@ -1489,9 +1506,7 @@ static void V4L2Capture_tick(Instance *pi)
       int icr = 0;
       int icb = 0;
       uint8_t *p = priv->buffers[priv->wait_on].data;
-      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, 0L);
-      getdoubletime(&y422p->c.timestamp);
-      FPS_update_timestamp(&priv->calculated_fps, y422p->c.timestamp);
+      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, &c);
       for (i=0; i < priv->vbuffer.bytesused/4; i++) {
 	/* YUYV is packed-pixels, need to sort to planes for YUV422p.
 	 * Current SSE versions don't support scatter/gather, so
@@ -1510,7 +1525,7 @@ static void V4L2Capture_tick(Instance *pi)
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
       int i = 0;
-      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, 0L);
+      Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, &c);
       /* Every 2nd pixel will be a gray value. */
       for (i=0; i < priv->vbuffer.bytesused/2; i++) {
 	g->data[i] = priv->buffers[priv->wait_on].data[i*2];
@@ -1521,11 +1536,10 @@ static void V4L2Capture_tick(Instance *pi)
   else if (streq(s(priv->format), "JPEG") ||
 	   streq(s(priv->format), "MJPG") ) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
-      Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, 0L);
-      getdoubletime(&j->c.timestamp);
-      j->c.label = String_new("/snapshot.jpg"); /* For VirtualStorage */
-      FPS_update_timestamp(&priv->calculated_fps, j->c.timestamp);
-      j->c.nominal_period = priv->nominal_period;
+      Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, &c);
+      /* Had been setting this for VirtualStorage,
+  	   j->c.label = String_new("/snapshot.jpg") 
+	 but that should be done via config now. */
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
       j->encoded_length = priv->vbuffer.bytesused;
       if (priv->fix) { Jpeg_fix(j); }
@@ -1543,8 +1557,7 @@ static void V4L2Capture_tick(Instance *pi)
   }
   else if (streq(s(priv->format), "O511")) {
     if (pi->outputs[OUTPUT_O511].destination) {
-      O511_buffer *o = O511_buffer_new(priv->width, priv->height, 0L);
-      getdoubletime(&o->c.timestamp);
+      O511_buffer *o = O511_buffer_new(priv->width, priv->height, &c);
       memcpy(o->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
 
       dpf("O511 bytesused=%d\n", priv->vbuffer.bytesused);
@@ -1591,7 +1604,10 @@ static void V4L2Capture_instance_init(Instance *pi)
   priv->contrast = String_value_none();
   priv->autoexpose = String_value_none();
   priv->exposure = String_value_none();
-  
+
+  priv->label = String_value_none();
+
+  priv->exit_on_error = 1;
 }
 
 static Template V4L2Capture_template = {
