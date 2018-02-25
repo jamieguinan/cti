@@ -14,7 +14,8 @@ typedef struct {
   int socket;
   uint16_t port;
   String *addr;
-  struct sockaddr_in remote;  
+  struct sockaddr_in remote;
+  int logging;
 } UDPTransmit_private;
 
 
@@ -73,6 +74,7 @@ static int set_addr(Instance *pi, const char *value)
 static Config config_table[] = {
   {"port", set_port, 0L, 0L}
   , {"addr", set_addr, 0L, 0L}
+  , {"logging", 0L, 0L, 0L, cti_set_int, offsetof(UDPTransmit_private, logging)}
 };
 
 static void RawData_handler(Instance *pi, void *data)
@@ -84,6 +86,16 @@ static void RawData_handler(Instance *pi, void *data)
 		 (struct sockaddr *) &priv->remote, sizeof(priv->remote));
   if (n == -1) {
     perror("sendto");
+  }
+
+  if (priv->logging) {
+    static FILE * f;
+    double t;
+    if (!f) {
+      f = fopen("/dev/shm/udp.csv", "w");
+    }
+    cti_getdoubletime(&t);
+    fprintf(f, "%f\n", t);
   }
 
   RawData_buffer_release(raw);
