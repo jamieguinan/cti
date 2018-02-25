@@ -87,6 +87,7 @@
 #include "Global.h"
 #include "Curl.h"
 #include "UDPTransmit.h"
+#include "Compositor.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -223,6 +224,7 @@ int cti_main(int argc, char *argv[])
   PushQueue_init();
   //PCMSource_init();
   UDPTransmit_init();
+  Compositor_init();
   Global_init();
 
   return app_code(argc, argv);

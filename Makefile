@@ -187,6 +187,7 @@ OBJS= \
 	BinaryFiler.o \
 	Global.o \
 	UDPTransmit.o \
+	Compositor.o \
 	$(MAIN) 
 
 
