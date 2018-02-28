@@ -29,7 +29,7 @@ extern void Array_set_error_handler(void (*handler)(void));
 #define Array_append(c, item) do { Array_grow((void*)&(c.items), sizeof(c.items[0]), &(c.available), &(c.count)); \
     c.items[c.count-1] = item; } while (0)
 #define Array_get(c, i) (c.items[i])
-#define Array_delete(c, index) do { if (index < c.count) { int i; for (i=index; i < c.count; i++) { c.items[i] = c.items[i+1]; } c.count -= 1; } } while (0)
+#define Array_delete(c, index) do { if (index < c.count) { int ii; for (ii=index; ii < c.count; ii++) { c.items[ii] = c.items[ii+1]; } c.count -= 1; } } while (0)
 #define Array_count(c) (c.count)
 #define Array_free(c, type, f)  do { void (*cleanup_func)(type)=f; \
     if (f) { int i; for (i=0;i<c.count;i++){cleanup_func(c.items[i]);} } \
