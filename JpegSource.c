@@ -24,7 +24,8 @@ static Output JpegSource_outputs[] = {
 
 typedef struct {
   Instance i;
-  Jpeg_buffer *jpeg;
+  Jpeg_buffer * jpeg;
+  String * label;
 } JpegSource_private;
 
 
@@ -34,12 +35,23 @@ static int set_file(Instance *pi, const char *value)
   ArrayU8 *fdata = File_load_data(S((char*)value));
   if (fdata) {
     priv->jpeg = Jpeg_buffer_from(fdata->data, fdata->len, 0L);
+    ArrayU8_cleanup(&fdata);
   }
   else {
     fprintf(stderr, "failed to load %s\n", value);
+    return 1;
   }
 
-  ArrayU8_cleanup(&fdata);
+  return 0;
+}
+
+static int set_label(Instance *pi, const char *value)
+{
+  JpegSource_private *priv = (JpegSource_private *)pi;
+  if (priv->label) {
+    String_free(&priv->label);
+  }
+  priv->label = String_new(value);
   return 0;
 }
 
@@ -61,8 +73,10 @@ static int do_run(Instance *pi, const char *value)
     return 1;
   }
 
+  Image_common c = { .label = priv->label };
+
   for (i=0; i < count; i++) {
-    Jpeg_buffer *tmp = Jpeg_buffer_from(priv->jpeg->data, priv->jpeg->encoded_length, 0L);
+    Jpeg_buffer *tmp = Jpeg_buffer_from(priv->jpeg->data, priv->jpeg->encoded_length, &c);
     if (cfg.verbosity) {
       printf("%d/%d (%d)\n", i, count,
 	     pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages);
@@ -87,6 +101,7 @@ static int do_run(Instance *pi, const char *value)
 static Config config_table[] = {
   { "file",    set_file, 0L, 0L },
   { "run",     do_run, 0L, 0L },
+  { "label",   set_label, 0L, 0L },
 };
 
 
