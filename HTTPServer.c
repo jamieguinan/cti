@@ -294,7 +294,7 @@ static void * http_thread(void *data)
 				    // Last-modified:
 				    // Etag:
 				    // Accept-Ranges:
-				    "Content-length: %ld\r\n"
+				    "Content-length: %zd\r\n"
 				    "Content-type: %s\r\n"
 				    "\r\n"
 				    "%s",
