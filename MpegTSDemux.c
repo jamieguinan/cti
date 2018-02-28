@@ -75,7 +75,7 @@ typedef struct _Stream {
   struct _Stream *next;
 } Stream;
 
-static Stream * Stream_new(pid)
+static Stream * Stream_new(int pid)
 {
   Stream *s = Mem_calloc(1, sizeof(*s));
   s->pid = pid;
