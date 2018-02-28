@@ -22,6 +22,7 @@ extern void do_frame_io(struct appctx * ctx,
 			int * keyframe);
 extern void encode_cleanup(struct appctx * ctx);
 extern int rpi_encode_yuv_c__analysis_enabled;
+extern int say_verbose;
 #define NAL_type(p) ((p)[4] & 31)
 
 
@@ -142,6 +143,7 @@ static void RPiH264Enc_instance_init(Instance *pi)
   priv->video_bitrate = 500000;
   priv->gop_seconds = 5;
 
+  say_verbose = 1;
   // rpi_encode_yuv_c__analysis_enabled = 1;
 }
 
