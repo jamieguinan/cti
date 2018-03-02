@@ -7,6 +7,7 @@
 
 #include "CTI.h"
 #include "UDPTransmit.h"
+#include "ArrayU8.h"
 #include "socket_common.h"	/* all the usual headers */
 
 typedef struct {
@@ -15,6 +16,8 @@ typedef struct {
   uint16_t port;
   String *addr;
   struct sockaddr_in remote;
+  int buffer_level;
+  ArrayU8 *buffer;
   int logging;
 } UDPTransmit_private;
 
@@ -75,6 +78,7 @@ static Config config_table[] = {
   {"port", set_port, 0L, 0L}
   , {"addr", set_addr, 0L, 0L}
   , {"logging", 0L, 0L, 0L, cti_set_int, offsetof(UDPTransmit_private, logging)}
+  , {"buffer_level", 0L, 0L, 0L, cti_set_int, offsetof(UDPTransmit_private, buffer_level)}  
 };
 
 static void RawData_handler(Instance *pi, void *data)
@@ -82,8 +86,24 @@ static void RawData_handler(Instance *pi, void *data)
   UDPTransmit_private *priv = (UDPTransmit_private *)pi;
   RawData_buffer *raw = data;
 
-  int n = sendto(priv->socket, raw->data, raw->data_length, 0,
+  int n = 0;
+  
+  if (priv->buffer_level) {
+    if (!priv->buffer) {
+      priv->buffer = ArrayU8_new();
+    }
+    ArrayU8_append(priv->buffer, ArrayU8_temp_const(raw->data, raw->data_length));
+    if (priv->buffer->len >= priv->buffer_level) {
+      n = sendto(priv->socket, priv->buffer->data, priv->buffer->len, 0,
 		 (struct sockaddr *) &priv->remote, sizeof(priv->remote));
+      ArrayU8_trim_left(priv->buffer, priv->buffer->len);
+    }
+  }
+  else {
+    n = sendto(priv->socket, raw->data, raw->data_length, 0,
+	       (struct sockaddr *) &priv->remote, sizeof(priv->remote));
+  }
+
   if (n == -1) {
     perror("sendto");
   }
