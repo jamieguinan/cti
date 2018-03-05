@@ -10,12 +10,16 @@
 #include "Compositor.h"
 #include "Images.h"
 
+#define RED "[31m"
+#define CLEAR "[0m"
+
 static void Config_handler(Instance *pi, void *msg);
 static void YUV420P_handler(Instance *pi, void *msg);
 
 static int set_size(Instance *pi, const char *value);
 static int set_require(Instance *pi, const char *value);
 static int set_paste(Instance *pi, const char *value);
+static int do_clear(Instance *pi, const char *value);
 
 enum { INPUT_CONFIG, INPUT_YUV420P };
 static Input Compositor_inputs[] = {
@@ -55,6 +59,7 @@ static Config config_table[] = {
   { "size",    set_size, NULL, NULL },
   { "require", set_require, NULL, NULL },
   { "paste",   set_paste, NULL, NULL },
+  { "clear",   do_clear, NULL, NULL },
 };
 
 
@@ -119,12 +124,6 @@ static int set_paste(Instance *pi, const char *value)
 		 , &p->rotation
 		 );
   if ((n != 8)
-      || (p->src.x < 0)
-      || (p->src.y < 0)
-      || (p->src.w < 0)
-      || (p->src.h < 0)
-      || (p->dest.x < 0)
-      || (p->dest.y < 0)
       || (p->src.x % 2 != 0)
       || (p->src.y % 2 != 0)
       || (p->src.w % 2 != 0)
@@ -147,11 +146,26 @@ static int set_paste(Instance *pi, const char *value)
   return rc;
 }
 
+static int do_clear(Instance *pi, const char *value)
+{
+  Compositor_private *priv = (Compositor_private *)pi;
+
+  while (priv->operations.count) {
+    PasteOp * p = Array_get(priv->operations, 0);
+    Array_delete(priv->operations, 0);
+    String_clear(&p->label);
+    Mem_free(p);
+  }
+  return 0;
+}
+
 
 static void Config_handler(Instance *pi, void *data)
 {
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
+
+#define PLANE_PASTE_DEBUG 0
 
 static void plane_paste(uint8_t * src, int src_w, int src_h,
 			uint8_t * dest, int dest_w, int dest_h,
@@ -159,8 +173,9 @@ static void plane_paste(uint8_t * src, int src_w, int src_h,
 {
   /* Handles cases where source rect exceeds boundaries of source image.
      Copy and rotate are done in a single operation. */
-  
-  if (0) fprintf(stderr, "%s:%s pasteOp@%p src={%d,%d %d,%d} dest={%d,%d} rotation=%d\n"
+
+#if PLANE_PASTE_DEBUG  
+  fprintf(stderr, "%s:%s pasteOp@%p src={%d,%d %d,%d} dest={%d,%d} rotation=%d\n"
 	  , __FILE__
 	  , __func__
 	  , p
@@ -171,14 +186,16 @@ static void plane_paste(uint8_t * src, int src_w, int src_h,
 	  , p->dest.x
 	  , p->dest.y
 	  , p->rotation);
-  
+#endif
   uint8_t * psrc=NULL;
   uint8_t * pdest=NULL;
   PasteOp op = *p;  /* Use a local copy of the operation, so it can be modified. */
   int x, y;
   int x_count, y_count;
   const int d_src_x=1;	/* same for all rotations */
-  int d_src_y=0, d_dest_x=0, d_dest_y=0;
+  const int d_src_y = (src_w);
+  int d_dest_x=0, d_dest_y=0;
+  
 
   /* If op source rectangle begins right or below source image. */  
   if (op.src.x >= src_w) { return; }
@@ -191,7 +208,6 @@ static void plane_paste(uint8_t * src, int src_w, int src_h,
   if (op.src.w <= 0) { return; }
   if (op.src.h <= 0) { return; }
 
-  /* If op source rectange ends right or below source image. */
   x_count = op.src.w - cti_max(0, op.src.x + op.src.w - src_w);
   y_count = op.src.h - cti_max(0, op.src.y + op.src.h - src_h);
 
@@ -203,56 +219,65 @@ static void plane_paste(uint8_t * src, int src_w, int src_h,
 
   if (op.rotation == 0) {
     if (op.dest.x >= dest_w || op.dest.y >= dest_h) { return; }
-    if (op.dest.x < 0) { x_count -= cti_max(x_count, -(op.dest.x)); psrc += -(op.dest.x); op.dest.x = 0;}
-    if (op.dest.y < 0) { y_count -= cti_max(y_count, -(op.dest.y)); psrc += (src_w * -(op.dest.y));  op.dest.y = 0;}
-    x_count -= cti_max(0, op.dest.x + x_count - dest_w);
-    y_count -= cti_max(0, op.dest.y + y_count - dest_h);
+    if (op.dest.x < 0) { psrc += -(op.dest.x); x_count -= -(op.dest.x); ; op.dest.x = 0;}
+    if (op.dest.y < 0) { psrc += (src_w * -(op.dest.y)); y_count -= -(op.dest.y); op.dest.y = 0;}
+    if (op.dest.x + x_count > dest_w) { x_count -= (op.dest.x + x_count - dest_w); }
+    if (op.dest.y + y_count > dest_h) { y_count -= (op.dest.y + y_count - dest_h); }
     d_dest_x = 1;
-    d_dest_y = (dest_w - x_count);
+    d_dest_y = (dest_w);
+    pdest = dest + op.dest.x + (dest_w * (op.dest.y)); /* no dest pixel change */
   }
   else if (op.rotation == 90) {
-    fprintf(stderr, "rotation 90 not handled yet\n");
-    /* dest pixel left 1 because of rotation */
-    return;
+    if (op.dest.x <= 0 || op.dest.y >= dest_h) { return; }
+    if (op.dest.x > dest_w) { psrc += (src_w * (op.dest.x - dest_w)); y_count -= (op.dest.x - dest_w); op.dest.x = dest_w; }
+    if (op.dest.y < 0) { psrc += (-op.dest.y); x_count += (op.dest.y); op.dest.y = 0; }
+    if (op.dest.x - y_count < 0) { y_count = op.dest.x; }
+    if (op.dest.y + x_count > dest_h) { x_count = dest_h - op.dest.y; }
+    d_dest_x = (dest_w);
+    d_dest_y = -1;
+    pdest = dest + (op.dest.x-1) + (dest_w * (op.dest.y)); /* dest pixel left 1 because of rotation */
   }
   else if (op.rotation == 180) {
     if (op.dest.x <= 0 || op.dest.y <= 0) { return; }
     if (op.dest.x > dest_w) { psrc += (op.dest.x - dest_w); x_count -= (op.dest.x - dest_w) ; op.dest.x = dest_w; }
     if (op.dest.y > dest_h) { psrc += (src_w * (op.dest.y - dest_h)); y_count -= (op.dest.y - dest_h); op.dest.y = dest_h; }
+    if (op.dest.x - x_count < 0) { x_count = op.dest.x; }
+    if (op.dest.y - y_count < 0) { y_count = op.dest.y; }
     d_dest_x = -1;
     d_dest_y = (-dest_w);
     pdest = dest + (op.dest.x-1) + (dest_w * (op.dest.y-1)); /* dest pixel up and left 1 because of rotation */
-    d_src_y = (src_w);
   }
   else if (op.rotation == 270) {
-    // fprintf(stderr, "%s:%s.%d x_count=%d y_count=%d\n", __FILE__, __func__, __LINE__, x_count, y_count);  
-    if (op.dest.y < 0 || op.dest.x > dest_w) { return; }
+    if (op.dest.x > dest_w || op.dest.y < 0) { return; }
     if (op.dest.x < 0) { psrc += (src_w * -(op.dest.x)); y_count += op.dest.x; op.dest.x = 0; }
-    if (op.dest.y > dest_h) { psrc += (op.dest.y - dest_h); x_count -= (op.dest.y - dest_h); op.dest.y = (dest_h-1); }
-    if (x_count > op.dest.y) { x_count = op.dest.y; }
-    if (op.dest.x + y_count > dest_w) { y_count = dest_w - op.dest.x; }
+    if (op.dest.y > dest_h) { psrc += (op.dest.y - dest_h); x_count -= (op.dest.y - dest_h); op.dest.y = dest_h; }
+    if (op.dest.x + y_count > dest_w) { y_count = (op.dest.x + y_count - dest_w); }
+    if (op.dest.y - x_count < 0) { x_count = op.dest.y; }
     d_dest_x = -(dest_w);
     d_dest_y = 1;
     pdest = dest + op.dest.x + (dest_w * (op.dest.y-1)); /* dest pixel up 1 because of rotation */
-    d_src_y = (src_w);
   }
   else {
     fprintf(stderr, "invalid rotation %d\n", op.rotation);
     return;
   }
 
-  // fprintf(stderr, "%s:%s.%d x_count=%d y_count=%d\n", __FILE__, __func__, __LINE__, x_count, y_count);
+#if PLANE_PASTE_DEBUG
+  fprintf(stderr, "%s:%s.%d x_count=%d y_count=%d\n", __FILE__, __func__, __LINE__, x_count, y_count);
+  fprintf(stdrer, "starting at %ld -> %ld\n", (psrc-src), (pdest-dest));
+#endif
 
-  // printf("starting at %d -> %d\n", (psrc-src), (pdest-dest));
   /* Having done all the calculations above, the copy is done in
      a nested for loop. */
   for (y = 0; y < y_count; y += 1) {
     /* Note, could do a memcpy if (d_src_x == d_dest_x == 1) */
     for (x = 0; x < x_count; x += 1) {
-      if (psrc < src) { fprintf(stderr, "psrc underflow\n"); return;}
-      if (psrc >= src+(src_w*src_h)) { fprintf(stderr, "psrc overflow\n"); return;} 
-      if (pdest < dest) { fprintf(stderr, "pdest underflow\n"); return;}
-      if (pdest >= dest+(dest_w*dest_h)) { fprintf(stderr, "pdest overflow at %d,%d\n", x, y); return;} 
+#if PLANE_PASTE_DEBUG      
+      if (psrc < src) { fprintf(stderr, RED "psrc underflow at %d,%d" CLEAR "\n", x, y); return;}
+      if (psrc >= src+(src_w*src_h)) { fprintf(stderr, RED "psrc overflow at %d,%d" CLEAR "\n", x, y); return;} 
+      if (pdest < dest) { fprintf(stderr, RED "pdest underflow at %d,%d" CLEAR "\n", x, y); return;}
+      if (pdest >= dest+(dest_w*dest_h)) { fprintf(stderr, RED "pdest overflow at %d,%d" CLEAR "\n", x, y); return;}
+#endif
       *pdest = *psrc;
       pdest += d_dest_x;
       psrc += d_src_x;
