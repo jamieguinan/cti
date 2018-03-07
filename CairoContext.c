@@ -84,6 +84,7 @@ typedef struct {
   long timeout;
   long timeout_timestamp;
   String * hostname;
+  String * label;
 } CairoContext_private;
 
 
@@ -105,6 +106,18 @@ static int set_show_text(Instance *pi, const char *value)
 
   return 0;
 }
+
+
+static int set_label(Instance *pi, const char *value)
+{
+  CairoContext_private *priv = (CairoContext_private *)pi;
+  if (priv->label) {
+    String_free(&priv->label);
+  }
+  priv->label = String_new(value);
+  return 0;
+}
+
 
 static void do_system_text(CairoContext_private * priv, String * key)
 {
@@ -335,6 +348,10 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
 			cairo_image_surface_get_height(priv->surface),
 			cairo_image_surface_get_stride(priv->surface));
 
+  if (!String_is_none(priv->label) && !rgb3->c.label) {
+    rgb3->c.label = String_dup(priv->label);
+  }
+
   cairo_surface_destroy(priv->surface);
   cairo_destroy(priv->context);
 }
@@ -416,6 +433,7 @@ static Config config_table[] = {
   { "timeout",   0L, 0L, 0L, cti_set_int, offsetof(CairoContext_private, timeout) },
   { "command",   add_command, 0L, 0L },
   { "text",      set_show_text, 0L, 0L },
+  { "label",     set_label, 0L, 0L },
 };
 
 static void Config_handler(Instance *pi, void *data)
@@ -446,6 +464,7 @@ static void CairoContext_instance_init(Instance *pi)
 {
   CairoContext_private *priv = (CairoContext_private *)pi;
   priv->text = String_value_none();
+  priv->label = String_value_none();
   priv->hostname = File_load_text(S("/etc/hostname"));
   String_trim_right(priv->hostname); 
 }
