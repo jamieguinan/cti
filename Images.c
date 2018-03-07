@@ -183,6 +183,7 @@ Gray_buffer *Gray_buffer_from(uint8_t *data, int width, int height, Image_common
 
 void Gray_buffer_release(Gray_buffer *gray)
 {
+  Image_common_cleanup(&(gray->c));
   Mem_free(gray->data);
   memset(gray, 0, sizeof(*gray));
   Mem_free(gray);
@@ -204,6 +205,7 @@ Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c)
 
 void Gray32_buffer_release(Gray32_buffer *gray32)
 {
+  Image_common_cleanup(&(gray32->c));  
   Mem_free(gray32->data);
   memset(gray32, 0, sizeof(*gray32));
   Mem_free(gray32);
@@ -308,6 +310,7 @@ void RGB3_buffer_release(RGB3_buffer *rgb)
   int count;
   LockedRef_decrement(&rgb->c.ref, &count);
   if (count == 0) {
+    Image_common_cleanup(&(rgb->c));    
     Mem_free(rgb->data);
     memset(rgb, 0, sizeof(*rgb));
     Mem_free(rgb);
@@ -334,6 +337,7 @@ void BGR3_buffer_release(BGR3_buffer *bgr)
   int count;
   LockedRef_decrement(&bgr->c.ref, &count);
   if (count == 0) {
+    Image_common_cleanup(&(bgr->c));
     Mem_free(bgr->data);
     memset(bgr, 0, sizeof(*bgr));
     Mem_free(bgr);
@@ -443,6 +447,7 @@ void YUV422P_buffer_release(YUV422P_buffer *yuv422p)
   int count;
   LockedRef_decrement(&yuv422p->c.ref, &count);
   if (count == 0) {
+    Image_common_cleanup(&(yuv422p->c));    
     if (yuv422p->cb[yuv422p->cb_length] != 0x55) { fprintf(stderr, "cb buffer spilled!\n"); }
     Mem_free(yuv422p->cb);
     if (yuv422p->cr[yuv422p->cr_length] != 0x55) { fprintf(stderr, "cr buffer spilled!\n"); }
@@ -794,6 +799,7 @@ void YUV420P_buffer_release(YUV420P_buffer *yuv420p)
   int count;
   LockedRef_decrement(&yuv420p->c.ref, &count);
   if (count == 0) {
+    Image_common_cleanup(&(yuv420p->c));
     Mem_free(yuv420p->data);
     memset(yuv420p, 0, sizeof(*yuv420p));
     Mem_free(yuv420p);
