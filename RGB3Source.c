@@ -135,8 +135,8 @@ static void RGB3Source_tick(Instance *pi)
   generate_one_frame(pi);
 
   int sec = priv->period_ms/1000;
-  long nsec = (priv->period_ms % 1000) * 1000000; 
- nanosleep(&(struct timespec) { .tv_sec = sec, .tv_nsec = nsec}, NULL);
+  long nsec = (priv->period_ms % 1000) * 1000000;
+  nanosleep(&(struct timespec) { .tv_sec = sec, .tv_nsec = nsec}, NULL);
 
   pi->counter++;
 }
