@@ -121,7 +121,7 @@ static int set_label(Instance *pi, const char *value)
 
 static void do_system_text(CairoContext_private * priv, String * key)
 {
-  fprintf(stderr, "%s: key=%s\n", __func__, s(key));
+  dpf("%s: key=%s\n", __func__, s(key));
   localptr(String, value) = String_value_none();
   if (streq(s(key), "hostname")) {
     value = String_dup(priv->hostname);
