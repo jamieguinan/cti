@@ -8,7 +8,8 @@
 #include "CairoContext.h"
 #include "Images.h"
 #include "Array.h"
-#include "Cfg.h"
+#include "File.h"
+#include "localptr.h"
 
 #include "cairo.h"
 
@@ -25,10 +26,11 @@ static Input CairoContext_inputs[] = {
   [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
-enum { OUTPUT_RGB3, OUTPUT_YUV422P };
+enum { OUTPUT_RGB3, OUTPUT_YUV422P,  OUTPUT_YUV420P };
 static Output CairoContext_outputs[] = {
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
+  [ OUTPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .destination = 0L },
 };
 
 
@@ -60,7 +62,6 @@ static struct {
   { .label = "identity_matrix", .command = CC_COMMAND_IDENTITY_MATRIX, .num_double_args = 0 },
 
   { .label = "set_font_size", .command = CC_COMMAND_SET_FONT_SIZE, .num_double_args = 1 },
-  // { .label = "set_text", .command = CC_COMMAND_SET_TEXT, .num_double_args = 0 },
   { .label = "show_text", .command = CC_COMMAND_SHOW_TEXT, .num_double_args = 0 },
 
   { .label = "rotate_subseconds", .command = CC_COMMAND_ROTATE_SUBSECONDS, .num_double_args = 0 },
@@ -82,6 +83,7 @@ typedef struct {
   String * text;
   long timeout;
   long timeout_timestamp;
+  String * hostname;
 } CairoContext_private;
 
 
@@ -104,6 +106,41 @@ static int set_show_text(Instance *pi, const char *value)
   return 0;
 }
 
+static void do_system_text(CairoContext_private * priv, String * key)
+{
+  fprintf(stderr, "%s: key=%s\n", __func__, s(key));
+  localptr(String, value) = String_value_none();
+  if (streq(s(key), "hostname")) {
+    value = String_dup(priv->hostname);
+    String_trim_right(value);    
+  }
+  else if (streq(s(key), "datetime")) {
+    char datetime[128];
+    time_t t = time(NULL);
+    struct tm *lt = localtime(&t);
+    if (lt) {
+      strftime(datetime, sizeof(datetime), "%Y-%m-%d %H:%M:%S %Z", lt);
+      value = String_new(datetime);
+    }
+  }
+  else if (streq(s(key), "wifistatus")) {
+    //value = String_new("WiFi ...");
+    //system("iwconfig wlan0 | grep Signal | sed -e 's/.*Signal.level=//g' -e 's/[ ].*$//g' > /dev/shm/wifi.txt");
+    //localptr(String, wifitmp) = File_load_text(S("/dev/shm/wifi.txt"));
+    //String_cat1(value, s(wifitmp));
+    //String_trim_right(value);
+  }
+  else if (streq(s(key), "memstatus")) {
+    //system("grep -E 'MemFree' /proc/meminfo  | sed -e 's/.kB$//g' -e 's/.* //g' > /dev/shm/memstatus.txt");
+    //value = File_load_text(S("/dev/shm/memstatus.txt"));
+    //String_trim_right(value);
+    //String_cat1(value, "kB free");
+  }
+  if (!String_is_none(value)) {
+    cairo_show_text(priv->context, value->bytes);
+  }
+}
+
 
 static int add_command(Instance *pi, const char *value)
 {
@@ -124,14 +161,25 @@ static int add_command(Instance *pi, const char *value)
 	     &cmd.args[4],
 	     &cmd.args[5]);
 
-  if (streq(value, "set_text") && value[strlen(value)] != 0) {
+  fprintf(stderr, "add_command label=%s\n", label[0] ? label : "" );
+  fprintf(stderr, "%d %d\n", streq(value, "system_text") , value[strlen(value)] != 0);
+
+  if (streq(label, "set_text") && value[strlen(label)] != 0) {
     cmd.command = CC_COMMAND_SET_TEXT;
     cmd.text = String_new(value + strlen(label) + 1);
     Array_append(priv->commands, cmd);
     found = 1;
     goto out;
   }
-	     
+
+  else if (streq(label, "system_text") && value[strlen(label)] != 0) {
+    cmd.command = CC_COMMAND_SYSTEM_TEXT;
+    cmd.text = String_new(value + strlen(label) + 1);
+    Array_append(priv->commands, cmd);
+    found = 1;
+    goto out;
+  }
+
   for (i=0; i < table_size(CairoCommandMap); i++) {
     if (streq(label, CairoCommandMap[i].label)
 	&& (n-1) == CairoCommandMap[i].num_double_args) {
@@ -232,14 +280,20 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
     case CC_COMMAND_SET_FONT_SIZE:
       cairo_set_font_size(priv->context, cmd.args[0]);
       break;
+    case CC_COMMAND_SHOW_TEXT:
+      if (s(priv->text)) {
+	cairo_show_text(priv->context, s(priv->text));
+      }
+      break;
+
     case CC_COMMAND_SET_TEXT:
       if (cmd.text) {
 	cairo_show_text(priv->context, cmd.text->bytes);
       }
       break;
-    case CC_COMMAND_SHOW_TEXT:
-      if (s(priv->text)) {
-	cairo_show_text(priv->context, s(priv->text));
+    case CC_COMMAND_SYSTEM_TEXT:
+      if (cmd.text) {
+        do_system_text(priv, cmd.text);
       }
       break;
 
@@ -301,6 +355,11 @@ static void rgb3_handler(Instance *pi, void *msg)
 
   if (do_apply) {
     apply_commands(priv, rgb3);
+  }
+
+  if (pi->outputs[OUTPUT_YUV420P].destination) {
+    YUV420P_buffer * yuv = RGB3_to_YUV420P(rgb3);
+    PostData(yuv, pi->outputs[OUTPUT_YUV420P].destination);
   }
   
   if (pi->outputs[OUTPUT_RGB3].destination) {
@@ -387,6 +446,8 @@ static void CairoContext_instance_init(Instance *pi)
 {
   CairoContext_private *priv = (CairoContext_private *)pi;
   priv->text = String_value_none();
+  priv->hostname = File_load_text(S("/etc/hostname"));
+  String_trim_right(priv->hostname); 
 }
 
 

@@ -24,9 +24,11 @@ enum {
   CC_COMMAND_POP_GROUP,
   CC_COMMAND_IDENTITY_MATRIX,
 
-  CC_COMMAND_SET_TEXT,
   CC_COMMAND_SET_FONT_SIZE,
   CC_COMMAND_SHOW_TEXT,
+
+  CC_COMMAND_SET_TEXT,
+  CC_COMMAND_SYSTEM_TEXT,
 
   /* I made these up, they make use of the date stamp in the input RGB buffer. */
   CC_COMMAND_ROTATE_SUBSECONDS,
