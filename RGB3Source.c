@@ -96,6 +96,7 @@ static Config config_table[] = {
   { "color",   0L, 0L, 0L, cti_set_ulong, offsetof(RGB3Source_private, color) },
   { "width",   0L, 0L, 0L, cti_set_int, offsetof(RGB3Source_private, width) },
   { "height",   0L, 0L, 0L, cti_set_int, offsetof(RGB3Source_private, height) },
+  { "period_ms", 0L, 0L, 0L, cti_set_int, offsetof(RGB3Source_private, period_ms) },
   { "enable",   set_enable, 0L, 0L },
 };
 
