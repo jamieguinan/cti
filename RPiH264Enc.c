@@ -90,7 +90,7 @@ static void y420p_handler(Instance *pi, void *msg)
 
   uint8_t *output = NULL;
   int output_size = 0;
-
+  
   int y_size, u_size, v_size;
   rpi_get_sizes(priv->ctx, &y_size, &u_size, &v_size);
   do_frame_io(priv->ctx,
@@ -99,7 +99,7 @@ static void y420p_handler(Instance *pi, void *msg)
 	      y420p->cr, v_size,
 	      &output, &output_size,
 	      &keyframe);
-
+  
   if (output) {
     if (pi->outputs[OUTPUT_H264].destination) {
       H264_buffer *hout = H264_buffer_from(output, output_size, y420p->width, y420p->height, &y420p->c);
@@ -108,7 +108,26 @@ static void y420p_handler(Instance *pi, void *msg)
     }
     free(output);
   }
+  
+  /* Try a second call to flush output buffer. */
+  output = NULL;
+  do_frame_io(priv->ctx,
+	      NULL, 0,
+	      NULL, 0,
+	      NULL, 0,
+	      &output, &output_size,
+	      &keyframe);
 
+  if (output) {
+    dpf("do_frame_io second try succeeded\n");
+    if (pi->outputs[OUTPUT_H264].destination) {
+      H264_buffer *hout = H264_buffer_from(output, output_size, y420p->width, y420p->height, &y420p->c);
+      hout->keyframe = keyframe;
+      PostData(hout, pi->outputs[OUTPUT_H264].destination);      
+    }
+    free(output);
+  }
+  
   YUV420P_buffer_release(y420p);
 }
 
