@@ -32,6 +32,7 @@ connect dj3 YUV420P_buffer comp
 
 connect comp YUV420P_buffer enc
 
+connect rgb RGB3_buffer cc
 connect cc YUV420P_buffer comp
 
 #config tsm debug_outpackets 1
@@ -64,6 +65,7 @@ config vc3 autoexpose 3
 
 config rgb width 400
 config rgb height 280
+config rgb color 0x404040
 
 config cc width 400
 config cc height 280
@@ -72,9 +74,9 @@ config cc command set_line_width 2.0
 config cc command set_source_rgb 0.9 0.9 0.9
 config cc command identity_matrix
 config cc command set_font_size 20.0
-config cc command move_to 110 160
+config cc command move_to 120 90
 config cc command system_text hostname
-config cc command move_to 110 190
+config cc command move_to 60 180
 config cc command system_text datetime
 
 # Frame rates and periods grouped together here to make it
@@ -87,7 +89,7 @@ config rgb period_ms 31
 
 config comp size 1120x640
 config comp require Top,South,North,West
-config comp paste Top:0,0,400,280:0,360:0
+config comp paste Top:0,0,400,280:360,0:0
 config comp paste South:0,0,640,360:0,640:270
 config comp paste West:120,0,400,360:760,640:180
 config comp paste North:0,0,640,360:760,640:270
@@ -114,7 +116,7 @@ config ss enable 1
 config vc1 enable 1
 config vc2 enable 1
 config vc3 enable 1
-
+config rgb enable 1
 config ac enable 1
 
 # Increase max pending messages from 100 to ...
