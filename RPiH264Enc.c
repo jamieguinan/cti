@@ -119,7 +119,7 @@ static void y420p_handler(Instance *pi, void *msg)
 	      &keyframe);
 
   if (output) {
-    dpf("do_frame_io second try succeeded\n");
+    dpf("%s: do_frame_io second call got output\n", __func__);
     if (pi->outputs[OUTPUT_H264].destination) {
       H264_buffer *hout = H264_buffer_from(output, output_size, y420p->width, y420p->height, &y420p->c);
       hout->keyframe = keyframe;
