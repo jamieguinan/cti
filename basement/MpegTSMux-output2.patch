@@ -1,0 +1,50 @@
+diff --git a/MpegTSMux.c b/MpegTSMux.c
+index a51c138..d97cbd9 100644
+--- a/MpegTSMux.c
++++ b/MpegTSMux.c
+@@ -98,9 +98,10 @@ static Input MpegTSMux_inputs[] = {
+   [ INPUT_MP3 ] = { .type_label = "MP3_buffer", .handler = MP3_handler },
+ };
+ 
+-enum { OUTPUT_RAWDATA, OUTPUT_PUSH_DATA };
++enum { OUTPUT_RAWDATA, OUTPUT_RAWDATA_2, OUTPUT_PUSH_DATA };
+ static Output MpegTSMux_outputs[] = {
+   [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
++  [ OUTPUT_RAWDATA_2 ] = { .type_label = "RawData_buffer_2", .destination = 0L },
+   [ OUTPUT_PUSH_DATA ] = { .type_label = "Push_data", .destination = 0L },
+ };
+ 
+@@ -833,6 +834,11 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
+ 	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+ 	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+       }
++      if (pi->outputs[OUTPUT_RAWDATA_2].destination) {
++	/* FIXME: Could just assign the packet an avoid another allocation. */
++	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
++	PostData(rd, pi->outputs[OUTPUT_RAWDATA_2].destination);
++      }
+ 
+       if (priv->output_sink) {
+ 	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+@@ -853,6 +859,10 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
+ 	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+ 	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+       }
++      if (pi->outputs[OUTPUT_RAWDATA_2].destination) {
++	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
++	PostData(rd, pi->outputs[OUTPUT_RAWDATA_2].destination);
++      }
+ 
+       if (priv->output_sink) {
+ 	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+@@ -874,6 +884,10 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
+       RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+       PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+     }
++    if (pi->outputs[OUTPUT_RAWDATA_2].destination) {
++      RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
++      PostData(rd, pi->outputs[OUTPUT_RAWDATA_2].destination);
++    }
+ 
+     if (priv->output_sink) {
+       Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
