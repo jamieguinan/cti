@@ -96,3 +96,36 @@ void StackDebug2(void *ptr, const char * text)
   fprintf(stderr, "\n");
 }
 
+
+void StackDebug3up(void *ptr, const char *type, ssize_t size)
+{
+  int i;
+  Instance *pi = pthread_getspecific(instance_key);
+  if (!pi) { 
+    fprintf(stderr, "no instance key for thread\n");
+    return; 
+  }
+  fprintf(stderr, "%s::", pi->label);
+  for (i=0; i < pi->stack_index; i++) {
+    fprintf(stderr, "/%p", pi->stack[i]);
+  }
+  fprintf(stderr, "::%p::%s", ptr, type);
+  fprintf(stderr, "\n");
+}
+
+
+void StackDebug3down(void *ptr)
+{
+  int i;
+  Instance *pi = pthread_getspecific(instance_key);
+  if (!pi) { 
+    fprintf(stderr, "no instance key for thread\n");
+    return; 
+  }
+  fprintf(stderr, "%s::", pi->label);
+  for (i=0; i < pi->stack_index; i++) {
+    fprintf(stderr, "/%p", pi->stack[i]);
+  }
+  fprintf(stderr, "::%p", ptr);
+  fprintf(stderr, "\n");
+}

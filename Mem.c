@@ -17,7 +17,7 @@ static pthread_mutex_t mem_lock = PTHREAD_MUTEX_INITIALIZER;
 static void backtrace_and_hold(void)
 {
 #if 0
-  /* This doesn't work on ARM, nor n270. */
+  /* This doesn't work on ARM, nor Atom n270. */
   int i, n;
   void *buffer[32];
   n = backtrace(buffer, 32);
@@ -45,39 +45,51 @@ void backtrace_and_exit(void)
 }
 
 
-void *_Mem_calloc(int count, int size, const char *func, int line)
+void *_Mem_calloc(int count, int size, const char *func, int line, const char * type)
 {
   pthread_mutex_lock(&mem_lock);
   void *ptr = calloc(count, size);
   if (cfg.mem_tracking) {
     StackDebug2(ptr, "+");
   }
+  if (cfg.mem_tracking3) {
+    StackDebug3up(ptr, type, size);
+  }
   pthread_mutex_unlock(&mem_lock);
   // fprintf(stderr, "calloc: %p\n", ptr);
   return ptr;
 }
 
-void *_Mem_malloc(int size, const char *func, int line)
+void *_Mem_malloc(int size, const char *func, int line, const char * type)
 {
   pthread_mutex_lock(&mem_lock);
   void *ptr = malloc(size);
   if (cfg.mem_tracking) {
     StackDebug2(ptr, "+");
   }
+  if (cfg.mem_tracking3) {
+    StackDebug3up(ptr, type, size);
+  }
   pthread_mutex_unlock(&mem_lock);
   // fprintf(stderr, "malloc: %p\n", ptr);
   return ptr;
 }
 
-void *_Mem_realloc(void *ptr, int newsize, const char *func, int line)
+void *_Mem_realloc(void *ptr, int newsize, const char *func, int line, const char * type)
 {
   pthread_mutex_lock(&mem_lock);
   if (cfg.mem_tracking) {
     StackDebug2(ptr, "-");
   }
+  if (cfg.mem_tracking3) {
+    StackDebug3down(ptr);
+  }
   void *newptr = realloc(ptr, newsize);
   if (cfg.mem_tracking) {
-    StackDebug2(newptr, "+");
+    StackDebug2(newptr, "+");    
+  }
+  if (cfg.mem_tracking3) {
+    StackDebug3up(newptr, type, newsize);
   }
   pthread_mutex_unlock(&mem_lock);
   return newptr;
@@ -89,6 +101,9 @@ void _Mem_free(void *ptr, const char *func, int line)
   pthread_mutex_lock(&mem_lock);
   if (cfg.mem_tracking) {
     StackDebug2(ptr, "-");
+  }
+  if (cfg.mem_tracking3) {
+    StackDebug3down(ptr);
   }
   // fprintf(stderr, "free: %p\n", ptr);
   free(ptr);

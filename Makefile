@@ -193,9 +193,9 @@ OBJS= \
 
 # Uncomment these next few lines for debugging segfaults, memory leaks and
 # other issues.
-#CPPFLAGS += -DUSE_STACK_DEBUG
-#CPPFLAGS += -finstrument-functions
-#OBJS+=StackDebug.o
+CPPFLAGS += -DUSE_STACK_DEBUG
+CPPFLAGS += -finstrument-functions
+OBJS+=StackDebug.o
 
 
 ifeq ($(OS),Linux)

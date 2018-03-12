@@ -130,7 +130,7 @@ static void ALSA_buffer_io(ALSAio_common * aic,
 			   ALSAio_rw_enum rw)
 {
   int rc;
-  snd_pcm_sframes_t n;
+  snd_pcm_sframes_t n = 0;
   int state;
   int dir = 0;			/* Returned by *_near() calls. */
 
