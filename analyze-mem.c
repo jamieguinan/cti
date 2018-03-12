@@ -3,7 +3,7 @@
  *
  * Compile command,
  
-  gcc analyize-mem.c Index.c Array.c Cfg.c StackDebug.c Mem.c CTI.c locks.c dpf.c String.c -lpthread -o analyize-mem
+  gcc analyze-mem.c Index.c Array.c Cfg.c StackDebug.c Mem.c CTI.c locks.c dpf.c String.c -lpthread -o analyze-mem
 
   *
   */
