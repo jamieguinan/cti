@@ -9,6 +9,7 @@
   */
 
 #include <stdio.h>
+#include <inttypes.h>
 
 #include "CTI.h"
 #include "StackDebug.h"
@@ -20,7 +21,7 @@ Index * symbol_map = NULL;
 
 void bug_callback(Index_node *node)
 {
-  printf("0x%lx %s %s\n", node->key, s(node->stringKey), s((String *)node->value));
+  printf("0x%" PRIu32 "x %s %s\n", node->key, s(node->stringKey), s((String *)node->value));
 }
 
 void post_callback(Index_node *node)
