@@ -32,5 +32,6 @@ extern int _Mem_unref(MemObject *mo, const char *func);
 #define Mem_unref(mo) _Mem_unref(mo, __func__)
 
 extern void backtrace_and_exit(void);
+extern void mdump(void);
 
 #endif

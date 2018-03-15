@@ -602,6 +602,7 @@ static void AAC_handler(Instance *pi, void *msg)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   AAC_buffer *aac = msg;
+
   if (!priv->seen_audio) { priv->seen_audio = 1; }
   priv->streams[1].pts_value = timestamp_to_90KHz(aac->timestamp);
   priv->streams[1].es_duration = timestamp_to_90KHz(aac->nominal_period);
@@ -757,7 +758,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     av_packets += priv->streams[i].packet_count;
   }
 
-  if (priv->verbose) { printf("av_packets = %d\n", av_packets); }
+  dpf("%d+%d=%d av packets\n", priv->streams[0].packet_count, priv->streams[1].packet_count, av_packets);
 
   if (av_packets == 0) {
     return;
