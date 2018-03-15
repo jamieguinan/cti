@@ -9,6 +9,7 @@
 #include "CTI.h"
 #include "Compositor.h"
 #include "Images.h"
+#include "dpf.h"
 
 #define RED "[31m"
 #define CLEAR "[0m"
@@ -53,6 +54,8 @@ typedef struct {
   String_list * required_labels;
   Array(PasteOp *) operations;
   Array(YUV420P_buffer *) yuv420p_images;
+  int count;
+  int active;
 } Compositor_private;
 
 static Config config_table[] = {
@@ -112,7 +115,7 @@ static int set_paste(Instance *pi, const char *value)
   Compositor_private *priv = (Compositor_private *)pi;
   PasteOp * p = Mem_calloc(1, sizeof(*p));
   int rc = 0;
-  char * label = NULL;
+  char * label = NULL;		/* Allocated by sscanf() */
   int n = sscanf(value, "%m[A-Za-z0-9]:%d,%d,%d,%d:%d,%d:%d"
 		 , &label
 		 , &p->src.x
@@ -133,7 +136,7 @@ static int set_paste(Instance *pi, const char *value)
       || (p->rotation % 90 != 0)
       ) {
     fprintf(stderr, "%s:%s bad paste specification\n", __FILE__, __func__);
-    free(p);
+    Mem_free(p);
     rc = 1;
   }
   else {
@@ -339,8 +342,11 @@ static void check_list(Instance *pi)
     for (imageIndex = 0; imageIndex < Array_count(priv->yuv420p_images); imageIndex++) {
       YUV420P_buffer * img = Array_get(priv->yuv420p_images, imageIndex);
       if (String_eq(p->label, img->c.label)) {
-	/* Apply operation, remove image from list, release image. */
+	/* Apply operation. */
 	yuv420_paste(img, outimg, p);
+	/* Update common info. */
+	if (outimg->c.timestamp < img->c.timestamp) { outimg->c.timestamp = img->c.timestamp; }
+	if (outimg->c.nominal_period < img->c.nominal_period) { outimg->c.nominal_period = img->c.nominal_period; }
 	break;
       }
     }
@@ -352,6 +358,7 @@ static void check_list(Instance *pi)
       YUV420P_buffer * img = Array_get(priv->yuv420p_images, 0);
       Array_delete(priv->yuv420p_images, 0);
       YUV420P_buffer_release(img);
+      priv->active -= 1;
   }
 
   if (!pi->outputs[OUTPUT_YUV420P].destination) {
@@ -366,6 +373,9 @@ static void YUV420P_handler(Instance *pi, void *msg)
 {
   Compositor_private *priv = (Compositor_private *)pi;
   YUV420P_buffer * img = msg;
+  priv->count += 1;
+  priv->active += 1;
+  dpf("%s:%s %d images handled, %d in list\n", __FILE__, __func__, priv->count, priv->active);
   if (!pi->outputs[OUTPUT_YUV420P].destination) {
     fprintf(stderr, "no output configured, discarding input image\n");
     YUV420P_buffer_release(img);
