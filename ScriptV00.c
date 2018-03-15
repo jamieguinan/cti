@@ -70,7 +70,7 @@ static void load_module(ScriptV00_private *priv, const char *filename)
     String_shorten(init_sym_name, i);
     String_cat1(init_sym_name, "_init");
   }
-  
+
   void (*init_sym)(void) = dlsym(pmod, s(init_sym_name));
   if (init_sym) {
     init_sym();
@@ -122,7 +122,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     InstanceGroup_connect(priv->g, String_new(token1), token2, String_new(token3));
     return;
   }
-  
+
   if (n == 4 && streq(token0, "config")) {
     /* label, key, value */
     Instance *inst = InstanceGroup_find(priv->g, String_new(token1));
@@ -151,12 +151,12 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     scan_file(priv, token1);
     return;
   }
-  
+
   if (n == 2 && streq(token0, "load")) {
     load_module(priv, token1);
     return;
   }
-  
+
   if (streq(token0, "system")) {
     int rc = system(line->bytes + strlen("system "));
     if (rc == -1) {
@@ -164,17 +164,28 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     }
     return;
   }
-  
+
   if (n == 1 && streq(token0, "exit")) {
     exit(1);
-    return;    
+    return;
   }
 
   if (n == 1 && streq(token0, "mt")) {
     cfg.mem_tracking = !cfg.mem_tracking;
     return;
   }
-  
+
+  if (n == 1 && streq(token0, "mt3")) {
+    cfg.mem_tracking_3 = !cfg.mem_tracking_3;
+    fprintf(stderr, "cfg.mem_tracking_3 %s\n", (cfg.mem_tracking_3 ? "on":"off"));
+    return;
+  }
+
+  if (n == 1 && streq(token0, "mdump")) {
+    mdump();
+    return;
+  }
+
   if (n == 1 && streq(token0, "tlv")) {
     Template_list(1);
     return;
@@ -199,13 +210,13 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     g_synchronous = !g_synchronous;
     return;
   }
-  
+
   if (n == 1 && streq(token0, "abort")) {
     puts("");			/* Wrap line on console. */
     abort();
     return;
   }
-  
+
   if (n == 1 && streq(token0, "p")) {
     if (is_stdin) {
       cfg.pause = 1;
@@ -217,18 +228,18 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     }
     return;
   }
-  
+
   if (n == 1 && streq(token0, "ignoreeof")) {
     priv->exit_on_eof = 0;
     printf("exit_on_eof disabled!\n");
     return;
   }
-  
+
   if (n == 1 && streq(token0, "dpl")) {
     cti_debug_printf_list();
     return;
   }
-  
+
   if (n == 2 && streq(token0, "v")) {
     cfg.verbosity = atoi(token1);
     if (is_stdin) {
@@ -240,7 +251,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     }
     return;
   }
-  
+
   if (n == 2 && streq(token0, "dpt")) {
     int index = atoi(token1);
     cti_debug_printf_toggle(index);
@@ -259,7 +270,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     printf("max_pending_messages set to %d\n", cfg.max_pending_messages);
     return;
   }
-  
+
 }
 
 
@@ -393,7 +404,7 @@ static void ScriptV00_tick(Instance *pi)
 static void ScriptV00_instance_init(Instance *pi)
 {
   ScriptV00_private *priv = (ScriptV00_private *)pi;
-  
+
   priv->g = gig;		/* Use global instance group. */
   priv->exit_on_eof = 1;
 }

@@ -5,6 +5,7 @@ typedef struct {
   int verbosity;
   int logging;
   int mem_tracking;
+  int mem_tracking_3;
   int pause;
   int max_pending_messages;
 } Cfg;
