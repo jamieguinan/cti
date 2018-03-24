@@ -170,9 +170,6 @@ void *_Mem_realloc(void *ptr, int newsize, const char *func, int line, const cha
   if (cfg.mem_tracking) {
     StackDebug2(newptr, "+");    
   }
-  if (cfg.mem_tracking3) {
-    StackDebug3up(newptr, type, newsize);
-  }
   if (cfg.mem_tracking_3) {
     mt3(newptr, newsize, func, line);
   }
