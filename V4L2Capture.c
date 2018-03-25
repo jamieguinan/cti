@@ -115,7 +115,7 @@ typedef struct  {
   int timeout_ms;		/* Frame timeout before full reset */
 
   int sequence;			/* Keep track of lost frames. */
-  int check_sequence;		/* Some cards (cx88) don't set sequence! */
+  int check_sequence;		/* Set to N to check for up to N lost frames. Note: some cards (cx88) don't set sequence! */
 
   struct v4l2_buffer vbuffer;
 
@@ -1000,7 +1000,6 @@ static int set_timeout_ms(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   priv->timeout_ms = atoi(value);
   return 0;
-  
 }
 
 static int set_drivermatch(Instance *pi, const char *value)
@@ -1017,6 +1016,12 @@ static int set_label(Instance *pi, const char *value)
   return 0;
 }
 
+static int set_check_sequence(Instance *pi, const char *value)
+{
+  V4L2Capture_private *priv = (V4L2Capture_private *)pi;
+  priv->check_sequence = atoi(value);
+  return 0;
+}
 
 static Config config_table[] = {
   /* NOTE: cti_set_int does not work here.  This module uses a custom
@@ -1040,6 +1045,7 @@ static Config config_table[] = {
   { "fix",        set_fix, 0L, 0L}, 
   { "timeout_ms", set_timeout_ms, 0L, 0L},
   { "label",      set_label, 0L, 0L},
+  { "check_sequence",   set_check_sequence, 0L, 0L},
 };
 
 
@@ -1392,10 +1398,9 @@ static void V4L2Capture_tick(Instance *pi)
   if (priv->check_sequence) {
     int missed = priv->vbuffer.sequence - 1 - priv->sequence;
     if (missed) { 
-      printf("missed %d frames leading up to %d\n", missed, priv->vbuffer.sequence);
-      if (priv->vbuffer.sequence == 0) {
-	/* cx88 does not set buffer.sequence, so stop checking. */
-	priv->check_sequence = 0;
+      printf("%s missed %d frames leading up to %d\n", s(pi->instance_label), missed, priv->vbuffer.sequence);
+      if (priv->check_sequence > 0) {
+	priv->check_sequence -= 1; /* tick down by 1 */
       }
     }
     priv->sequence = priv->vbuffer.sequence;
