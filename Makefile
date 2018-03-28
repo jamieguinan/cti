@@ -188,6 +188,8 @@ OBJS= \
 	Global.o \
 	UDPTransmit.o \
 	Compositor.o \
+	Alternator.o \
+	Collator.o \
 	$(MAIN) 
 
 
