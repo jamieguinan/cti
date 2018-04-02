@@ -1,4 +1,4 @@
-/* 
+/*
  * Jpeg decompression module.
  */
 #include <stdio.h>
@@ -23,13 +23,13 @@ static void Jpeg_handler(Instance *pi, void *data);
 
 /* DJpeg Instance and Template implementation. */
 enum { INPUT_CONFIG, INPUT_JPEG };
-static Input DJpeg_inputs[] = { 
+static Input DJpeg_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
 };
 
 enum { OUTPUT_RGB3, OUTPUT_GRAY, OUTPUT_YUV422P, OUTPUT_YUV420P, OUTPUT_JPEG };
-static Output DJpeg_outputs[] = { 
+static Output DJpeg_outputs[] = {
   [ OUTPUT_RGB3 ] = {.type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_GRAY ] = {.type_label = "GRAY_buffer", .destination = 0L },
   [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },
@@ -47,7 +47,7 @@ typedef struct {
   int dct_method;
 
   int every;
-} 
+}
 DJpeg_private;
 
 
@@ -128,7 +128,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   FormatInfo * fmt = NULL;
 
-  Jpeg_decompress(jpeg_in, &yuv420p, &yuv422p, &fmt);
+  Jpeg_decompress(jpeg_in, priv->dct_method, &yuv420p, &yuv422p, &fmt);
 
   /* Sanity check... */
   if (!yuv422p && !yuv420p) {
@@ -218,6 +218,15 @@ static void DJpeg_tick(Instance *pi)
   if (hm) {
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm,pi);
+  }
+
+  if (pi->pending_messages > 5) {
+    /* There's one of these in CTI.c too, but it can get too noisy when
+       network instances like UDPTransmit are running. */
+    dpf("%s (%s): %d queued messages\n",
+	pi->label,
+	s(pi->instance_label),
+	pi->pending_messages);
   }
 }
 
