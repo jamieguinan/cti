@@ -90,6 +90,7 @@
 #include "Compositor.h"
 #include "Alternator.h"
 #include "Collator.h"
+#include "ColorSpaceConvert.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -229,6 +230,7 @@ int cti_main(int argc, char *argv[])
   Compositor_init();
   Alternator_init();
   Collator_init();
+  ColorSpaceConvert_init();
   Global_init();
 
   return app_code(argc, argv);
