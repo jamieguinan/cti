@@ -95,7 +95,8 @@ static void Collator_tick(Instance *pi)
 
 static void Collator_instance_init(Instance *pi)
 {
-  // Collator_private *priv = (Collator_private *)pi;
+  Collator_private *priv = (Collator_private *)pi;
+  priv->limit = 3;
 }
 
 
