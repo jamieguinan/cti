@@ -17,6 +17,8 @@
 #define cti_table_size(x) (sizeof(x)/sizeof(x[0]))
 #endif
 
+int jpeg_misc_debug_save;
+
 static void save_error_jpeg(uint8_t *data, int data_length)
 {
   char filename[256];
@@ -122,7 +124,8 @@ static void jerr_warning_noop(j_common_ptr cinfo, int msg_level)
 }
 
 
-void Jpeg_decompress(Jpeg_buffer * jpeg_in, 
+void Jpeg_decompress(Jpeg_buffer * jpeg_in,
+		     int dct_method,
 		     YUV420P_buffer ** yuv420p_result,
 		     YUV422P_buffer ** yuv422p_result,
 		     FormatInfo ** pfmt)
@@ -245,7 +248,8 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
   /* I verified that setting .dct_method before jpeg_start_decompress() works with 
      jpeg-7 by adding printfs in the respective jidct*.c functions and running
      separate tests for dct_method ifast, islow, and float. */
-  cinfo.dct_method = JDCT_DEFAULT; // priv->dct_method;
+  cinfo.dct_method = dct_method;
+
   (void) jpeg_start_decompress(&cinfo);
 
   uint8_t *buffers[3] = {};
@@ -298,7 +302,7 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
 
   }
 
-  if (0) {
+  if (jpeg_misc_debug_save) {
     /* Development testing: dump planes as .pgm files. */
     FILE *y = fopen("y.pgm", "wb");
     if (y) {
@@ -362,7 +366,7 @@ RGB3_buffer * Jpeg_to_rgb3(Jpeg_buffer * jpeg)
   YUV422P_buffer * yuv422p = NULL;
   YUV420P_buffer * yuv420p = NULL;
   FormatInfo * fmt = NULL;
-  Jpeg_decompress(jpeg, &yuv420p, &yuv422p, &fmt);
+  Jpeg_decompress(jpeg, JDCT_IFAST, &yuv420p, &yuv422p, &fmt);
   if (yuv420p) {
     rgb3 = YUV420P_to_RGB3(yuv420p);
     YUV420P_buffer_release(yuv420p);
