@@ -3,6 +3,9 @@ MAKEFLAGS=j$(shell grep '^processor' /proc/cpuinfo | wc -l)
 
 ifeq ($(shell arch),x86_64)
 ARCH=x86_64-Linux
+JPEGINCLUDE=-I../jpeg-8
+JPEGLIB=../jpeg-8/.libs/libjpeg.a
+JPEGTRANSUPP=../jpeg-8/transupp.o
 endif
 
 ifeq ($(shell arch),i686)
@@ -11,16 +14,22 @@ endif
 
 ifeq ($(shell arch),armv6l)
 ARCH=rpi
+JPEGINCLUDE=-I../libjpeg-turbo -I../libjpeg-turbo/build
+JPEGLIB=../libjpeg-turbo/build/libjpeg.a
+JPEGTRANSUPP=../libjpeg-turbo/build/CMakeFiles/jpegtran-static.dir/transupp.c.o
 endif
 
 ifeq ($(shell arch),armv7l)
 ARCH=rpi
+JPEGINCLUDE=-I../libjpeg-turbo -I../libjpeg-turbo/build
+JPEGLIB=../libjpeg-turbo/build/libjpeg.a
+JPEGTRANSUPP=../libjpeg-turbo/build/CMakeFiles/jpegtran-static.dir/transupp.c.o
 endif
 
 default: test-requirements cti_main
 
 test-requirements:
-	@test -d ../jpeg-9/.libs || ( echo "Need compiled libjpeg in ../jpeg-9" ; false )
+	@test -f $(JPEGLIB) || ( echo "Need compiled libjpeg at $(JPEGLIB)" ; false )
 	@pkg-config --exists libssl || ( echo "Need libssl for serf" ; false )
 	@pkg-config --exists libcrypto || ( echo "Need libcrypto for ssl" ; false )
 
@@ -66,8 +75,8 @@ endif
 CPPFLAGS += -I/usr/include
 #CPPFLAGS += -I../platform/$(ARCH)/include
 CPPFLAGS += -MMD -MP -MF $(subst .c,.dep,$<)
-CPPFLAGS += -I ../jpeg-9
-LDFLAGS += $(PWD)/../jpeg-9/.libs/libjpeg.a
+CPPFLAGS += $(JPEGINCLUDE)
+LDFLAGS += $(JPEGLIB)
 LDFLAGS += -lpthread
 ifeq ($(OS),Linux)
 LDFLAGS += -ldl -lrt
@@ -106,6 +115,7 @@ OBJS= \
 	Images.o \
 	JpegFiler.o \
 	JpegTran.o \
+	$(JPEGTRANSUPP) \
 	PGMFiler.o \
 	MotionDetect.o \
 	MjpegMux.o \
@@ -183,13 +193,13 @@ OBJS= \
 	HTTPClient.o \
 	TunerControl.o \
 	cti_utils.o \
-	../jpeg-9/transupp.o \
 	BinaryFiler.o \
 	Global.o \
 	UDPTransmit.o \
 	Compositor.o \
 	Alternator.o \
 	Collator.o \
+	ColorSpaceConvert.o \
 	$(MAIN) 
 
 
@@ -204,7 +214,6 @@ ifeq ($(OS),Linux)
 OBJS+=\
 	Uvc.o \
 	FFmpegEncode.o
-#	../platform/$(ARCH)/jpeg-7/libjpeg.la
 ifneq ($(ARCH),lpd)
 OBJS+=\
 	V4L2Capture.o \
