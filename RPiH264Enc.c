@@ -1,4 +1,4 @@
-/* Interface to Raspberry PI OMX H264 encoder. */
+/* Interface to Raspberry PI H264 encoder. */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
 #include <string.h>		/* memcpy */
