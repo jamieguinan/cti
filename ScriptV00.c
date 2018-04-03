@@ -229,9 +229,19 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
-  if (n == 1 && streq(token0, "ignoreeof")) {
-    priv->exit_on_eof = 0;
-    printf("exit_on_eof disabled!\n");
+  if (n >= 1 && streq(token0, "ignoreeof")) {
+    if (n == 1) {
+      priv->exit_on_eof = 0;
+    }
+    else {
+      priv->exit_on_eof = !(atoi(token1));
+    }
+    if (!priv->exit_on_eof) {
+      printf("exit_on_eof disabled!\n");
+    }
+    else {
+      printf("exit_on_eof enabled\n");
+    }
     return;
   }
 
