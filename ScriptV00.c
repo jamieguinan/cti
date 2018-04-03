@@ -98,7 +98,7 @@ static void scan_file(ScriptV00_private *priv, const char *filename);
 
 static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
 {
-  char token0[256], token1[256], token2[256], token3[256];
+  char token0[256] = {}, token1[256] = {}, token2[256], token3[256] = {};
   int n = 0;
 
   /* Commands with special formatting tested first. */
@@ -157,7 +157,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
-  if (streq(token0, "system")) {
+  if (n > 1 && streq(token0, "system")) {
     int rc = system(line->bytes + strlen("system "));
     if (rc == -1) {
       perror("system");
@@ -283,7 +283,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
 static void scan_lines(ScriptV00_private *priv, FILE *f, const char *prompt)
 {
   while (1) {
-    char line[256];
+    char line[256] = {};
     char *s;
     String *st;
 
