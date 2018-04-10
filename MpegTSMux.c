@@ -267,11 +267,24 @@ static int set_index_dir(Instance *pi, const char *value)
   return 0;
 }
 
+static int set_debug_outpackets(Instance *pi, const char *value)
+{
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+
+  priv->debug_outpackets = atoi(value);
+
+  if (priv->debug_outpackets && access("outpackets", R_OK) != 0) {
+    mkdir("outpackets", 0744);
+  }
+
+  return 0;
+}
+
 
 static Config config_table[] = {
   { "pmt_essd", set_pmt_essd, 0L, 0L },
   { "pmt_pcrpid", set_pmt_pcrpid, 0L, 0L },
-  { "debug_outpackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, debug_outpackets) },
+  { "debug_outpackets", set_debug_outpackets, 0L, 0L, 0L },
   { "output", set_output },
   { "index_dir", set_index_dir },
   { "duration",  0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, duration) },
@@ -729,12 +742,29 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
 }
 
 
-static void debug_outputpacket_write(TSPacket * pkt, String * fname)
+static void write_packet(Instance *pi, TSPacket *pkt)
 {
-  FILE *f = fopen(s(fname), "wb");
-  if (f) {
-    if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
-    fclose(f);
+  /* Packets can go to any of 3 destinations, all factored into this function. */
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+  int pid = MpegTS_PID(pkt->data);
+
+  if (priv->debug_outpackets) {
+    localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, pid,
+                                             pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+    FILE *f = fopen(s(fname), "wb");
+    if (f) {
+      if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
+      fclose(f);
+    }
+  }
+
+  if (pi->outputs[OUTPUT_RAWDATA].destination) {
+    RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+    PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+  }
+  
+  if (priv->output_sink) {
+    Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
   }
 }
 
@@ -748,10 +778,6 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
   uint64_t pts_now = 0;
   uint64_t pat_pts_last = 0;
   
-  if (priv->debug_outpackets && access("outpackets", R_OK) != 0) {
-    mkdir("outpackets", 0744);
-  }
-
   /* Sum up the pending AV packets. */
   int av_packets = 0;
 
@@ -823,67 +849,20 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
 
       /* PAT, pid 0 */
       pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
-
-      if (priv->debug_outpackets) {
-	localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 0,
-						 pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
-	debug_outputpacket_write(pkt, fname);
-      }
-
-      if (pi->outputs[OUTPUT_RAWDATA].destination) {
-	/* FIXME: Could just assign the packet an avoid another allocation. */
-	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
-	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
-      }
-
-      if (priv->output_sink) {
-	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
-      }
-
+      write_packet(pi, pkt);
       Mem_free(pkt);
     
       /* PMT, pid 256 */
       pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
-
-      if (priv->debug_outpackets) {
-	localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 256,
-						 pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
-	debug_outputpacket_write(pkt, fname);
-      }
-
-      if (pi->outputs[OUTPUT_RAWDATA].destination) {
-	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
-	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
-      }
-
-      if (priv->output_sink) {
-	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
-      }
-
+      write_packet(pi, pkt);
       Mem_free(pkt);
     } /* end PAT+PMT generation */
 
 
     dpf("flush: et=%" PRIu64 " pid=%d\n", pkt->estimated_timestamp, stream->pid);
-
-    if (priv->debug_outpackets) {
-      localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, stream->pid,
-					       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
-      debug_outputpacket_write(pkt, fname);
-    }
-
-    if (pi->outputs[OUTPUT_RAWDATA].destination) {
-      RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
-      PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
-    }
-
-    if (priv->output_sink) {
-      Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
-    }
-
+    write_packet(pi, pkt);
     stream->packets = stream->packets->next;
     stream->packet_count -= 1;
-
     Mem_free(pkt);
   }
 }
