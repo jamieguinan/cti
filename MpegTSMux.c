@@ -98,10 +98,9 @@ static Input MpegTSMux_inputs[] = {
   [ INPUT_MP3 ] = { .type_label = "MP3_buffer", .handler = MP3_handler },
 };
 
-enum { OUTPUT_RAWDATA, OUTPUT_PUSH_DATA };
+enum { OUTPUT_RAWDATA };
 static Output MpegTSMux_outputs[] = {
   [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
-  [ OUTPUT_PUSH_DATA ] = { .type_label = "Push_data", .destination = 0L },
 };
 
 int v = 0;
@@ -354,16 +353,6 @@ static void m3u8_files_update(Instance *pi)
 
   localptr(String, m3u8name) = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
   rename(s(tmpname), s(m3u8name));
-
-  if (pi->outputs[OUTPUT_PUSH_DATA].destination) {
-    PushQueue_message * msg = PushQueue_message_new();
-    msg->local_path = String_dup(m3u8name);
-    msg->file_to_send = String_basename(m3u8name);
-    if (!String_is_none(file_to_delete)) {
-      msg->file_to_delete = String_basename(file_to_delete);
-    }
-    PostData(msg, pi->outputs[OUTPUT_PUSH_DATA].destination);
-  }
 
  out:
   if (!String_is_none(file_to_delete)) {
@@ -794,13 +783,6 @@ static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
   if (keyframe && priv->output_sink) {
     /* Start a new output segment on video keyframe. */
     Sink_close_current(priv->output_sink);
-    if (pi->outputs[OUTPUT_PUSH_DATA].destination
-	&& priv->output_sink->io.generated_path) {
-      PushQueue_message * msg = PushQueue_message_new();
-      msg->local_path = String_dup(priv->output_sink->io.generated_path);
-      msg->file_to_send = String_basename(msg->local_path);
-      PostData(msg, pi->outputs[OUTPUT_PUSH_DATA].destination);
-    }
     Sink_reopen(priv->output_sink);
     String *tmp = String_new(s(priv->output_sink->io.generated_path));
     String_list_add(priv->m3u8_ts_files, &tmp);
