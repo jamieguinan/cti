@@ -88,7 +88,7 @@ static void Config_handler(Instance *pi, void *msg);
 static void H264_handler(Instance *pi, void *msg);
 static void AAC_handler(Instance *pi, void *msg);
 static void MP3_handler(Instance *pi, void *msg);
-static void flush(Instance *pi, uint64_t flush_timestamp);
+static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe);
 
 enum { INPUT_CONFIG, INPUT_H264, INPUT_AAC, INPUT_MP3 };
 static Input MpegTSMux_inputs[] = {
@@ -148,6 +148,8 @@ typedef struct {
   /* PTS timestamp of beginnig of current sequence. */
   uint64_t m3u8_pts_start;
 
+  uint64_t pat_pts_last;
+
   /* PCR should be "behind" PTS so that the decoder has time to decompress and possibly
      even reorder video frames.  200ms seems to work well, but it is a config item for
      experimentation. */
@@ -180,9 +182,6 @@ typedef struct {
   int debug_pktseq; 
 
   int verbose;			/* For certain printfs. */
-
-  int always_flush;		/* For timely UDP broadcast. */
-
 } MpegTSMux_private;
 
 
@@ -238,7 +237,8 @@ static int set_pmt_pcrpid(Instance *pi, const char *value)
 
 static int set_output(Instance *pi, const char *value)
 {
-  /* Using '%s' in the value string will generate sequential names. */
+  /* Use '%s' in the value string to generate sequential names. Not using it will overwrite
+     the same file, so it is an error if not present. */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   if (value[0] == '$') {
     value = getenv(value+1);
@@ -246,6 +246,11 @@ static int set_output(Instance *pi, const char *value)
       fprintf(stderr, "env var %s is not set\n", value+1);
       return 1;
     }
+  }
+
+  if (!strstr(value, "%s")) {
+    fprintf(stderr, "%s:%s: output format string requires a '%%s'\n", __FILE__, __func__);
+    return 1;
   }
   
   if (priv->output_sink) {
@@ -289,7 +294,6 @@ static Config config_table[] = {
   { "index_dir", set_index_dir },
   { "duration",  0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, duration) },
   { "pcr_lag_ms",  0L, 0L, 0L, cti_set_uint, offsetof(MpegTSMux_private, pcr_lag_ms) },
-  { "always_flush", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, always_flush) },
   // { "...",    set_..., get_..., get_..._range },
 };
 
@@ -591,10 +595,7 @@ static void H264_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
 
-  if (h264->keyframe || priv->always_flush) {
-    /* flush() here ensures that next batch begins with keyframe. */
-    flush(pi, timestamp_to_90KHz(h264->c.timestamp));
-  }
+  flush(pi, timestamp_to_90KHz(h264->c.timestamp), h264->keyframe);
 
   priv->streams[0].pts_value = timestamp_to_90KHz(h264->c.timestamp);
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
@@ -769,14 +770,13 @@ static void write_packet(Instance *pi, TSPacket *pkt)
 }
 
 
-static void flush(Instance *pi, uint64_t flush_timestamp)
+static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
 {
   /* Write out interleaved video and audio packets, adding PAT and PMT
      packets at least every 100ms or N packets. */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   int i;
   uint64_t pts_now = 0;
-  uint64_t pat_pts_last = 0;
   
   /* Sum up the pending AV packets. */
   int av_packets = 0;
@@ -791,8 +791,8 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     return;
   }
 
-  if (priv->output_sink) {
-    /* flush() always starts a new output segment. */
+  if (keyframe && priv->output_sink) {
+    /* Start a new output segment on video keyframe. */
     Sink_close_current(priv->output_sink);
     if (pi->outputs[OUTPUT_PUSH_DATA].destination
 	&& priv->output_sink->io.generated_path) {
@@ -837,15 +837,14 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
       return;
     }
 
-    /* PAT+PMT should get generated once at the start of a flush,
-       which should happen because pat_pts_last is initially zero,
-       then regularly during the flush loop.  FIXME:  There is still
-       the problem of PTS wrap, because the 33-bit counter can only
-       hold ~26 hours at 90KHz, and I'm using a modulo value of the
-       real timestamp. */
-    if ( (pkt->estimated_timestamp - pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
-      pat_pts_last = pkt->estimated_timestamp;
-      TSPacket *pkt;
+    /* PAT+PMT should get generated on keyframes or when enough
+       program time has elapsed.  FIXME: There is still the problem of
+       PTS wrap, because the 33-bit counter can only hold ~26 hours at
+       90KHz, and I'm using a modulo value of the real timestamp. */
+    if (keyframe
+        || (pkt->estimated_timestamp - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
+      priv->pat_pts_last = pkt->estimated_timestamp;
+      TSPacket *pkt; /* note: this shadows the other pkt local var */
 
       /* PAT, pid 0 */
       pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
@@ -913,7 +912,6 @@ static void MpegTSMux_instance_init(Instance *pi)
   priv->pcr_lag_ms = 200;
   String_set_local(&priv->index_dir, ".");
 
-  priv->always_flush = 0;
   priv->verbose = 0;
 }
 
