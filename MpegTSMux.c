@@ -276,6 +276,7 @@ static Config config_table[] = {
   { "index_dir", set_index_dir },
   { "duration",  0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, duration) },
   { "pcr_lag_ms",  0L, 0L, 0L, cti_set_uint, offsetof(MpegTSMux_private, pcr_lag_ms) },
+  { "always_flush", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, always_flush) },
   // { "...",    set_..., get_..., get_..._range },
 };
 
@@ -578,7 +579,7 @@ static void H264_handler(Instance *pi, void *msg)
   H264_buffer *h264 = msg;
 
   if (h264->keyframe || priv->always_flush) {
-    /* Note, flush BEFORE packetize, so that next batch begins with keyframe. */
+    /* flush() here ensures that next batch begins with keyframe. */
     flush(pi, timestamp_to_90KHz(h264->c.timestamp));
   }
 
@@ -933,7 +934,7 @@ static void MpegTSMux_instance_init(Instance *pi)
   priv->pcr_lag_ms = 200;
   String_set_local(&priv->index_dir, ".");
 
-  priv->always_flush = 1;
+  priv->always_flush = 0;
   priv->verbose = 0;
 }
 
