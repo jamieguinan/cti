@@ -7,6 +7,7 @@
 #include "RPiH264Enc.h"
 #include "Images.h"
 #include "ArrayU8.h"
+#include "dpf.h"
 
 struct appctx;			/* Type for opaque pointers. */
 
@@ -22,9 +23,8 @@ extern void do_frame_io(struct appctx * ctx,
 			int * keyframe);
 extern void encode_cleanup(struct appctx * ctx);
 extern int rpi_encode_yuv_c__analysis_enabled;
+extern int rpi_encode_yuv_c__nal_dump;
 extern int say_verbose;
-#define NAL_type(p) ((p)[4] & 31)
-
 
 /* Handlers. */
 static void Config_handler(Instance *pi, void *msg);
@@ -161,7 +161,7 @@ static void RPiH264Enc_instance_init(Instance *pi)
   priv->video_framerate = 15;
   priv->video_bitrate = 500000;
   priv->gop_seconds = 5;
-
+  dv(rpi_encode_yuv_c__nal_dump);
   say_verbose = 1;
   // rpi_encode_yuv_c__analysis_enabled = 1;
 }

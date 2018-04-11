@@ -1,5 +1,5 @@
 /*
- * Mpeg TS/PES muxer.  
+ * Mpeg TS/PES muxer.
  * See iso13818-1.pdf around p.32 for bit packing.
  * This also supports generating files for HTTP Live Streaming,
  *   http://tools.ietf.org/html/draft-pantos-http-live-streaming-12
@@ -88,7 +88,7 @@ static void Config_handler(Instance *pi, void *msg);
 static void H264_handler(Instance *pi, void *msg);
 static void AAC_handler(Instance *pi, void *msg);
 static void MP3_handler(Instance *pi, void *msg);
-static void flush(Instance *pi, uint64_t flush_timestamp);
+static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe);
 
 enum { INPUT_CONFIG, INPUT_H264, INPUT_AAC, INPUT_MP3 };
 static Input MpegTSMux_inputs[] = {
@@ -98,10 +98,9 @@ static Input MpegTSMux_inputs[] = {
   [ INPUT_MP3 ] = { .type_label = "MP3_buffer", .handler = MP3_handler },
 };
 
-enum { OUTPUT_RAWDATA, OUTPUT_PUSH_DATA };
+enum { OUTPUT_RAWDATA };
 static Output MpegTSMux_outputs[] = {
   [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
-  [ OUTPUT_PUSH_DATA ] = { .type_label = "Push_data", .destination = 0L },
 };
 
 int v = 0;
@@ -148,6 +147,8 @@ typedef struct {
   /* PTS timestamp of beginnig of current sequence. */
   uint64_t m3u8_pts_start;
 
+  uint64_t pat_pts_last;
+
   /* PCR should be "behind" PTS so that the decoder has time to decompress and possibly
      even reorder video frames.  200ms seems to work well, but it is a config item for
      experimentation. */
@@ -180,9 +181,6 @@ typedef struct {
   int debug_pktseq; 
 
   int verbose;			/* For certain printfs. */
-
-  int always_flush;		/* For timely UDP broadcast. */
-
 } MpegTSMux_private;
 
 
@@ -238,7 +236,8 @@ static int set_pmt_pcrpid(Instance *pi, const char *value)
 
 static int set_output(Instance *pi, const char *value)
 {
-  /* Using '%s' in the value string will generate sequential names. */
+  /* Use '%s' in the value string to generate sequential names. Not using it will overwrite
+     the same file, so it is an error if not present. */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   if (value[0] == '$') {
     value = getenv(value+1);
@@ -246,6 +245,11 @@ static int set_output(Instance *pi, const char *value)
       fprintf(stderr, "env var %s is not set\n", value+1);
       return 1;
     }
+  }
+
+  if (!strstr(value, "%s")) {
+    fprintf(stderr, "%s:%s: output format string requires a '%%s'\n", __FILE__, __func__);
+    return 1;
   }
   
   if (priv->output_sink) {
@@ -267,11 +271,24 @@ static int set_index_dir(Instance *pi, const char *value)
   return 0;
 }
 
+static int set_debug_outpackets(Instance *pi, const char *value)
+{
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+
+  priv->debug_outpackets = atoi(value);
+
+  if (priv->debug_outpackets && access("outpackets", R_OK) != 0) {
+    mkdir("outpackets", 0744);
+  }
+
+  return 0;
+}
+
 
 static Config config_table[] = {
   { "pmt_essd", set_pmt_essd, 0L, 0L },
   { "pmt_pcrpid", set_pmt_pcrpid, 0L, 0L },
-  { "debug_outpackets", 0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, debug_outpackets) },
+  { "debug_outpackets", set_debug_outpackets, 0L, 0L, 0L },
   { "output", set_output },
   { "index_dir", set_index_dir },
   { "duration",  0L, 0L, 0L, cti_set_int, offsetof(MpegTSMux_private, duration) },
@@ -336,16 +353,6 @@ static void m3u8_files_update(Instance *pi)
 
   localptr(String, m3u8name) = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
   rename(s(tmpname), s(m3u8name));
-
-  if (pi->outputs[OUTPUT_PUSH_DATA].destination) {
-    PushQueue_message * msg = PushQueue_message_new();
-    msg->local_path = String_dup(m3u8name);
-    msg->file_to_send = String_basename(m3u8name);
-    if (!String_is_none(file_to_delete)) {
-      msg->file_to_delete = String_basename(file_to_delete);
-    }
-    PostData(msg, pi->outputs[OUTPUT_PUSH_DATA].destination);
-  }
 
  out:
   if (!String_is_none(file_to_delete)) {
@@ -577,10 +584,7 @@ static void H264_handler(Instance *pi, void *msg)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   H264_buffer *h264 = msg;
 
-  if (h264->keyframe || priv->always_flush) {
-    /* Note, flush BEFORE packetize, so that next batch begins with keyframe. */
-    flush(pi, timestamp_to_90KHz(h264->c.timestamp));
-  }
+  flush(pi, timestamp_to_90KHz(h264->c.timestamp), h264->keyframe);
 
   priv->streams[0].pts_value = timestamp_to_90KHz(h264->c.timestamp);
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
@@ -728,29 +732,43 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
 }
 
 
-static void debug_outputpacket_write(TSPacket * pkt, String * fname)
+static TSPacket * write_packet(Instance *pi, TSPacket *pkt)
 {
-  FILE *f = fopen(s(fname), "wb");
-  if (f) {
-    if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
-    fclose(f);
+  /* Packets can go to any of 3 destinations, all factored into this function. */
+  MpegTSMux_private *priv = (MpegTSMux_private *)pi;
+  int pid = MpegTS_PID(pkt->data);
+
+  if (priv->debug_outpackets) {
+    localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, pid,
+                                             pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
+    FILE *f = fopen(s(fname), "wb");
+    if (f) {
+      if (fwrite(pkt->data, sizeof(pkt->data), 1, f) != 1) { perror("fwrite"); }
+      fclose(f);
+    }
   }
+
+  if (pi->outputs[OUTPUT_RAWDATA].destination) {
+    RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
+    PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
+  }
+  
+  if (priv->output_sink) {
+    Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
+  }
+
+  return pkt;
 }
 
 
-static void flush(Instance *pi, uint64_t flush_timestamp)
+static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
 {
   /* Write out interleaved video and audio packets, adding PAT and PMT
      packets at least every 100ms or N packets. */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   int i;
   uint64_t pts_now = 0;
-  uint64_t pat_pts_last = 0;
   
-  if (priv->debug_outpackets && access("outpackets", R_OK) != 0) {
-    mkdir("outpackets", 0744);
-  }
-
   /* Sum up the pending AV packets. */
   int av_packets = 0;
 
@@ -764,16 +782,9 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
     return;
   }
 
-  if (priv->output_sink) {
-    /* flush() always starts a new output segment. */
+  if (keyframe && priv->output_sink) {
+    /* Start a new output segment on video keyframe. */
     Sink_close_current(priv->output_sink);
-    if (pi->outputs[OUTPUT_PUSH_DATA].destination
-	&& priv->output_sink->io.generated_path) {
-      PushQueue_message * msg = PushQueue_message_new();
-      msg->local_path = String_dup(priv->output_sink->io.generated_path);
-      msg->file_to_send = String_basename(msg->local_path);
-      PostData(msg, pi->outputs[OUTPUT_PUSH_DATA].destination);
-    }
     Sink_reopen(priv->output_sink);
     String *tmp = String_new(s(priv->output_sink->io.generated_path));
     String_list_add(priv->m3u8_ts_files, &tmp);
@@ -810,79 +821,26 @@ static void flush(Instance *pi, uint64_t flush_timestamp)
       return;
     }
 
-    /* PAT+PMT should get generated once at the start of a flush,
-       which should happen because pat_pts_last is initially zero,
-       then regularly during the flush loop.  FIXME:  There is still
-       the problem of PTS wrap, because the 33-bit counter can only
-       hold ~26 hours at 90KHz, and I'm using a modulo value of the
-       real timestamp. */
-    if ( (pkt->estimated_timestamp - pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
-      pat_pts_last = pkt->estimated_timestamp;
-      TSPacket *pkt;
+    /* PAT+PMT should get generated on keyframes or when enough
+       program time has elapsed.  FIXME: There is still the problem of
+       PTS wrap, because the 33-bit counter can only hold ~26 hours at
+       90KHz, and I'm using a modulo value of the real timestamp. */
+    if (keyframe
+        || (pkt->estimated_timestamp - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
+      priv->pat_pts_last = pkt->estimated_timestamp;
 
       /* PAT, pid 0 */
-      pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
-
-      if (priv->debug_outpackets) {
-	localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 0,
-						 pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
-	debug_outputpacket_write(pkt, fname);
-      }
-
-      if (pi->outputs[OUTPUT_RAWDATA].destination) {
-	/* FIXME: Could just assign the packet an avoid another allocation. */
-	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
-	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
-      }
-
-      if (priv->output_sink) {
-	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
-      }
-
-      Mem_free(pkt);
+      Mem_free(write_packet(pi, generate_psi(priv, 0, 0, &priv->PAT.continuity_counter)));
     
       /* PMT, pid 256 */
-      pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
-
-      if (priv->debug_outpackets) {
-	localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, 256,
-						 pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
-	debug_outputpacket_write(pkt, fname);
-      }
-
-      if (pi->outputs[OUTPUT_RAWDATA].destination) {
-	RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
-	PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
-      }
-
-      if (priv->output_sink) {
-	Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
-      }
-
-      Mem_free(pkt);
+      Mem_free(write_packet(pi, generate_psi(priv, 256, 2, &priv->PMT.continuity_counter)));
     } /* end PAT+PMT generation */
 
 
     dpf("flush: et=%" PRIu64 " pid=%d\n", pkt->estimated_timestamp, stream->pid);
-
-    if (priv->debug_outpackets) {
-      localptr(String, fname) = String_sprintf("outpackets/%05d-ts%04d%s%s", priv->debug_pktseq++, stream->pid,
-					       pkt->af ? "-AF" : "" , pkt->pus ? "-PUS" : "");
-      debug_outputpacket_write(pkt, fname);
-    }
-
-    if (pi->outputs[OUTPUT_RAWDATA].destination) {
-      RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
-      PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
-    }
-
-    if (priv->output_sink) {
-      Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
-    }
-
+    write_packet(pi, pkt);
     stream->packets = stream->packets->next;
     stream->packet_count -= 1;
-
     Mem_free(pkt);
   }
 }
@@ -933,7 +891,6 @@ static void MpegTSMux_instance_init(Instance *pi)
   priv->pcr_lag_ms = 200;
   String_set_local(&priv->index_dir, ".");
 
-  priv->always_flush = 1;
   priv->verbose = 0;
 }
 

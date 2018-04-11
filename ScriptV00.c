@@ -276,6 +276,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   }
 
   if (n == 2 && streq(token0, "dpe")) {
+    /* Enable until dpe called again, without blocking command line. */
     int index = atoi(token1);
     cti_debug_printf_toggle(index);
     return;
