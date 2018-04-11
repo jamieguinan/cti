@@ -1,5 +1,5 @@
 /*
- * Mpeg TS/PES muxer.  
+ * Mpeg TS/PES muxer.
  * See iso13818-1.pdf around p.32 for bit packing.
  * This also supports generating files for HTTP Live Streaming,
  *   http://tools.ietf.org/html/draft-pantos-http-live-streaming-12
@@ -732,7 +732,7 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
 }
 
 
-static void write_packet(Instance *pi, TSPacket *pkt)
+static TSPacket * write_packet(Instance *pi, TSPacket *pkt)
 {
   /* Packets can go to any of 3 destinations, all factored into this function. */
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
@@ -756,6 +756,8 @@ static void write_packet(Instance *pi, TSPacket *pkt)
   if (priv->output_sink) {
     Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
   }
+
+  return pkt;
 }
 
 
@@ -826,17 +828,12 @@ static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
     if (keyframe
         || (pkt->estimated_timestamp - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
       priv->pat_pts_last = pkt->estimated_timestamp;
-      TSPacket *pkt; /* note: this shadows the other pkt local var */
 
       /* PAT, pid 0 */
-      pkt = generate_psi(priv, 0, 0, &priv->PAT.continuity_counter);
-      write_packet(pi, pkt);
-      Mem_free(pkt);
+      Mem_free(write_packet(pi, generate_psi(priv, 0, 0, &priv->PAT.continuity_counter)));
     
       /* PMT, pid 256 */
-      pkt = generate_psi(priv, 256, 2, &priv->PMT.continuity_counter);
-      write_packet(pi, pkt);
-      Mem_free(pkt);
+      Mem_free(write_packet(pi, generate_psi(priv, 256, 2, &priv->PMT.continuity_counter)));
     } /* end PAT+PMT generation */
 
 
