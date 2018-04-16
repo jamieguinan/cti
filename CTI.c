@@ -313,6 +313,21 @@ void Instance_list(int verbose)
   }
 }
 
+static void Instance_pending_messages(Index_node *node)
+{
+  Instance * pi = node->value;
+  printf("%s (%s) has %d pending messsages\n",
+         s(node->stringKey), pi->label, pi->pending_messages);
+}
+
+void CTI_pending_messages(void)
+{
+  if (gig->instances.index) {
+    Index_walk(gig->instances.index, Instance_pending_messages);
+  }
+}
+
+
 static Instance * _Instantiate_local(const char *label, String * instanceLabel, int run)
 {
   int i;
@@ -834,3 +849,5 @@ void getdoubletime(double *tdest)
   gettimeofday(&tv, NULL);
   *tdest = (tv.tv_sec + (tv.tv_usec/1000000.0));
 }
+
+

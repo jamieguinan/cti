@@ -306,7 +306,7 @@ extern void InstanceGroup_connect2(InstanceGroup *g,
 				   const char *ioLabel2);
 
 extern void Instance_list(int verbose);
-
+extern void CTI_pending_messages(void);
 
 /* Callback function, with one parameter. */
 typedef struct {
