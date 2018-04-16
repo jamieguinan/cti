@@ -62,6 +62,14 @@ static void Config_handler(Instance *pi, void *data)
   Generic_config_handler(pi, data, config_table, table_size(config_table));
 }
 
+static void _shutdown_(void)
+{
+  CTI_pending_messages();
+  mdump();
+  exit(1);
+}
+
+
 static void ResourceMonitor_tick(Instance *pi)
 {
   ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
@@ -93,7 +101,7 @@ static void ResourceMonitor_tick(Instance *pi)
       }
       if (priv->rss_limit && usage.ru_maxrss > priv->rss_limit) {
 	fprintf(stderr, "%s: rss_limit exceded (%ld > %ld)!\n", __func__, usage.ru_maxrss, priv->rss_limit);
-	exit(1);
+	_shutdown_();
       }
     }
   }
@@ -114,7 +122,7 @@ static void ResourceMonitor_tick(Instance *pi)
 	    if (priv->rss_limit && rss_value > priv->rss_limit)   {
 	      fprintf(stderr, "%s: rss_limit exceded (%ld > %ld)!\n", __func__, 
 		      rss_value, priv->rss_limit);
-	      exit(1);
+	      _shutdown_();
 	    }
 	    if (cfg.verbosity) {
 	      printf("VSZ or RSS %ld\n", rss_value);
