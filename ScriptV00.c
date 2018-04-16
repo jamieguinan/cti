@@ -288,6 +288,11 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
+  if (n == 1 && streq(token0, "apm")) {
+    /* Show all pending messages. */
+    CTI_pending_messages();
+  }
+
 }
 
 
