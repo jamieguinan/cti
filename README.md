@@ -26,6 +26,8 @@ If you're looking for bigger, well-established projects in the same space, that 
 * [Processing](https://processing.org/)
 * [Scratch](https://scratch.mit.edu/)
 
+Many [SoCs](https://en.wikipedia.org/wiki/System_on_a_chip) have similar capabilities in dedicated silicon circuitry. The OpenMax library used with the Raspberry Pi and other SoCs has [components with inputs and outputs](http://home.nouwen.name/RaspberryPi/documentation/ilcomponents/index.html) enumerated as port numbers.
+
 I am of course aware of C++, and I spent a few years as a serious aficionado of the language, but I came back to C and have mostly stuck with it. I won't get into the C vs. C++ debate here, but I do acknowledge that several features in CTI could have been implemented more concisely in C++. My philosophy is "each to his own", whatever tools and language a developer is most familiar and comfortable with, are the best.
 
 ### An example
