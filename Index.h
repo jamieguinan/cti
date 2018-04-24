@@ -1,9 +1,9 @@
 #ifndef _CTI_INDEX_H_
 #define _CTI_INDEX_H_
 
-/* Key/value index.  Keys of various kinds are allowed, values are
- * always "void *".  Values are treated as opaque, never accessed or
- * freed. 
+/* Key/value index with binary tree implementation.  Keys of various
+ * kinds are allowed, values are always "void *".  Values are treated
+ * as opaque, caller must free.
  */
 #include <stdint.h>		/* uint32_t */
 

@@ -1,7 +1,7 @@
 /* 
  * Index module, see Index.h for description.
  * 
- * This is 2nd year Computer Science stuff, but as a professional
+ * This is 1st or 2nd year Computer Science stuff. As a professional
  * programmer I've been spoiled by Python, C++ STL, and other
  * containers, so I haven't written code like this since ~1992.
  * Writing this evokes memories of my compsci professors drawing nodes
