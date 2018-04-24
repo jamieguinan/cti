@@ -202,13 +202,8 @@ OBJS= \
 	ColorSpaceConvert.o \
 	$(MAIN) 
 
-
-# Uncomment these next few lines for debugging segfaults, memory leaks and
-# other issues.
-#CPPFLAGS += -DUSE_STACK_DEBUG
-#CPPFLAGS += -finstrument-functions
-#OBJS+=StackDebug.o
-
+include StackDebug.mk
+OBJS+=StackDebug.o
 
 ifeq ($(OS),Linux)
 OBJS+=\

@@ -18,13 +18,16 @@
 #include "Mem.h"
 #include "Cfg.h"
 
+int (*ui_main)(int argc, char *argv[]) = NULL;
 
 pthread_key_t instance_key;
 int instance_key_initialized;
 int g_synchronous = 0;		/* Can be toggled in ScriptV00.c */
 
-int (*ui_main)(int argc, char *argv[]) = NULL;
-
+/* instance_key_init() should be called only once, by the main thread
+   in a CTI application, before any instance threads are
+   created. Following these rules obviates the need for
+   pthread_once(). */
 void instance_key_init(void)
 {
   pthread_key_create(&instance_key, NULL);
@@ -849,5 +852,3 @@ void getdoubletime(double *tdest)
   gettimeofday(&tv, NULL);
   *tdest = (tv.tv_sec + (tv.tv_usec/1000000.0));
 }
-
-

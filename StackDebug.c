@@ -10,6 +10,8 @@
 #include <stdio.h>		/* FILE, sprintf, printf */
 #include <string.h>		/* strstr */
 
+#ifdef STACK_DEBUG_INSTRUMENT_FUNCTIONS
+
 __attribute__((no_instrument_function))
 void __cyg_profile_func_enter (void *this_fn,
 			       void *call_site)
@@ -40,6 +42,9 @@ void __cyg_profile_func_exit  (void *this_fn,
   }
 }
 
+#endif  /* STACK_DEBUG_INSTRUMENT_FUNCTIONS */
+
+
 static void show_symbol(void *addr)
 {
   FILE *f = fopen("/tmp/cti.map", "r");
@@ -64,7 +69,9 @@ static void show_symbol(void *addr)
   fclose(f);
 }
 
-void StackDebug(void)
+/* Stack_dump is called in response to errors, and shows the calling
+   thread's stack */
+void Stack_dump(void)
 {
   int i;
   Instance *pi = pthread_getspecific(instance_key);

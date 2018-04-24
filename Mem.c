@@ -131,9 +131,6 @@ void *_Mem_calloc(int count, int size, const char *func, int line, const char * 
 {
   pthread_mutex_lock(&mem_lock);
   void *ptr = calloc(count, size);
-  if (cfg.mem_tracking) {
-    Mem_debug(ptr, "+");
-  }
   if (cfg.mem_tracking_3) {
     mt3(ptr, count*size, func, line);
   }
@@ -146,9 +143,6 @@ void *_Mem_malloc(int size, const char *func, int line, const char * type)
 {
   pthread_mutex_lock(&mem_lock);
   void *ptr = malloc(size);
-  if (cfg.mem_tracking) {
-    Mem_debug(ptr, "+");
-  }
   if (cfg.mem_tracking_3) {
     mt3(ptr, size, func, line);
   }
@@ -160,16 +154,10 @@ void *_Mem_malloc(int size, const char *func, int line, const char * type)
 void *_Mem_realloc(void *ptr, int newsize, const char *func, int line, const char * type)
 {
   pthread_mutex_lock(&mem_lock);
-  if (cfg.mem_tracking) {
-    Mem_debug(ptr, "-");
-  }
   if (cfg.mem_tracking_3) {
     mt3(ptr, -2, func, line);
   }
   void *newptr = realloc(ptr, newsize);
-  if (cfg.mem_tracking) {
-    Mem_debug(newptr, "+");    
-  }
   if (cfg.mem_tracking_3) {
     mt3(newptr, newsize, func, line);
   }
@@ -181,9 +169,6 @@ void *_Mem_realloc(void *ptr, int newsize, const char *func, int line, const cha
 void _Mem_free(void *ptr, const char *func, int line)
 {
   pthread_mutex_lock(&mem_lock);
-  if (cfg.mem_tracking) {
-    Mem_debug(ptr, "-");
-  }
   if (cfg.mem_tracking_3) {
     mt3(ptr, -1, func, line);
   }
@@ -208,21 +193,6 @@ void _Mem_memcpyPtr(Ptr dest, int dest_offset, uint8_t *src, int length, const c
   memcpy(dest.data + dest_offset, src, length);
 }
 
-void Mem_debug(void *ptr, const char * text)
-{
-  int i;
-  Instance *pi = pthread_getspecific(instance_key);
-  if (!pi) { 
-    fprintf(stderr, "no instance key for thread\n");
-    return; 
-  }
-  fprintf(stderr, "%s::", pi->label);
-  for (i=0; i < pi->stack_index; i++) {
-    fprintf(stderr, "/%p", pi->stack[i]);
-  }
-  fprintf(stderr, "::%p::%s", ptr, text);
-  fprintf(stderr, "\n");
-}
 
 #if 0
 /* This is unused. */

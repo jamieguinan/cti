@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef USE_STACK_DEBUG
 #include "StackDebug.h"
-#endif
 
 void Lock_init(Lock *lock)
 {
@@ -31,9 +29,7 @@ void Lock_acquire(Lock *lock)
   rc = pthread_mutex_lock(&lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_mutex_lock returned %d\n", rc);
-#ifdef USE_STACK_DEBUG
-    StackDebug();
-#endif
+    Stack_dump();
     exit(1);
   }
 #else
@@ -48,9 +44,7 @@ void Lock_release(Lock *lock)
   rc = pthread_mutex_unlock(&lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_mutex_unlock returned %d\n", rc);
-#ifdef USE_STACK_DEBUG
-    StackDebug();
-#endif
+    Stack_dump();
  exit(1);
   }
 #else
@@ -65,9 +59,7 @@ void Lock_release__event_wait__lock_acquire(Lock *lock, Event *event)
   rc = pthread_cond_wait(&event->event, &lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_cond_wait returned %d\n", rc);
-#ifdef USE_STACK_DEBUG
-    StackDebug(); 
-#endif
+    Stack_dump(); 
     exit(1);
   }
 #else

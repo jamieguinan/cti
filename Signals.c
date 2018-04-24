@@ -37,14 +37,14 @@ static void shutdown_handler(int signo)
 
   fprintf(stderr, "%s: caught signal %d (%s)\n", threadname, signo, signame);
 
-  StackDebug();
+  Stack_dump();
 
   _exit(signo);
 }
 
 static void usr1_handler(int signo)
 {
-  StackDebug();
+  Stack_dump();
 }
 
 
