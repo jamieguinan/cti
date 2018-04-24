@@ -79,19 +79,3 @@ void StackDebug(void)
     fprintf(stderr, "%s: this build probably did not have instrumented functions\n", __func__);
   }
 }
-
-void StackDebug2(void *ptr, const char * text)
-{
-  int i;
-  Instance *pi = pthread_getspecific(instance_key);
-  if (!pi) { 
-    fprintf(stderr, "no instance key for thread\n");
-    return; 
-  }
-  fprintf(stderr, "%s::", pi->label);
-  for (i=0; i < pi->stack_index; i++) {
-    fprintf(stderr, "/%p", pi->stack[i]);
-  }
-  fprintf(stderr, "::%p::%s", ptr, text);
-  fprintf(stderr, "\n");
-}
