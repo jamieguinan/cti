@@ -5,6 +5,9 @@
 #include <sys/types.h>
 #include "CTI.h"
 #include "Cfg.h"
+#include "localptr.h"
+
+extern char *argv0;
 
 static void Config_handler(Instance *pi, void *data);
 static void Line_handler(Instance *pi, void *data);
@@ -286,6 +289,12 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   if (n == 1 && streq(token0, "apm")) {
     /* Show all pending messages. */
     CTI_pending_messages();
+  }
+
+  if (n == 1 && streq(token0, "md5")) {
+    /* Show md5sum of executable. */
+    localptr(String, cmd) = String_sprintf("md5sum %s", argv0);
+    system(s(cmd));
   }
 
 }
