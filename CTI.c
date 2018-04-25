@@ -30,8 +30,8 @@ int g_synchronous = 0;		/* Can be toggled in ScriptV00.c */
    pthread_once(). */
 void instance_key_init(void)
 {
-  pthread_key_create(&instance_key, NULL);
-  pthread_setspecific(instance_key, NULL);
+  pthread_key_create(&instance_key, NULL); /* No destructor function. */
+  pthread_setspecific(instance_key, NULL); /* Pass NULL for main thread. */
   instance_key_initialized = 1;
 }
 
