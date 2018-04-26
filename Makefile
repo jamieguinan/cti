@@ -200,6 +200,7 @@ OBJS= \
 	Alternator.o \
 	Collator.o \
 	ColorSpaceConvert.o \
+	DynamicVideoControl.o \
 	$(MAIN) 
 
 include StackDebug.mk

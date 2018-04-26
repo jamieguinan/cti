@@ -91,6 +91,7 @@
 #include "Alternator.h"
 #include "Collator.h"
 #include "ColorSpaceConvert.h"
+#include "DynamicVideoControl.h"
 //#include "PCMSource.h"
 
 extern int app_code(int argc, char *argv[]);
@@ -231,6 +232,7 @@ int cti_main(int argc, char *argv[])
   Alternator_init();
   Collator_init();
   ColorSpaceConvert_init();
+  DynamicVideoControl_init();
   Global_init();
 
   return app_code(argc, argv);
