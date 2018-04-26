@@ -5,12 +5,14 @@ system cp hls-stream.m3u8 /dev/shm/hls1/stream.m3u8
 	
 new V4L2Capture vc
 new ALSACapture ac
+new ColorSpaceConvert csc
 new RPiH264Enc enc
 new AAC aenc
 new MpegTSMux tsm
 new PushQueue pq
 
-connect vc YUV422P_buffer enc
+connect vc YUV422P_buffer csc
+connect csc YUV420P_buffer enc
 connect enc H264_buffer tsm
 connect ac Wav_buffer aenc
 connect aenc AAC_buffer tsm

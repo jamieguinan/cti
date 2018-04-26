@@ -1,8 +1,10 @@
 new V4L2Capture vc
+new ColorSpaceConvert csc
 new RPiH264Enc enc
 new BinaryFiler bf
 
-connect vc YUV422P_buffer enc
+connect vc YUV422P_buffer csc
+connect csc YUV420P_buffer enc
 connect enc H264_buffer bf
 
 config bf output /dev/shm/test.h264

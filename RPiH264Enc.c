@@ -29,13 +29,11 @@ extern int say_verbose;
 /* Handlers. */
 static void Config_handler(Instance *pi, void *msg);
 static void y420p_handler(Instance *pi, void *msg);
-static void y422p_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_YUV420P, INPUT_YUV422P };
+enum { INPUT_CONFIG, INPUT_YUV420P };
 static Input RPiH264Enc_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .handler = y420p_handler },
-  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
 enum { OUTPUT_H264, OUTPUT_FEEDBACK };
@@ -130,16 +128,6 @@ static void y420p_handler(Instance *pi, void *msg)
   
   YUV420P_buffer_release(y420p);
 }
-
-
-static void y422p_handler(Instance *pi, void *msg)
-{
-  YUV422P_buffer *y422p = msg;
-  YUV420P_buffer *y420 = YUV422P_to_YUV420P(y422p);
-  y420p_handler(pi, y420);
-  YUV422P_buffer_release(y422p);  
-}
-
 
 static void RPiH264Enc_tick(Instance *pi)
 {
