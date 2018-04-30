@@ -8,7 +8,7 @@
 
 #include "CTI.h"
 #include "ResourceMonitor.h"
-#include "Cfg.h"
+#include "dpf.h"
 #include "File.h"
 
 static void Config_handler(Instance *pi, void *msg);
@@ -91,14 +91,11 @@ static void ResourceMonitor_tick(Instance *pi)
   }
 
   if (priv->mode == RESOURCE_MONITOR_MODE_RUSAGE) {
-    // rc = getrusage(RUSAGE_SELF, &usage);
-    int id = (pi->counter % 3) - 1;
-    rc = getrusage(id, &usage);  
+    rc = getrusage(RUSAGE_SELF, &usage);
+    // int id = (pi->counter % 3) - 1;
+    // rc = getrusage(id, &usage);  
     if (rc == 0) {
-      if (cfg.verbosity) {
-	printf("ru_maxrss=%ld\n", usage.ru_maxrss);
-	printf("ixrss=%ld\n", usage.ru_ixrss);
-      }
+      dpf("ru_maxrss=%ld ixrss=%ld\n", usage.ru_maxrss, usage.ru_ixrss);
       if (priv->rss_limit && usage.ru_maxrss > priv->rss_limit) {
 	fprintf(stderr, "%s: rss_limit exceded (%ld > %ld)!\n", __func__, usage.ru_maxrss, priv->rss_limit);
 	_shutdown_();
@@ -119,13 +116,11 @@ static void ResourceMonitor_tick(Instance *pi)
 	  int n = sscanf(p+1, "%ld", &value);
 	  if (n == 1) {
 	    long rss_value = (value / 1024);
+	    dpf("VSZ or RSS %ld\n", rss_value);
 	    if (priv->rss_limit && rss_value > priv->rss_limit)   {
 	      fprintf(stderr, "%s: rss_limit exceded (%ld > %ld)!\n", __func__, 
 		      rss_value, priv->rss_limit);
 	      _shutdown_();
-	    }
-	    if (cfg.verbosity) {
-	      printf("VSZ or RSS %ld\n", rss_value);
 	    }
 	  }
 	  break;
@@ -142,9 +137,10 @@ static void ResourceMonitor_tick(Instance *pi)
 static void ResourceMonitor_instance_init(Instance *pi)
 {
   ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
-  
-  priv->mode = RESOURCE_MONITOR_MODE_PROCSELFSTAT;
-  priv->procselfstat_field = 22;
+
+  //priv->mode = RESOURCE_MONITOR_MODE_PROCSELFSTAT;
+  //priv->procselfstat_field = 23; /* man 5 proc */
+  priv->mode = RESOURCE_MONITOR_MODE_RUSAGE;
 }
 
 
