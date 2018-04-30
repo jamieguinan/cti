@@ -36,10 +36,10 @@ static Input RPiH264Enc_inputs[] = {
   [ INPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .handler = y420p_handler },
 };
 
-enum { OUTPUT_H264, OUTPUT_FEEDBACK };
+enum { OUTPUT_H264, OUTPUT_YUV420P };
 static Output RPiH264Enc_outputs[] = {
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
-  [ OUTPUT_FEEDBACK ] = { .type_label = "Feedback_buffer", .destination = 0L  },
+  [ OUTPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -125,8 +125,14 @@ static void y420p_handler(Instance *pi, void *msg)
     }
     free(output);
   }
-  
-  YUV420P_buffer_release(y420p);
+
+  if (pi->outputs[OUTPUT_YUV420P].destination) {
+    /* Pass buffer along for further processing. */
+    PostData(y420p, pi->outputs[OUTPUT_YUV420P].destination);
+  }
+  else {
+    YUV420P_buffer_release(y420p);
+  }
 }
 
 static void RPiH264Enc_tick(Instance *pi)
