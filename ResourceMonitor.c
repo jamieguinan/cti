@@ -10,6 +10,7 @@
 #include "ResourceMonitor.h"
 #include "dpf.h"
 #include "File.h"
+#include "localptr.h"
 
 static void Config_handler(Instance *pi, void *msg);
 
@@ -23,18 +24,10 @@ static Output ResourceMonitor_outputs[] = {
   //[ OUTPUT_... ] = { .type_label = "", .destination = 0L },
 };
 
-enum {
-  RESOURCE_MONITOR_MODE_NONE, 
-  RESOURCE_MONITOR_MODE_RUSAGE, 
-  RESOURCE_MONITOR_MODE_PROCSELFSTAT
-};
-
 typedef struct {
   Instance i;
-  int mode;
   unsigned int period_ms;
-  long rss_limit;
-  int procselfstat_field;
+  int rss_limit;               /* in KB */
 } ResourceMonitor_private;
 
 static int set_period_ms(Instance *pi, const char *value)
@@ -74,8 +67,8 @@ static void ResourceMonitor_tick(Instance *pi)
 {
   ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
   Handler_message *hm;
-  int rc;
-  struct rusage usage;
+  int rss_value;
+  int i, end;
 
   hm = GetData(pi, 0);
   if (hm) {
@@ -90,45 +83,16 @@ static void ResourceMonitor_tick(Instance *pi)
     nanosleep(&(struct timespec){.tv_sec = 1, .tv_nsec = 0}, NULL);
   }
 
-  if (priv->mode == RESOURCE_MONITOR_MODE_RUSAGE) {
-    rc = getrusage(RUSAGE_SELF, &usage);
-    // int id = (pi->counter % 3) - 1;
-    // rc = getrusage(id, &usage);  
-    if (rc == 0) {
-      dpf("ru_maxrss=%ld ixrss=%ld\n", usage.ru_maxrss, usage.ru_ixrss);
-      if (priv->rss_limit && usage.ru_maxrss > priv->rss_limit) {
-	fprintf(stderr, "%s: rss_limit exceded (%ld > %ld)!\n", __func__, usage.ru_maxrss, priv->rss_limit);
-	_shutdown_();
-      }
+  localptr(String, data) = File_load_text(S("/proc/self/status"));
+  i = String_find(data, 0, "VmRSS:", &end);
+  if (i > 0) {
+    String_parse_int(data, end+1, &rss_value);
+    dpf("VmRSS %d\n", rss_value);
+    if (priv->rss_limit && rss_value > priv->rss_limit)   {
+      fprintf(stderr, "%s: rss_limit exceded (%d > %d)!\n", __func__, 
+              rss_value, priv->rss_limit);
+      _shutdown_();
     }
-  }
-
-  else if (priv->mode == RESOURCE_MONITOR_MODE_PROCSELFSTAT) {
-    int i=0;
-    char *p;
-    String *data = File_load_text(S("/proc/self/stat"));
-    p = data->bytes;
-    while (*p) {
-      if (*p == ' ') {
-	i++;
-	if (i == priv->procselfstat_field) {
-	  long value;
-	  int n = sscanf(p+1, "%ld", &value);
-	  if (n == 1) {
-	    long rss_value = (value / 1024);
-	    dpf("VSZ or RSS %ld\n", rss_value);
-	    if (priv->rss_limit && rss_value > priv->rss_limit)   {
-	      fprintf(stderr, "%s: rss_limit exceded (%ld > %ld)!\n", __func__, 
-		      rss_value, priv->rss_limit);
-	      _shutdown_();
-	    }
-	  }
-	  break;
-	}
-      }
-      p++;
-    }
-    String_free(&data);
   }
     
   pi->counter++;
@@ -136,11 +100,7 @@ static void ResourceMonitor_tick(Instance *pi)
 
 static void ResourceMonitor_instance_init(Instance *pi)
 {
-  ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
-
-  //priv->mode = RESOURCE_MONITOR_MODE_PROCSELFSTAT;
-  //priv->procselfstat_field = 23; /* man 5 proc */
-  priv->mode = RESOURCE_MONITOR_MODE_RUSAGE;
+  // ResourceMonitor_private *priv = (ResourceMonitor_private *)pi;
 }
 
 
