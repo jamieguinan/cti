@@ -29,6 +29,7 @@ static struct {
 
 static void mt3(void * ptr, int size, const char * func, int line)
 {
+  /* All callers must hold mem_lock */
   int i;
   if (size < 0) {
     /* free or realloc */
@@ -67,6 +68,11 @@ static void mt3(void * ptr, int size, const char * func, int line)
       dpf("mt3 top=%d total=%ld active=%d\n", Mem.top, Mem.total, Mem.active);
     }
     x += 1;
+  }
+
+  if (Mem.top == (NUM_ALLOCATIONS)-1) {
+    fprintf(stderr, "allocations full, turning off mt3\n");
+    cfg.mem_tracking_3 = 0;
   }
 }
 
