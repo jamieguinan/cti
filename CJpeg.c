@@ -12,7 +12,6 @@
 #include "CJpeg.h"
 #include "Images.h"
 #include "Mem.h"
-#include "Cfg.h"
 #include "Log.h"
 
 static void Config_handler(Instance *pi, void *msg);
@@ -281,11 +280,10 @@ static void compress_and_post(Instance *pi,
   getdoubletime(&t2);
   double tdiff =  (t2 - t1);
 
-  if (cfg.verbosity > 0) {
-    if (pi->counter % (30) == 0) {
-      printf("%.5f\n", tdiff);
-    }
+  if (pi->counter % (30) == 0) {
+    dpf("tdiff=%.5f\n", tdiff);
   }
+
 
   if ((priv->time_limit > 0.0) && (tdiff > priv->time_limit)) {
     /* Compress time went over time limit, call sched_yield(), which

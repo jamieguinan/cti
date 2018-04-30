@@ -14,7 +14,6 @@
 #include "String.h"
 #include "ArrayU8.h"
 #include "SourceSink.h"
-#include "Cfg.h"
 #include "Numbers.h"
 
 static void Config_handler(Instance *pi, void *data);
@@ -218,7 +217,7 @@ static void Y4MInput_tick(Instance *pi)
       }
       else {
 	/* Need more data, will get it on next call. */
-	if (cfg.verbosity) { fprintf(stderr, "needData = 1\n"); }
+	dpf("needData = 1\n"); }
 	priv->needData = 1;
       }
       return;
