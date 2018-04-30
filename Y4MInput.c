@@ -217,7 +217,7 @@ static void Y4MInput_tick(Instance *pi)
       }
       else {
 	/* Need more data, will get it on next call. */
-	dpf("needData = 1\n"); }
+	dpf("%s needData = 1\n", __func__);
 	priv->needData = 1;
       }
       return;
