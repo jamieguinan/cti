@@ -103,7 +103,7 @@ static Output MpegTSMux_outputs[] = {
   [ OUTPUT_RAWDATA ] = { .type_label = "RawData_buffer", .destination = 0L },
 };
 
-int v = 0;
+static int v = 0;
 
 
 typedef struct _ts_packet {
@@ -805,6 +805,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
 	stream = &priv->streams[i];
       }
       else if (priv->streams[i].packets->estimated_timestamp < stream->packets->estimated_timestamp) {
+        /* Push out the older packet. */
 	stream = &priv->streams[i];
       }
     }
@@ -817,7 +818,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
     TSPacket *pkt = stream->packets;
 
     if (pkt->estimated_timestamp > flush_timestamp) {
-      if (priv->verbose) { printf("audio packet(s) will wait for next flush\n"); }
+      dpf("wait for next flush: %" PRIu64 " > %" PRIu64 "\n", pkt->estimated_timestamp, flush_timestamp);
       return;
     }
 
