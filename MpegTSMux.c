@@ -178,7 +178,7 @@ typedef struct {
 
   int seen_audio;
   int debug_outpackets;
-  int debug_pktseq; 
+  int debug_pktseq;
 
   int verbose;			/* For certain printfs. */
 } MpegTSMux_private;
@@ -365,8 +365,9 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 {
   /* Wrap a unit of encoded data into a elementary stream packet, then
      divide and wrap that into a series of 188-byte transport stream
-     packets and leave them in a list for later multiplexing.  Larger
-     TS packet types are not currently supported. */
+     packets and leave them in a list for later multiplexing.
+     See "demo-ts-analysis.txt".
+     Note that larger TS packet types are not currently supported. */
   MpegTimeStamp pts = {};
   MpegTimeStamp dts = {};
   int i;
@@ -400,10 +401,6 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     }
   }
 
-  /* Wrap the data in a PES packet (prepend a chunk of header data),
-     then divide into TS packets, and either write out, or save in a
-     list so they can be smoothly interleaved with audio packets.  See
-     "demo-ts-analysis.txt".  */
   ArrayU8 *pes = ArrayU8_new();
   ArrayU8_append_bytes(pes, 
 		       0x00, 0x00, 0x01, /* PES packet start code prefix. */
@@ -574,7 +571,13 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 
 static uint64_t timestamp_to_90KHz(double timestamp)
 {
-  return (uint64_t)(fmod(timestamp, 95000)  // pts wraps at 95000 seconds, so why not
+  /* Audio and video samples are timestamped against a wall or
+     monotonic clock. This function maps them to the 26.5 hour PTS
+     period, and converts to 90KHz PTS units. The actual wrap would be
+     at about 95443 seconds, but I chose to round down to 95000.
+     Players shouldn't care, this could even round to a much lower
+     period. */
+  return (uint64_t)(fmod(timestamp, 95000)
 		    * 1000000 // Convert to microseconds.
 		    * 9 / 100); // Convert to 90KHz units.
 }
@@ -586,10 +589,12 @@ static void H264_handler(Instance *pi, void *msg)
 
   flush(pi, timestamp_to_90KHz(h264->c.timestamp), h264->keyframe);
 
+  dpf("timestamp modulo: %f\n", fmod(h264->c.timestamp, 95000));
+
   priv->streams[0].pts_value = timestamp_to_90KHz(h264->c.timestamp);
   priv->streams[0].es_duration = timestamp_to_90KHz(h264->c.nominal_period);
   dpf("h264->encoded_length=%d timestamp=%.6f nominal_period=%.6f es_duration=%" PRIu64" pts_value=%" PRIu64 " keyframe:%s\n",
-      h264->encoded_length, 
+      h264->encoded_length,
       h264->c.timestamp,
       h264->c.nominal_period,
       priv->streams[0].es_duration,
@@ -817,22 +822,40 @@ static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
 
     TSPacket *pkt = stream->packets;
 
-    if (pkt->estimated_timestamp > flush_timestamp) {
-      dpf("wait for next flush: %" PRIu64 " > %" PRIu64 "\n", pkt->estimated_timestamp, flush_timestamp);
+    if (pkt->estimated_timestamp > flush_timestamp
+        && flush_timestamp > (90000*5)
+        ) {
+      /*
+       * Notes: The "pkt->estimated_timestamp > flush_timestamp" test
+       * and early return was introduced in April 2014, see the
+       * "sv-history" branch for more details. I originally added it
+       * to make playback smooth on iOS, but it seems like a good idea
+       * to always order packets by timestamp anyway.  While
+       * exercising the code 4 years later (Spring 2018), I found a
+       * problem when the timestamp_to_90KHz() modulo result
+       * wrapped. The above would fail and the packets would pile up
+       * without being transmitted until OOM or ResourceMonitor killed
+       * the process. I added the "flush_timestamp > (90000*5)" test
+       * so that during the first 5 seconds after PTS wrap, packets
+       * are allowed through even if they are out of order. The PTS
+       * counter is 33-bits and has 90KHz resolution, so it has a
+       * period of about 26.5 hours. A 5-second window of possily
+       * jittery playback once a day is acceptable to me.
+       */
+      dpf("[%s] wait for next flush: %" PRIu64 " > %" PRIu64 "\n",
+          stream->typecode, pkt->estimated_timestamp, flush_timestamp);
       return;
     }
 
     /* PAT+PMT should get generated on keyframes or when enough
-       program time has elapsed.  FIXME: There is still the problem of
-       PTS wrap, because the 33-bit counter can only hold ~26 hours at
-       90KHz, and I'm using a modulo value of the real timestamp. */
+       program time has elapsed. */
     if (keyframe
         || (pkt->estimated_timestamp - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
       priv->pat_pts_last = pkt->estimated_timestamp;
 
       /* PAT, pid 0 */
       Mem_free(write_packet(pi, generate_psi(priv, 0, 0, &priv->PAT.continuity_counter)));
-    
+
       /* PMT, pid 256 */
       Mem_free(write_packet(pi, generate_psi(priv, 256, 2, &priv->PMT.continuity_counter)));
     } /* end PAT+PMT generation */
