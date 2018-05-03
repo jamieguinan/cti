@@ -530,7 +530,7 @@ static void render_frame_gl(SDLstuff_private *priv, RGB3_buffer *rgb3_in)
 
   if (0) {
     double tv;
-    getdoubletime(&tv);
+    cti_getdoubletime(&tv);
     printf("sdl %.6f\n", tv);
   }
 

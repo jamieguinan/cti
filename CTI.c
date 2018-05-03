@@ -845,10 +845,3 @@ const char *CTI_cmdline_get(const char *key)
   return NULL;
 }
 
-
-void getdoubletime(double *tdest)
-{
-  struct timeval tv;  
-  gettimeofday(&tv, NULL);
-  *tdest = (tv.tv_sec + (tv.tv_usec/1000000.0));
-}

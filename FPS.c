@@ -31,7 +31,7 @@ void FPS_update_timestamp(FPS *fps, double timestamp)
 void FPS_update(FPS *fps)
 {
   double timestamp;
-  getdoubletime(&timestamp);
+  cti_getdoubletime(&timestamp);
   FPS_update_timestamp(fps, timestamp);
   
 }

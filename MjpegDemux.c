@@ -714,7 +714,7 @@ static void MjpegDemux_tick(Instance *pi)
       }
       else if (priv->use_timestamps && !priv->seen_audio) {
 	double tnow;
-	getdoubletime(&tnow);
+	cti_getdoubletime(&tnow);
 	
 	if (priv->video.stream_t0 < 0.0) {
 	  /* New stream, or seek occurred. */

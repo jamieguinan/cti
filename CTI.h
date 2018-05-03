@@ -349,8 +349,6 @@ typedef struct {
 extern Feedback_buffer *Feedback_buffer_new(void);
 extern void Feedback_buffer_release(Feedback_buffer *raw);
 
-extern void getdoubletime(double *tdest);
-
 /* Useful macros. */
 #define copy_list(a, b, c, d) do { int n = sizeof(*a)*b; *c = Mem_malloc(n); memcpy(*c, a, n); *d = b;} while (0);
 #define table_size(x) (sizeof(x)/sizeof(x[0]))

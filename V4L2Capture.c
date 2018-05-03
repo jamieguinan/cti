@@ -1413,7 +1413,7 @@ static void V4L2Capture_tick(Instance *pi)
     .label = priv->label,
     .nominal_period = priv->nominal_period
   };
-  getdoubletime(&c.timestamp);
+  cti_getdoubletime(&c.timestamp);
   FPS_update_timestamp(&priv->calculated_fps, c.timestamp);
 
   pi->counter += 1;

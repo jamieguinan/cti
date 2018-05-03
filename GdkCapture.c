@@ -129,7 +129,7 @@ static void check_files(Instance *pi)
       goto out;
     }
     rgb = RGB3_buffer_new(width, height, 0L);
-    getdoubletime(&rgb->c.timestamp);
+    cti_getdoubletime(&rgb->c.timestamp);
     size = height*bpl;
     data = Mem_malloc(size);
     if (fread(data, size, 1, f) != 1) {

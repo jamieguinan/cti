@@ -53,7 +53,7 @@ typedef struct {
 static int do_trigger(Instance *pi, const char *value_unused)
 {
   MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
-  getdoubletime(&priv->record_until);
+  cti_getdoubletime(&priv->record_until);
   priv->record_until += priv->forwardbuffer;
   return 0;
 }

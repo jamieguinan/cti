@@ -114,7 +114,7 @@ static void RawSource_move_data(Instance *pi)
     }
     if (priv->audio.atype != CTI_AUDIO_UNKNOWN) {
       Audio_buffer *audio = Audio_buffer_new(priv->audio.rate, priv->audio.channels, priv->audio.atype);
-      getdoubletime(&audio->timestamp);
+      cti_getdoubletime(&audio->timestamp);
       Audio_buffer_add_samples(audio, chunk->data, chunk->len);
       PostData(audio, pi->outputs[OUTPUT_AUDIO].destination);
     }

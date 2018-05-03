@@ -338,7 +338,7 @@ static void Y4MInput_tick(Instance *pi)
 
     /* Getting time here is REALLY sloppy, downstream should capture
        the first timestamp and use the nominal period to increment. */
-    getdoubletime(&priv->video_common.timestamp);
+    cti_getdoubletime(&priv->video_common.timestamp);
 
     YUV420P_buffer * yuv = YUV420P_buffer_from(priv->chunk->data+eol+1, 
 					       priv->current.width, priv->current.height, 

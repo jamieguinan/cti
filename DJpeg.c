@@ -116,7 +116,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     goto out;
   }
 
-  getdoubletime(&t1);
+  cti_getdoubletime(&t1);
 
   if (!(pi->outputs[OUTPUT_YUV422P].destination ||
 	pi->outputs[OUTPUT_YUV420P].destination ||
@@ -203,7 +203,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   pi->counter += 1;
 
   /* Calculate decompress time. */
-  getdoubletime(&t2);
+  cti_getdoubletime(&t2);
   float tdiff = t2 - t1;
 
   dpf("djpeg %.5f (%dx%d)\n", tdiff, save_width, save_height);

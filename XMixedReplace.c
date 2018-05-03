@@ -18,7 +18,7 @@ XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, cons
 
   XMixedReplace_buffer *buffer = Mem_malloc(sizeof(*buffer));
 
-  getdoubletime(&buffer->timestamp, NULL);
+  cti_getdoubletime(&buffer->timestamp, NULL);
 
   /* Format header... */
   n = sprintf(header, 

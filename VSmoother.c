@@ -46,7 +46,7 @@ void VSmoother_smooth(VSmoother *priv,
   double ftime;
   double ftdiff;
 
-  getdoubletime(&tnow);
+  cti_getdoubletime(&tnow);
 
   ftime = frame_timestamp;
 

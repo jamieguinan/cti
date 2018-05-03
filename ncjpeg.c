@@ -202,11 +202,11 @@ int main(int argc, char *argv[])
 
     SetConfig(cj, "quality", "80");
     
-    getdoubletime(&t1);
+    cti_getdoubletime(&t1);
     for (i=0; i < num_frames; i++) {
       vc->tick(vc);		/* Capture. */
     }
-    getdoubletime(&t2);
+    cti_getdoubletime(&t2);
 
     float tdiff =  (t2 - t1);
     printf("%d frames in %.4f seconds\n", num_frames, tdiff);

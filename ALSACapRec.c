@@ -634,7 +634,7 @@ static void ALSACapture_tick(Instance *pi)
     fprintf(stderr, "%s: state=%s\n", __func__, ALSAio_state_to_string(state));
 
     /* Initialize running_timestamp. */
-    getdoubletime(&priv->c.running_timestamp);
+    cti_getdoubletime(&priv->c.running_timestamp);
   }
 
   snd_pcm_hw_params_get_period_size(priv->c.hwparams, &frames, &dir);
@@ -683,7 +683,7 @@ static void ALSACapture_tick(Instance *pi)
   priv->c.running_timestamp += calculated_period;
   
   double tnow;
-  getdoubletime(&tnow);
+  cti_getdoubletime(&tnow);
   
   /* Do coarse adjustment if necessary, this can happen after a
      system date change via ntp or htpdate. */

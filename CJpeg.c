@@ -134,7 +134,7 @@ static void compress_and_post(Instance *pi,
 	 width, height,
 	 c1, c2, c3);
   
-  getdoubletime(&t1);
+  cti_getdoubletime(&t1);
 
   cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
 					this may cause the program to call exit()! */
@@ -277,7 +277,7 @@ static void compress_and_post(Instance *pi,
   jpeg_out = 0L;		/* Clear output buffer copy. */
 
   /* Calculate compress time. */
-  getdoubletime(&t2);
+  cti_getdoubletime(&t2);
   double tdiff =  (t2 - t1);
 
   if (pi->counter % (30) == 0) {

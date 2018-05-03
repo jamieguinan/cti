@@ -61,7 +61,7 @@ static void check_record_state(MjpegLocalBuffer_private *priv)
 {
   if (priv->recording) {
     double tnow;
-    getdoubletime(&tnow);
+    cti_getdoubletime(&tnow);
     if (tnow > priv->record_until) {
       priv->recording = 0;
       fprintf(stderr, "md recording OFF (%.3f > %.3f)\n", 
@@ -84,7 +84,7 @@ static void MotionDetect_handler(Instance *pi, void *data)
   }
 
   if (md->sum > priv->md_threshold) {
-    getdoubletime(&priv->record_until);
+    cti_getdoubletime(&priv->record_until);
     priv->record_until += priv->forwardbuffer;
     if (!priv->recording) {
       priv->recording = 1;
