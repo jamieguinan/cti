@@ -67,7 +67,12 @@ void post(const char * uri, String_list * headers, String * data,
   }
   else {
     // printf("%s\n", s(result));
-    handler(0, out_headers, result);
+    if (handler) {
+      handler(0, out_headers, result);
+    }
+    else {
+      fprintf(stderr, "%s: no handler defined\n", __func__);
+    }
   }
   curl_slist_free_all(chunk);  
 }
