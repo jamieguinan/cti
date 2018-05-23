@@ -1,5 +1,4 @@
 #include "Mem.h"
-#include "Cfg.h"
 #include "dpf.h"
 #include <string.h>		/* memcpy */
 #include <stdlib.h>
@@ -12,6 +11,7 @@
 #include "StackDebug.h"
 
 static pthread_mutex_t mem_lock = PTHREAD_MUTEX_INITIALIZER;
+static int mem_tracking_3 = 0;
 
 #define NUM_ALLOCATIONS 10000
 
@@ -72,8 +72,14 @@ static void mt3(void * ptr, int size, const char * func, int line)
 
   if (Mem.top == (NUM_ALLOCATIONS)-1) {
     fprintf(stderr, "allocations full, turning off mt3\n");
-    cfg.mem_tracking_3 = 0;
+    mem_tracking_3 = 0;
   }
+}
+
+int mt3_toggle(void)
+{
+  mem_tracking_3 = !mem_tracking_3;
+  return mem_tracking_3;
 }
 
 void mdump(void)
@@ -137,7 +143,7 @@ void *_Mem_calloc(int count, int size, const char *func, int line, const char * 
 {
   pthread_mutex_lock(&mem_lock);
   void *ptr = calloc(count, size);
-  if (cfg.mem_tracking_3) {
+  if (mem_tracking_3) {
     mt3(ptr, count*size, func, line);
   }
   pthread_mutex_unlock(&mem_lock);
@@ -149,7 +155,7 @@ void *_Mem_malloc(int size, const char *func, int line, const char * type)
 {
   pthread_mutex_lock(&mem_lock);
   void *ptr = malloc(size);
-  if (cfg.mem_tracking_3) {
+  if (mem_tracking_3) {
     mt3(ptr, size, func, line);
   }
   pthread_mutex_unlock(&mem_lock);
@@ -160,11 +166,11 @@ void *_Mem_malloc(int size, const char *func, int line, const char * type)
 void *_Mem_realloc(void *ptr, int newsize, const char *func, int line, const char * type)
 {
   pthread_mutex_lock(&mem_lock);
-  if (cfg.mem_tracking_3) {
+  if (mem_tracking_3) {
     mt3(ptr, -2, func, line);
   }
   void *newptr = realloc(ptr, newsize);
-  if (cfg.mem_tracking_3) {
+  if (mem_tracking_3) {
     mt3(newptr, newsize, func, line);
   }
   pthread_mutex_unlock(&mem_lock);
@@ -175,7 +181,7 @@ void *_Mem_realloc(void *ptr, int newsize, const char *func, int line, const cha
 void _Mem_free(void *ptr, const char *func, int line)
 {
   pthread_mutex_lock(&mem_lock);
-  if (cfg.mem_tracking_3) {
+  if (mem_tracking_3) {
     mt3(ptr, -1, func, line);
   }
   // fprintf(stderr, "free: %p\n", ptr);

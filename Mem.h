@@ -33,5 +33,6 @@ extern int _Mem_unref(MemObject *mo, const char *func);
 
 extern void backtrace_and_exit(void);
 extern void mdump(void);
+extern int mt3_toggle(void);
 
 #endif

@@ -174,8 +174,8 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   }
 
   if (n == 1 && streq(token0, "mt3")) {
-    cfg.mem_tracking_3 = !cfg.mem_tracking_3;
-    fprintf(stderr, "cfg.mem_tracking_3 %s\n", (cfg.mem_tracking_3 ? "on":"off"));
+    int v = mt3_toggle();
+    fprintf(stderr, "mem_tracking_3 %s\n", (v ? "on":"off"));
     return;
   }
 
