@@ -1,5 +1,5 @@
 /*
- * Read 188 byte TS packets from stdin, seach for target strings,
+ * Read 188 byte TS packets from stdin, search for target strings,
  * dump entire TS packet if match.
  * Example:
  *   nc -l -u 192.168.1.14 -p 6679 | ./tsa naltype7
