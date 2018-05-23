@@ -58,6 +58,52 @@ String * File_load_text(String * filename)
   }
 }
 
+static char base64map[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+String * File_load_base64(String * filename)
+{
+  int i;
+  ArrayU8 *a = File_load_data(filename);
+  if (!a) {
+    return String_value_none();
+  }
+  
+  String * result = String_new("");
+  int digits[4] = {};
+  char values[4];
+  for (i=0; i < a->len; i++) {
+    switch (i%3) {
+    case 0: digits[0] = a->data[i] >> 2; digits[1] = (a->data[i] & 0x3) << 4;
+      values[0] = base64map[digits[0]];
+      break;
+    case 1: digits[1] |= a->data[i] >> 4; digits[2] = (a->data[i] & 0xf) << 2;
+      values[1] = base64map[digits[1]];
+      break;
+    case 2: digits[2] |= a->data[i] >> 6; digits[3] = (a->data[i] & 0x3f);
+      values[2] = base64map[digits[2]];
+      values[3] = base64map[digits[3]];
+      String_append_bytes(result, values, 4);
+      break;
+    }
+  }
+  
+  switch(i%3) {
+  case 0: break;
+  case 1:
+    values[1] = base64map[digits[1]];
+    String_append_bytes(result, values, 2);
+    String_cat1(result, "==");
+    break;
+  case 2:
+    values[2] = base64map[digits[2]];
+    String_append_bytes(result, values, 3);
+    String_cat1(result, "=");
+    break;
+  }
+
+  return result;
+}
+
 
 String_list *Files_glob(String *path, String *pattern)
 {
