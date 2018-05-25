@@ -849,10 +849,18 @@ static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
 
     /* PAT+PMT should get generated on keyframes or when enough
        program time has elapsed. */
-    if (keyframe
-        || (pkt->estimated_timestamp - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450) ) {
-      priv->pat_pts_last = pkt->estimated_timestamp;
+    int send_pat_pmt = 0;
+    
+    if (keyframe && stream->packets->next == NULL) {
+      send_pat_pmt = 1;
+    }
 
+    if ((pkt->estimated_timestamp - priv->pat_pts_last) >= (MAXIMUM_PAT_INTERVAL_90KHZ - 1450)){
+      priv->pat_pts_last = pkt->estimated_timestamp;
+      send_pat_pmt = 1;
+    }
+
+    if (send_pat_pmt) {
       /* PAT, pid 0 */
       Mem_free(write_packet(pi, generate_psi(priv, 0, 0, &priv->PAT.continuity_counter)));
 
