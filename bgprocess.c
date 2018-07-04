@@ -27,7 +27,9 @@ void bgstartv(char * args[], int * pidptr)
     break;
   default:
     /* parent */
-    *pidptr = newpid;
+    if (pidptr) {
+      *pidptr = newpid;
+    }
     break;
   }
 
@@ -199,10 +201,11 @@ void bgstop_pidfile(const char *pidfile)
     fprintf(stderr, "%s: could not open pidfile %s\n", __func__, pidfile);
     return;
   }
-  fgets(buffer, sizeof(buffer), f);
-  if (sscanf(buffer, "%d", &pid) == 1) {
+  if (fgets(buffer, sizeof(buffer), f) != NULL
+      && sscanf(buffer, "%d", &pid) == 1) {
     bgstop(&pid);
   }
+  fclose(f);
   unlink(pidfile);
 }
 
