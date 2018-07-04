@@ -131,10 +131,12 @@ int jsmn_lookup_int(JsmnContext * jc, const char * key, int * value)
     }
 
     if (jc->tokens[i].type == JSMN_STRING) {
-      if (jc->tokens[i+1].type == JSMN_PRIMITIVE) {
-	return jsmn_get_int(jc->js_str, jc->tokens[i+1], value);
-      }
-      i+=1;
+      if (String_eq_jsmn(jc->js_str, jc->tokens[i], key)
+          && jc->tokens[i+1].type == JSMN_PRIMITIVE)
+        {
+          return jsmn_get_int(jc->js_str, jc->tokens[i+1], value);
+        }
+      i += 1;
     }
   }
   return -1;
@@ -232,7 +234,7 @@ void jsmn_dispatch(JsmnContext * jc, const char * firstkey,
   
   // jsmn_dump_verbose(json_str, tokens, n, n);
   
-  if (jc->num_tokens  >= 3
+  if (jc->num_tokens >= 3
       && jc->tokens[0].type == JSMN_OBJECT
       && jc->tokens[1].type == JSMN_STRING
       && jc->tokens[1].size == 1
