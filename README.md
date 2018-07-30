@@ -1,7 +1,7 @@
 CTI
 ===
 
-CTI is a hobby project I've been working on since 2010. During the 2000s, I had written several of one-off programs involving simple video and audio capture and processing, and network services. Applications included a birdfeeder webcam, recording analog TV programs, and converting DV tapes. Every time I needed a new, slightly different application, I'd copy and rename the previous one and change it slightly. I would add features to the new programs, and the old ones would [bit rot](https://en.wikipedia.org/wiki/Software_rot). This bothered me, so I came up with the idea of having *one* program that could be configured at runtime to handle any of the applications I might come up with, and if I fixed a bug or added a feature, it would be immediately included and available in all of these applications. This was the impetus for CTI.
+CTI is a hobby project I've been working on since 2010. During the 2000s, I had written several of one-off programs involving simple video and audio capture and processing, and network services. Applications included a birdfeeder webcam, recording analog TV programs with an NTSC tuner card, and converting DV tapes. Every time I needed a new, slightly different application, I'd copy and rename the previous one and change it slightly. I would add features to the new programs, and the old ones would [bit rot](https://en.wikipedia.org/wiki/Software_rot). This bothered me, so I came up with the idea of having *one* program that could be configured at runtime to handle any of the applications I might come up with, and if I fixed a bug or added a feature, it would be immediately included and available in all of these applications. This was the impetus for CTI.
 
 The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc` stood for, maybe something to do with `netcat`. From my notes,
 
@@ -16,7 +16,7 @@ The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc`
 
 The core concept in CTI is that there are a set of static **C** structures, with camel-case labels like `SocketServer`, that are used as **T**emplates. Any number of them can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which usually blocks until it has something to do. Most instances have a set of Input and Output members, which can be connected in a many-to-one Output-to-Input graph, of sorts. Instances may thus pass (loosely runtime-typed) messages to other instances, and that is how a CTI "application" is built. Also, each instance has a table of configuration parameters that can be set using key/value strings.
 
-So, CTI is *a modular, multi-threaded, message-passing, runtime-configurable program for video and audio capture and processing, networking, and various other applications*. That sounds impressive, but I chose to open this document describing it as a "hobby project", because I don't want to lose track of where it came from, I don't expect it to become a popular project, and I'm not looking to compete with other more developed projects in the same space. CTI exists primarily for my own use and entertainment, and as an exercise in programming.
+So, CTI is *a modular, multi-threaded, message-passing, runtime-configurable program for video and audio capture and processing, networking, and various other applications*.
 
 If you're looking for bigger, well-established projects in the same space, that let you instantiate and plug parts together to do things, here are a few that come to mind,
 
@@ -26,9 +26,9 @@ If you're looking for bigger, well-established projects in the same space, that 
 * [Processing](https://processing.org/)
 * [Scratch](https://scratch.mit.edu/)
 
-Many [SoCs](https://en.wikipedia.org/wiki/System_on_a_chip) have similar capabilities in dedicated silicon circuitry. The OpenMax library used with the Raspberry Pi and other SoCs has [components with inputs and outputs](http://home.nouwen.name/RaspberryPi/documentation/ilcomponents/index.html) enumerated as port numbers.
+Many [SoCs](https://en.wikipedia.org/wiki/System_on_a_chip) have similar capabilities in dedicated hardware. The OpenMax library used with the Raspberry Pi and other SoCs has [components with inputs and outputs](http://home.nouwen.name/RaspberryPi/documentation/ilcomponents/index.html) enumerated as port numbers.
 
-I am of course aware of C++, and I spent a few years as a serious aficionado of the language, but I came back to C and have mostly stuck with it. I won't get into the C vs. C++ debate here, but I do acknowledge that several features in CTI could have been implemented more concisely in C++. My philosophy is "each to his own", whatever tools and language a developer is most familiar and comfortable with, are the best.
+Why not C++? I spent a few years as a serious aficionado of the language, but I came back to C and have mostly stuck with it. I won't get into the C vs. C++ debate here, but I do acknowledge that several features in CTI could have been implemented more concisely in C++. My philosophy is "each to his own", whatever tools and language a developer is most familiar and comfortable with, are the best.
 
 ### An example
 
@@ -36,9 +36,9 @@ CTI has a number of compiled-in Templates, each implemented in a separate C file
 
     Instance * Instantiate(const char *label);
 
-where `label` is the name associated with the Template. While CTI could be used as a library, and applications hard-coded to call `Instantiate()`, my main design goal of CTI was to allow runtime configurability, so I came up with a simple configuration and command language. Thinking that I would probably come up with something better later on, but not wanting to break previous applications, I implemented it in a file named `ScriptV00.c`, allowing for later versions named `ScriptV01`, `ScriptV02`, etc. But as is often the case, the original worked good enough for my needs, and I haven't added any other versions. Despite the name, it doesn't have looping constructs and it is not turing complete, so I would not call it an actual *scripting* language.
+where `label` is the name associated with the Template. While CTI could be used as a library, and applications hard-coded to call `Instantiate()`, my main design goal of CTI was to allow runtime configurability, so I came up with a simple configuration and command language. Thinking that I would probably come up with something better later on, but not wanting to break previous applications, I implemented it in a file named `ScriptV00.c`, allowing for later versions named `ScriptV01`, `ScriptV02`, etc. But as is often the case, the original worked good enough for my needs, and I haven't added any other versions.
 
-Ok, now an example. `logitech.cmd` is a simple camera viewer application. It assumes a [UVC](https://en.wikipedia.org/wiki/USB_video_device_class) compatible USB camera is available on the computer. Oh, and since I hadn't mentioned it thus far, CTI is pretty Linux-centric, although I have occasionally ported it to other platforms, with mixed success.
+Ok, now an example. `logitech.cmd` is a simple camera viewer application. It assumes a [UVC](https://en.wikipedia.org/wiki/USB_video_device_class) compatible USB camera is available on the computer. Side note, since I hadn't mentioned it thus far, CTI is pretty Linux-centric, although I have occasionally ported it to other platforms, with varying degrees of success.
 
     # Make instances for video capture, Jpeg decompression, and display using SDL.
     # syntax: new template-label instance-label
@@ -106,7 +106,7 @@ There are a few files that I've imported into CTI that I did not write.
 
 ### Some notes about the code
 
-Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I was lazy and ended up just calling `wget` (and then later importing `serf_get.c`). And `NVidiaCUDA.c`, yeah, never did anything with that.
+Many of the built-in template modules are incomplete, or just empty skeletons. For example `HTTPClient.c` seemed like a good idea one day, but I ended up just calling `wget` (and then later importing `serf_get.c`).
 
 There are a few C files that aren't part of CTI, which I wrote for testing, and may or may not have compiled in a long time, but I keep them in the project for possible future reference. I moved some of them into the `basement/` subfolder.
 
@@ -118,9 +118,7 @@ Since I use CTI modules in other projects, it has also become convenient place f
  * as a return value from functions that failed to produce a result, and
  * for comparison via the function `String_is_none()`
 
-The advantage over using `NULL` is that it points to an existing fixed `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. I don't pretend to write perfect code, and once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong.
-
-This is similar in some ways to [NSULL](https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSNull_Class/index.html#//apple_ref/occ/cl/NSNull) in Apple's Objective-C libraries. It provides a singleton object that can be assigned, and compared against. In my case, it protects me from segfaults in my code, and in Apple's case, it can be used in instances where `NULL` or `nil` is not allowed.
+The advantage over using `NULL` is that it points to an existing fixed `String` structure, so code that mistakenly accesses an "unset" string or fails to adequately check return values will see `"unset_string_or_empty_result"` instead of segfaulting. Once in a while that `"unset_..."` string pops up, and it makes it much easier to go back and figure out where I went wrong. I think this is similar to [NSULL](https://developer.apple.com/library/mac/documentation/Cocoa/Reference/Foundation/Classes/NSNull_Class/index.html#//apple_ref/occ/cl/NSNull) in Apple's Objective-C libraries.
 
 <del>Since this is C and not C++, there is no `auto_ptr` and no garbage collection. I keep my code close to the left margin (minimal levels of conditionals and loops), and I'm not averse to using `goto` to jump to the end of the function, where you may find `String_clear()` calls for each of the local `String *` variables in said function.</del>
 
@@ -151,11 +149,8 @@ For `String *` variables, I simply need to provide this function,
 
 I love this. I still keep my code simple and close to the left margin, but I no longer have to use goto's and *one explicit cleanup call per local variable*. I sometimes think about writing a blog post explaing why I choose to use C over C++, I'll write more about this if I get around to it.
 
-Moving on, the `Makefile` isn't very tidy. There is some scaffolding and artifacts left over from different Linux platforms that I've experimented with.
-
 I had an experimental project called "modc" in the late 2000s, which implemented garbage collection by means of reference-counting allocations, keeping track of types, and leveraging the descending property of stack variable addresses (on most platforms) to periodically clean up dynamically allocated objects. It worked great, and I even wrote an sshfs-compatible (but non-encrypted) SFTP server completely from scratch with it, but the other goals of the modc project didn't pan out, so I abandoned it. I might try reviving some of the modc concepts in CTI one day.
 
 ### Using individual modules outside of CTI
 
 Not every program lends itself to the "graph of connected instances" model, and I have several other projects that use various C modules from the CTI project, mostly `String.c`, `File.c`, and `SourceSink.c`. I've tried to minimize the dependencies between modules so they can be used independently without dragging in the entire CTI project.
-
