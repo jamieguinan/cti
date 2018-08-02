@@ -1,7 +1,7 @@
 CTI
 ===
 
-CTI is a hobby project I've been working on since 2010. During the 2000s, I had written several of one-off programs involving simple video and audio capture and processing, and network services. Applications included a birdfeeder webcam, recording analog TV programs with an NTSC tuner card, and converting DV tapes. Every time I needed a new, slightly different application, I'd copy and rename the previous one and change it slightly. I would add features to the new programs, and the old ones would [bit rot](https://en.wikipedia.org/wiki/Software_rot). This bothered me, so I came up with the idea of having *one* program that could be configured at runtime to handle any of the applications I might come up with, and if I fixed a bug or added a feature, it would be immediately included and available in all of these applications. This was the impetus for CTI.
+CTI is a hobby project I've been working on since 2010. During the 2000s, I had written several of one-off programs involving simple video and audio capture and processing, and network services. Applications included a birdfeeder webcam, recording analog TV programs with an NTSC tuner card, and converting DV tapes to other formats. Every time I needed a new, slightly different application, I'd copy and rename the previous one and change it slightly. I added features to the new programs, and the old ones would [bit rot](https://en.wikipedia.org/wiki/Software_rot). This bothered me, so I came up with the idea of having *one* program that could be configured at runtime to handle any of the applications I might come up with, and if I fixed a bug or added a feature, it would be immediately included and available in all of these applications. This was the impetus for CTI.
 
 The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc` stood for, maybe something to do with `netcat`. From my notes,
 
@@ -18,7 +18,7 @@ The core concept in CTI is that there are a set of static **C** structures, with
 
 So, CTI is *a modular, multi-threaded, message-passing, runtime-configurable program for video and audio capture and processing, networking, and various other applications*.
 
-If you're looking for bigger, well-established projects in the same space, that let you instantiate and plug parts together to do things, here are a few that come to mind,
+If you're looking for other projects in the same space, that let you instantiate and plug parts together to do things, here are a few that come to mind,
 
 * [PureData](https://puredata.info/)
 * [gstreamer](https://gstreamer.freedesktop.org/)
