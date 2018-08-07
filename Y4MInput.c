@@ -344,6 +344,8 @@ static void Y4MInput_tick(Instance *pi)
 					       priv->current.width, priv->current.height, 
 					       &priv->video_common);
 
+    dpf("%s posting data\n", __func__);
+    
     if (priv->synchronous) {
       int result;
       PostDataGetResult(yuv, pi->outputs[OUTPUT_YUV420P].destination, &result);
