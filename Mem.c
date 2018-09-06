@@ -62,6 +62,11 @@ static void mt3(void * ptr, int size, const char * func, int line)
     Mem.allocations[i].line = line;
   }
 
+#if 0
+  /* I am not sure what to do about this. I think this particular dpf()
+     call might be useful, but I don't want to include the dpf.c dependency
+     in every project outside side that uses Mem.c. For now I am just
+     #if blocking it out.*/
   {
     static int x = 0;
     if (x % 100 == 0) {
@@ -69,6 +74,7 @@ static void mt3(void * ptr, int size, const char * func, int line)
     }
     x += 1;
   }
+#endif
 
   if (Mem.top == (NUM_ALLOCATIONS)-1) {
     fprintf(stderr, "allocations full, turning off mt3\n");
