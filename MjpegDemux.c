@@ -173,7 +173,7 @@ static int set_output_enable_priv(MjpegDemux_private *priv, int x)
 
   if (priv->output_enable) {
     Sink_reopen(priv->output_sink);
-    fprintf(stderr, "output [re]enabled\n");
+    fprintf(stderr, "output [re]enabled, %s\n", s(priv->output_sink->io.generated_path));
   }
   else {
     Sink_close_current(priv->output_sink);
