@@ -52,3 +52,7 @@ config ap frames_per_io 128
 
 config mjd enable 1
 config ap enable 1
+
+# Side-channel output, to be toggled at runtime.
+config mjd output /tmp/dell-%Y%m%d-%H%M%S.mjx
+config mjd rec_key R
