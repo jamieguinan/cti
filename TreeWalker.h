@@ -5,6 +5,7 @@
 
 // extern void TreeWalker_init(void);
 extern int TreeWalker_walk(String *dstr,
-                           int (*callback)(String * path, unsigned char dtype) );
+                           int (*callback)(String * path, unsigned char dtype, void * cbdata),
+                           void * cbdata);
 
 #endif

@@ -20,7 +20,8 @@
 #include "localptr.h"
 
 int TreeWalker_walk(String *dstr,
-                    int (*callback)(String * path, unsigned char dtype) )
+                    int (*callback)(String * path, unsigned char dtype, void * cbdata),
+                    void * cbdata)
 {
   DIR * d = opendir(s(dstr));
   if (!d) {
@@ -71,15 +72,15 @@ int TreeWalker_walk(String *dstr,
       }
       localptr(String, nextdir) = String_sprintf("%s/%s", s(dstr), de->d_name);
       int ignore = 0;
-      if (callback) { ignore = callback(nextdir, DT_DIR); }
+      if (callback) { ignore = callback(nextdir, DT_DIR, cbdata); }
       if (ignore == 0) { 
-	ret = TreeWalker_walk(nextdir, callback);
+	ret = TreeWalker_walk(nextdir, callback, cbdata);
       }
     }
     else if (d_type == DT_REG || d_type == DT_LNK) {
       localptr(String, fullname) = String_sprintf("%s/%s", s(dstr), de->d_name);
       if (callback) {
-        ret = callback(fullname, d_type);
+        ret = callback(fullname, d_type, cbdata);
       }
     }
     else {
@@ -99,7 +100,7 @@ int TreeWalker_walk(String *dstr,
 
 #ifdef TEST
 
-int xcallback(String *path, unsigned char dtype)
+int xcallback(String *path, unsigned char dtype, void *)
 {
   if (dtype == DT_DIR) {
     printf("   directory: %s\n", s(path));
@@ -115,7 +116,7 @@ int main(int argc, char *argv[])
   //TreeWalker_walk(S("/home/xplane9"));
   //TreeWalker_walk(S("/usr/local/kernels"));
   //TreeWalker_walk(S("/storage00/usr/local/kernels"));
-  TreeWalker_walk(S("/home/guinan/.maildir"), xcallback);
+  TreeWalker_walk(S("/home/guinan/.maildir"), xcallback, NULL);
   return 0;
 }
 #endif
