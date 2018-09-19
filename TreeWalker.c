@@ -46,10 +46,9 @@ int TreeWalker_walk(String *dstr,
 
     if (d_type == 0) {
       /* Fallback, use stat(). */
-      char path[strlen(s(dstr)) + strlen(de->d_name) + 1];
-      sprintf(path, "%s/%s", s(dstr), de->d_name);
+      localptr(String, path) = String_sprintf("%s/%s", s(dstr), de->d_name);
       struct stat st;
-      if (lstat(path, &st) == 0) {
+      if (lstat(s(path), &st) == 0) {
 	if (S_ISLNK(st.st_mode)) {
 	  d_type = DT_LNK;
 	}
