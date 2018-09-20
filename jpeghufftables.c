@@ -3,11 +3,11 @@
 #include "jpeghufftables.h"
 
 /* Default huffman tables.  From "jcparam.c", and verified in "mjpeg-notes.txt".*/
-static JHUFF_TBL dc_0 = { 
+static JHUFF_TBL dc_0 = {
   { /* 0-base */ 0x00, 0, 1, 5, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }
 };
-static JHUFF_TBL dc_1 = { 
+static JHUFF_TBL dc_1 = {
   { /* 0-base */ 0x01, 0, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 },
   { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 },
 };
@@ -34,10 +34,10 @@ static JHUFF_TBL ac_0 = {
     0xd5, 0xd6, 0xd7, 0xd8, 0xd9, 0xda, 0xe1, 0xe2,
     0xe3, 0xe4, 0xe5, 0xe6, 0xe7, 0xe8, 0xe9, 0xea,
     0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
-    0xf9, 0xfa }  
+    0xf9, 0xfa }
 };
 
-static JHUFF_TBL ac_1 = { 
+static JHUFF_TBL ac_1 = {
   { /* 0-base */ 0x11, 0, 2, 1, 2, 4, 4, 3, 4, 7, 5, 4, 4, 0, 1, 2, 0x77 },
   { 0x00, 0x01, 0x02, 0x03, 0x11, 0x04, 0x05, 0x21,
     0x31, 0x06, 0x12, 0x41, 0x51, 0x07, 0x61, 0x71,

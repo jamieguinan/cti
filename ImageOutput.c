@@ -41,7 +41,7 @@ static void YUV422P_handler(Instance *pi, void *data)
 {
   // ImageOutput_private * priv = (ImageOutput_private*) pi;
   YUV422P_buffer *y422p_in = data;
-  
+
   YUV422P_buffer_release(y422p_in);
 }
 
@@ -68,7 +68,7 @@ static void ImageOutput_instance_init(Instance *pi)
 
 static Template ImageOutput_template = {
   .label = "ImageOutput",
-  .priv_size = sizeof(ImageOutput_private),  
+  .priv_size = sizeof(ImageOutput_private),
   .inputs = ImageOutput_inputs,
   .num_inputs = table_size(ImageOutput_inputs),
   .outputs = ImageOutput_outputs,

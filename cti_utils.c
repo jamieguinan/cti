@@ -23,7 +23,7 @@ void cti_usleep(unsigned long usecs)
 
 void cti_getdoubletime(double *tdest)
 {
-  struct timeval tv;  
+  struct timeval tv;
   gettimeofday(&tv, NULL);
   *tdest = (tv.tv_sec + (tv.tv_usec/1000000.0));
 }
@@ -36,7 +36,7 @@ unsigned char cti_extract_hex_uchar(const char * input, int offset, int count, i
   if (!input || strlen(input) < (offset+count)) {
     *err = 1; return 0;
   }
-  
+
   for (i=0; i < count; i++) {
     result = result * 16;
     char c = input[offset+i];

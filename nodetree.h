@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include "String.h"
 
-/* Generic "Node" code, written to support HTML and XML, but could 
+/* Generic "Node" code, written to support HTML and XML, but could
    be used for anything where it fits. */
 
 typedef struct _Node {

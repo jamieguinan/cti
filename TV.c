@@ -27,7 +27,7 @@ static Output TV_outputs[] = {
 };
 
 /* States. */
-enum { 
+enum {
   IDLE=0,
   ENTERING_DIGITS,
 };
@@ -47,7 +47,7 @@ typedef struct {
 
 static int set_skip_channel(Instance *pi, const char *value)
 {
-  TV_private *priv = (TV_private *)pi;  
+  TV_private *priv = (TV_private *)pi;
   int channel = atoi(value);
   if (0 < channel && channel < 1000) {
     priv->skip_channels[channel/32] |= (1 << channel % 32);
@@ -58,11 +58,11 @@ static int set_skip_channel(Instance *pi, const char *value)
     return 1;
   }
 }
-  
+
 
 static int _get_skip_channel(TV_private *priv, int channel)
 {
-  
+
   if (priv->skip_channels[channel/32] & (1 << (channel % 32))) {
     return 1;
   }
@@ -89,7 +89,7 @@ static void change_channel(Instance *pi)
   const char *freq_str = ChannelMaps_channel_to_frequency(priv->map, channel_str->bytes);
 
   if (freq_str && pi->outputs[OUTPUT_VC_CONFIG].destination) {
-    PostData(Config_buffer_new("frequency", freq_str), 
+    PostData(Config_buffer_new("frequency", freq_str),
 	     pi->outputs[OUTPUT_VC_CONFIG].destination);
   }
 
@@ -158,7 +158,7 @@ static void Keycode_handler(Instance *pi, void *msg)
       }
     }
     goto channelchange;
-  case CTI__KEY_CHANNELDOWN: 
+  case CTI__KEY_CHANNELDOWN:
     while (priv->current_channel > 2) {
       priv->current_channel -= 1;
       if (_get_skip_channel(priv, priv->current_channel) == 0) {
@@ -250,7 +250,7 @@ static void TV_tick(Instance *pi)
 static void TV_instance_init(Instance *pi)
 {
   TV_private *priv = (TV_private *)pi;
-  
+
   priv->current_channel = 12;
   priv->map = "NTSC_Cable";
 }

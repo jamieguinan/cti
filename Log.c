@@ -42,7 +42,7 @@ void Log(int category, char *fmt, ...)
   if (Logs[category].msgs[n]) {
     free(Logs[category].msgs[n]);
   }
-  
+
   Logs[category].msgs[n] = p;
 
   n += 1;

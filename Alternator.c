@@ -44,7 +44,7 @@ static void Jpeg_handler(Instance *pi, void *data)
   Alternator_private *priv = (Alternator_private *)pi;
   const int available_outputs[] = { OUTPUT_JPEG_1, OUTPUT_JPEG_2, OUTPUT_JPEG_3 };
   int connected_outputs[MAX_OUTPUTS];
-  int connected_count = 0;  
+  int connected_count = 0;
   int i, j;
   Jpeg_buffer *jpeg_in = data;
 
@@ -64,7 +64,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   /* connected_outputs[] now contains indexes to connected outputs */
   priv->jpeg_connected_index = (priv->jpeg_connected_index + 1) % connected_count;
-  
+
   for (i=0; i < connected_count; i++) {
     if (i == priv->jpeg_connected_index) {
       j = connected_outputs[i];
@@ -96,7 +96,7 @@ static void Alternator_instance_init(Instance *pi)
 
 static Template Alternator_template = {
   .label = "Alternator",
-  .priv_size = sizeof(Alternator_private),  
+  .priv_size = sizeof(Alternator_private),
   .inputs = Alternator_inputs,
   .num_inputs = table_size(Alternator_inputs),
   .outputs = Alternator_outputs,

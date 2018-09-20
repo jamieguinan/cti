@@ -53,8 +53,8 @@ int listen_socket_setup(listen_common *lsc)
   if (set_reuseaddr) {
     int reuse = 1;
     rc = setsockopt(lsc->fd, SOL_SOCKET, SO_REUSEADDR, (void*)&reuse, sizeof(reuse));
-    if (rc == -1) { 
-      perror("SO_REUSEADDR\n"); 
+    if (rc == -1) {
+      perror("SO_REUSEADDR\n");
       close(lsc->fd); lsc->fd = -1;
       return 1;
     }
@@ -67,8 +67,8 @@ int listen_socket_setup(listen_common *lsc)
     /* http://stackoverflow.com/questions/1618240/how-to-support-both-ipv4-and-ipv6-connections */
     int x = 0;
     rc = setsockopt(lsc->fd, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&x, sizeof(x));
-    if (rc == -1) { 
-      perror("IPPROTO_IPV6\n"); 
+    if (rc == -1) {
+      perror("IPPROTO_IPV6\n");
     }
 
     struct sockaddr_in6 sa6 = {
@@ -87,21 +87,21 @@ int listen_socket_setup(listen_common *lsc)
     rc = bind(lsc->fd, (struct sockaddr *)&sa, sizeof(sa));
   }
 
-  if (rc == -1) { 
-    perror("bind"); 
+  if (rc == -1) {
+    perror("bind");
     close(lsc->fd); lsc->fd = -1;
     return 1;
   }
 
   rc = listen(lsc->fd, 5);
-  if (rc == -1) { 
-    perror("listen"); 
+  if (rc == -1) {
+    perror("listen");
     close(lsc->fd); lsc->fd = -1;
     return 1;
   }
 
   fprintf(stderr, "listening on port %d\n", lsc->port);
-  
+
   return 0;
 }
 

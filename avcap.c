@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
   Instance *cj = Instantiate("CJpeg");
   printf("instance: %s\n", cj->label);
   Instance_loop_thread(cj);
-  
+
   Instance *mj = Instantiate("MjpegMux");
   printf("instance: %s\n", mj->label);
 

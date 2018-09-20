@@ -117,7 +117,7 @@ Node * Text(const char *text)
 {
   Node *n = node_new("");
   n->text = strdup(text);
-  
+
   return n;
 }
 
@@ -232,7 +232,7 @@ Node * node_find_subnode_by_path_match(Node * node, const char * path, const cha
   if (!path) {
     /* End of path search.  If there is a text subnode, return it,
        first comparing to subnode_text if supplied. */
-    if (node->subnodes_count 
+    if (node->subnodes_count
 	&& node->subnodes[0]->text) {
       if (subnode_text) {
 	/* Require a match, or return NULL. */
@@ -263,7 +263,7 @@ Node * node_find_subnode_by_path_match(Node * node, const char * path, const cha
   }
 
   if (nodetree_debug) printf("local_path=%s\n", local_path);
-  
+
   for (i=0; i < node->subnodes_count; i++) {
     Node * subnode = node->subnodes[i];
     //printf("i=%d subnode->tag=%p (%s)\n", i, subnode->tag, subnode->tag ? subnode->tag :"");

@@ -83,7 +83,7 @@ static void Y422p_handler(Instance *pi, void *msg)
   YUV422P_buffer *y422p_in = msg;
   int n = 0;
 
-#if 0    
+#if 0
   if (y422p_in == 0L) {
     /* End of stream. */
     pclose(priv->po);
@@ -93,14 +93,14 @@ static void Y422p_handler(Instance *pi, void *msg)
 #endif
 
   // printf("%s got a frame %p\n", __func__, y422p_in);
-  
+
   if (!priv->po) {
     fprintf(stderr, "%s: pipe output not set!\n", __func__);
     goto out;
   }
-    
+
   if (!priv->header_sent) {
-    /* 
+    /*
      * Create and write header.
      *     It: interlaced, top-field first
      *   C422: 4:2:2 chroma subsampling
@@ -111,10 +111,10 @@ static void Y422p_handler(Instance *pi, void *msg)
 	    );
     priv->header_sent = 1;
   }
-  
+
   /* Create and write one frame. */
   fprintf(priv->po, "FRAME\n");
-  
+
   n += fwrite(y422p_in->y, y422p_in->y_length, 1, priv->po);
   n += fwrite(y422p_in->cb, y422p_in->cb_length, 1, priv->po);
   n += fwrite(y422p_in->cr, y422p_in->cr_length, 1, priv->po);
@@ -132,7 +132,7 @@ static void Y422p_handler(Instance *pi, void *msg)
     fb->seq = 0;
     PostData(fb, pi->outputs[OUTPUT_FEEDBACK].destination);
   }
-  
+
  out:
   YUV422P_buffer_release(y422p_in);
 }

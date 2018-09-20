@@ -20,9 +20,9 @@
 
 
 static int SDLtoCTI_Keymap[SDLK_LAST] = {
-  [SDLK_UP] = CTI__KEY_UP, 
-  [SDLK_DOWN] = CTI__KEY_DOWN, 
-  [SDLK_LEFT] = CTI__KEY_LEFT, 
+  [SDLK_UP] = CTI__KEY_UP,
+  [SDLK_DOWN] = CTI__KEY_DOWN,
+  [SDLK_LEFT] = CTI__KEY_LEFT,
   [SDLK_RIGHT] = CTI__KEY_RIGHT,
   [SDLK_0] = CTI__KEY_0,
   [SDLK_1] = CTI__KEY_1,
@@ -167,7 +167,7 @@ static void update_display_times()
   /* CLOCK_MONOTONIC_RAW is only present in linux-2.6.28+ */
   static double field_times[600];
   static int tcount = 0;
-  
+
   if (tcount == 600) {
     return;
   }
@@ -201,7 +201,7 @@ static void Keycode_handler(Instance *pi, void *msg)
   int handled = 0;
 
   //   puts(__func__);
-  
+
   if (km->keycode == CTI__KEY_F) {
     priv->toggle_fullscreen = 1;
     handled = 1;
@@ -223,7 +223,7 @@ static void Keycode_handler(Instance *pi, void *msg)
     }
     handled = 1;
   }
-  
+
   else if (km->keycode == CTI__KEY_Q) {
     handled = 1;
     exit(0);
@@ -399,8 +399,8 @@ static void _gl_setup(SDLstuff_private *priv)
 	extensions[i] = '\n';
       }
     }
-    
-    { 
+
+    {
       FILE *f = fopen("extensions.txt", "w");
       fputs(extensions, f);
       fclose(f);
@@ -446,7 +446,7 @@ static void _reset_video(SDLstuff_private *priv, const char *func)
     }
 
     sdl_vid_flags |= SDL_OPENGL;
-    priv->surface = SDL_SetVideoMode(priv->width, priv->height, 32, 
+    priv->surface = SDL_SetVideoMode(priv->width, priv->height, 32,
 				    sdl_vid_flags
 				    );
   }
@@ -461,7 +461,7 @@ static void _reset_video(SDLstuff_private *priv, const char *func)
   }
 
   else  {
-    priv->surface= SDL_SetVideoMode(priv->width, priv->height, 24, 
+    priv->surface= SDL_SetVideoMode(priv->width, priv->height, 24,
 				    sdl_vid_flags
 				    );
   }
@@ -478,7 +478,7 @@ static void _reset_video(SDLstuff_private *priv, const char *func)
     if (0 == rc) {
       printf("SDL_GL_DOUBLEBUFFER=%d\n", v);
     }
-    
+
     rc = SDL_GL_GetAttribute(SDL_GL_SWAP_CONTROL, &v);
     if (0 == rc) {
       printf("SDL_GL_SWAP_CONTROL=%d\n", v);
@@ -547,8 +547,8 @@ static void render_frame_gl(SDLstuff_private *priv, RGB3_buffer *rgb3_in)
 
   rgb_final = rgb3_in;
 
-  /* 
-   * Interestingly, the order of calling glPixelZoom and glDrawPixels doesn't seem to matter. 
+  /*
+   * Interestingly, the order of calling glPixelZoom and glDrawPixels doesn't seem to matter.
    * Maybe its just setting up parts of the GL pipeline before it runs.
    */
   glDrawPixels(rgb_final->width, rgb_final->height, GL_RGB, GL_UNSIGNED_BYTE, rgb_final->data);
@@ -595,7 +595,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 
     if (priv->fullscreen
         && priv->screen_aspect
-	&& (global.display.width != 0) 
+	&& (global.display.width != 0)
 	&& (global.display.height != 0)) {
       overlayWidth = yuv420p_in->height * (global.display.width/(global.display.height*1.0));
       while (overlayWidth % 4 != 0) {
@@ -611,8 +611,8 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     }
 
     priv->overlay = SDL_CreateYUVOverlay(overlayWidth, overlayHeight,
-					 SDL_YV12_OVERLAY, 
-					 // SDL_IYUV_OVERLAY, 
+					 SDL_YV12_OVERLAY,
+					 // SDL_IYUV_OVERLAY,
 					 priv->surface);
     if (!priv->overlay) {
       fprintf(stderr, "SDL_CreateYUVOverlay: SDL_error %s\n", SDL_GetError());
@@ -624,7 +624,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
       exit(1);
     }
 
-    fprintf(stderr, 
+    fprintf(stderr,
 	    "Overlay:\n"
 	    "  %d, %d\n"
 	    "  %d planes\n"
@@ -637,7 +637,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 
     fprintf(stderr, "  priv size: %d,%d\n", priv->width, priv->height);
     fprintf(stderr, "  yuv420p_in: %d,%d,%d\n", yuv420p_in->y_length, yuv420p_in->cb_length, yuv420p_in->cr_length);
-    
+
   }
 
   int iy, next_iy; /* Start line, to allow rendering interlace fields. */
@@ -704,22 +704,22 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 	dst_index = y * priv->overlay->pitches[1];
 
 	memset(&priv->overlay->pixels[1][dst_index], 128, pad_left);
-	memcpy(&priv->overlay->pixels[1][dst_index] + pad_left, 
-	       &yuv420p_in->cr[src_index], 
+	memcpy(&priv->overlay->pixels[1][dst_index] + pad_left,
+	       &yuv420p_in->cr[src_index],
 	       src_width);
 	memset(&priv->overlay->pixels[1][dst_index]+pad_left+src_width, 128, pad_right);
 
 
 	memset(&priv->overlay->pixels[2][dst_index], 128, pad_left);
 	memcpy(&priv->overlay->pixels[2][dst_index] + pad_left,
-	       &yuv420p_in->cb[src_index], 
+	       &yuv420p_in->cb[src_index],
 	       src_width);
 	memset(&priv->overlay->pixels[2][dst_index]+pad_left+src_width, 128, pad_right);
 
 	src_index += (src_width * dy);
       }
     }
-  
+
     SDL_UnlockYUVOverlay(priv->overlay);
 
     SDL_Rect rect = { 0, 0, priv->width, priv->height };
@@ -731,7 +731,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     if (1) {
       clock_nanosleep(CLOCK_MONOTONIC,
 		      0,
-		      &(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/70}, 
+		      &(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/70},
 		      NULL);
       iy = next_iy;
     }
@@ -781,8 +781,8 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   dpf("frame %d ready for display\n", priv->inFrames);
   int need_reset = 0;
 
-  if (priv->toggle_fullscreen 
-      && (global.display.width != 0) 
+  if (priv->toggle_fullscreen
+      && (global.display.width != 0)
       && (global.display.height != 0)) {
     if (!priv->fullscreen) {
       priv->fullscreen = 1;
@@ -801,7 +801,7 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   }
 
   if (priv->new_width && priv->new_height) {
-    if (priv->new_width != priv->width || 
+    if (priv->new_width != priv->width ||
 	priv->new_height != priv->height) {
       /* Resize based on config-adjusted size. */
       priv->width = priv->new_width;
@@ -810,14 +810,14 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
     }
   }
   else if (!priv->fullscreen
-	   && width != priv->width 
+	   && width != priv->width
 	   && height != priv->height) {
     /* Resize based on incoming frame. */
     priv->width = width;
     priv->height = height;
     need_reset = 1;
   }
-    
+
   if (need_reset) {
     reset_video(priv);
   }
@@ -834,7 +834,7 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
   }
 
   if (priv->smoother) {
-    VSmoother_smooth(priv->smoother, 
+    VSmoother_smooth(priv->smoother,
 		     c->timestamp,
 		     ((Instance *)priv)->pending_messages);
   }
@@ -896,19 +896,19 @@ static void YUV420P_handler(Instance *pi, void *data)
   pre_render_frame(priv, yuv420p->width, yuv420p->height, &yuv420p->c);
 
   switch (priv->renderMode) {
-  case RENDER_MODE_GL: 
+  case RENDER_MODE_GL:
     {
       rgb3 = YUV420P_to_RGB3(yuv420p);
       render_frame_gl(priv, rgb3);
       RGB3_buffer_release(rgb3);
     }
     break;
-  case RENDER_MODE_OVERLAY: 
+  case RENDER_MODE_OVERLAY:
     {
       render_frame_overlay(priv, yuv420p);
     }
     break;
-  case RENDER_MODE_SOFTWARE: 
+  case RENDER_MODE_SOFTWARE:
     {
       bgr3 = YUV420P_to_BGR3(yuv420p);
       render_frame_software(priv, bgr3);
@@ -946,19 +946,19 @@ static void YUV422P_handler(Instance *pi, void *data)
   pre_render_frame(priv, yuv422p->width, yuv422p->height, &yuv422p->c);
 
   switch (priv->renderMode) {
-  case RENDER_MODE_GL: 
+  case RENDER_MODE_GL:
     {
       rgb3 = YUV422P_to_RGB3(yuv422p);
       render_frame_gl(priv, rgb3);
     }
     break;
-  case RENDER_MODE_OVERLAY: 
+  case RENDER_MODE_OVERLAY:
     {
       yuv420p = YUV422P_to_YUV420P(yuv422p);
       render_frame_overlay(priv, yuv420p);
     }
     break;
-  case RENDER_MODE_SOFTWARE: 
+  case RENDER_MODE_SOFTWARE:
     {
       bgr3 = YUV422P_to_BGR3(yuv422p);
       render_frame_software(priv, bgr3);
@@ -1017,18 +1017,18 @@ static void RGB3_handler(Instance *pi, void *data)
   pre_render_frame(priv, rgb3->width, rgb3->height, &rgb3->c);
 
   switch (priv->renderMode) {
-  case RENDER_MODE_GL: 
+  case RENDER_MODE_GL:
     {
       render_frame_gl(priv, rgb3);
     }
     break;
-  case RENDER_MODE_OVERLAY: 
+  case RENDER_MODE_OVERLAY:
     {
       yuv420p = RGB3_to_YUV420P(rgb3);
       render_frame_overlay(priv, yuv420p);
     }
     break;
-  case RENDER_MODE_SOFTWARE: 
+  case RENDER_MODE_SOFTWARE:
     {
       rgb3_to_bgr3(&rgb3, &bgr3);
       render_frame_software(priv, bgr3);
@@ -1063,26 +1063,26 @@ static void BGR3_handler(Instance *pi, void *data)
 
   pre_render_frame(priv, bgr3->width, bgr3->height, &bgr3->c);
   switch (priv->renderMode) {
-  case RENDER_MODE_GL: 
+  case RENDER_MODE_GL:
     {
       /* FIXME: glDrawPixels can handle GL_BGR, so could just pass that along...*/
       bgr3_to_rgb3(&bgr3, &rgb3);
       render_frame_gl(priv, rgb3);
     }
     break;
-  case RENDER_MODE_OVERLAY: 
+  case RENDER_MODE_OVERLAY:
     {
       /* FIXME... */
       // render_frame_overlay(priv, yuv420p);
     }
     break;
-  case RENDER_MODE_SOFTWARE: 
+  case RENDER_MODE_SOFTWARE:
     {
       render_frame_software(priv, bgr3);
     }
     break;
   }
-  post_render_frame(pi);  
+  post_render_frame(pi);
 
   if (rgb3) {
     RGB3_buffer_release(rgb3);
@@ -1108,7 +1108,7 @@ static void GRAY_handler(Instance *pi, void *data)
 
   pre_render_frame(priv, gray->width, gray->height, &gray->c);
   switch (priv->renderMode) {
-  case RENDER_MODE_GL: 
+  case RENDER_MODE_GL:
     {
       rgb3 = RGB3_buffer_new(gray->width, gray->height, &gray->c);
       int i;
@@ -1121,7 +1121,7 @@ static void GRAY_handler(Instance *pi, void *data)
       render_frame_gl(priv, rgb3);
     }
     break;
-  case RENDER_MODE_OVERLAY: 
+  case RENDER_MODE_OVERLAY:
     {
       yuv420p = YUV420P_buffer_new(gray->width, gray->height, &gray->c);
       memcpy(yuv420p->y, gray->data, gray->data_length);
@@ -1130,7 +1130,7 @@ static void GRAY_handler(Instance *pi, void *data)
       render_frame_overlay(priv, yuv420p);
     }
     break;
-  case RENDER_MODE_SOFTWARE: 
+  case RENDER_MODE_SOFTWARE:
     {
       bgr3 = BGR3_buffer_new(gray->width, gray->height, &gray->c);
       int i;
@@ -1144,7 +1144,7 @@ static void GRAY_handler(Instance *pi, void *data)
     }
     break;
   }
-  post_render_frame(pi);  
+  post_render_frame(pi);
 
   if (gray) {
     Gray_buffer_release(gray);
@@ -1191,7 +1191,7 @@ void sdl_event_loop(void)
   //priv->renderMode = RENDER_MODE_GL;
   //priv->renderMode = RENDER_MODE_SOFTWARE;
   priv->renderMode = RENDER_MODE_OVERLAY;
-  
+
 
   printf("%s started\n", __func__);
 
@@ -1251,10 +1251,10 @@ static void SDLstuff_tick(Instance *pi)
   }
 
   if (hm) {
-    SDL_Event ev = {  .user.type = SDL_USEREVENT, 
+    SDL_Event ev = {  .user.type = SDL_USEREVENT,
 		      .user.code = 0,
-		      .user.data1 = hm,  
-		      .user.data2 = 0L 
+		      .user.data1 = hm,
+		      .user.data2 = 0L
     };
 
     /* PushEvent will fail until SDL is initialized in the other thread. */
@@ -1304,7 +1304,7 @@ static Template SDLstuff_template = {
   .outputs = SDLstuff_outputs,
   .num_outputs = table_size(SDLstuff_outputs),
   .tick = SDLstuff_tick,
-  .instance_init = SDLstuff_instance_init,  
+  .instance_init = SDLstuff_instance_init,
 };
 
 void SDLstuff_init(void)

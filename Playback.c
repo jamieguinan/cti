@@ -26,7 +26,7 @@ static Config config_table[] = {
 
 static void Example_tick(Instance *pi)
 {
-  
+
 }
 
 static void Example_instance_init(Instance *pi)

@@ -26,7 +26,7 @@ static void save_error_jpeg(uint8_t *data, int data_length)
   FILE *f = fopen(filename, "wb");
   int n = fwrite(data, 1, data_length, f);
   if (n != data_length) {
-    perror("fwrite"); 
+    perror("fwrite");
   } else {
     printf("saved erroneous jpeg to error.jpg\n");
     fclose(f);
@@ -49,15 +49,15 @@ static void jerr_error_handler(j_common_ptr cinfo)
 
 static FormatInfo known_formats[] = {
   /* See swdev/notes.txt regarding subsampling and formats. */
-  { .imgtype = IMAGE_TYPE_YUV420P, .label = "YUV420P", 
+  { .imgtype = IMAGE_TYPE_YUV420P, .label = "YUV420P",
     .libjpeg_colorspace = JCS_YCbCr, .libjpeg_colorspace_label = "JCS_YCbCr",
     .factors = { 2, 2, 1, 1, 1, 1}, .crcb_width_divisor = 2, .crcb_height_divisor = 2},
 
-  { .imgtype = IMAGE_TYPE_YUV422P, .label = "YUV422P", 
+  { .imgtype = IMAGE_TYPE_YUV422P, .label = "YUV422P",
     .libjpeg_colorspace = JCS_YCbCr, .libjpeg_colorspace_label = "JCS_YCbCr",
     .factors = { 2, 1, 1, 1, 1, 1}, .crcb_width_divisor = 2, .crcb_height_divisor = 1},
 
-  { .imgtype = IMAGE_TYPE_YUV422P, .label = "YUV422P", 
+  { .imgtype = IMAGE_TYPE_YUV422P, .label = "YUV422P",
     .libjpeg_colorspace = JCS_YCbCr, .libjpeg_colorspace_label = "JCS_YCbCr",
     .factors = { 2, 2, 1, 2, 1, 2}, .crcb_width_divisor = 2, .crcb_height_divisor = 1},
 };
@@ -77,13 +77,13 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, unsigned long data_length, Image_co
   int error = 0;
 
   if (Image_guess_type(data, 5) != IMAGE_TYPE_JPEG) {
-    fprintf(stderr, "%s: data does not look like a jpeg file [%02x %02x %02x %02x]\n", 
+    fprintf(stderr, "%s: data does not look like a jpeg file [%02x %02x %02x %02x]\n",
 	    __func__, data[0], data[1], data[2], data[3]);
-    return NULL;    
+    return NULL;
   }
 
-  cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
-					this may cause the program to call 
+  cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit,
+					this may cause the program to call
 					exit()! */
   jerr.error_exit = jerr_error_handler;
 
@@ -113,9 +113,9 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, unsigned long data_length, Image_co
   jpeg->encoded_length = data_length;
   memcpy(jpeg->data, data, data_length);
 
- out:  
-  jpeg_destroy_decompress(&cinfo); 
-  
+ out:
+  jpeg_destroy_decompress(&cinfo);
+
   return jpeg;
 }
 
@@ -142,21 +142,21 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
   struct jpeg_error_mgr jerr;
   int error = 0;
   jmp_buf jb;
-  
-  cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
+
+  cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit,
 					this may cause the program to call exit()! */
   jerr.emit_message = jerr_warning_noop;
-  jerr.error_exit = jerr_error_handler;    
-  
+  jerr.error_exit = jerr_error_handler;
+
   jpeg_create_decompress(&cinfo);
-  
+
   cinfo.client_data = &jb;
   error = setjmp(jb);
   if (error) {
     fprintf(stderr, "%s:%d\n", __func__, __LINE__);
     goto jdd;
   }
-  
+
   cinfo.raw_data_out = TRUE;
 
   jpeg_mem_src(&cinfo, jpeg_in->data, jpeg_in->data_length);
@@ -165,7 +165,7 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
 
   //save_width = cinfo.image_width;
   //save_height = cinfo.image_height;
-  
+
   int samp_factors[6] = {
     cinfo.comp_info[0].h_samp_factor,
     cinfo.comp_info[0].v_samp_factor,
@@ -185,7 +185,7 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
       break;
     }
   }
-    
+
   if (!fmt) {
     printf("jpeg colorspace is %s\n",
 	   cinfo.jpeg_color_space == JCS_GRAYSCALE ? "JCS_GRAYSCALE" :
@@ -220,7 +220,7 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
 
   /* Note: Adjust default decompression parameters here. */
 
-  /* 
+  /*
    * By default, setting JCS_YCbCr produces 4:4:4 interleaved output. If input
    * is 4:2:2 and want 4:2:2 raw output, can set "cinfo.raw_data_out = TRUE", but
    * then must also use jpeg_read_raw_data().  Setup is very similar
@@ -239,13 +239,13 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
     cinfo.dc_huff_tbl_ptrs[0] = dc_huff_tbl_ptrs[0];
     cinfo.dc_huff_tbl_ptrs[1] = dc_huff_tbl_ptrs[1];
   }
-    
+
   if (!cinfo.ac_huff_tbl_ptrs[0]) {
     cinfo.ac_huff_tbl_ptrs[0] = ac_huff_tbl_ptrs[0];
     cinfo.ac_huff_tbl_ptrs[1] = ac_huff_tbl_ptrs[1];
   }
-	   
-  /* I verified that setting .dct_method before jpeg_start_decompress() works with 
+
+  /* I verified that setting .dct_method before jpeg_start_decompress() works with
      jpeg-7 by adding printfs in the respective jidct*.c functions and running
      separate tests for dct_method ifast, islow, and float. */
   cinfo.dct_method = dct_method;
@@ -280,24 +280,24 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
     JSAMPROW cb[16];
     JSAMPROW cr[16];
     for (n=0; n < 16; n++) {
-      y[n] = buffers[0] + 
+      y[n] = buffers[0] +
 	((n+cinfo.output_scanline) * cinfo.image_width);
-      cb[n] = buffers[1] + 
+      cb[n] = buffers[1] +
 	((n+cinfo.output_scanline/fmt->crcb_height_divisor) * cinfo.image_width/fmt->crcb_width_divisor);
-      cr[n] = buffers[2] + 
+      cr[n] = buffers[2] +
 	((n+cinfo.output_scanline/fmt->crcb_height_divisor) * cinfo.image_width/fmt->crcb_width_divisor);
     }
-      
+
     JSAMPARRAY array[3] = { y, cb, cr};
     JSAMPIMAGE image = array;
-    /* Need to pass enough lines at a time, see 
+    /* Need to pass enough lines at a time, see
         if (max_lines < lines_per_iMCU_row)
        test in jdapistd.c.  Sometimes only needs
        8, but 16 doesn't hurt in that case.  */
 
     n = jpeg_read_raw_data(&cinfo, image, 16);
-    
-    //printf("  n=%d cinfo.output_scanline=%d cinfo.output_height=%d\n", 
+
+    //printf("  n=%d cinfo.output_scanline=%d cinfo.output_height=%d\n",
     //       n, cinfo.output_scanline , cinfo.output_height);
 
   }
@@ -313,22 +313,22 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
 
     FILE *Cb = fopen("cb.pgm", "wb");
     if (Cb) {
-      fprintf(Cb, "P5\n%d %d\n255\n", 
+      fprintf(Cb, "P5\n%d %d\n255\n",
 	      cinfo.image_width/fmt->crcb_width_divisor,
 	      cinfo.image_height/fmt->crcb_height_divisor);
-      fwrite(buffers[1], 
-	     cinfo.image_width*cinfo.image_height/(fmt->crcb_width_divisor*fmt->crcb_height_divisor), 1, 
+      fwrite(buffers[1],
+	     cinfo.image_width*cinfo.image_height/(fmt->crcb_width_divisor*fmt->crcb_height_divisor), 1,
 	     Cb);
       fclose(Cb);
     }
 
     FILE *Cr = fopen("cr.pgm", "wb");
     if (Cr) {
-      fprintf(Cb, "P5\n%d %d\n255\n", 
+      fprintf(Cb, "P5\n%d %d\n255\n",
 	      cinfo.image_width/fmt->crcb_width_divisor,
 	      cinfo.image_height/fmt->crcb_height_divisor);
-      fwrite(buffers[2], 
-	     cinfo.image_width*cinfo.image_height/(fmt->crcb_width_divisor*fmt->crcb_height_divisor), 1, 
+      fwrite(buffers[2],
+	     cinfo.image_width*cinfo.image_height/(fmt->crcb_width_divisor*fmt->crcb_height_divisor), 1,
 	     Cr);
       fclose(Cr);
     }
@@ -382,21 +382,21 @@ RGB3_buffer * Jpeg_to_rgb3(Jpeg_buffer * jpeg)
 /* I also put Jpeg_fix() in this module, because it has access to the huffman
    tables, and again I didn't want Images.c to pull in jpeglib.h, nor define
    a second copy of the tables. */
-enum maker_enums { 
-  SOI = 0xd8, 
-  APP0 = 0xe0, 
-  DQT = 0xdb, 
-  SOF0 = 0xc0, 
-  SOS = 0xda, 
-  EOI = 0xd9, 
-  DRI = 0xdd, 
-  DHT = 0xc4 
+enum maker_enums {
+  SOI = 0xd8,
+  APP0 = 0xe0,
+  DQT = 0xdb,
+  SOF0 = 0xc0,
+  SOS = 0xda,
+  EOI = 0xd9,
+  DRI = 0xdd,
+  DHT = 0xc4
 };
 
 static const char *markers[] = {
   [SOI] = "SOI",
   [APP0] = "APP0",
-  [DQT] = "DQT", 
+  [DQT] = "DQT",
   [SOF0] = "SOF0",
   [SOS] = "SOS",
   [EOI] = "EOI",
@@ -458,7 +458,7 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
       while (1) {
 	uint8_t x[1] = { 0xff};
 	j = ArrayU8_search(ArrayU8_temp_const(jpeg->data, jpeg->data_length),
-			   i, 
+			   i,
 			   ArrayU8_temp_const(x, 1));
 	if (j == -1) {
 	  fprintf(stderr, "reached end of data without finding closing tag!\n");
@@ -469,7 +469,7 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
 	  i = j+1;
 	  continue;
 	}
-	else if ( (jpeg->data[j+1] & 0xf0) == 0xd0 
+	else if ( (jpeg->data[j+1] & 0xf0) == 0xd0
 		  && (jpeg->data[j+1] & 0x0f) <= 7) {
 	  // Restart marker.  Keep searching inside SOS.
 	  i = j+2;
@@ -506,7 +506,7 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
       blockL = i0;
       blockR = i;
     }
-    
+
     if (saw_sof && marker != DHT) {
       /* Add huffman tables.  Using the same tables that are set
 	 during decompression if they are found to be missing
@@ -530,7 +530,7 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
       ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[1]->bits, 17));
       ArrayU8_append(newdata, ArrayU8_temp_const(ac_huff_tbl_ptrs[1]->huffval, 162));
     }
-    
+
     if (marker == SOF0) {
       saw_sof = 1;
     }

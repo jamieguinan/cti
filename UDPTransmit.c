@@ -52,7 +52,7 @@ static int set_addr(Instance *pi, const char *value)
     fprintf(stderr, "%s %s: must set port first\n", __FILE__, __func__);
     return 1;
   }
-  
+
   String_set(&priv->addr, value);
 
   priv->socket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
@@ -60,7 +60,7 @@ static int set_addr(Instance *pi, const char *value)
     perror("socket");
     return 1;
   }
-    
+
   priv->remote.sin_family = AF_INET;
   priv->remote.sin_port = htons(priv->port);
 
@@ -70,15 +70,15 @@ static int set_addr(Instance *pi, const char *value)
   }
 
   fprintf(stderr, "%s: socket init successful\n", pi->label);
-  
-  return 0;  
+
+  return 0;
 }
 
 static Config config_table[] = {
   {"port", set_port, 0L, 0L}
   , {"addr", set_addr, 0L, 0L}
   , {"logging", 0L, 0L, 0L, cti_set_int, offsetof(UDPTransmit_private, logging)}
-  , {"buffer_level", 0L, 0L, 0L, cti_set_int, offsetof(UDPTransmit_private, buffer_level)}  
+  , {"buffer_level", 0L, 0L, 0L, cti_set_int, offsetof(UDPTransmit_private, buffer_level)}
 };
 
 static void RawData_handler(Instance *pi, void *data)
@@ -87,7 +87,7 @@ static void RawData_handler(Instance *pi, void *data)
   RawData_buffer *raw = data;
 
   int n = 0;
-  
+
   if (priv->buffer_level) {
     if (!priv->buffer) {
       priv->buffer = ArrayU8_new();
@@ -145,7 +145,7 @@ static void UDPTransmit_instance_init(Instance *pi)
 
 static Template UDPTransmit_template = {
   .label = "UDPTransmit",
-  .priv_size = sizeof(UDPTransmit_private),  
+  .priv_size = sizeof(UDPTransmit_private),
   .inputs = UDPTransmit_inputs,
   .num_inputs = table_size(UDPTransmit_inputs),
   .outputs = UDPTransmit_outputs,

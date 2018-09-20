@@ -32,7 +32,7 @@ typedef struct {
   int count;
 } Index;
 
-enum { 
+enum {
   INDEX_NO_ERROR,
   INDEX_DUPLICATE_KEY,
   INDEX_KEY_NOT_FOUND,

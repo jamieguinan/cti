@@ -55,14 +55,14 @@ static void junk(O511_buffer *o511_in, YUV420P_buffer *y420p_out)
 	  perror("fwrite");
 	}
 	fclose(f);
-	
+
 	f = fopen("/tmp/u.pgm", "wb");
 	fprintf(f, "P5\n%d %d\n255\n",  o511_in->width/2, o511_in->height/2);
 	if (fwrite(y420p_out->data + o511_in->width * o511_in->height, (o511_in->width * o511_in->height)/4, 1, f) != 1) {
 	  perror("fwrite");
 	}
 	fclose(f);
-	
+
 	f = fopen("/tmp/v.pgm", "wb");
 	fprintf(f, "P5\n%d %d\n255\n",  o511_in->width/2, o511_in->height/2);
 	if (fwrite(y420p_out->data + (o511_in->width * o511_in->height)*5/4, (o511_in->width * o511_in->height)/4, 1, f) != 1) {
@@ -112,7 +112,7 @@ static void O511_handler(Instance *pi, void *data)
 
   y420p_out = YUV420P_buffer_new(o511_in->width, o511_in->height, 0L);
   y420p_out->c.timestamp = o511_in->c.timestamp;
-    
+
   temp = malloc( (o511_in->width * o511_in->height * 3)/ 2);
 
   if (priv->gspca_mode) {
@@ -126,11 +126,11 @@ static void O511_handler(Instance *pi, void *data)
   }
 
   // printf("o511_in->data_length=%d\n", o511_in->data_length);
-  ov511_decomp_420(o511_in->data+magic_offset, 
-		   y420p_out->data, 
-		   temp, 
-		   o511_in->width, 
-		   o511_in->height, 
+  ov511_decomp_420(o511_in->data+magic_offset,
+		   y420p_out->data,
+		   temp,
+		   o511_in->width,
+		   o511_in->height,
 		   o511_in->data_length);
   free(temp);
 

@@ -1,7 +1,7 @@
 /*
  * This is a utility module, not normally built into the cti main
  * program, but used by other programs.
- * 
+ *
  * Jsmn (https://github.com/zserge/jsmn) is a wonderfully small,
  * efficient JSON parser/tokenizer, and I am almost embarassed
  * to wrap it in this layer, but it is necessary to connect
@@ -231,9 +231,9 @@ void jsmn_dispatch(JsmnContext * jc, const char * firstkey,
       break;
     }
   }
-  
+
   // jsmn_dump_verbose(json_str, tokens, n, n);
-  
+
   if (jc->num_tokens >= 3
       && jc->tokens[0].type == JSMN_OBJECT
       && jc->tokens[1].type == JSMN_STRING

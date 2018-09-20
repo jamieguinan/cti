@@ -68,7 +68,7 @@ String * File_load_base64(String * filename)
   if (!a) {
     return String_value_none();
   }
-  
+
   String * result = String_new("");
   int digits[4] = {};
   char values[4];
@@ -87,7 +87,7 @@ String * File_load_base64(String * filename)
       break;
     }
   }
-  
+
   switch(i%3) {
   case 0: break;
   case 1:
@@ -169,7 +169,7 @@ int File_make_dir(String * path)
       return -1;
     }
   }
-  
+
   return mkdir(s(path), 0777);
 }
 
@@ -187,7 +187,7 @@ int File_copy(String * oldpath, String * newpath)
      if it made use of SourceSink.c instead of redudantly doing similar
      things here. */
   int ret = 0;
-  
+
   FILE * fin = fopen(s(oldpath), "rb");
   if (!fin) {
     perror(s(oldpath));
@@ -209,7 +209,7 @@ int File_copy(String * oldpath, String * newpath)
       break;
     }
     int wn = fwrite(block, 1, rn, fout);
-    // fprintf(stderr, "wrote %d\n", wn);    
+    // fprintf(stderr, "wrote %d\n", wn);
     if (wn != rn) {
       ret = 1;
       break;
@@ -229,8 +229,8 @@ int File_copy(String * oldpath, String * newpath)
     perror("fclose");
     ret = 1;
   }
-  
+
   fclose(fin);
-  
+
   return ret;
 }

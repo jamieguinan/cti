@@ -1,6 +1,6 @@
-/* 
+/*
  * Index module, see Index.h for description.
- * 
+ *
  * This is 1st or 2nd year Computer Science stuff. As a professional
  * programmer I've been spoiled by Python, C++ STL, and other
  * containers, so I haven't written code like this since ~1992.
@@ -84,7 +84,7 @@ static inline uint32_t key_from_ptr(void * voidKey)
 }
 
 
-static inline void key_from_either(String * stringKey, void * voidKey, 
+static inline void key_from_either(String * stringKey, void * voidKey,
 				   uint32_t * key,
 				   int * err)
 {
@@ -105,7 +105,7 @@ static inline void key_from_either(String * stringKey, void * voidKey,
 
 
 static void Index_analyze_2(Index_node *p, int depth, int *maxDepth,
-			   int *leftNodes, int *rightNodes) 
+			   int *leftNodes, int *rightNodes)
 {
   if (depth > *maxDepth) {
     *maxDepth = depth;
@@ -133,7 +133,7 @@ void Index_analyze(Index *idx)
     Index_analyze_2(p, 0, &maxDepth, &leftNodes, &rightNodes);
   }
 
-  printf("max depth=%d, %d left nodes, %d right nodes, %d total nodes\n", 
+  printf("max depth=%d, %d left nodes, %d right nodes, %d total nodes\n",
 	 maxDepth, leftNodes, rightNodes, leftNodes + rightNodes + 1);
 }
 
@@ -225,15 +225,15 @@ enum {
 
 
 /*
- * 2014-Jun-03: New experiments. 
+ * 2014-Jun-03: New experiments.
  * Single function to walk the tree and set up for add or find, with
  * flags for delete.
  */
-static void _Index_op(Index *idx, 
-		      String *stringKey, void * voidKey, 
-		      void *new_value, void ** existing_value, 
-		      int op, 
-		      int del, 
+static void _Index_op(Index *idx,
+		      String *stringKey, void * voidKey,
+		      void *new_value, void ** existing_value,
+		      int op,
+		      int del,
 		      int * err)
 {
   uint32_t key;
@@ -248,7 +248,7 @@ static void _Index_op(Index *idx,
   if (*err == INDEX_NO_KEY) {
     return;
   }
- 
+
   Index_node *node = idx->_nodes;
   Index_node **pnode = &(idx->_nodes);
 
@@ -265,7 +265,7 @@ static void _Index_op(Index *idx,
       /* Duplicate hash keys are allowed.  After all, 1 in 4 billion isn't
 	 that rare if working on GHz CPUs with sets of thousands or millions
 	 of nodes.  So, verify source key. */
-      if ( (stringKey && String_cmp(stringKey, node->stringKey) == 0) 
+      if ( (stringKey && String_cmp(stringKey, node->stringKey) == 0)
 		|| (voidKey && voidKey == node->voidKey) ) {
 	/* Matching node found. */
 	break;
@@ -278,9 +278,9 @@ static void _Index_op(Index *idx,
     }
   }
 
-  /* 
+  /*
    * If "node" is set, then above loop has found existing node with matching key.
-   * Either way, "pnode" points at the location where a new node would go, or the 
+   * Either way, "pnode" points at the location where a new node would go, or the
    * location to update if a node is to be removed.
    */
   if (op == INDEX_OP_FIND) {
@@ -350,7 +350,7 @@ static void _Index_op(Index *idx,
 /* public API functions: */
 void Index_add_string(Index * idx, String * stringKey, void * value, int * err)
 {
-  _Index_op(idx, 
+  _Index_op(idx,
 	    stringKey, NULL,
 	    value, NULL,
 	    INDEX_OP_ADD,
@@ -361,7 +361,7 @@ void Index_add_string(Index * idx, String * stringKey, void * value, int * err)
 
 void Index_replace_string(Index * idx, String * stringKey, void * value, void **oldvalue, int * err)
 {
-  _Index_op(idx, 
+  _Index_op(idx,
 	    stringKey, NULL,
 	    value, oldvalue,
 	    INDEX_OP_ADD,
@@ -372,7 +372,7 @@ void Index_replace_string(Index * idx, String * stringKey, void * value, void **
 
 void Index_add_ptrkey(Index * idx, void * voidKey, void * value, int * err)
 {
-  _Index_op(idx, 
+  _Index_op(idx,
 	    NULL, voidKey,
 	    value, NULL,
 	    INDEX_OP_ADD,
@@ -384,7 +384,7 @@ void Index_add_ptrkey(Index * idx, void * voidKey, void * value, int * err)
 void * Index_find_string(Index * idx, String * stringKey, int * err)
 {
   void *oldvalue = NULL;
-  _Index_op(idx, 
+  _Index_op(idx,
 	    stringKey, NULL,
 	    NULL, &oldvalue,
 	    INDEX_OP_FIND,
@@ -397,7 +397,7 @@ void * Index_find_string(Index * idx, String * stringKey, int * err)
 void * Index_find_ptrkey(Index * idx, void * voidKey, int * err)
 {
   void *oldvalue = NULL;
-  _Index_op(idx, 
+  _Index_op(idx,
 	    NULL, voidKey,
 	    NULL, &oldvalue,
 	    INDEX_OP_FIND,
@@ -410,7 +410,7 @@ void * Index_find_ptrkey(Index * idx, void * voidKey, int * err)
 void Index_del_string(Index * idx, String * stringKey, int * err)
 {
   /* Find and delete, ignore return value. */
-  _Index_op(idx, 
+  _Index_op(idx,
 	    stringKey, NULL,
 	    NULL, NULL,
 	    INDEX_OP_FIND,
@@ -422,7 +422,7 @@ void Index_del_string(Index * idx, String * stringKey, int * err)
 void Index_del_ptrkey(Index * idx, void * voidKey, int * err)
 {
   /* Find and delete, ignore return value. */
-  _Index_op(idx, 
+  _Index_op(idx,
 	    NULL, voidKey,
 	    NULL, NULL,
 	    INDEX_OP_FIND,
@@ -435,7 +435,7 @@ void * Index_pull_string(Index * idx, String * stringKey, int * err)
 {
   /* Find and delete, returning value. */
   void *oldvalue = NULL;
-  _Index_op(idx, 
+  _Index_op(idx,
 	    stringKey, NULL,
 	    NULL, &oldvalue,
 	    INDEX_OP_FIND,
@@ -449,7 +449,7 @@ void * Index_pull_ptrkey(Index * idx, void * voidKey, int * err)
 {
   /* Find and delete, returning value. */
   void *oldvalue = NULL;
-  _Index_op(idx, 
+  _Index_op(idx,
 	    NULL, voidKey,
 	    NULL, &oldvalue,
 	    INDEX_OP_FIND,

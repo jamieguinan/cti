@@ -45,7 +45,7 @@ void Audio_buffer_add_samples(Audio_buffer *audio, uint8_t *data, int data_len)
 	    audio->data_length, audio->header.frame_size);
     return;
   }
-  
+
   if (!audio->data) {
     audio->data = Mem_malloc(data_len);
     new_length = data_len;
@@ -190,12 +190,12 @@ void Wav_buffer_release(Wav_buffer **buffer)
     memset(w, 0, sizeof(*w));
     Mem_free(w);
   }
-  
+
   *buffer = 0L;			/* Clear buffer in any case. */
 }
 
 
-int Wav_parse_header_values(unsigned char *src_bytes, 
+int Wav_parse_header_values(unsigned char *src_bytes,
 			    int src_length,
 			    uint32_t * rate,
 			    uint16_t * channels,
@@ -227,7 +227,7 @@ int Wav_parse_header_values(unsigned char *src_bytes,
   case 16: *atype = CTI_AUDIO_16BIT_SIGNED_LE; break;
   case 24: *atype = CTI_AUDIO_24BIT_SIGNED_LE; break;
   }
-  
+
   return 0;
 }
 
@@ -262,17 +262,17 @@ Wav_buffer * Wav_buffer_from(unsigned char *src_bytes, int src_length)
   }
 
   /* Good enough, do the allocation now. */
-  buffer = Mem_calloc(1, sizeof(*buffer));  
+  buffer = Mem_calloc(1, sizeof(*buffer));
 
   /* Copy header. */
-  memcpy(buffer->header, src_bytes, 44);  
+  memcpy(buffer->header, src_bytes, 44);
   buffer->header_length = 44;
 
   /* Copy data. */
   buffer->data = Mem_malloc(wav_data_length);
   memcpy(buffer->data, src_bytes+44, wav_data_length);
   buffer->data_length = wav_data_length;
-  
+
   /* Extract convenience parameters. */
   buffer->params.channels = extract_le16(buffer->header, NUM_CHANNELS_OFFSET);
   buffer->params.rate = extract_le32(buffer->header, SAMPLES_PER_SEC_OFFSET);

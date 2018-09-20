@@ -122,7 +122,7 @@ static void handle_client_message(XMLMessageServer_private *priv, IO_common *io,
 
   /*
    * FIXME: Combine 2 calls into a single function,
-   * String * instance_str = xml_find_simple_node_value_by_path(top, "config/instance") 
+   * String * instance_str = xml_find_simple_node_value_by_path(top, "config/instance")
    */
 
   Node * instance_node = node_find_subnode_by_path(top, "config/instance"); /* TO BE PHASED OUT */
@@ -140,7 +140,7 @@ static void handle_client_message(XMLMessageServer_private *priv, IO_common *io,
 	!String_is_none(key_str) &&
 	!String_is_none(value_str)) {
       // What about return values?  Return on "reponse" node tree.
-      fprintf(stderr, "config %s %s %s\n", 
+      fprintf(stderr, "config %s %s %s\n",
 	      s(instance_str),
 	      s(key_str),
 	      s(value_str));
@@ -154,12 +154,12 @@ static void handle_client_message(XMLMessageServer_private *priv, IO_common *io,
       }
     }
   }
-  
+
   else if (intent_node && value_node) {
     /* NEW */
     String *intent_str = xml_simple_node_value(intent_node);
     String *value_str = xml_simple_node_value(value_node);
-    
+
     if (!String_is_none(intent_str) &&
 	!String_is_none(value_str)) {
       // What about return values?  Return on "reponse" node tree.
@@ -173,7 +173,7 @@ static void handle_client_message(XMLMessageServer_private *priv, IO_common *io,
       }
     }
   }
-  
+
   /* FIXME: Clean up the "top" Node and the String instances above. */
 }
 
@@ -225,7 +225,7 @@ static void XMLMessageServer_tick(Instance *pi)
     Node * resp = node_new("response");
     comm.io.s = accept(priv->lsc.fd, (struct sockaddr *)&comm.io.addr, &comm.io.addrlen);
     // fprintf(stderr, "%s: new connection!\n", __func__);
-    if (comm.io.s == -1) {    
+    if (comm.io.s == -1) {
       /* This is unlikely but possible.  If it happens, just clean up
 	 and return... */
       perror("accept");
@@ -241,9 +241,9 @@ static void XMLMessageServer_tick(Instance *pi)
     Comm_write_string_with_byte(&comm, resp_str, '$');
     String_free(&resp_str);
     Comm_close(&comm);
-  }  
+  }
 
- out:  
+ out:
   pi->counter++;
 }
 
@@ -251,13 +251,13 @@ static void XMLMessageServer_instance_init(Instance *pi)
 {
   XMLMessageServer_private *priv = (XMLMessageServer_private *)pi;
   priv->intents = Index_new();
-  
+
 }
 
 
 static Template XMLMessageServer_template = {
   .label = "XMLMessageServer",
-  .priv_size = sizeof(XMLMessageServer_private),  
+  .priv_size = sizeof(XMLMessageServer_private),
   .inputs = XMLMessageServer_inputs,
   .num_inputs = table_size(XMLMessageServer_inputs),
   .outputs = XMLMessageServer_outputs,

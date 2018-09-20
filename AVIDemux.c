@@ -40,7 +40,7 @@ typedef struct {
   int done;
   int enable;			/* Set this to start processing. */
   int synchronized;
-  
+
   int video_frame_period_ms;
   int audio_channels;
   int audio_hz;
@@ -66,7 +66,7 @@ static int set_input(Instance *pi, const char *value)
   priv->chunk = ArrayU8_new();
 
   priv->needData = 1;
-  
+
   return 0;
 }
 
@@ -81,7 +81,7 @@ static int set_enable(Instance *pi, const char *value)
     fprintf(stderr, "AVIDemux: cannot enable because source not set!\n");
     priv->enable = 0;
   }
-  
+
   printf("AVIDemux enable set to %d\n", priv->enable);
 
   return 0;
@@ -175,7 +175,7 @@ static void AVIDemux_tick(Instance *pi)
    */
   if (Source_tell(priv->source) == 0 && !priv->synchronized) {
     /* Parse AVI header. */
-    
+
   }
 
   if (!priv->synchronized) {
@@ -211,7 +211,7 @@ static void AVIDemux_tick(Instance *pi)
       ArrayU8_trim_left(priv->chunk, index);
       priv->synchronized = 1;
     }
-    
+
     if (!priv->synchronized) {
       /* Still not synchronized! */
       priv->needData = 1;

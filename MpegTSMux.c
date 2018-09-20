@@ -76,10 +76,10 @@ uint32_t mpegts_crc32(const uint8_t *data, int len)
 {
     register int i;
     uint32_t crc = 0xffffffff;
-    
+
     for (i=0; i<len; i++)
         crc = (crc << 8) ^ crc_table[((crc >> 24) ^ *data++) & 0xff];
-    
+
     return crc;
 }
 
@@ -188,7 +188,7 @@ static int set_pmt_essd(Instance *pi, const char *value)
 {
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   localptr(String_list, parts) = String_split_s(value, ":");
-  
+
   if (String_list_len(parts) != 3) {
     fprintf(stderr, "%s expected essd as index:streamtype:pid\n", __func__);
     return 1;
@@ -251,7 +251,7 @@ static int set_output(Instance *pi, const char *value)
     fprintf(stderr, "%s:%s: output format string requires a '%%s'\n", __FILE__, __func__);
     return 1;
   }
-  
+
   if (priv->output_sink) {
     Sink_free(&priv->output_sink);
   }
@@ -337,7 +337,7 @@ static void m3u8_files_update(Instance *pi)
 
   if (priv->verbose) { printf("========\n"); }
   int i;
-  for (i=0; 
+  for (i=0;
        i < String_list_len(priv->m3u8_ts_files)
 	 - 1; 			/* Don't include the latest, it is still being generated. */
        i++) {
@@ -372,7 +372,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   MpegTimeStamp dts = {};
   int i;
   Stream *stream = NULL;
-  
+
   for (i=0; i < MAX_STREAMS; i++) {
     if (priv->streams[i].pid == pid) {
       stream = &priv->streams[i];
@@ -402,7 +402,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   }
 
   ArrayU8 *pes = ArrayU8_new();
-  ArrayU8_append_bytes(pes, 
+  ArrayU8_append_bytes(pes,
 		       0x00, 0x00, 0x01, /* PES packet start code prefix. */
 		       stream->es_id);	 /* Elementary stream id */
 
@@ -413,7 +413,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   else {
     /* PES remaining length SET for audio. */
     /* 8 == 0x84, flag, peslen, [5 PTS bytes] */
-    int x = 8 + data->len;	
+    int x = 8 + data->len;
     ArrayU8_append_bytes(pes, (x >> 8 & 0xff), (x & 0xff));
   }
 
@@ -428,7 +428,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   if (pts.set) {
     /* Pack PTS. */
     dpf("stream %s pts.value=%" PRIu64 "\n", stream->typecode, pts.value);
-    ArrayU8_append_bytes(pes, 
+    ArrayU8_append_bytes(pes,
 			 (pts.set << 5) | (dts.set << 4) | (((pts.value>>30)&0x7) << 1 ) | 1
 			 ,((pts.value >> 22)&0xff) /* bits 29:22 */
 			 ,((pts.value >> 14)&0xfe) | 1 /* bits 21:15, 1 */
@@ -453,7 +453,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
   ArrayU8_append(pes, data);
 
   if (v) printf("pid=%d pes->len=%ld, data->len=%ld\n", pid, pes->len, data->len);
-  
+
   /* Now pack into TS packets... */
   unsigned int pes_offset = 0;
   unsigned int pes_remaining;
@@ -468,7 +468,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
     packet->estimated_timestamp = et;
     et += et_add;
 
-    //printf("stream %u estimated timestamp: %" PRIu64 " (es_duration=%" PRIu64 " et_add=%d)\n", 
+    //printf("stream %u estimated timestamp: %" PRIu64 " (es_duration=%" PRIu64 " et_add=%d)\n",
     //   stream->pid, packet->estimated_timestamp, stream->es_duration, et_add);
 
     unsigned int afLen = 0;
@@ -479,7 +479,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
 
     packet->data[0] = 0x47;			/* Sync byte */
 
-    packet->data[1] = 
+    packet->data[1] =
       (0 << 5) |		      /* priority bit, not set */
       ((pid & 0x1f00) >> 8);	      /* pid[13:8] */
 
@@ -487,7 +487,7 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
       packet->pus = 1;
       packet->data[1] |= (1 << 6);      /*  Payload Unit Start */
     }
-    
+
     packet->data[2] = (pid & 0xff); /* pid[7:0] */
     packet->data[3] = (0x0 << 6); /* not scrambled */
     packet->data[3] |= (1 << 4); /* contains payload */
@@ -547,8 +547,8 @@ static void packetize(MpegTSMux_private * priv, uint16_t pid, ArrayU8 * data)
       afAdjust = 0;
     }
 
-    memcpy(packet->data+4+afAdjust+afLen, 
-	   pes->data+pes_offset, 
+    memcpy(packet->data+4+afAdjust+afLen,
+	   pes->data+pes_offset,
 	   payload_size);
 
     pes_offset += payload_size;
@@ -629,7 +629,7 @@ static void MP3_handler(Instance *pi, void *msg)
 
   /* Assemble TS packets, save in a list so they can be smoothly
      interleaved with video packets. */
-  
+
   /* Discard MP3 data. */
   //MP3_buffer_release(&mp3);
 }
@@ -642,14 +642,14 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
   int n = 0;
 
   packet->data[n++] = 0x47;	/* sync byte */
-  packet->data[n++] = 
+  packet->data[n++] =
     (1 << 6) |			/* Payload Unit Start, PSI data */
     ((pid & 0x1f00) >> 8);	/* pid[13:8] */
 
   packet->pus = 1;
 
   packet->data[n++] = (pid & 0xff); /* pid[7:0] */
-  
+
   packet->data[n] = (0x0 << 6); /* not scrambled */
   /* no adaptation field */
   packet->data[n] |= (1 << 4);
@@ -673,7 +673,7 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
   }
   packet->data[n++] |= (section_length >> 8) & 0x3;
   packet->data[n++] = (section_length & 0xff);
-  
+
   /* Table syntax section: */
   uint16_t table_id_extension = 1;
   packet->data[n++] = (table_id_extension >> 8) & 0xff;
@@ -683,7 +683,7 @@ static TSPacket * generate_psi(MpegTSMux_private *priv, uint16_t pid, uint8_t ta
   packet->data[n++] |= (1);	/* current/next */
   packet->data[n++] = 0x00;	/* section number */
   packet->data[n++] = 0x00;	/* last section number */
-  
+
   if (table_id == 0) {
     /* PAT data */
     uint16_t program_num = 1;
@@ -757,7 +757,7 @@ static TSPacket * write_packet(Instance *pi, TSPacket *pkt)
     RawData_buffer * rd = RawData_buffer_new(188); Mem_memcpy(rd->data, pkt->data, sizeof(pkt->data));
     PostData(rd, pi->outputs[OUTPUT_RAWDATA].destination);
   }
-  
+
   if (priv->output_sink) {
     Sink_write(priv->output_sink, pkt->data, sizeof(pkt->data));
   }
@@ -773,7 +773,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
   int i;
   uint64_t pts_now = 0;
-  
+
   /* Sum up the pending AV packets. */
   int av_packets = 0;
 
@@ -850,7 +850,7 @@ static void flush(Instance *pi, uint64_t flush_timestamp, int keyframe)
     /* PAT+PMT should get generated on keyframes or when enough
        program time has elapsed. */
     int send_pat_pmt = 0;
-    
+
     if (keyframe && stream->packets->next == NULL) {
       send_pat_pmt = 1;
     }
@@ -896,10 +896,10 @@ static void MpegTSMux_instance_init(Instance *pi)
   MpegTSMux_private *priv = (MpegTSMux_private *)pi;
 
   priv->streams[0] = (Stream) {
-    .pid = 258, 
-    .pts = 1, 
-    .dts = 1, 
-    .pcr = 1, 
+    .pid = 258,
+    .pts = 1,
+    .dts = 1,
+    .pcr = 1,
     .es_id = 224,
     .pts_value = 900000,
     .typecode = "V",
@@ -930,7 +930,7 @@ static void MpegTSMux_instance_init(Instance *pi)
 static Template MpegTSMux_template = {
   .label = "MpegTSMux",
   .priv_size = sizeof(MpegTSMux_private),
-  .inputs = MpegTSMux_inputs, 
+  .inputs = MpegTSMux_inputs,
   .num_inputs = table_size(MpegTSMux_inputs),
   .outputs = MpegTSMux_outputs,
   .num_outputs = table_size(MpegTSMux_outputs),

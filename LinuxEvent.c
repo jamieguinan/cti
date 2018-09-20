@@ -64,11 +64,11 @@ static int set_device(Instance *pi, const char *value)
 {
   LinuxEvent_private *priv = (LinuxEvent_private *)pi;
   int rc;
-  
+
   if (priv->devfd != -1) {
     close_device(priv);
   }
-  
+
   priv->devfd = open(value, O_RDONLY);
   if (priv->devfd == -1) {
     perror(value);
@@ -116,7 +116,7 @@ static void handle_next_event(Instance *pi)
     close_device(priv);
     return;
   }
-  
+
   // printf("%s code=%d value=%d\n", ev_type_string(ev.type), ev.code, ev.value);
   if (ev.type == EV_KEY && ev.value == 1) {
     int cti_key = Keycode_from_linux_event(ev.code);
@@ -161,7 +161,7 @@ static void LinuxEvent_instance_init(Instance *pi)
 
 static Template LinuxEvent_template = {
   .label = "LinuxEvent",
-  .priv_size = sizeof(LinuxEvent_private),  
+  .priv_size = sizeof(LinuxEvent_private),
   .inputs = LinuxEvent_inputs,
   .num_inputs = table_size(LinuxEvent_inputs),
   .outputs = LinuxEvent_outputs,

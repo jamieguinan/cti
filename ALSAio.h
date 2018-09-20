@@ -16,7 +16,7 @@ typedef struct {
   snd_pcm_stream_t mode;
 
   int rate;
-  int channels;   
+  int channels;
   snd_pcm_format_t format;	/* translate to/from string using formats[] */
   Audio_type atype;
   int format_bytes;
@@ -25,7 +25,7 @@ typedef struct {
   snd_pcm_uframes_t frames_per_io;
 
   int enable;
-  float total_dropped; 
+  float total_dropped;
   struct timespec t0;
   int analyze;
   int total_wait_for_it;
@@ -33,7 +33,7 @@ typedef struct {
   uint64_t total_encoded_next;
   uint64_t total_encoded_delta;
   double running_timestamp;
-  
+
 } ALSAio_common;
 
 extern const char * ALSAio_state_to_string(int state);

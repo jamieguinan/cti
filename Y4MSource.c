@@ -19,7 +19,7 @@ static Input Y4MSource_inputs[] = {
 };
 
 enum { OUTPUT_YUV422P, OUTPUT_CONFIG };
-static Output Y4MSource_outputs[] = { 
+static Output Y4MSource_outputs[] = {
   [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
 };

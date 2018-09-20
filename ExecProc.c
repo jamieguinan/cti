@@ -1,4 +1,4 @@
-/* 
+/*
  * Sub-process module, which run sub-programs without keeping track of them.
  * This was started as a copy of SubProc.c, but intended to be a simpler
  * open-loop handler.
@@ -38,7 +38,7 @@ static int set_proc(Instance *pi, const char *value)
 
   fprintf(stderr, "%s(%s)\n", __func__, value);
   priv->proc = String_new(value);
-  
+
   return 0;
 }
 
@@ -89,7 +89,7 @@ static void ExecProc_instance_init(Instance *pi)
 
 static Template ExecProc_template = {
   .label = "ExecProc",
-  .priv_size = sizeof(ExecProc_private),  
+  .priv_size = sizeof(ExecProc_private),
   .inputs = ExecProc_inputs,
   .num_inputs = table_size(ExecProc_inputs),
   .outputs = ExecProc_outputs,

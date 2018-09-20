@@ -31,7 +31,7 @@ typedef struct {
   Instance i;
   int fd;
   int baud;
-  struct termios saved_settings;  
+  struct termios saved_settings;
   struct termios new_settings;
 } SerialIO_private;
 
@@ -61,10 +61,10 @@ static void SerialIO_open(Instance *pi, KV * args)
   case 115200: priv->baud = B115200; break;
   default: fprintf(stderr, "Invalid baud specified.\n"); return;
   }
-  
+
   localptr(String, devpattern) = KV_get_string(args, S("device"));
   if (String_is_none(devpattern)) { return; }
-  
+
   localptr(String_list, devices) = Files_glob(S(""), devpattern);
   for (i=0; i < String_list_len(devices); i++) {
     localptr(String, device) = String_list_get(devices, i);
@@ -73,7 +73,7 @@ static void SerialIO_open(Instance *pi, KV * args)
       break;
     }
   }
-  
+
   if (priv->fd == -1) { fprintf(stderr, "Invalid baud specified.\n"); return; }
 
   /* Warn on tc*attr() errors, but continue anyway. */
@@ -111,7 +111,7 @@ static void SerialIO_instance_init(Instance *pi)
 
 static Template SerialIO_template = {
   .label = "SerialIO",
-  .priv_size = sizeof(SerialIO_private),  
+  .priv_size = sizeof(SerialIO_private),
   .inputs = SerialIO_inputs,
   .num_inputs = table_size(SerialIO_inputs),
   .outputs = SerialIO_outputs,

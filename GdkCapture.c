@@ -95,10 +95,10 @@ void gdk_to_rgb(uint8_t *data, int width, int height, int depth, int bpp, int bp
 static void check_files(Instance *pi)
 {
   GdkCapture_private *priv = (GdkCapture_private *)pi;
-  
+
   /* Poll for file, because I don't have a good IPC mechanism yet. */
-  if (priv->filename == 0L || 
-      String_is_none(priv->filename) || 
+  if (priv->filename == 0L ||
+      String_is_none(priv->filename) ||
       access(priv->filename->bytes, R_OK) != 0) {
     nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/100}, NULL);
     return;
@@ -145,7 +145,7 @@ static void check_files(Instance *pi)
       priv->last_checksum_seq = priv->seq;
     }
     else {
-      if (priv->idle_quit_threshold && 
+      if (priv->idle_quit_threshold &&
 	  (priv->seq - priv->last_checksum_seq) > priv->idle_quit_threshold) {
 	printf("quit trigger!\n");
 	exit(0);

@@ -1,4 +1,4 @@
-/* Lirc client.  IR remote control input for Linux.  
+/* Lirc client.  IR remote control input for Linux.
  * NOTE: This is probably going to be obviated by LinuxInput.c */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -92,7 +92,7 @@ static struct {
 };
 
 
-static void handle_code(Instance *pi, const char *code) 
+static void handle_code(Instance *pi, const char *code)
 {
   /* Map code to output token and pass along to output. */
   int i;
@@ -156,7 +156,7 @@ static void Lirc_tick(Instance *pi)
 	char *string = 0L;
 	char *prog = 0L;
 	rc = lirc_code2charprog(priv->lircconfig, code, &string, &prog);
-	printf("rc=%d string=%s prog=%s\n", rc, 
+	printf("rc=%d string=%s prog=%s\n", rc,
 	       string? string: "(nil)",
 	       prog? prog: "(nil)"
 	       );
@@ -169,7 +169,7 @@ static void Lirc_tick(Instance *pi)
 	/* So instead I parse it out manually.  This only works for my
 	   particular configuration, using a Hauppauge remote with a
 	   pcHDTV card using devinput driver.  See sully/notes.txt for
-	   how I set that up. 
+	   how I set that up.
 
             0004000400000014 00 KEY_UP /tmp/lirc.txt
 	*/
@@ -189,7 +189,7 @@ static void Lirc_tick(Instance *pi)
 
       nevermind: ;
       }
-	
+
       free(code);
     }
   }

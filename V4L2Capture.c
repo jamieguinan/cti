@@ -1,4 +1,4 @@
-/* 
+/*
  * V4L2 capture.  This has been tested with:
  *   WinTV (BTTV)
  *   pcHDTV
@@ -51,7 +51,7 @@ static Input V4L2Capture_inputs[] = {
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_YUV422P, OUTPUT_YUV420P, 
+enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_YUV422P, OUTPUT_YUV420P,
        OUTPUT_JPEG, OUTPUT_O511, OUTPUT_H264, OUTPUT_GRAY };
 static Output V4L2Capture_outputs[] = {
   [ OUTPUT_BGR3 ] = { .type_label = "BGR3_buffer", .destination = 0L },
@@ -151,7 +151,7 @@ static int set_device(Instance *pi, const char *value)
     V4L2_queue_unmap(priv);
     priv->fd = -1;
   }
-  
+
   /* Try matching by description first... */
   Range available_v4l_devices = {};
   get_device_range(pi, &available_v4l_devices);
@@ -166,7 +166,7 @@ static int set_device(Instance *pi, const char *value)
   }
 
   Range_clear(&available_v4l_devices);
-  
+
   if (String_is_none(priv->devpath)) {
     /* Not found, try value as a path. */
     String_set(&priv->devpath, value);
@@ -254,7 +254,7 @@ static void get_device_range(Instance *pi, Range *range)
       String_cat3(tmp, "/sys/class/video4linux/", de->d_name, "/name");
       desc = File_load_text(tmp);
       String_free(&tmp);
-      
+
       String_trim_right(desc);
 
       printf("%s\n", desc->bytes);
@@ -284,7 +284,7 @@ static int set_input(Instance *pi, const char *value)
     }
 
     printf("Available input: %s\n", input.name);
-    
+
     if (streq((char*)input.name, value)) {
       printf("Found input: %s\n", input.name);
       priv->input_index = i;
@@ -375,7 +375,7 @@ static void get_format_range(Instance *pi, Range *range)
   struct v4l2_fmtdesc fmtdesc = {};
 
   Range *r = Range_new(RANGE_STRINGS);
-  
+
   /* Enumerate pixel formats until a string match is found. */
   i = 0;
   while (1) {
@@ -413,7 +413,7 @@ static void get_input_range(Instance *pi, Range *range)
   struct v4l2_input input = {};
 
   Range *r = Range_new(RANGE_STRINGS);
-  
+
   /* Enumerate inputs. */
   i = 0;
   while (1) {
@@ -469,7 +469,7 @@ static int set_std_priv(V4L2Capture_private *priv)
       perror("VIDIOC_ENUMSTD");
     goto out;
     }
-    
+
     if (streq((char*)standard.name, s(priv->std)))  {
       printf("%s (%d/%d)\n", standard.name, standard.frameperiod.denominator, standard.frameperiod.numerator);
       break;
@@ -531,7 +531,7 @@ static void generic_v4l2_get_range(V4L2Capture_private *priv, uint32_t cid, cons
   struct v4l2_queryctrl queryctrl = {};
 
   *range = 0L;
- 
+
   queryctrl.id = cid;
 
   rc = ioctl(priv->fd, VIDIOC_QUERYCTRL, &queryctrl);
@@ -734,11 +734,11 @@ static int set_fps_priv(V4L2Capture_private *priv)
   else {
     rc = ioctl(priv->fd, VIDIOC_G_PARM, &setfps);
     if (rc == 0) {
-      printf("frame rate: %d/%d\n", 
+      printf("frame rate: %d/%d\n",
 	     setfps.parm.capture.timeperframe.numerator,
 	     setfps.parm.capture.timeperframe.denominator);
     }
-    
+
   }
 
   if (re_enable) {
@@ -773,7 +773,7 @@ static int set_size(Instance *pi, const char *value)
     return -1;
   }
 
-  priv->width = w;  
+  priv->width = w;
   priv->height = h;
 
   /* Get current format. */
@@ -800,7 +800,7 @@ static int set_size(Instance *pi, const char *value)
   else {
     printf("Capture size set to %dx%d\n", format.fmt.pix.width, format.fmt.pix.height);
   }
-    
+
  out:
   if (re_enable) {
     stream_enable(priv);
@@ -829,7 +829,7 @@ static int set_frequency(Instance *pi, const char *value)
     goto out;
   }
 
-  /* 
+  /*
    * http://v4l2spec.bytesex.org/spec/r11094.htm: "Tuning frequency in
    * units of 62.5 kHz, or if the struct v4l2_tuner or struct
    * v4l2_modulator capabilities flag V4L2_TUNER_CAP_LOW is set, in
@@ -870,15 +870,15 @@ static int V4L2_queue_setup(V4L2Capture_private *priv)
 
   for (i=0; i < req.count; i+=1) {
     priv->vbuffer.index = i;
-      
+
     rc = ioctl(priv->fd, VIDIOC_QUERYBUF, &priv->vbuffer);
     if (-1 == rc) {
       perror("VIDIOC_QUERYBUF");
       return 1;
     }
 
-    priv->buffers[i].data = mmap(0L, priv->vbuffer.length, 
-				 PROT_READ | PROT_WRITE, MAP_SHARED, 
+    priv->buffers[i].data = mmap(0L, priv->vbuffer.length,
+				 PROT_READ | PROT_WRITE, MAP_SHARED,
 				 priv->fd, priv->vbuffer.m.offset);
     if (priv->buffers[i].data == MAP_FAILED) {
       perror("mmap");
@@ -924,13 +924,13 @@ static int stream_enable(V4L2Capture_private *priv)
 
   int capture = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   rc = ioctl(priv->fd, VIDIOC_STREAMON, &capture);
-  if (-1 == rc) { 
-    perror("VIDIOC_STREAMON"); 
+  if (-1 == rc) {
+    perror("VIDIOC_STREAMON");
   }
 
   /* Always start waiting on the first queued buffer, otherwise there
      is a lag NUM_BUFFERS frames. */
-  priv->wait_on = 0;		
+  priv->wait_on = 0;
 
   return 0;
 }
@@ -943,8 +943,8 @@ static void stream_disable(V4L2Capture_private *priv)
      needs to re-queue from scratch. */
   int capture = V4L2_BUF_TYPE_VIDEO_CAPTURE;
   int rc = ioctl(priv->fd, VIDIOC_STREAMOFF, &capture);
-  if (-1 == rc) { 
-    perror("VIDIOC_STREAMOFF"); 
+  if (-1 == rc) {
+    perror("VIDIOC_STREAMOFF");
   }
 }
 
@@ -982,7 +982,7 @@ static int set_snapshot(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   priv->snapshot = atoi(value);
   return 0;
-  
+
 }
 
 
@@ -991,7 +991,7 @@ static int set_fix(Instance *pi, const char *value)
   V4L2Capture_private *priv = (V4L2Capture_private *)pi;
   priv->fix = atoi(value);
   return 0;
-  
+
 }
 
 
@@ -1042,7 +1042,7 @@ static Config config_table[] = {
   { "mute",       set_mute,   0L, 0L},
   { "fps",        set_fps,   0L, 0L},
   { "frequency",  set_frequency,  0L, 0L},
-  { "fix",        set_fix, 0L, 0L}, 
+  { "fix",        set_fix, 0L, 0L},
   { "timeout_ms", set_timeout_ms, 0L, 0L},
   { "label",      set_label, 0L, 0L},
   { "check_sequence",   set_check_sequence, 0L, 0L},
@@ -1055,7 +1055,7 @@ static int find_control(V4L2Capture_private *priv, const char *label, struct v4l
   int ctrlid;
   int local_verbose = 0;
 
-  { 
+  {
     static int pass1 = 1;
     if (pass1) { local_verbose = 1; }
     pass1 = 0;
@@ -1138,7 +1138,7 @@ static int find_control(V4L2Capture_private *priv, const char *label, struct v4l
       fprintf(stderr, "%s\n", qctrl->name);
     }
   }
-  
+
 
   return -1;
 }
@@ -1161,15 +1161,15 @@ static int generic_set(Instance *pi, const char *label, const char *value)
     }
   }
   label_copy[i] = 0;
-  
+
   fprintf(stderr, "generic_set(%s, %s)\n", label_copy, value);
 
   if (find_control(priv, label_copy, &qctrl) == 0) {
     int rc;
     struct v4l2_control control = { .id = qctrl.id };
 
-    fprintf(stderr, "%30s(0x%x) %5d-%-5d step %d default:%d", 
-	    qctrl.name, qctrl.id, qctrl.minimum, qctrl.maximum, qctrl.step, 
+    fprintf(stderr, "%30s(0x%x) %5d-%-5d step %d default:%d",
+	    qctrl.name, qctrl.id, qctrl.minimum, qctrl.maximum, qctrl.step,
 	    qctrl.default_value);
 
     //ioctl(priv->fd, VIDIOC_G_CTRL, &control);
@@ -1179,7 +1179,7 @@ static int generic_set(Instance *pi, const char *label, const char *value)
       int new_value = atoi(value);
 
       control.value = new_value;
-      
+
       rc = ioctl(priv->fd, VIDIOC_S_CTRL, &control);
       if (rc == -1) {
 	perror("VIDIOC_S_CTRL");
@@ -1208,13 +1208,13 @@ static void Config_handler(Instance *pi, void *data)
       break;
     }
   }
-  
+
   /* If not found in config table, try finding the control by label */
   if (!priv->msg_handled) {
     generic_set(pi, cb_in->label->bytes, cb_in->value->bytes);
     priv->msg_handled = 1;
   }
-  
+
   Config_buffer_release(&cb_in);
 }
 
@@ -1246,7 +1246,7 @@ static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
     if (fwrite(j->data, j->encoded_length, 1, f) != 1) { perror("fwrite"); }
     fclose(f);
   }
-  priv->snapshot -= 1;	  
+  priv->snapshot -= 1;
 }
 
 
@@ -1275,7 +1275,7 @@ static void bgr3_snapshot(Instance *pi, BGR3_buffer *bgr3)
     }
     fclose(f);
   }
-  priv->snapshot -= 1;	  
+  priv->snapshot -= 1;
 }
 
 
@@ -1296,7 +1296,7 @@ static void yuv420p_snapshot(Instance *pi, YUV420P_buffer *yuv420p)
   else {
     perror(filename);
   }
-  priv->snapshot -= 1;	  
+  priv->snapshot -= 1;
 }
 
 
@@ -1317,7 +1317,7 @@ static void yuv422p_snapshot(Instance *pi, YUV422P_buffer *y422p)
   else {
     perror(filename);
   }
-  priv->snapshot -= 1;	  
+  priv->snapshot -= 1;
 }
 
 
@@ -1382,22 +1382,22 @@ static void V4L2Capture_tick(Instance *pi)
       else {
 	printf("device re-open Ok fd=%d\n", priv->fd);
       }
-      
+
       stream_enable(priv);
       goto out;
     }
   }
-  
+
   rc = ioctl(priv->fd, VIDIOC_DQBUF, &priv->vbuffer);
   if (-1 == rc) {
     perror("VIDIOC_DQBUF");
     sleep(1); 			/* Sleep so don't flood output. */
     goto out;
-  }  
+  }
 
   if (priv->check_sequence) {
     int missed = priv->vbuffer.sequence - 1 - priv->sequence;
-    if (missed) { 
+    if (missed) {
       printf("%s missed %d frames leading up to %d\n", s(pi->instance_label), missed, priv->vbuffer.sequence);
       if (priv->check_sequence > 0) {
 	priv->check_sequence -= 1; /* tick down by 1 */
@@ -1458,10 +1458,10 @@ static void V4L2Capture_tick(Instance *pi)
       YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, &c);
       Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
-      memcpy(y422p->cb, 
-	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 
+      memcpy(y422p->cb,
+	     priv->buffers[priv->wait_on].data + priv->width*priv->height,
 	     priv->width*priv->height/2);
-      memcpy(y422p->cr, 
+      memcpy(y422p->cr,
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height + priv->width*priv->height/2,
 	     priv->width*priv->height/2);
       Log(LOG_YUV422P, "%s posting y422p @ %p", __func__, y422p);
@@ -1473,7 +1473,7 @@ static void V4L2Capture_tick(Instance *pi)
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
       Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, &c);
-      memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);      
+      memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
@@ -1482,10 +1482,10 @@ static void V4L2Capture_tick(Instance *pi)
       YUV420P_buffer *y420p = YUV420P_buffer_new(priv->width, priv->height, &c);
       dpf("%s allocated y420p @ %p", __func__, y420p);
       memcpy(y420p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
-      memcpy(y420p->cb, 
-	     priv->buffers[priv->wait_on].data + priv->width*priv->height, 
+      memcpy(y420p->cb,
+	     priv->buffers[priv->wait_on].data + priv->width*priv->height,
 	     y420p->cr_width*y420p->cr_height);
-      memcpy(y420p->cr, 
+      memcpy(y420p->cr,
 	     priv->buffers[priv->wait_on].data + priv->width*priv->height + y420p->cr_width*y420p->cr_height,
 	     y420p->cb_width*y420p->cb_height);
       if (priv->snapshot > 0) {
@@ -1497,7 +1497,7 @@ static void V4L2Capture_tick(Instance *pi)
 
     if (pi->outputs[OUTPUT_GRAY].destination) {
       Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, &c);
-      memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);      
+      memcpy(g->data, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
@@ -1543,7 +1543,7 @@ static void V4L2Capture_tick(Instance *pi)
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, &c);
       /* Had been setting this for VirtualStorage,
-  	   j->c.label = String_new("/snapshot.jpg") 
+  	   j->c.label = String_new("/snapshot.jpg")
 	 but that should be done via config now. */
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
       j->encoded_length = priv->vbuffer.bytesused;

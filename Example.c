@@ -54,7 +54,7 @@ static void Example_instance_init(Instance *pi)
 
 static Template Example_template = {
   .label = "Example",
-  .priv_size = sizeof(Example_private),  
+  .priv_size = sizeof(Example_private),
   .inputs = Example_inputs,
   .num_inputs = table_size(Example_inputs),
   .outputs = Example_outputs,

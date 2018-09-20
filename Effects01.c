@@ -1,5 +1,5 @@
 /*
- * Rotation, inversion, and other simple operations. 
+ * Rotation, inversion, and other simple operations.
  */
 #include <stdio.h>		/* fprintf */
 #include <stdlib.h>		/* calloc */
@@ -60,8 +60,8 @@ static void rotate_rgb_90(uint8_t *src, uint8_t *dst, int src_width, int src_hei
     uint8_t *p_in = src + src_y*src_width*3;
     uint8_t *p_out = dst + (dst_width - 1 - src_y)*3;
     for (src_x = 0; src_x < src_width; src_x++) {
-      *p_out++ = *p_in++; 
-      *p_out++ = *p_in++; 
+      *p_out++ = *p_in++;
+      *p_out++ = *p_in++;
       *p_out++ = *p_in++;
       p_out += (dst_width*3 - 3);
     }
@@ -78,8 +78,8 @@ static void rotate_rgb_270(uint8_t *src, uint8_t *dst, int src_width, int src_he
     uint8_t *p_in = src + src_y*src_width*3;
     uint8_t *p_out = dst + (dst_width * (dst_height - 1) + src_y) * 3;
     for (src_x = 0; src_x < src_width; src_x++) {
-      *p_out++ = *p_in++; 
-      *p_out++ = *p_in++; 
+      *p_out++ = *p_in++;
+      *p_out++ = *p_in++;
       *p_out++ = *p_in++;
       p_out -= 3;
       p_out -= dst_width*3;

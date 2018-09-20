@@ -2,7 +2,7 @@
  * Test code for Index.c module.  This includes it directly, so can
  * call static functions including _Index_op().
  *
- * gcc Index_test_01.c -o Index_test_01 && ./Index_test_01 
+ * gcc Index_test_01.c -o Index_test_01 && ./Index_test_01
  */
 
 #include "Index.c"
@@ -49,7 +49,7 @@ void make_gv(Index *idx, const char *filename)
 
   Index_walk(idx, gvout1);
   Index_walk(idx, gvout2);
-  
+
   fprintf(gvf, "}\n");
   fclose(gvf);
 }
@@ -74,7 +74,7 @@ int main()
 
     _Index_op(idx, S("five"), NULL, (void*)5, NULL, INDEX_OP_ADD, 0, &err);
     check(err, INDEX_NO_ERROR);
-  
+
     void *result;
 
     _Index_op(idx, S("three"), NULL, NULL, &result, INDEX_OP_FIND, 0, &err);
@@ -156,12 +156,12 @@ over the packets and assign an estimated timestamp to each packet, \
 even those that do not include PTS/DTS.  Then it should be relatively \
 easy to sort the packets for writeout, and more accurately insert PAT \
 and PMT packets.";
-  
+
     String_list *strs = String_split_s(text, " ");
     printf("%d strings\n", String_list_len(strs));
 
-    Index *idx = Index_new();  
-    
+    Index *idx = Index_new();
+
     int i;
     for (i=0; i < String_list_len(strs); i++) {
       void *oldvalue = NULL;
@@ -199,6 +199,6 @@ and PMT packets.";
     Index_analyze(idx);
 
   }
-  
+
   return 0;
 }

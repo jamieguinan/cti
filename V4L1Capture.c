@@ -37,8 +37,8 @@ static Input V4L1Capture_inputs[] = {
 
 enum { OUTPUT_YUV420P, OUTPUT_O511 };
 static Output V4L1Capture_outputs[] = {
-  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },  
-  [ OUTPUT_O511 ] = {.type_label = "O511_buffer", .destination = 0L },  
+  [ OUTPUT_YUV420P ] = {.type_label = "YUV420P_buffer", .destination = 0L },
+  [ OUTPUT_O511 ] = {.type_label = "O511_buffer", .destination = 0L },
 };
 
 typedef struct {
@@ -52,7 +52,7 @@ typedef struct {
   int enable;			/* Set this to start capturing. */
   int msg_handled;
 
-  struct video_capability cap;  
+  struct video_capability cap;
   struct video_mbuf vmbuf;	/* Info about mmap-able area. */
   struct video_mmap vmmap;	/* mmap configuration via ioctl */
   uint8_t *map;			/* mapped memory */
@@ -66,7 +66,7 @@ typedef struct {
 
 static struct {
   const char *enumString;
-  const char *textString;  
+  const char *textString;
 }
 v4l1_formats[] = {
   [1] = { .enumString="VIDEO_PALETTE_GREY", .textString="Linear greyscale"},
@@ -251,7 +251,7 @@ static int set_w_h(Instance *pi, const char *value)
   while (1) {
     rc = ioctl(v->fd, VIDIOCSWIN, &v->window);
     // rc_check("VIDIOCSWIN");
-    if (rc == 0) { 
+    if (rc == 0) {
       break;
     }
     perror("VIDIOCSWIN");
@@ -274,7 +274,7 @@ static Config config_table[] = {
   { "device",     set_device, 0L, 0L},
   { "brightness", set_brightness, 0L, 0L},
   { "exposure",   set_exposure, 0L, 0L},
-  { "size",       set_w_h,   0L, 0L},  
+  { "size",       set_w_h,   0L, 0L},
 };
 
 
@@ -324,20 +324,20 @@ static void V4L1Capture_tick(Instance *pi)
     v->vmmap.frame = v->next_frame;
     /* printf("capturing %dx%d\n",v->vmmap.width, v->vmmap.height); */
     rc = ioctl(v->fd, VIDIOCMCAPTURE, &v->vmmap /* .frame */);
-    rc_check("VIDIOCMCAPTURE");    
+    rc_check("VIDIOCMCAPTURE");
   }
 
   rc = ioctl(v->fd, VIDIOCSYNC, &current_frame);
   rc_check("VIDIOCSYNC");
-  
+
   /* If only a single frame, queue the next capture now. */
   if (v->vmbuf.frames == 1) {
-    rc = ioctl(v->fd, VIDIOCMCAPTURE, &v->vmmap /* .frame */);  
+    rc = ioctl(v->fd, VIDIOCMCAPTURE, &v->vmmap /* .frame */);
   }
 
   if (pi->outputs[OUTPUT_YUV420P].destination) {
     YUV420P_buffer *y420p = YUV420P_buffer_new(v->w, v->h, 0L);
-    memcpy(y420p->y, 
+    memcpy(y420p->y,
 	   v->map + v->vmbuf.offsets[current_frame],
 	   y420p->y_length);
     memcpy(y420p->cr,
@@ -361,7 +361,7 @@ static void V4L1Capture_tick(Instance *pi)
 					 0L);
     PostData(o511, pi->outputs[OUTPUT_O511].destination);
   }
- 
+
   dpf("frame %d captured\n", pi->counter);
 
   pi->counter += 1;
@@ -376,7 +376,7 @@ static void V4L1Capture_instance_init(Instance *pi)
 
 static Template V4L1Capture_template = {
   .label = "V4L1Capture",
-  .priv_size = sizeof(V4L1Capture_private),  
+  .priv_size = sizeof(V4L1Capture_private),
   .inputs = V4L1Capture_inputs,
   .num_inputs = table_size(V4L1Capture_inputs),
   .outputs = V4L1Capture_outputs,

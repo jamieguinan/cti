@@ -114,7 +114,7 @@ static void YUV422P_handler(Instance *pi, void *data)
     localptr(String, header) = String_new("FRAME\n");
     Sink_write(priv->sink, s(header), String_len(header));
   }
-  
+
   Sink_write(priv->sink, y422p_in->y, y422p_in->y_length);
   Sink_write(priv->sink, y422p_in->cb, y422p_in->cb_length);
   Sink_write(priv->sink, y422p_in->cr, y422p_in->cr_length);
@@ -133,11 +133,11 @@ static void YUV420P_handler(Instance *pi, void *data)
     Sink_close_current(priv->sink);
     priv->sink = NULL;
   }
-  
+
   if (!priv->sink) {
     goto out;
   }
-  
+
   if (!priv->raw) {
     if (priv->state == Y4MOUTPUT_STATE_INIT) {
       priv->width = y420p->width;
@@ -157,10 +157,10 @@ static void YUV420P_handler(Instance *pi, void *data)
   }
   else {
     if (!priv->raw) {
-      localptr(String, header) = String_new("FRAME\n");    
+      localptr(String, header) = String_new("FRAME\n");
       Sink_write(priv->sink, s(header), String_len(header));
     }
-    
+
     Sink_write(priv->sink, y420p->y, y420p->y_length);
     Sink_write(priv->sink, y420p->cb, y420p->cb_length);
     Sink_write(priv->sink, y420p->cr, y420p->cr_length);

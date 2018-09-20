@@ -95,7 +95,7 @@ static void XMLMessageRelay_instance_init(Instance *pi)
 
 static Template XMLMessageRelay_template = {
   .label = "XMLMessageRelay",
-  .priv_size = sizeof(XMLMessageRelay_private),  
+  .priv_size = sizeof(XMLMessageRelay_private),
   .inputs = XMLMessageRelay_inputs,
   .num_inputs = table_size(XMLMessageRelay_inputs),
   .outputs = XMLMessageRelay_outputs,

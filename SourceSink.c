@@ -33,7 +33,7 @@ static void io_close_current(IO_common *io)
     pclose(io->p);
     io->p = NULL;
   }
-  else if (io->s != -1) {   
+  else if (io->s != -1) {
     /* I'm not a fan of superfluous shutdown() calls, but if I was going to
      * use it, this is where it would be: */
     // if (shutdown(io->s, SHUT_RDWR) != 0) { perror("shutdown"); }
@@ -84,7 +84,7 @@ static void io_open(IO_common *io, const char *mode)
         perror("FD_CLOEXEC");
       }
       rc = connect(io->s, rp->ai_addr, rp->ai_addrlen);
-      //fprintf(stderr, "rc=%d io->s=%d family=%d socktype=%d protocol=%d addrlen=%d, errno=%d\n", 
+      //fprintf(stderr, "rc=%d io->s=%d family=%d socktype=%d protocol=%d addrlen=%d, errno=%d\n",
       //  rc, io->s, rp->ai_family, rp->ai_socktype, rp->ai_protocol, rp->ai_addrlen, errno);
       if (rc == 0) {
         fprintf(stderr, "connect Ok\n");
@@ -162,7 +162,7 @@ static void io_write(IO_common * io, void *data, int length)
       io_close_current(io);
     }
   }
-  else if (io->s != -1) {   
+  else if (io->s != -1) {
     int sent = 0;
     while (sent < length) {
       /* FIXME: This send() can block, which can cause the calling
@@ -274,7 +274,7 @@ void Sink_free(Sink **sink)
 Source * Source_allocate(const char * path)
 {
   Source * source = Mem_calloc(1, sizeof(*source));
-  String_set(&source->io.path, path);  
+  String_set(&source->io.path, path);
   source->io.state = IO_CLOSED;
   return source;
 }
@@ -360,7 +360,7 @@ ArrayU8 * io_read(IO_common *io)
 
     dpf("recv %d bytes (max_read=%d)\n", len, max_read);
   }
-  
+
   if (len == 0) {
     io->extra = result;
     result = 0L;
@@ -390,7 +390,7 @@ int Source_poll(Source *source, int timeout_ms)
 {
   struct pollfd fds[1];
   fds[0].events = POLLIN;
-  
+
   if (source->io.f) {
     fds[0].fd = fileno(source->io.f);
   }
@@ -400,7 +400,7 @@ int Source_poll(Source *source, int timeout_ms)
   else {
     return 0;
   }
-  
+
   return poll(fds, 1, timeout_ms);
 }
 
@@ -415,7 +415,7 @@ int Source_seek(Source *source, long amount)
 
     fstat(fileno(source->io.f), &st);
     pos = ftell(source->io.f);
-    
+
     /* Clamp seek to beginning and end of file. */
     if (pos + amount > st.st_size) {
       amount = st.st_size - pos;
@@ -455,7 +455,7 @@ int Source_set_offset(Source *source, long amount)
     if (source->file_size) {
       printf("offset %ld: %ld%%\n", pos, (pos*100)/source->file_size);
     }
-    
+
     return rc;
   }
   else if (source->io.s != -1) {
@@ -486,7 +486,7 @@ void Source_close_current(Source *source)
     fclose(source->io.f);
     source->io.f = 0L;
   }
-  else if (source->io.s != -1) {   
+  else if (source->io.s != -1) {
     close(source->io.s);
     source->io.s = -1;
   }
@@ -537,7 +537,7 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
 
     Items_per_sec_update(&source->bytes_per_sec, newChunk->len);
 
-    { 
+    {
       static time_t t_last = 0;
       time_t tnow = time(NULL);
       if (tnow > t_last) {
@@ -550,7 +550,7 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
     }
 
     if (source->eof_flagged) {
-      fprintf(stderr, "%s: EOF reset\n", __func__);      
+      fprintf(stderr, "%s: EOF reset\n", __func__);
     }
     source->eof = 0;
     source->eof_flagged = 0;
@@ -564,7 +564,7 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
 
 void Source_set_persist(Source *source, int value)
 {
-  source->persist = value;  
+  source->persist = value;
 }
 
 
@@ -577,7 +577,7 @@ Comm * Comm_new(char * path)
   comm->io.state = IO_CLOSED;
   String_set(&comm->io.path, path);
   io_open(&comm->io, "w+b");
-  
+
   return comm;
 }
 
@@ -597,7 +597,7 @@ String * Comm_read_string_to_byte(Comm * comm, char byteval)
     }
 
     // fprintf(stderr, "new_chunk len %d\n", new_chunk->len);
-    
+
     if (!chunk) {
       chunk = new_chunk;
     }
@@ -605,13 +605,13 @@ String * Comm_read_string_to_byte(Comm * comm, char byteval)
       ArrayU8_append(chunk, new_chunk);
       /* FIXME: Free new_chunk */
     }
-    
+
     //fprintf(stderr, "scanning %d bytes for value 0x%x\n", chunk->len, byteval);
-    
+
     for (i=0; i < chunk->len; i++) {
       //fprintf(stderr, "chunk->data[i] = 0x%x [%c]\n", chunk->data[i], chunk->data[i]);
       if (chunk->data[i] == byteval) {
-	//fprintf(stderr, "found at offset %d\n", i);	
+	//fprintf(stderr, "found at offset %d\n", i);
 	String *result = String_new("");
 	String_append_bytes(result, (char*)chunk->data, i);
 	if (chunk->len > i && !comm->io.extra) {
@@ -622,7 +622,7 @@ String * Comm_read_string_to_byte(Comm * comm, char byteval)
 	return result;
       }
     }
-    
+
   }
   return String_value_none();
 }

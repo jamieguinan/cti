@@ -44,15 +44,15 @@ void cti_debug_printf_register(const char *file, int line, int *enabled, const c
   }
   else if (printfRecords.available == (printfRecords.count+1)) {
     printfRecords.available *= 2;
-    printfRecords.records = Mem_realloc(printfRecords.records, 
+    printfRecords.records = Mem_realloc(printfRecords.records,
 				    printfRecords.available*sizeof(*printfRecords.records));
   }
-  
+
   printfRecords.records[printfRecords.count].file = file;
   printfRecords.records[printfRecords.count].line = line;
   printfRecords.records[printfRecords.count].enabled = enabled;
   printfRecords.records[printfRecords.count].fmt = fmt;
-  
+
   printfRecords.count += 1;
 }
 
@@ -68,7 +68,7 @@ void cti_debug_printf_list(void)
 	   printfRecords.records[i].file,
 	   printfRecords.records[i].line,
 	   printfRecords.records[i].fmt);
-  
+
     n = strlen(printfRecords.records[i].fmt);
     if (n && printfRecords.records[i].fmt[n-1] != '\n') {
       fputc('\n', stdout);
@@ -80,7 +80,7 @@ void cti_debug_printf_toggle(int index)
 {
   if (index < printfRecords.count) {
     int e = *printfRecords.records[index].enabled;
-    if (!e) { 
+    if (!e) {
       *printfRecords.records[index].enabled = 1;
     }
     else {

@@ -97,14 +97,14 @@ static int add_button(Instance *pi, const char *init)
   w->fgcolor = 0x808080;
   w->width = 40;
   w->height = 30;
-  
+
   p = key = init;
   while (*p) {
     if (state == PARSING_KEY) {
       if (*p == '=') {
 	value = p+1;
 	state = PARSING_VALUE;
-      }	
+      }
     }
     else if (state == PARSING_VALUE) {
       if (*p == ';') {
@@ -112,7 +112,7 @@ static int add_button(Instance *pi, const char *init)
 	set_kv(w, key, value, p);
 	key = p+1;
 	value = NULL;
-      }	
+      }
     }
     p++;
   }
@@ -153,7 +153,7 @@ static void pointer_handler(Instance *pi, void *msg)
       }
       break;
     }
-  } 
+  }
 
   Pointer_event_release(p);
 }

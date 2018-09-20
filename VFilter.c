@@ -1,4 +1,4 @@
-/* 
+/*
  * Filter operations, mostly operating on the Y channel for YCrCb images.
  * I didn't like this module for a while, but it has sort of grown on me.
  */
@@ -48,7 +48,7 @@ typedef struct {
 static int set_left_right_crop(Instance *pi, const char *value)
 {
   VFilter_private *priv = (VFilter_private *)pi;
-  
+
   int tmp =  atoi(value);
   if (tmp < 0) {
     fprintf(stderr, "invalid left_right_crop value %d\n", tmp);
@@ -63,7 +63,7 @@ static int set_left_right_crop(Instance *pi, const char *value)
 static int set_bottom_crop(Instance *pi, const char *value)
 {
   VFilter_private *priv = (VFilter_private *)pi;
-  
+
   int tmp =  atoi(value);
   if (tmp < 0) {
     fprintf(stderr, "invalid bottom_crop value %d\n", tmp);
@@ -134,7 +134,7 @@ static int set_horizontal_filter(Instance *pi, const char *value)
   fprintf(stderr, "\n(");
   for (i=0; i < 5; i++) {
     priv->horizontal_filter_divisor += priv->horizontal_filter[i];
-    fprintf(stderr, "%s%d", 
+    fprintf(stderr, "%s%d",
 	    (i == 0 ? "" : ","),
 	    priv->horizontal_filter[i]);
   }
@@ -213,7 +213,7 @@ static void single_121_linear_blend(uint8_t *data_in, uint8_t *data_out, int wid
 
 static void single_y3blend(uint8_t *data_in, uint8_t *data_out, int width, int height)
 {
-  /* 
+  /*
    * I made this to smooth out the luma channel for videos captured
    * from the KWorld em28xx usb device.  It works pretty good, but
    * does blur things out a bit.  Running a sharpening filter
@@ -242,7 +242,7 @@ static void adaptive3point_filter(YUV422P_buffer *y422p_src, YUV422P_buffer *y42
   /* Another attempt at cleaning up saturation artifacts. */
   int y, x;
   int i;
-  
+
   static struct {
     int factors[3];
     int divisor;
@@ -272,8 +272,8 @@ static void adaptive3point_filter(YUV422P_buffer *y422p_src, YUV422P_buffer *y42
 	/* Medium saturation, keep luma. */
 	i = 1;
       }
-      int16_t k = (ysrc[-1]*filter[i].factors[0] 
-		   + ysrc[0]*filter[i].factors[1] 
+      int16_t k = (ysrc[-1]*filter[i].factors[0]
+		   + ysrc[0]*filter[i].factors[1]
 		   + ysrc[1]*filter[i].factors[2]) / filter[i].divisor;
       if (k > 255) { k = 255; } else if (k < 0) { k = 0; } /* Clamp. */
       *yout++ = k;
@@ -289,7 +289,7 @@ static void adaptive3point_filter(YUV422P_buffer *y422p_src, YUV422P_buffer *y42
     }
     *yout++ = *ysrc++;		/* copy last pixel */
   }
-  
+
   memcpy(y422p_out->cb, y422p_src->cb, y422p_out->cb_length);
   memcpy(y422p_out->cr, y422p_src->cr, y422p_out->cb_length);
 }
@@ -306,7 +306,7 @@ static void single_horizontal_filter(VFilter_private *priv, uint8_t *data_in, ui
     *dest++ = *p++;
     *dest++ = *p++;
     for (x=2; x < width-2; x++) {
-      int16_t x = 
+      int16_t x =
 	(*(p-2)*priv->horizontal_filter[0] +
 	 *(p-1)*priv->horizontal_filter[1] +
 	 *(p+0)*priv->horizontal_filter[2] +
@@ -315,9 +315,9 @@ static void single_horizontal_filter(VFilter_private *priv, uint8_t *data_in, ui
 	/ priv->horizontal_filter_divisor;
 
       /* Clamp. */
-      if (x > 255) { 
-	x = 255; 
-      }	
+      if (x > 255) {
+	x = 255;
+      }
       else if (x < 0) {
 	x = 0;
       }
@@ -346,7 +346,7 @@ static void single_field_split(uint8_t *data, int width, int height)
   /* Copy of data plane, on stack. */
   uint8_t temp[width * height];
   memcpy(temp, data, sizeof(temp));
-	 
+
   /* Copy first field.  Note that first line is already in place. */
   pdest = data + width;
   psrc = temp + (width * 2);
@@ -415,11 +415,11 @@ static void Y422p_handler(Instance *pi, void *msg)
   if (priv->left_right_crop) {
     y422p_src = y422p_out ? y422p_out : y422p_in;
     if (priv->left_right_crop > y422p_src->width) {
-      fprintf(stderr, "left_right_crop value %d is wider than input %d\n", 
+      fprintf(stderr, "left_right_crop value %d is wider than input %d\n",
 	      priv->left_right_crop, y422p_src->width);
     }
     else {
-      y422p_out = YUV422P_buffer_new(y422p_src->width - (priv->left_right_crop * 2), y422p_src->height, 
+      y422p_out = YUV422P_buffer_new(y422p_src->width - (priv->left_right_crop * 2), y422p_src->height,
 				   &y422p_src->c);
       memcpy(y422p_out->y, y422p_src->y+priv->left_right_crop, y422p_out->width);
       memcpy(y422p_out->cb, y422p_src->cb+(priv->left_right_crop/2), y422p_out->width/2);
@@ -475,30 +475,30 @@ static void Y422p_handler(Instance *pi, void *msg)
   }
 
   if (!y422p_out) {
-    y422p_out = y422p_in; 
+    y422p_out = y422p_in;
   }
-  
+
   if (priv->field_split) {
     y422p_out->c.interlace_mode = IMAGE_FIELDSPLIT_TOP_FIRST;
     single_field_split(y422p_out->y, y422p_out->width, y422p_out->height);
     single_field_split(y422p_out->cb, y422p_out->width/2, y422p_out->height);
     single_field_split(y422p_out->cr, y422p_out->width/2, y422p_out->height);
   }
-  
+
   if (pi->outputs[OUTPUT_YUV422P].destination) {
     PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);
   }
   else {
     YUV422P_buffer_release(y422p_out);
   }
-  
+
 }
 
 
 static void RGB3_handler(Instance *pi, void *msg)
 {
   VFilter_private *priv = (VFilter_private *)pi;
-  RGB3_buffer *rgb3 = msg;  
+  RGB3_buffer *rgb3 = msg;
 
   if (priv->trim) {
     single_trim(priv, rgb3->data, rgb3->data, rgb3->width*3, rgb3->height);
@@ -525,7 +525,7 @@ static void RGB3_handler(Instance *pi, void *msg)
     RGB3_buffer_release(rgb3);
   }
 
-  
+
 }
 
 

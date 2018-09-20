@@ -12,7 +12,7 @@ String_list * cookies_from_env(void)
 
   String_list * result = String_split_s(cookies, "; ");
   String_list_trim(result);
-    
+
   return result;
 }
 
@@ -58,7 +58,7 @@ String_list * queryvars_from_env(void)
 
   String_list * result = String_split_s(queryvars, "&");
   String_list_trim(result);
-    
+
   return result;
 }
 

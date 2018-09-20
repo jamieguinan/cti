@@ -11,12 +11,12 @@ static void Config_handler(Instance *pi, void *msg);
 
 /* VSmoother Instance and Template implementation. */
 enum { INPUT_CONFIG  /* , INPUT_RGB3, INPUT_BGR3, INPUT_YUV422P */ };
-static Input VSmoother_inputs[] = { 
+static Input VSmoother_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
 };
 
 // enum { OUTPUT_RGB3, OUTPUT_BGR3, OUTPUT_YUV422P };
-static Output VSmoother_outputs[] = { 
+static Output VSmoother_outputs[] = {
 };
 
 /* Full type declaration. */
@@ -34,8 +34,8 @@ static Config config_table[] = {
 };
 
 
-void VSmoother_smooth(VSmoother *priv, 
-		      double frame_timestamp, 
+void VSmoother_smooth(VSmoother *priv,
+		      double frame_timestamp,
 		      int pending_messages)
 {
   /* Compare current frame time and previous frame time, and
@@ -60,7 +60,7 @@ void VSmoother_smooth(VSmoother *priv,
   printf("ftime=%.2f last_ftime=%.2f ftdiff=%.2f\n",
 	 ftime, priv->last_ftime, ftdiff);
 
-  if (ftdiff <= 0.0 || ftdiff > 10.0) {  
+  if (ftdiff <= 0.0 || ftdiff > 10.0) {
     /* Unreasonable frame rates. */
     goto out;
   }
@@ -73,7 +73,7 @@ void VSmoother_smooth(VSmoother *priv,
 #define IIR_SIZE 30
   priv->period = ((priv->period * (IIR_SIZE-1)) +  (ftdiff)) / IIR_SIZE;
 
-  printf("tnow=%.6f eta=%.6f period=%.6f sleep=%.6f\n", 
+  printf("tnow=%.6f eta=%.6f period=%.6f sleep=%.6f\n",
   	 tnow, priv->eta, priv->period, (priv->eta - tnow));
 
   if (tnow < priv->eta) {
@@ -99,8 +99,8 @@ void VSmoother_smooth(VSmoother *priv,
     }
   }
   else {
-    /* Took too long to get here.  What to do?  Don't sleep. 
-       Set eta to current time plus period. "Catch up" code above 
+    /* Took too long to get here.  What to do?  Don't sleep.
+       Set eta to current time plus period. "Catch up" code above
        should drain backed up frames at a faster rate. */
     printf("***\n");
     priv->eta = tnow + priv->period;
@@ -130,7 +130,7 @@ static Template VSmoother_template = {
   .outputs = VSmoother_outputs,
   .num_outputs = table_size(VSmoother_outputs),
   // .tick = VSmoother_tick,
-  .instance_init = VSmoother_instance_init,  
+  .instance_init = VSmoother_instance_init,
 };
 
 void VSmoother_init(void)

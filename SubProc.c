@@ -57,7 +57,7 @@ static void close_all(SubProc_private *priv)
   if (priv->proc_stdin) {
     Sink_free(&priv->proc_stdin);
   }
-  
+
   if (priv->proc_stdout) {
     Source_free(&priv->proc_stdout);
   }
@@ -87,9 +87,9 @@ static int set_proc(Instance *pi, const char *value)
   }
 
   fprintf(stderr, "%s(%s)\n", __func__, value);
-  /* Prepend pipe character for eventual call to io_open(). */ 
+  /* Prepend pipe character for eventual call to io_open(). */
   priv->proc = String_sprintf("|%s", value);
-  
+
   return 0;
 }
 
@@ -104,7 +104,7 @@ static int set_control_channel(Instance *pi, const char *value)
 
   fprintf(stderr, "%s(%s)\n", __func__, value);
   priv->control_channel = String_sprintf("|%s", value);
-  
+
   return 0;
 }
 
@@ -146,7 +146,7 @@ static int handle_token(Instance *pi, const char *value)
     fprintf(stderr, "%s: subproc stdin flushed\n", __func__);
   }
   String_free(&token);
-  
+
   return 0;
 }
 
@@ -154,7 +154,7 @@ static int handle_token(Instance *pi, const char *value)
 static int handle_start_readonly(Instance *pi, const char *optional_param)
 {
   SubProc_private *priv = (SubProc_private *)pi;
-  
+
   close_all(priv);
 
   if (streq(optional_param, "1")) {
@@ -185,12 +185,12 @@ static int handle_start_readonly(Instance *pi, const char *optional_param)
 static int handle_start_writeonly(Instance *pi, const char *optional_param)
 {
   SubProc_private *priv = (SubProc_private *)pi;
-  
+
   close_all(priv);
 
   if (streq(optional_param, "1")) {
     /* Simple case, enable. */
-    priv->proc_stdin = Sink_new(s(priv->proc));    
+    priv->proc_stdin = Sink_new(s(priv->proc));
   }
   else {
     /* Enable with parameter. */
@@ -292,7 +292,7 @@ static void SubProc_instance_init(Instance *pi)
 
 static Template SubProc_template = {
   .label = "SubProc",
-  .priv_size = sizeof(SubProc_private),  
+  .priv_size = sizeof(SubProc_private),
   .inputs = SubProc_inputs,
   .num_inputs = table_size(SubProc_inputs),
   .outputs = SubProc_outputs,

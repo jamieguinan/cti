@@ -65,7 +65,7 @@ static int set_input(Instance *pi, const char *value)
       return 1;
     }
   }
-  
+
   if (priv->source) {
     Source_free(&priv->source);
   }
@@ -93,7 +93,7 @@ static int set_enable(Instance *pi, const char *value)
     fprintf(stderr, "LibDV: cannot enable because source not set!\n");
     priv->enable = 0;
   }
-  
+
   printf("LibDV enable set to %d\n", priv->enable);
 
   return 0;
@@ -118,7 +118,7 @@ static int do_seek(Instance *pi, const char *value)
   }
 
   if (priv->source) {
-    Source_seek(priv->source, amount);  
+    Source_seek(priv->source, amount);
   }
 
   /* Reset current stuff. */
@@ -126,7 +126,7 @@ static int do_seek(Instance *pi, const char *value)
     ArrayU8_cleanup(&priv->chunk);
   }
   priv->chunk = ArrayU8_new();
-  
+
   return 0;
 }
 
@@ -171,7 +171,7 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
   LibDV_private *priv = (LibDV_private *)pi;
 
   rc = dv_parse_header(priv->decoder, priv->chunk->data);
-  if (rc < 0) { 
+  if (rc < 0) {
     fprintf(stderr, "error parsing header");
     return;
   }
@@ -240,7 +240,7 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
 
   if (pi->outputs[OUTPUT_RGB3].destination) {
     RGB3_buffer *rgb3 = RGB3_buffer_new(priv->decoder->width, priv->decoder->height, 0L);
-    uint8_t *pixels[3] = { rgb3->data, 
+    uint8_t *pixels[3] = { rgb3->data,
 			   0L,
 			   0L };
     int pitches[3] = { rgb3->width * 3, 0, 0 };
@@ -267,7 +267,7 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
     //int pitches[3] = {720*3, 0, 0};
   //  dv_decode_full_frame(priv->decoder, priv->chunk->data, e_dv_color_bgr0, pixels, pitches);
   //}
- 
+
 
   /* Trim consumed data. */
   ArrayU8_trim_left(priv->chunk, priv->decoder->frame_size);
@@ -321,7 +321,7 @@ static void LibDV_instance_init(Instance *pi)
 
   /* Could put a lock around this test, in case > 1 instance. */
   if (!LibDV_initialized) {
-    dv_init(0, 0);		
+    dv_init(0, 0);
     LibDV_initialized = 1;
 
   }
@@ -336,9 +336,9 @@ static void LibDV_instance_init(Instance *pi)
   for (i=0; i < 4; i++) {
     priv->audio_buffers[i] = Mem_calloc(1, DV_AUDIO_MAX_SAMPLES*sizeof(int16_t));
   }
-  
 
-  /* 
+
+  /*
    * I see lots of this,
    *   ...
    *   asf 00:20:46.20 2012-07-11 21:37:35 7b 97 02 12 2/48
@@ -348,7 +348,7 @@ static void LibDV_instance_init(Instance *pi)
    * so just set the error stream to /dev/null.
    */
   dv_set_error_log(priv->decoder, fopen("/dev/null", "w"));
-  
+
 }
 
 

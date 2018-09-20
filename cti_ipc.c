@@ -1,4 +1,4 @@
-/* 
+/*
  * Socket/file-descriptor based interprocess communication.
  * This is rather low-level, uses malloc/free and bare read/write calls.
  */
@@ -41,7 +41,7 @@ int cti_ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout
 
   if (message_length <= 250) {
     uint8_t msglen = message_length;
-    
+
     struct iovec iov[2] = { { .iov_base = &msglen, .iov_len = 1 },
 			    { .iov_base = message, .iov_len = message_length } };
     if (!writable(fd, timeout_ms)) { fprintf(stderr, "%s: not writable\n", __func__); return 1; }
@@ -56,7 +56,7 @@ int cti_ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout
     msglen32[1] = (message_length >> 8) & 0xff;
     msglen32[2] = (message_length >> 16) & 0xff;
     msglen32[3] = (message_length >> 24) & 0xff;
-    
+
     struct iovec iov[3] = { { .iov_base = &code, .iov_len = 1 },
 			    { .iov_base = &msglen32, .iov_len = 4 },
 			    { .iov_base = message, .iov_len = message_length } };
@@ -103,7 +103,7 @@ int cti_ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int time
 
   if (!readable(fd, timeout_ms)) { fprintf(stderr, "%s: case 1 not readable\n", __func__); return 1; }
   n = read(fd, buffer, sizeof(buffer));
-  if (n < 1) { fprintf(stderr, "%s: read case 1 failed\n", __func__); return 1; } 
+  if (n < 1) { fprintf(stderr, "%s: read case 1 failed\n", __func__); return 1; }
   bytes_read = n;
   code = buffer[0];
   if (code <= 250) {
@@ -122,7 +122,7 @@ int cti_ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int time
       bytes_read += n;
     }
     /* Copy remainder of buffer to allocated message. */
-    result_length = buffer[1] 
+    result_length = buffer[1]
       + (buffer[2] << 8)
       + (buffer[3] << 16)
       + (buffer[4] << 24);
@@ -143,7 +143,7 @@ int cti_ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int time
     message_read += n;
   }
 
-  if (cti_ipc_debug_recv_checksum) { 
+  if (cti_ipc_debug_recv_checksum) {
     int i;
     int chksum = 0;
     for (i=0; i < result_length; i++) {
@@ -154,7 +154,7 @@ int cti_ipc_recv(int fd, uint8_t ** message, uint32_t * message_length, int time
 
   *message = result;
   *message_length = result_length;
-  
+
   return 0;
 }
 

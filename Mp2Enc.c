@@ -77,13 +77,13 @@ static void Wav_handler(Instance *pi, void *msg)
     fprintf(stderr, "%s: pipe output not set!\n", __func__);
     goto out;
   }
-    
+
   if (!priv->header_sent) {
     /* Create and write header. */
     n = fwrite(wav_in->header, 44, 1, priv->po);
     if (n != 1) {
       perror(priv->vout->bytes);
-      pclose(priv->po);    
+      pclose(priv->po);
       priv->po = 0L;
       goto out;
     }
@@ -96,10 +96,10 @@ static void Wav_handler(Instance *pi, void *msg)
 
   if (n != 1) {
     perror(priv->vout->bytes);
-    pclose(priv->po);    
+    pclose(priv->po);
     priv->po = 0L;
   }
-  
+
  out:
   Wav_buffer_release(&wav_in);
 }

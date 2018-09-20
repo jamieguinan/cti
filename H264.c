@@ -3,7 +3,7 @@
  * Note that libx264 is GPL, but a commercial license is available,
  *
  *   http://www.videolan.org/developers/x264.html
- * 
+ *
  * Notes on presets: https://trac.ffmpeg.org/wiki/x264EncodingGuide
  *
  * Additional references,
@@ -108,7 +108,7 @@ static int set_output(Instance *pi, const char *value)
       return 1;
     }
   }
-  
+
   if (priv->output_sink) {
     Sink_free(&priv->output_sink);
   }
@@ -130,7 +130,7 @@ static int set_preset(Instance *pi, const char *value)
       return 0;
     }
   }
-  
+
   printf("H264: invalid preset %s\n", value);
   return 1;
 }
@@ -148,7 +148,7 @@ static int set_tune(Instance *pi, const char *value)
       return 0;
     }
   }
-  
+
   printf("H264: invalid tune %s\n", value);
   return 1;
 }
@@ -166,7 +166,7 @@ static int set_profile(Instance *pi, const char *value)
       return 0;
     }
   }
-  
+
   printf("H264: invalid profile %s\n", value);
   return 1;
 }
@@ -241,7 +241,7 @@ static void YUV420P_handler(Instance *pi, void *msg)
     rc = x264_param_default_preset(&params, priv->preset, priv->tune);
     if (rc != 0) { fprintf(stderr, "x264_param_default_preset failed"); sleep(1); return; }
 
-    rc = x264_param_apply_profile(&params, priv->profile); 
+    rc = x264_param_apply_profile(&params, priv->profile);
     if (rc != 0) { fprintf(stderr, "x264_param_apply_profile failed");  sleep(1); return; }
 
     params.i_width = y420->width;
@@ -365,13 +365,13 @@ static void YUV420P_handler(Instance *pi, void *msg)
 	     nal[i].b_long_startcode,
 	     nal[i].i_payload);
     }
-    
+
     //printf("\n");
 
     // "p_payload=%p i_payload=%d"
     // nal ? (nal->p_payload) : NULL,
     // nal ? (nal->i_payload) : 0
-    
+
     if (0) {
       for (i=0; i < frame_size && i < 64;) {
 	printf(" %02x", nal[0].p_payload[i]);

@@ -125,7 +125,7 @@ static void do_system_text(CairoContext_private * priv, String * key)
   localptr(String, value) = String_value_none();
   if (streq(s(key), "hostname")) {
     value = String_dup(priv->hostname);
-    String_trim_right(value);    
+    String_trim_right(value);
   }
   else if (streq(s(key), "datetime")) {
     char datetime[128];
@@ -215,8 +215,8 @@ static int add_command(Instance *pi, const char *value)
       Array_free(priv->commands, CairoCommand, NULL);
     }
   }
-  
- out:  
+
+ out:
   return 0;
 }
 
@@ -342,7 +342,7 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
   dpf("%d cairo operations done, status=%d\n", i, cairo_status(priv->context));
 
   /* Now merge into RGB buffer. */
-  RGB_buffer_merge_rgba(rgb3, 
+  RGB_buffer_merge_rgba(rgb3,
 			cairo_image_surface_get_data(priv->surface),
 			cairo_image_surface_get_width(priv->surface),
 			cairo_image_surface_get_height(priv->surface),
@@ -378,7 +378,7 @@ static void rgb3_handler(Instance *pi, void *msg)
     YUV420P_buffer * yuv = RGB3_to_YUV420P(rgb3);
     PostData(yuv, pi->outputs[OUTPUT_YUV420P].destination);
   }
-  
+
   if (pi->outputs[OUTPUT_RGB3].destination) {
     PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
   }
@@ -417,7 +417,7 @@ static void y422p_handler(Instance *pi, void *msg)
     YUV422P_paste(y422p, temp, 0, 0, priv->width, priv->height);
     YUV422P_buffer_release(temp);
   }
-  
+
   if (pi->outputs[OUTPUT_YUV422P].destination) {
     PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
   }
@@ -466,7 +466,7 @@ static void CairoContext_instance_init(Instance *pi)
   priv->text = String_value_none();
   priv->label = String_value_none();
   priv->hostname = File_load_text(S("/etc/hostname"));
-  String_trim_right(priv->hostname); 
+  String_trim_right(priv->hostname);
 }
 
 

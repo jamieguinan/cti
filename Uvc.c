@@ -72,7 +72,7 @@ void add_focus_control(int camfd)
   info.selector = 3;
   info.size = 6;
   info.flags = 175;
-  
+
   rc = ioctl(camfd, UVCIOC_CTRL_ADD, &info);
   if (rc == -1) {
     perror("UVCIOC_CTRL_ADD");
@@ -95,7 +95,7 @@ void add_focus_control(int camfd)
     perror("UVCIOC_CTRL_MAP");
     return;
   }
-  
+
   printf("focus control added successfully!\n");
 }
 
@@ -134,7 +134,7 @@ void add_led1_control(int camfd)
   info.selector = 1;
   info.size = 3;
   info.flags = 191;
-  
+
   rc = ioctl(camfd, UVCIOC_CTRL_ADD, &info);
   if (rc == -1) {
     perror("UVCIOC_CTRL_ADD");
@@ -157,7 +157,7 @@ void add_led1_control(int camfd)
     perror("UVCIOC_CTRL_MAP");
     return;
   }
-  
+
   printf("led1 mode control added successfully!\n");
 
 }

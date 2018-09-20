@@ -1,4 +1,4 @@
-/* 
+/*
  * Scale image width and/or height by 1/N.
  */
 #include <stdio.h>		/* fprintf */
@@ -37,7 +37,7 @@ static Config config_table[] = {
   { "Ny",  0L, 0L, 0L, cti_set_int, offsetof(NScale_private, Ny) },
 };
 
-static void N_scale(NScale_private *priv, uint8_t *indata, int in_width, int in_height, 
+static void N_scale(NScale_private *priv, uint8_t *indata, int in_width, int in_height,
 		    uint8_t *outdata, int out_width, int out_height)
 {
   int i, j, k;
@@ -80,11 +80,11 @@ static void y422p_handler(Instance *pi, void *data)
 
     YUV422P_buffer *y422p_out = YUV422P_buffer_new(y422p_in->width/priv->Nx, y422p_in->height/priv->Ny,
 					       &y422p_in->c);
-    N_scale(priv, y422p_in->y, y422p_in->width, y422p_in->height, 
+    N_scale(priv, y422p_in->y, y422p_in->width, y422p_in->height,
 	    y422p_out->y, y422p_out->width, y422p_out->height);
-    N_scale(priv, y422p_in->cr, y422p_in->cr_width, y422p_in->cr_height, 
+    N_scale(priv, y422p_in->cr, y422p_in->cr_width, y422p_in->cr_height,
 	    y422p_out->cr, y422p_out->cr_width, y422p_out->cr_height);
-    N_scale(priv, y422p_in->cb, y422p_in->cb_width, y422p_in->cb_height, 
+    N_scale(priv, y422p_in->cb, y422p_in->cb_width, y422p_in->cb_height,
 	    y422p_out->cb, y422p_out->cb_width, y422p_out->cb_height);
     dpf("posting %dx%d image to output\n", y422p_out->width, y422p_out->height);
     y422p_out->c.timestamp = y422p_in->c.timestamp;
@@ -116,7 +116,7 @@ static void NScale_tick(Instance *pi)
 static void NScale_instance_init(Instance *pi)
 {
   NScale_private *priv = (NScale_private *)pi;
-  
+
   priv->Nx = 1;
   priv->Ny = 1;
 }

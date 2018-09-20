@@ -105,7 +105,7 @@ static Config config_table[] = {
 static void push_ycc(LibQuickTimeOutput_private *priv, YUV422P_buffer *ycc)
 {
   int rc;
-  
+
   if (!priv->qt) {
     fprintf(stderr, "%s: no output set!\n", __func__);
     return;
@@ -123,7 +123,7 @@ static void push_ycc(LibQuickTimeOutput_private *priv, YUV422P_buffer *ycc)
 			     1001,	/* frame_duration */
 			     30000,	/* timescale */
 			     priv->ycc_encoder);
-    
+
     printf("lqt_add_video_track returns %d\n", priv->ycc_track);
   }
 
@@ -174,7 +174,7 @@ static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
 			     1001,	/* frame_duration */
 			     30000,	/* timescale */
 			     priv->rgb_encoder);
-    
+
     printf("lqt_add_video_track returns %d\n", priv->rgb_track);
   }
 
@@ -186,7 +186,7 @@ static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
     quicktime_set_avi(priv->qt, 1);
     priv->avi_set = 1;
   }
-  
+
 
   uint8_t *video_buffer = Mem_malloc(rgb->data_length);
   memcpy(video_buffer, rgb->data, rgb->data_length);
@@ -222,7 +222,7 @@ static void BGR3_handler(Instance *pi, void *data)
   YUV422P_buffer *ycc = 0L;
   static int frame = 0;
 
-  
+
   ycc = BGR3_toYUV422P(bgr);
   BGR3_buffer_release(bgr);
 
@@ -244,7 +244,7 @@ static void BGR3_handler(Instance *pi, void *data)
 #if 1
   RGB3_buffer *rgb = 0L;
   static int frame = 0;
-  
+
   bgr3_to_rgb3(&bgr, &rgb);
 
   if (frame < frame_limit) {
@@ -283,8 +283,8 @@ static void Wav_handler(Instance *pi, void *data)
 					    wav->params.rate,
 					    wav->params.bits_per_sample,
 					    priv->audio_encoder);
-    
-    printf("lqt_add_audio_track (%d %d %d) returns %d\n", 
+
+    printf("lqt_add_audio_track (%d %d %d) returns %d\n",
 	   wav->params.channels,
 	   wav->params.rate,
 	   wav->params.bits_per_sample,
@@ -328,7 +328,7 @@ static void LibQuickTimeOutput_tick(Instance *pi)
 static void LibQuickTimeOutput_instance_init(Instance *pi)
 {
   LibQuickTimeOutput_private *priv = (LibQuickTimeOutput_private *)pi;
-  
+
 
   int i;
   lqt_codec_info_t** encoders;

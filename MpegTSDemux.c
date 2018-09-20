@@ -4,13 +4,13 @@
  * Unpack data from Mpeg2 Transport Streams, with options to print
  * information to stdout, and to save TS and ES packets in individual
  * files.  Started from earlier code "modc/MpegTS.h".  References,
- * 
+ *
  *   https://en.wikipedia.org/wiki/MPEG_transport_stream
  *   https://en.wikipedia.org/wiki/Program_Specific_Information
  *   https://en.wikipedia.org/wiki/Packetized_Elementary_Stream
  *   https://en.wikipedia.org/wiki/Elementary_stream
  *   file:///home/guinan/projects/video/iso13818-1.pdf
- *   
+ *
  * This was written as an exercise and testing tool, so that
  * MpegTSMux.c (not Demux) could be developed in parallel doing the
  * inverse of what this module does.  But I think it could be made
@@ -62,7 +62,7 @@ static Output MpegTSDemux_outputs[] = {
 
 
 /*
- * "Stream", maybe a "Packetized elementary stream", 
+ * "Stream", maybe a "Packetized elementary stream",
  *
  *    http://en.wikipedia.org/wiki/Packetized_elementary_stream
  *
@@ -95,7 +95,7 @@ typedef struct {
 
   int enable;			/* Set this to start processing. */
   int filter_pid;
-  
+
   int pmt_id;			/* Program Map Table ID */
 
   uint64_t offset;
@@ -187,7 +187,7 @@ static int set_enable(Instance *pi, const char *value)
       String_free(&src);
     }
   }
-  
+
   printf("MpegTSDemux enable set to %d\n", priv->enable);
 
   return 0;
@@ -212,7 +212,7 @@ static int set_tsfile(Instance *pi, const char *value)
   MpegTSDemux_private *priv = (MpegTSDemux_private *)pi;
   if (priv->tsfile) { Sink_free(&priv->tsfile);  }
   priv->tsfile = Sink_new(value);
-  return 0;  
+  return 0;
 }
 
 
@@ -297,10 +297,10 @@ static void handle_pes(MpegTSDemux_private *priv, Stream *s)
   if (ppl) {
     /* Note, ppl can be 0 for video streams */
     if (ppl != s->data->len) {
-      // 
+      //
     }
   }
-  
+
   if (priv->v.show_pes) {
     printf("    Marker bits: %d\n", ((edata[6]>>6)&0x3));
     printf("    Scramblig control: %d\n", ((edata[6]>>4)&0x3));
@@ -322,7 +322,7 @@ static void handle_pes(MpegTSDemux_private *priv, Stream *s)
     if (priv->v.show_pes) { printf("    DTS present\n"); }
   }
 
-  if (priv->v.show_pes) { 
+  if (priv->v.show_pes) {
     printf("    ESCR: %d\n", ((edata[7]>>5)&0x1));
     printf("    ES rate: %d\n", ((edata[7]>>4)&0x1));
     printf("    DSM trick: %d\n", ((edata[7]>>3)&0x1));
@@ -408,7 +408,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
   if (priv->streams == NULL) {
     priv->streams = Stream_new(pid);
   }
-  
+
   Stream *s = priv->streams;
 
   while (s) {
@@ -431,7 +431,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
     fprintf(stderr, "invalid packet at offset %" PRIu64 "\n", priv->offset);
     return;
   }
-    
+
   if (MpegTS_TEI(packet)) {
     fprintf(stderr, "transport error at offset %" PRIu64 "\n", priv->offset);
     return;
@@ -457,35 +457,35 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	  f = NULL;
 	  }
 	}
-	
-	if (pid != 0 && pid != priv->pmt_id) { 
+
+	if (pid != 0 && pid != priv->pmt_id) {
 	  handle_pes(priv, s);
 	}
-	
+
       } /* if (s->data->len) */
       s->seq += 1;
       ArrayU8_cleanup(&s->data);
     } /* if (s->data) */
     s->data = ArrayU8_new();
   }
-  
+
   if (MpegTS_TP(packet)) {
     if (priv->v.miscbits) { printf("  transport priority bit set\n"); }
   }
-  
+
   if (MpegTS_SC(packet)) {
     int bits = MpegTS_SC(packet);
     if (priv->v.miscbits) printf("  scrambling control enabled (bits %d%d)\n",
 			      (bits>>1), (bits&1));
   }
-  
+
   if (MpegTS_AFE(packet)) {
     afLen = MpegTS_AF_len(packet);
     // int optionOffset = 2;
     payloadLen = 188 - 4 - 1 - afLen;
     payloadOffset = 188 - payloadLen;
     if (priv->v.AF) printf("  AF present, length: (1+) %d\n", afLen);
-    
+
     if (afLen == 0) {
       /* I've observed this while analyzing the Apple TS dumps.  I
 	 treat it such that the remaining payload is 183 byte, so
@@ -540,12 +540,12 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
     if (MpegTS_AF_AFEXT(packet)) {
       if (priv->v.AF) printf("  adapdation field extension\n");
     }
-    
+
   xx:;
-    
+
   }	/* AFE... */
-  
-  
+
+
   if (MpegTS_PDE(packet)) {
     if (priv->v.payload) printf("  payload data present, length %d\n", payloadLen);
     if (!s->data) {
@@ -556,10 +556,10 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
   else {
     if (priv->v.payload) printf("  no payload data\n");
   }
-  
+
   int cc = MpegTS_CC(packet);
   if (priv->v.cc) { printf("  continuity counter=%d\n", cc); }
-  
+
   /* http://en.wikipedia.org/wiki/Program_Specific_Information */
   if (pid == 0) {
     int pointer_filler_bytes = MpegTS_PSI_PTRFIELD(packet);
@@ -587,11 +587,11 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	printf("    Section number: %d\n", MpegTS_PSI_TSS_SECNO(tss));
 	printf("    Last section number: %d\n", MpegTS_PSI_TSS_LASTSECNO(tss));
       }
-	  
+
       uint8_t * pasd = MpegTS_PAT_PASD(tss);
       uint32_t crc;
-      int remain = 
-	slen 
+      int remain =
+	slen
 	- 5 /* PSI_TSS */
 	- sizeof(crc);
       while (remain > 0) {
@@ -635,7 +635,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	printf("    current/next: %d\n", MpegTS_PSI_TSS_CURRNEXT(tss));
 	printf("    Section number: %d\n", MpegTS_PSI_TSS_SECNO(tss));
 	printf("    Last section number: %d\n", MpegTS_PSI_TSS_LASTSECNO(tss));
-	
+
 	printf("      [--Program Map Specific data]\n");
 	printf("      Reserved bits: 0x%x\n", MpegTS_PMT_PMSD_RBITS(pmsd));
 	printf("      PCR PID: %d\n", MpegTS_PMT_PMSD_PCRPID(pmsd));
@@ -643,11 +643,11 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	printf("      Unused bits: %d\n", MpegTS_PMT_PMSD_UNUSED(pmsd));
 	printf("      Program descriptors length: %d\n", MpegTS_PMT_PMSD_PROGINFOLEN(pmsd));
       }
-      
+
       uint8_t * essd = MpegTS_PMT_ESSD(pmsd);
       uint32_t crc;
-      int remain = 
-	slen 
+      int remain =
+	slen
 	- 5 /* PSI_TSS */
 	- 4 /* PMT_PMSD */
 	- MpegTS_PMT_PMSD_PROGINFOLEN(pmsd)
@@ -655,7 +655,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
       while (remain > 0) {
 	if (priv->v.PMT) {
 	  printf("      [--Elementary stream specific data]\n");
-	  printf("      Stream type: 0x%02x (%s)\n", 
+	  printf("      Stream type: 0x%02x (%s)\n",
 		 MpegTS_ESSD_STREAMTYPE(essd),
 		 stream_type_string(MpegTS_ESSD_STREAMTYPE(essd)));
 	  printf("      Reserved bits: %d\n", MpegTS_ESSD_RBITS1(essd));
@@ -668,7 +668,7 @@ static void Streams_add(MpegTSDemux_private *priv, uint8_t *packet)
 	remain -= n;
 	essd += n;
       }
-	  
+
       crc = (essd[0]<<24)|(essd[1]<<16)|(essd[2]<<8)|(essd[3]<<0);
       if (priv->v.PMT) { printf("      crc: (supplied:calculated) 0x%08x:0x????????\n", crc); }
     }
@@ -738,7 +738,7 @@ static void MpegTSDemux_tick(Instance *pi)
     ArrayU8 *newChunk;
     newChunk = Source_read(priv->source);
 
-    if (newChunk && cfg.verbosity) { 
+    if (newChunk && cfg.verbosity) {
       fprintf(stderr, "got %ld bytes\n", newChunk->len);
     }
 

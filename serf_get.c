@@ -170,9 +170,9 @@ static apr_status_t conn_setup(apr_socket_t *skt,
         if (!ctx->ssl_ctx) {
             ctx->ssl_ctx = serf_bucket_ssl_decrypt_context_get(c);
         }
-        serf_ssl_server_cert_chain_callback_set(ctx->ssl_ctx, 
-                                                ignore_all_cert_errors, 
-                                                print_certs, 
+        serf_ssl_server_cert_chain_callback_set(ctx->ssl_ctx,
+                                                ignore_all_cert_errors,
+                                                print_certs,
 						NULL);
         serf_ssl_set_hostname(ctx->ssl_ctx, ctx->hostinfo);
 
@@ -284,7 +284,7 @@ static apr_status_t setup_request(serf_request_t *request,
 	body_bkt = serf_bucket_simple_copy_create(ctx->req_body_string,
 						  strlen(ctx->req_body_string),
 						  serf_request_get_alloc(request));
-					     
+
     }
     else {
         body_bkt = NULL;
@@ -313,7 +313,7 @@ static apr_status_t setup_request(serf_request_t *request,
     *acceptor_baton = ctx->acceptor_baton;
     *handler = ctx->handler;
     *handler_baton = ctx;
-    
+
     return APR_SUCCESS;
 }
 
@@ -676,7 +676,7 @@ int serf_get_post(int argc, const char **argv, String * output_string)
     if (output_string && String_len(output_string) == 0) {
 	/* Append output to (initially empty) String object. */
 	handler_ctx.output_string = output_string;
-    } 
+    }
     else {
 	handler_ctx.output_string = NULL;
 	if (output_string) {
@@ -691,7 +691,7 @@ int serf_get_post(int argc, const char **argv, String * output_string)
 			      pool);
 	    if (status) {
 		printf("Error opening file (%s)\n", s(output_string));
-		return status;		
+		return status;
 	    }
 	}
 	else {

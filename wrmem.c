@@ -167,7 +167,7 @@ put_demapped_rgb (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
     PUTPPMSAMPLE(bufferptr, GETJSAMPLE(color_map1[pixval]));
     PUTPPMSAMPLE(bufferptr, GETJSAMPLE(color_map2[pixval]));
   }
-  
+
   dest_output(dest);
 }
 

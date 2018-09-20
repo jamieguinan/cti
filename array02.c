@@ -6,11 +6,11 @@
 
 /* Example type definition. */
 typedef struct {
-  struct { 
-    int  * items; 
-    int itemsize; 
-    int available; 
-    int count; 
+  struct {
+    int  * items;
+    int itemsize;
+    int available;
+    int count;
   } rates;
 } abc;
 
@@ -34,7 +34,7 @@ int main()
   /* pointer declaration */
   Array(int) * x3 = malloc(sizeof(*x3));
   Array_ptr_append(6, x3);
-  
+
   printf("%d\n", Array_get(x1.rates, 0));
   printf("%d\n", Array_get(x2.rates, 0));
   printf("%d\n", Array_ptr_get(x3, 0));

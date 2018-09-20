@@ -69,7 +69,7 @@ static void Config_handler(Instance *pi, void *data)
 
 #define BOUNDARY "--0123456789NEXT"
 
-static const char part_format[] = 
+static const char part_format[] =
   "%s\r\nContent-Type: %s\r\n"
   "Timestamp:%.6f\r\n"  	/* very important to use six digits for microseconds! :) */
   "%s"				/* extra headers... */
@@ -77,7 +77,7 @@ static const char part_format[] =
 
 static void Jpeg_handler(Instance *pi, void *data)
 {
-  MjxRepair_private *priv = (MjxRepair_private *)pi;  
+  MjxRepair_private *priv = (MjxRepair_private *)pi;
   Jpeg_buffer *jpeg_in = data;
 
   String *header = String_sprintf(part_format,
@@ -93,7 +93,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     Sink_write(priv->sink, header->bytes, header->len);
     Sink_write(priv->sink, jpeg_in->data, jpeg_in->encoded_length);
   }
-  
+
   String_free(&header);
 
   Jpeg_buffer_release(jpeg_in);
@@ -102,7 +102,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *data)
 {
-  MjxRepair_private *priv = (MjxRepair_private *)pi;  
+  MjxRepair_private *priv = (MjxRepair_private *)pi;
   Wav_buffer *wav_in = data;
   Log(LOG_WAV, "%s popped wav_in @ %p", __func__, wav_in);
 

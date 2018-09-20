@@ -19,7 +19,7 @@ static Input RGB3Source_inputs[] = {
 };
 
 enum { OUTPUT_RGB3, OUTPUT_CONFIG };
-static Output RGB3Source_outputs[] = { 
+static Output RGB3Source_outputs[] = {
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
 };
@@ -150,7 +150,7 @@ static void RGB3Source_instance_init(Instance *pi)
    * text banner for satellite streams, and I am looking at getting SDL to
    * handle updates so that I don't have to feed from here, thus the long
    * periiod. */
-  priv->period_ms = 60001/1;	
+  priv->period_ms = 60001/1;
 }
 
 

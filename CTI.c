@@ -73,7 +73,7 @@ void PostDataGetResult(void *data, Input *input, int * result)
   if (!input->handler) {
     /* Error, send calling thread to tar pit... */
     while (1) {
-      fprintf(stderr, "instance %s input %s does not have a handler!\n", 
+      fprintf(stderr, "instance %s input %s does not have a handler!\n",
 	      input->parent->label, input->type_label);
       sleep(1);
     }
@@ -98,7 +98,7 @@ void PostDataGetResult(void *data, Input *input, int * result)
     Lock_acquire(&input->parent->inputs_lock);
 
     {
-      /* Add node to list. */ 
+      /* Add node to list. */
       if (input->parent->msg_first == 0L) {
 	/* input->parent->msg_last should also be 0L in this case... */
 	input->parent->msg_first = hm;
@@ -110,16 +110,16 @@ void PostDataGetResult(void *data, Input *input, int * result)
 	input->parent->msg_last = hm;
       }
     }
-    
+
     if (input->parent->waiting) {
       Event_signal(&input->parent->inputs_event);
     }
-    
+
     input->parent->pending_messages += 1;
 
     if (input->parent->pending_messages > 5) {
-      dpf("%s (%p): %d queued messages\n", 
-	  input->parent->label, 
+      dpf("%s (%p): %d queued messages\n",
+	  input->parent->label,
 	  input,
 	  input->parent->pending_messages);
     }
@@ -128,9 +128,9 @@ void PostDataGetResult(void *data, Input *input, int * result)
   }
 
   while (input->parent->pending_messages > cfg.max_pending_messages) {
-    /* This one indicates a configuration problem or misestimation, so 
+    /* This one indicates a configuration problem or misestimation, so
        make it an fprintf instead of a dpf. */
-    fprintf(stderr, "sleeping to drain %s message queue (%p) (%d)\n", 
+    fprintf(stderr, "sleeping to drain %s message queue (%p) (%d)\n",
 	    input->parent->label,
 	    input,
 	    input->parent->pending_messages);
@@ -169,7 +169,7 @@ Handler_message *GetData(Instance *pi, int wait_flag)
     nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/50}, NULL);
   }
 
-  /* 
+  /*
      I thought about doing the if (...) check before the
      Lock_acquire(), and changing the goto to a return, thus avoiding
      the acquire/release cycle when there are no messages pending and
@@ -213,7 +213,7 @@ Handler_message *GetData(Instance *pi, int wait_flag)
       hm->prev = 0L;
     }
   }
-    
+
   pi->pending_messages -= 1;
 
 out:
@@ -266,11 +266,11 @@ void Template_list(int verbose)
 	printf("  [%d] *** UNINITIALIZED\n", j);
       }
     }
-    
+
     printf("  Outputs:\n");
     for (j=0; j < templates.items[i]->num_outputs; j++) {
       if (templates.items[i]->outputs[j].type_label) {
-	printf("  [%d] %s\n", j, templates.items[i]->outputs[j].type_label);      
+	printf("  [%d] %s\n", j, templates.items[i]->outputs[j].type_label);
       }
       else {
 	printf("  [%d] *** UNINITIALIZED\n", j);
@@ -467,7 +467,7 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
       /* If value is passed in, call the set function. */
       if (cb_in->value && config_table[i].vset) {
 	/* Generic setter. */
-	config_table[i].vset((uint8_t*)pi + config_table[i].value_offset, 
+	config_table[i].vset((uint8_t*)pi + config_table[i].value_offset,
 			     s(cb_in->value));
       }
       else if (cb_in->value && config_table[i].set) {
@@ -492,7 +492,7 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
       break;
     }
   }
-  
+
   Config_buffer_release(&cb_in);
 }
 
@@ -566,7 +566,7 @@ void Connect(Instance *from, const char *label, Instance *to)
   int i;
   int from_index = -1;
   int to_index = -1;
-  
+
   for (i=0; i < from->num_outputs ; i++) {
     if (from->outputs[i].type_label && streq(from->outputs[i].type_label, label)) {
       from_index = i;
@@ -609,7 +609,7 @@ void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *t
   int i;
   int from_index = -1;
   int to_index = -1;
-  
+
   for (i=0; i < from->num_outputs ; i++) {
     if (from->outputs[i].type_label && streq(from->outputs[i].type_label, fromlabel)) {
       from_index = i;
@@ -696,7 +696,7 @@ Instance *InstanceGroup_find(InstanceGroup *g, String *ilabel)
 }
 
 
-void InstanceGroup_connect(InstanceGroup *g, 
+void InstanceGroup_connect(InstanceGroup *g,
 			   String * instanceLabel1,
 			   const char *ioLabel,
 			   String * instanceLabel2)
@@ -709,7 +709,7 @@ void InstanceGroup_connect(InstanceGroup *g,
 }
 
 
-void InstanceGroup_connect2(InstanceGroup *g, 
+void InstanceGroup_connect2(InstanceGroup *g,
 			    String * instanceLabel1,
 			    const char *oLabel,
 			    String * instanceLabel2,
@@ -761,7 +761,7 @@ Callback *Callback_new(void)
 {
   Callback *cb = Mem_calloc(1, sizeof(*cb));
   Lock_init(&cb->lock);
-  return cb;  
+  return cb;
 }
 
 
@@ -776,12 +776,12 @@ void Callback_wait(Callback *cb)
 
 void Callback_fill(Callback *cb, int (*func)(void *), void *data)
 {
-  Lock_acquire(&cb->lock);  
+  Lock_acquire(&cb->lock);
   printf("%s(%p)\n", __func__, func);
   cb->func = func;
   cb->data = data;
   Event_signal(&cb->event);  // Is this even necessary?  It probably doesn't hurt.
-  Lock_release(&cb->lock);  
+  Lock_release(&cb->lock);
 }
 
 /* Raw data buffer API. */

@@ -90,7 +90,7 @@ static void parse_y4m_header(ArrayU8 *data, uint8_t ** framestart, int * pwidth,
 	//case 't': priv->video_common.interlace_mode = IMAGE_INTERLACE_TOP_FIRST; break;
 	//case 'b': priv->video_common.interlace_mode = IMAGE_INTERLACE_BOTTOM_FIRST; break;
 	//case 'm': priv->video_common.interlace_mode = IMAGE_INTERLACE_MIXEDMODE; break;
-	//case 'p': 
+	//case 'p':
 	//default:
 	//priv->video_common.interlace_mode = IMAGE_INTERLACE_NONE; break;
 	//}
@@ -99,7 +99,7 @@ static void parse_y4m_header(ArrayU8 *data, uint8_t ** framestart, int * pwidth,
 	//priv->video_common.nominal_period = (1.0*frame_denominator/frame_numerator);
 	//priv->video_common.fps_numerator = frame_numerator;
 	//priv->video_common.fps_denominator = frame_denominator;
-	//printf("frame rate %d:%d (%.5f period)\n", 
+	//printf("frame rate %d:%d (%.5f period)\n",
 	//priv->video_common.fps_numerator,
 	//priv->video_common.fps_denominator,
 	//priv->video_common.nominal_period);
@@ -111,12 +111,12 @@ static void parse_y4m_header(ArrayU8 *data, uint8_t ** framestart, int * pwidth,
     }
 
     String_list_free(&ls);
-    
+
     //priv->state = PARSING_FRAME;
     /* Trim out header plus newline. */
     // ArrayU8_trim_left(data, eoh+1);
     *framestart = data->data + eoh + 1 + strlen("FRAME\n");
-  } 
+  }
 }
 
 static int set_input(Instance *pi, const char *value)
@@ -155,7 +155,7 @@ static void y420p_handler(Instance *pi, void *msg)
 
   if (pi->outputs[OUTPUT_YUV420P].destination) {
     /* Compose overlay, pass along. */
-    if (priv->img 
+    if (priv->img
 	&& priv->img->width == buf->width
 	&& priv->img->height == buf->height) {
       int y, x;
@@ -215,7 +215,7 @@ static void Y4MOverlay_instance_init(Instance *pi)
 
 static Template Y4MOverlay_template = {
   .label = "Y4MOverlay",
-  .priv_size = sizeof(Y4MOverlay_private),  
+  .priv_size = sizeof(Y4MOverlay_private),
   .inputs = Y4MOverlay_inputs,
   .num_inputs = table_size(Y4MOverlay_inputs),
   .outputs = Y4MOverlay_outputs,

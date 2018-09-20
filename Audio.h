@@ -5,7 +5,7 @@
 #include <sys/time.h>
 #include "locks.h"
 
-/* 
+/*
  * Audio: raw, WAV.  AAC and MP3 are in a separate module since they
  * are optional and may bring in libraries that aren't present
  * on all CTI platforms.
@@ -43,7 +43,7 @@ extern double Audio_buffer_period(Audio_buffer *audio);
 
 extern int Audio_sample_size(Audio_type);
 
-/* 
+/*
  * Wav buffer, header is separate from data, but concatenated by MjpegMux.
  * References:
  *   https://ccrma.stanford.edu/courses/422/projects/WaveFormat/
@@ -72,7 +72,7 @@ typedef struct {
   LockedRef ref;
 } Wav_buffer;
 
-extern int Wav_parse_header_values(unsigned char *src_bytes, 
+extern int Wav_parse_header_values(unsigned char *src_bytes,
 				   int src_length,
 				   uint32_t * rate,
 				   uint16_t * channels,

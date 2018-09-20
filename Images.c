@@ -37,7 +37,7 @@ static void Image_common_copy(Image_common *dest, Image_common *src)
   if (src->label) {
     dest->label = String_new(s(src->label));
   }
-  
+
 }
 
 static void Image_common_cleanup(Image_common *c)
@@ -95,7 +95,7 @@ Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c)
 	printf("%d\n", maxval);
       }
     }
-    
+
     if (n == 0 && a->data[i] != '#') {
       fprintf(stderr, "not a PGM file (no comment)\n");
       return 0L;
@@ -112,7 +112,7 @@ Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c)
     memcpy(gray->data, a->data+j, len-j);
     return gray;
   }
-  
+
   return 0L;
 }
 
@@ -151,7 +151,7 @@ RGB3_buffer * PPM_buffer_from(uint8_t *data, int len, Image_common *c)
 	printf("%d\n", maxval);
       }
     }
-    
+
     if (n == 0 && a->data[i] != '#') {
       fprintf(stderr, "not a PPM file (no comment)\n");
       return 0L;
@@ -168,7 +168,7 @@ RGB3_buffer * PPM_buffer_from(uint8_t *data, int len, Image_common *c)
     memcpy(rgb->data, a->data+j, len-j);
     return rgb;
   }
-  
+
   return 0L;
 }
 
@@ -205,7 +205,7 @@ Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c)
 
 void Gray32_buffer_release(Gray32_buffer *gray32)
 {
-  Image_common_cleanup(&(gray32->c));  
+  Image_common_cleanup(&(gray32->c));
   Mem_free(gray32->data);
   memset(gray32, 0, sizeof(*gray32));
   Mem_free(gray32);
@@ -231,7 +231,7 @@ RGB3_buffer *RGB3_buffer_clone(RGB3_buffer *rgb_src)
 {
   RGB3_buffer *rgb = RGB3_buffer_new(rgb_src->width, rgb_src->height, &rgb_src->c);
   memcpy(rgb->data, rgb_src->data, rgb_src->data_length);
-  return rgb;  
+  return rgb;
 }
 
 
@@ -276,7 +276,7 @@ void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int heigh
     }
   }
 
-  if (0) { 
+  if (0) {
     FILE *f = fopen("/dev/shm/rgb.ppm", "wb");
     FILE *g = fopen("/dev/shm/a.pgm", "wb");
     fprintf(f, "P6\n%d %d\n255\n", width, height);
@@ -298,8 +298,8 @@ void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int heigh
     fclose(f);
   }
 
-  dpf("%d pixels copied (%d,%d) to (%d,%d)\n", 
-	   copied, 
+  dpf("%d pixels copied (%d,%d) to (%d,%d)\n",
+	   copied,
 	   offsetx, offsety,
 	   x, y);
 }
@@ -310,7 +310,7 @@ void RGB3_buffer_release(RGB3_buffer *rgb)
   int count;
   LockedRef_decrement(&rgb->c.ref, &count);
   if (count == 0) {
-    Image_common_cleanup(&(rgb->c));    
+    Image_common_cleanup(&(rgb->c));
     Mem_free(rgb->data);
     memset(rgb, 0, sizeof(*rgb));
     Mem_free(rgb);
@@ -408,7 +408,7 @@ static struct {
   int len;
   int width;
   int height;
-} 
+}
 yuv422p_known_sizes[] = {
   { .len = 691200, .width = 720, .height = 480 },
   { .len = 614400, .width = 640, .height = 480 },
@@ -447,7 +447,7 @@ void YUV422P_buffer_release(YUV422P_buffer *yuv422p)
   int count;
   LockedRef_decrement(&yuv422p->c.ref, &count);
   if (count == 0) {
-    Image_common_cleanup(&(yuv422p->c));    
+    Image_common_cleanup(&(yuv422p->c));
     if (yuv422p->cb[yuv422p->cb_length] != 0x55) { fprintf(stderr, "cb buffer spilled!\n"); }
     Mem_free(yuv422p->cb);
     if (yuv422p->cr[yuv422p->cr_length] != 0x55) { fprintf(stderr, "cr buffer spilled!\n"); }
@@ -465,7 +465,7 @@ static void YUV422P_to_xGx(YUV422P_buffer *yuv422p, RGB3_buffer *rgb, BGR3_buffe
   // R = Y + 1.402 (Cr-128)
   // G = Y - 0.34414 (Cb-128) - 0.71414 (Cr-128)
   // B = Y + 1.772 (Cb-128)
-  
+
   int x, y;
   uint8_t *prgb = 0L;
   uint8_t *pbgr = 0L;
@@ -498,9 +498,9 @@ static void YUV422P_to_xGx(YUV422P_buffer *yuv422p, RGB3_buffer *rgb, BGR3_buffe
       G = Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128);
       B = Y + 1.772 * (Cb - 128);
 
-      if (R > 255) { R = 255; } else if (R < 0) { R = 0; } 
-      if (G > 255) { G = 255; } else if (G < 0) { G = 0; } 
-      if (B > 255) { B = 255; } else if (B < 0) { B = 0; } 
+      if (R > 255) { R = 255; } else if (R < 0) { R = 0; }
+      if (G > 255) { G = 255; } else if (G < 0) { G = 0; }
+      if (B > 255) { B = 255; } else if (B < 0) { B = 0; }
 
       if (prgb) {
 	prgb[0] = R;
@@ -526,7 +526,7 @@ static void YUV420P_to_xGx(YUV420P_buffer *yuv420p, RGB3_buffer *rgb, BGR3_buffe
   // R = Y + 1.402 (Cr-128)
   // G = Y - 0.34414 (Cb-128) - 0.71414 (Cr-128)
   // B = Y + 1.772 (Cb-128)
-  
+
   int x, y;
   uint8_t *prgb = 0L;
   uint8_t *pbgr = 0L;
@@ -564,9 +564,9 @@ static void YUV420P_to_xGx(YUV420P_buffer *yuv420p, RGB3_buffer *rgb, BGR3_buffe
       G = Y - 0.34414 * (Cb - 128) - 0.71414 * (Cr - 128);
       B = Y + 1.772 * (Cb - 128);
 
-      if (R > 255) { R = 255; } else if (R < 0) { R = 0; } 
-      if (G > 255) { G = 255; } else if (G < 0) { G = 0; } 
-      if (B > 255) { B = 255; } else if (B < 0) { B = 0; } 
+      if (R > 255) { R = 255; } else if (R < 0) { R = 0; }
+      if (G > 255) { G = 255; } else if (G < 0) { G = 0; }
+      if (B > 255) { B = 255; } else if (B < 0) { B = 0; }
 
       if (prgb) {
 	prgb[0] = R;
@@ -772,7 +772,7 @@ YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
   yuv420p->cr = yuv420p->data + yuv420p->y_length + (width*16);
   yuv420p->cb = yuv420p->data + yuv420p->y_length + yuv420p->cr_length + (width*16*2);
 
-  LockedRef_init(&yuv420p->c.ref);  
+  LockedRef_init(&yuv420p->c.ref);
   return yuv420p;
 }
 
@@ -804,7 +804,7 @@ void YUV420P_buffer_release(YUV420P_buffer *yuv420p)
     memset(yuv420p, 0, sizeof(*yuv420p));
     Mem_free(yuv420p);
   }
-  
+
 }
 
 YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *yuv422p)
@@ -817,7 +817,7 @@ YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *yuv422p)
 
   /* Average the chroma samples from adjacent rows. */
   for (y = 0; y < yuv422p->height; y+=2) {
-    /* Using pointers in the horizontal loop yields about a 2x 
+    /* Using pointers in the horizontal loop yields about a 2x
        speed improvment over looking up every time. */
     uint8_t * pcb1 = & (yuv422p->cb[y*yuv422p->width/2]);
     uint8_t * pcb2 = & (yuv422p->cb[(y+1)*yuv422p->width/2]);
@@ -843,7 +843,7 @@ YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p)
   //printf("%s() has not been tested\n", __func__);
 
   /* Copy luma channel directly. */
-  memcpy(yuv422p->y, yuv420p->y, yuv420p->y_length); 
+  memcpy(yuv422p->y, yuv420p->y, yuv420p->y_length);
 #if 0
   memset(yuv422p->cb, 127, yuv422p->cb_length);
   memset(yuv422p->cr, 127, yuv422p->cr_length);
@@ -897,7 +897,7 @@ YUV422P_buffer *YUV422P_copy(YUV422P_buffer *yuv422p, int xoffset, int yoffset, 
       }
     }
   }
-  
+
   return newbuf;
 }
 
@@ -964,7 +964,7 @@ YUV420P_buffer *YUV420P_copy(YUV420P_buffer *yuv420p, int xoffset, int yoffset, 
       }
     }
   }
-  
+
   return newbuf;
 }
 
@@ -989,7 +989,7 @@ Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c)
     jpeg->data_length = size;
     /* Caller must fill in data. Must use standard malloc/calloc here,
        see comment in Jpeg_buffer_release below. */
-    jpeg->data = calloc(1, jpeg->data_length); 
+    jpeg->data = calloc(1, jpeg->data_length);
   }
   LockedRef_init(&jpeg->c.ref);
   return jpeg;
@@ -1090,7 +1090,7 @@ ImageType Image_guess_type(uint8_t *data, int len)
   ImageType t = IMAGE_TYPE_UNKNOWN;
   if (len > 4) {
     if (data[0] == 'P' && data[1] == '5' && data[2] == '\n') {
-      t = IMAGE_TYPE_PGM;      
+      t = IMAGE_TYPE_PGM;
     }
     else if (data[0] == 'P' && data[1] == '6' && data[2] == '\n') {
       t = IMAGE_TYPE_PPM;

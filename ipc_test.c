@@ -15,7 +15,7 @@
 
 int thread_done = 0;
 
-void sigpipe_handler(int sig) 
+void sigpipe_handler(int sig)
 {
   printf("sigpipe ignored\n");
 }
@@ -45,10 +45,10 @@ int main()
        half message then stall
      send full message using API
   */
-  
-  int send_sizes[] = { 1, 2, 3, 4, 5, 6, 8, 
-		       32, 64, 249, 250, 251, 253, 255, 256, 257, 1024, 16000, 
-		       31995, 31996, 31997, 31998,  31999, 32000, 32001, 
+
+  int send_sizes[] = { 1, 2, 3, 4, 5, 6, 8,
+		       32, 64, 249, 250, 251, 253, 255, 256, 257, 1024, 16000,
+		       31995, 31996, 31997, 31998,  31999, 32000, 32001,
 		       100000, 1000000 };
 
 
@@ -75,7 +75,7 @@ int main()
       for (j=0; j < ss; j++) {
 	synth_buffer[j+code_size+len_size] = (j % 256);
       }
-    
+
       if (ss <= 250) {
 	synth_buffer[0] = ss;
       }
@@ -110,7 +110,7 @@ int main()
 	sleep(2);
       }
       else if (mode == 3) {
-	{ 
+	{
 	  int i;
 	  int chksum = 0;
 	  for (i=0; i < ss; i++) {
@@ -125,7 +125,7 @@ int main()
       while (!thread_done) {}
       ipc_debug_recv_checksum = 0;
       close(fd);
-    }   
+    }
   }
 
   printf("\n%d/%ld tests completed\n", i, table_size(send_sizes));

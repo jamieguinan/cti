@@ -36,7 +36,7 @@ void post(const char * uri, String_list * headers, String * data,
 {
   int i;
   CURLcode res;
-  
+
   if (handle == NULL) {
     fprintf(stderr, "curl handle is not set up!\n");
     return;
@@ -59,7 +59,7 @@ void post(const char * uri, String_list * headers, String * data,
   localptr(String_list, out_headers) = String_list_new();
   curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, header_callback);
   curl_easy_setopt(handle, CURLOPT_HEADERDATA, out_headers);
-  
+
   res = curl_easy_perform(handle);
   if (res != CURLE_OK) {
     fprintf(stderr, "%s:%s() %s\n", __FILE__, __func__,
@@ -74,5 +74,5 @@ void post(const char * uri, String_list * headers, String * data,
       fprintf(stderr, "%s: no handler defined\n", __func__);
     }
   }
-  curl_slist_free_all(chunk);  
+  curl_slist_free_all(chunk);
 }

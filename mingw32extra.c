@@ -7,8 +7,8 @@
 
 #include <windows.h>		/* Sleep(), ... */
 
-int readlink(const char *path, char *buf, int bufsiz) 
-{ 
+int readlink(const char *path, char *buf, int bufsiz)
+{
   printf("%s() not implemented\n", __func__); sleep(1);
   return 0;
 }
@@ -57,7 +57,7 @@ int poll(struct pollfd *fds, int nfds, int timeout)
     if (fds[i].events & (POLLERR|POLLHUP)) { FD_SET(fds[i].fd, &exceptfds); }
   }
 
-  /* 
+  /*
    * FIXME: check file descriptors, however that is done.
    * See _kbhit docs for stdin.
    *    http://msdn2.microsoft.com/en-us/library/58w7c94c(VS.80).aspx
@@ -70,9 +70,9 @@ int poll(struct pollfd *fds, int nfds, int timeout)
   /* Translate fd_set back to pollfd args... */
   for (i=0; i < nfds; i++) {
     fds[i].revents = 0;
-    if (FD_ISSET(fds[i].fd, &readfds)) {  fds[i].revents |= POLLIN; } 
+    if (FD_ISSET(fds[i].fd, &readfds)) {  fds[i].revents |= POLLIN; }
     if (FD_ISSET(fds[i].fd, &writefds)) { fds[i].revents |= POLLOUT; }
-    if (FD_ISSET(fds[i].fd, &exceptfds)) {  fds[i].revents |= (POLLERR|POLLHUP); } 
+    if (FD_ISSET(fds[i].fd, &exceptfds)) {  fds[i].revents |= (POLLERR|POLLHUP); }
   }
 
   return rc;
@@ -91,7 +91,7 @@ void Socket_close(Socket_instance *s)
 {
   if (s->fd != -1) {
     /* http://msdn2.microsoft.com/en-us/library/ms740126.aspx */
-    s->rc = closesocket(s->fd);	
+    s->rc = closesocket(s->fd);
     s->fd = -1;
   }
 }

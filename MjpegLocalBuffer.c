@@ -1,4 +1,4 @@
-/* 
+/*
  * This module buffers single media frames, and either discards them
  * or passes them to an MjpegMux instance, which should either save or
  * forward.
@@ -64,7 +64,7 @@ static void check_record_state(MjpegLocalBuffer_private *priv)
     cti_getdoubletime(&tnow);
     if (tnow > priv->record_until) {
       priv->recording = 0;
-      fprintf(stderr, "md recording OFF (%.3f > %.3f)\n", 
+      fprintf(stderr, "md recording OFF (%.3f > %.3f)\n",
 	      tnow, priv->record_until);
     }
   }
@@ -105,7 +105,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
   /* If recording, pass along to MjpegMux output, else discard. */
   if (priv->recording && pi->outputs[OUTPUT_JPEG].destination) {
-    PostData(jpeg, pi->outputs[OUTPUT_JPEG].destination);    
+    PostData(jpeg, pi->outputs[OUTPUT_JPEG].destination);
   }
   else {
     Jpeg_buffer_release(jpeg);
@@ -122,7 +122,7 @@ static void Wav_handler(Instance *pi, void *data)
 
   /* If recording, pass along to MjpegMux output, else discard. */
   if (priv->recording && pi->outputs[OUTPUT_WAV].destination) {
-    PostData(wav, pi->outputs[OUTPUT_WAV].destination);    
+    PostData(wav, pi->outputs[OUTPUT_WAV].destination);
   }
   else {
     Wav_buffer_release(&wav);
@@ -147,7 +147,7 @@ static void MjpegLocalBuffer_tick(Instance *pi)
 static void MjpegLocalBuffer_instance_init(Instance *pi)
 {
   MjpegLocalBuffer_private *priv = (MjpegLocalBuffer_private *)pi;
-  
+
   priv->md_threshold = 1000000;
   priv->forwardbuffer = 5;
 }

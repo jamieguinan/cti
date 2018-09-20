@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
   YUV422P_buffer * y422p = YUV422P_buffer_new(width, height);
 
   srandom(12345678);			/* So should yield same result every time. */
-  
+
   for (i=0; i < 720*480; i++) {
     y422p->y[i] = random() % 256;
   }

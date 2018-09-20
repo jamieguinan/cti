@@ -79,6 +79,6 @@ String_list * Regex_get_matches(const char * input, const char * pattern)
     String_list_add(result, &s);
     offset += matches[0].rm_eo + 1;
   }
-  
+
   return result;
 }

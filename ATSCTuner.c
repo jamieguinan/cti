@@ -60,7 +60,7 @@ static void ATSCTuner_instance_init(Instance *pi)
 
 static Template ATSCTuner_template = {
   .label = "ATSCTuner",
-  .priv_size = sizeof(ATSCTuner_private),  
+  .priv_size = sizeof(ATSCTuner_private),
   .inputs = ATSCTuner_inputs,
   .num_inputs = table_size(ATSCTuner_inputs),
   .outputs = ATSCTuner_outputs,

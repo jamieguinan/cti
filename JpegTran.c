@@ -1,9 +1,9 @@
-/* 
+/*
  * Transform (rotate/flip) and crop Jpeg buffers, like "jpegtran"
  * command-line app.  Processing order is transform-then-crop.
  * Also adds standard quantization tables if absent.
  */
-#include <stdio.h>		
+#include <stdio.h>
 #include <stdlib.h>		/* exit */
 #include <string.h>
 #include <setjmp.h>
@@ -64,7 +64,7 @@ static int set_transform(Instance *pi, const char *value)
       return 0;
     }
   }
-  
+
   return 1;
 }
 
@@ -125,7 +125,7 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
   srcinfo.err = jpeg_std_error(&jsrcerr);
 
   srcinfo.err->emit_message = jerr_warning_noop;
-  srcinfo.err->error_exit = jerr_error_handler;    
+  srcinfo.err->error_exit = jerr_error_handler;
 
   jpeg_create_decompress(&srcinfo);
   srcinfo_needs_cleanup = 1;
@@ -162,7 +162,7 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
     srcinfo.dc_huff_tbl_ptrs[0] = dc_huff_tbl_ptrs[0];
     srcinfo.dc_huff_tbl_ptrs[1] = dc_huff_tbl_ptrs[1];
   }
-  
+
   if (!srcinfo.ac_huff_tbl_ptrs[0]) {
     srcinfo.ac_huff_tbl_ptrs[0] = ac_huff_tbl_ptrs[0];
     srcinfo.ac_huff_tbl_ptrs[1] = ac_huff_tbl_ptrs[1];
@@ -247,7 +247,7 @@ static void jpeg_handler(Instance *pi, void *msg)
       PostData(jpeg_out, pi->outputs[OUTPUT_JPEG].destination);
     }
   }
-  
+
   Jpeg_buffer_release(jpeg_in);
 }
 
@@ -282,7 +282,7 @@ static void JpegTran_instance_init(Instance *pi)
   priv->info.force_grayscale = FALSE;
   priv->info.crop = FALSE;
 
-  
+
 }
 
 static Template JpegTran_template = {

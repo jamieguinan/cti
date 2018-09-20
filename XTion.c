@@ -77,7 +77,7 @@ static int image_height = 240;
 void gray_draw_box(Gray_buffer *gb, int x, int y, int width, int height, uint8_t value)
 {
   int ix, iy;
-  
+
   for (iy=y; iy < (y+height); iy++) {
     if (iy < 0 || iy >= gb->height) continue;
     uint8_t * p = &(gb->data[gb->width * iy]);
@@ -101,7 +101,7 @@ void gray_draw_box(Gray_buffer *gb, int x, int y, int width, int height, uint8_t
 
 static void touch_detect(XTion_private *priv, Gray_buffer *gray)
 {
-  
+
 }
 
 
@@ -129,7 +129,7 @@ static void process_frame(Instance *pi)
     /* Create gray buffer. */
     int z;
     Gray_buffer *gray_out = Gray_buffer_new(image_width, image_height, NULL);
-  
+
     for (z=0; z < (image_width*image_height); z++) {
       gray_out->data[z] = ((frame[z] - 1000)/6)&0xff;
     }
@@ -183,7 +183,7 @@ static void XTion_instance_init(Instance *pi)
 
 static Template XTion_template = {
   .label = "XTion",
-  .priv_size = sizeof(XTion_private),  
+  .priv_size = sizeof(XTion_private),
   .inputs = XTion_inputs,
   .num_inputs = table_size(XTion_inputs),
   .outputs = XTion_outputs,

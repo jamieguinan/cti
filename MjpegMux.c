@@ -90,7 +90,7 @@ static void Config_handler(Instance *pi, void *data)
 
 #define BOUNDARY "--0123456789NEXT\r\n"
 
-static const char part_format[] = 
+static const char part_format[] =
   "%sContent-Type: %s\r\n"
   "Timestamp:%.6f\r\n"
   "%s"				/* extra headers... */
@@ -98,7 +98,7 @@ static const char part_format[] =
 
 static void Jpeg_handler(Instance *pi, void *data)
 {
-  MjpegMux_private *priv = (MjpegMux_private *)pi;  
+  MjpegMux_private *priv = (MjpegMux_private *)pi;
   Jpeg_buffer *jpeg_in = data;
 
   priv->seq += 1;
@@ -128,7 +128,7 @@ static void Jpeg_handler(Instance *pi, void *data)
     Sink_write(priv->sink, header->bytes, header->len);
     Sink_write(priv->sink, jpeg_in->data, jpeg_in->encoded_length);
   }
-  
+
   if (pi->outputs[OUTPUT_RAWDATA].destination) {
     if (priv->no_header) {
       RawData_buffer *raw = RawData_buffer_new(jpeg_in->encoded_length);
@@ -154,7 +154,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 
 static void O511_handler(Instance *pi, void *data)
 {
-  MjpegMux_private *priv = (MjpegMux_private *)pi;  
+  MjpegMux_private *priv = (MjpegMux_private *)pi;
   O511_buffer *o511_in = data;
   /* Format header. */
   String *dimensions = String_sprintf("Width:%d\r\nHeight:%d\r\n", o511_in->width, o511_in->height);
@@ -164,7 +164,7 @@ static void O511_handler(Instance *pi, void *data)
 				  o511_in->c.timestamp,
 				  dimensions->bytes,
 				  o511_in->encoded_length);
-  
+
   if (priv->sink) {
     Sink_write(priv->sink, header->bytes, header->len);
     Sink_write(priv->sink, o511_in->data, o511_in->encoded_length);
@@ -174,7 +174,7 @@ static void O511_handler(Instance *pi, void *data)
     /* Combine header and data, post. */
     RawData_buffer *raw = RawData_buffer_new(header->len + o511_in->encoded_length);
     memcpy(raw->data, header->bytes, header->len);
-    memcpy(raw->data+header->len, o511_in->data, o511_in->encoded_length);    
+    memcpy(raw->data+header->len, o511_in->data, o511_in->encoded_length);
     PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
   }
 
@@ -186,7 +186,7 @@ static void O511_handler(Instance *pi, void *data)
 
 static void Wav_handler(Instance *pi, void *data)
 {
-  MjpegMux_private *priv = (MjpegMux_private *)pi;  
+  MjpegMux_private *priv = (MjpegMux_private *)pi;
   Wav_buffer *wav_in = data;
 
   dpf("%s wav_in %p, pi->outputs[OUTPUT_RAWDATA].destination=%p\n", __func__, wav_in,
@@ -223,7 +223,7 @@ static void Wav_handler(Instance *pi, void *data)
 
 static void AAC_handler(Instance *pi, void *data)
 {
-  MjpegMux_private *priv = (MjpegMux_private *)pi;  
+  MjpegMux_private *priv = (MjpegMux_private *)pi;
   AAC_buffer *aac = data;
 
   /* Format header. */

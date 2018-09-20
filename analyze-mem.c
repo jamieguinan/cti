@@ -2,7 +2,7 @@
  * This program analyzes text generated from StackDebug.c.
  *
  * Compile command,
- 
+
   gcc analyze-mem.c Index.c Array.c Cfg.c StackDebug.c Mem.c CTI.c locks.c dpf.c String.c -lpthread -o analyze-mem
 
   *
@@ -40,11 +40,11 @@ void post_callback(Index_node *node)
 					  addrstr,
 					  &err);
       if (i > 1) {
-	printf("/"); 
+	printf("/");
       }
       printf("%s", s(symstr));
     }
-    printf("\n"); 
+    printf("\n");
   }
   else {
     printf("leftover: %s\n", s(stackpath));
@@ -72,7 +72,7 @@ static void load_map(const char *mapfile)
       String_list_free(&parts);
       continue;
     }
-    
+
     String * addrstr = String_list_get(parts, 0);
     String * typestr = String_list_get(parts, 1);
     String * symstr = String_list_get(parts, 2);
@@ -84,7 +84,7 @@ static void load_map(const char *mapfile)
       //printf("addr=0x%lx\n", addr);
       String * addrstr_shortened = String_sprintf("0x%lx", addr);
       int err;
-      Index_add_string(symbol_map, 
+      Index_add_string(symbol_map,
 		       addrstr_shortened,
 		       String_dup(symstr),
 		       &err);
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
 
 
   char buffer[256];
-  
+
   Index * idx = Index_new();
   int allocations = 0;
   int frees = 0;
@@ -180,6 +180,6 @@ int main(int argc, char *argv[])
   printf("%d calculated leftovers\n", (allocations - frees));
   printf("%d leftovers\n", leftovers);
 
-  
+
   return 0;
 }

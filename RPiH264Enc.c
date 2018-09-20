@@ -12,7 +12,7 @@
 struct appctx;			/* Type for opaque pointers. */
 
 /* These externs match the functions in "rpi-encode-yuv.c" */
-extern void encode_init(struct appctx ** p_ctx, 
+extern void encode_init(struct appctx ** p_ctx,
 			int video_width, int video_height, int video_framerate, int gop_seconds, int video_bitrate);
 extern void rpi_get_sizes(struct appctx * ctx, int * y_size, int * u_size, int * v_size);
 extern void do_frame_io(struct appctx * ctx,
@@ -70,17 +70,17 @@ static void y420p_handler(Instance *pi, void *msg)
   RPiH264Enc_private *priv = (RPiH264Enc_private *)pi;
   YUV420P_buffer *y420p = msg;
   int keyframe = 0;
-  
+
   if (!priv->initialized) {
     priv->video_width = y420p->width;
     priv->video_height = y420p->height;
     if (y420p->c.fps_denominator) {
       priv->video_framerate = y420p->c.fps_numerator/y420p->c.fps_denominator;
     }
-    encode_init(&priv->ctx, 
+    encode_init(&priv->ctx,
 		priv->video_width,
 		priv->video_height,
-		priv->video_framerate, 
+		priv->video_framerate,
 		priv->gop_seconds,
 		priv->video_bitrate);
     priv->initialized = 1;
@@ -88,7 +88,7 @@ static void y420p_handler(Instance *pi, void *msg)
 
   uint8_t *output = NULL;
   int output_size = 0;
-  
+
   int y_size, u_size, v_size;
   rpi_get_sizes(priv->ctx, &y_size, &u_size, &v_size);
   do_frame_io(priv->ctx,
@@ -97,16 +97,16 @@ static void y420p_handler(Instance *pi, void *msg)
 	      y420p->cr, v_size,
 	      &output, &output_size,
 	      &keyframe);
-  
+
   if (output) {
     if (pi->outputs[OUTPUT_H264].destination) {
       H264_buffer *hout = H264_buffer_from(output, output_size, y420p->width, y420p->height, &y420p->c);
       hout->keyframe = keyframe;
-      PostData(hout, pi->outputs[OUTPUT_H264].destination);      
+      PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
     free(output);
   }
-  
+
   /* Try a second call to flush output buffer. */
   output = NULL;
   do_frame_io(priv->ctx,
@@ -121,7 +121,7 @@ static void y420p_handler(Instance *pi, void *msg)
     if (pi->outputs[OUTPUT_H264].destination) {
       H264_buffer *hout = H264_buffer_from(output, output_size, y420p->width, y420p->height, &y420p->c);
       hout->keyframe = keyframe;
-      PostData(hout, pi->outputs[OUTPUT_H264].destination);      
+      PostData(hout, pi->outputs[OUTPUT_H264].destination);
     }
     free(output);
   }
@@ -163,7 +163,7 @@ static void RPiH264Enc_instance_init(Instance *pi)
 
 static Template RPiH264Enc_template = {
   .label = "RPiH264Enc",
-  .priv_size = sizeof(RPiH264Enc_private),  
+  .priv_size = sizeof(RPiH264Enc_private),
   .inputs = RPiH264Enc_inputs,
   .num_inputs = table_size(RPiH264Enc_inputs),
   .outputs = RPiH264Enc_outputs,

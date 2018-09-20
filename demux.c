@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
   Template_list(0);
 
   Instance *vf = Instantiate("VFilter");
-  Instance_loop_thread(vf);  
+  Instance_loop_thread(vf);
 
   Instance *jf = Instantiate("JpegFiler");
   Instance_loop_thread(jf);

@@ -23,7 +23,7 @@ static Output AudioFilter_outputs[] = {
 
 typedef struct {
   Instance i;
-  
+
 } AudioFilter_private;
 
 static Config config_table[] = {
@@ -41,7 +41,7 @@ static void Wav_handler(Instance *pi, void *msg)
   // AudioFilter_private *priv = (AudioFilter_private *)pi;
   Wav_buffer *wav = msg;
 
-  
+
 
   if (pi->outputs[OUTPUT_WAV].destination) {
     PostData(wav, pi->outputs[OUTPUT_WAV].destination);
@@ -69,7 +69,7 @@ static void AudioFilter_instance_init(Instance *pi)
 
 static Template AudioFilter_template = {
   .label = "AudioFilter",
-  .priv_size = sizeof(AudioFilter_private),  
+  .priv_size = sizeof(AudioFilter_private),
   .inputs = AudioFilter_inputs,
   .num_inputs = table_size(AudioFilter_inputs),
   .outputs = AudioFilter_outputs,

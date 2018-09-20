@@ -19,12 +19,12 @@ extern int instance_key_initialized;
 extern void instance_key_init(void); /* Call once at startup. */
 extern int g_synchronous;	     /* Make all message passing synchronous. */
 
-/* 
+/*
  * The IndexedSet() macro is for declaring structures compatible with the
  * IndexedSet_* macros.  "index" should initially be 0L, allocated and used
  * as needed.
  */
-#define IndexedSet(type) struct { type **items; int avail; int count; Index *index; } 
+#define IndexedSet(type) struct { type **items; int avail; int count; Index *index; }
 
 struct _Instance;
 
@@ -42,10 +42,10 @@ typedef struct {
 } Output;
 
 /* Range, set of values that a config item can take. */
-enum { 
+enum {
   RANGE_UNKNOWN=0, 	/* default for unset */
-  RANGE_STRINGS, 
-  RANGE_INTS, 
+  RANGE_STRINGS,
+  RANGE_INTS,
   RANGE_FLOATS,
   RANGE_INT_ENUM,
 };
@@ -107,7 +107,7 @@ typedef struct {
   void (*get_range)(struct _Instance *pi, Range *range);
   /* .vset allows use generic setters. */
   void (*vset)(void *addr, const char *value);
-  size_t value_offset;		
+  size_t value_offset;
 } Config;
 
 enum { INSTANCE_STATE_RUNNING,  INSTANCE_STATE_QUIT };
@@ -121,7 +121,7 @@ typedef struct _Handler_message {
   // String * result_str;	/* Provide if want response. */
 } Handler_message;
 
-typedef enum { 
+typedef enum {
   MESSAGERESULT_UNSET = 0,
   MESSAGERESULT_OK = 1,
   MESSAGERESULT_ERROR = 2,
@@ -133,10 +133,10 @@ typedef struct _Instance {
   String *instance_label;	/* Copied at instantiation. A
 				   container may also have a copy, but
 				   that's Ok. */
-  
+
   /* priv structure should include Instance as first member, priv_size is size of
      the enclosing structure. */
-  size_t priv_size;		
+  size_t priv_size;
 
   void (*tick)(struct _Instance *pi); /* One "unit" of processing. */
   void (*cleanup)(struct _Instance *pi); /* Cleanup function. */
@@ -150,7 +150,7 @@ typedef struct _Instance {
   int state;
   int counter;			/* Update in tick function. */
 
-  Lock inputs_lock;		
+  Lock inputs_lock;
   Event inputs_event;
   int waiting; 			/* 0 or 1, better to treat as boolean than counter. */
 
@@ -294,12 +294,12 @@ extern void InstanceGroup_add(InstanceGroup *g, const char *typeLabel, String *i
 extern Instance * InstanceGroup_find(InstanceGroup *g, String *instanceLabel);
 extern void InstanceGroup_wait(InstanceGroup *g);
 extern void InstanceGroup_free(InstanceGroup **g);
-extern void InstanceGroup_connect(InstanceGroup *g, 
+extern void InstanceGroup_connect(InstanceGroup *g,
 				  String * instanceLabel1,
 				  const char *ioLabel,
 				  String * instanceLabel2);
 
-extern void InstanceGroup_connect2(InstanceGroup *g, 
+extern void InstanceGroup_connect2(InstanceGroup *g,
 				   String * instanceLabel1,
 				   const char *ioLabel1,
 				   String * instanceLabel2,

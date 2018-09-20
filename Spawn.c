@@ -90,7 +90,7 @@ static void Spawn_tick(Instance *pi)
 {
   Handler_message *hm;
   Spawn_private *priv = (Spawn_private *)pi;
-  
+
   hm = GetData(pi, 0);
   if (hm) {
     hm->handler(pi, hm->data);
@@ -107,14 +107,14 @@ static void Spawn_tick(Instance *pi)
       priv->child_pid = -1;
     }
   }
-  
+
   pi->counter++;
 }
 
 static void Spawn_instance_init(Instance *pi)
 {
   Spawn_private *priv = (Spawn_private *)pi;
-  
+
   priv->trigger_key = -1;
   priv->child_pid = -1;
 }

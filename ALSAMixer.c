@@ -1,6 +1,6 @@
 /* ALSA mixer controller.   This is limited to a single "simple control".  See
  * output of this command for available controls,
- * 
+ *
  *   $ amixer | grep Simple
  *
  */
@@ -96,7 +96,7 @@ static int set_volume(Instance *pi, const char *value)
   snd_mixer_selem_id_set_name(sid, priv->control_name->bytes);
   for (i=0; i < 4; i++) {
       snd_mixer_selem_id_set_index(sid, i);
-      elem = snd_mixer_find_selem(priv->handle, sid);    
+      elem = snd_mixer_find_selem(priv->handle, sid);
 
       if (!elem) {
 	/* Break if not found.  So this should work with single-index
@@ -112,7 +112,7 @@ static int set_volume(Instance *pi, const char *value)
       snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_MONO, &vol);
 
       if (vmin <= temp && temp < vmax) {
-	priv->volume = temp;    
+	priv->volume = temp;
 	snd_mixer_selem_set_playback_volume(elem, SND_MIXER_SCHN_MONO, temp);
 	printf("volume: %ld -> %d\n", vol, temp);
       }
@@ -121,8 +121,8 @@ static int set_volume(Instance *pi, const char *value)
 
   if (i == 0) {
     /* Warn if no controls matching control_name were found. */
-    fprintf(stderr, "unable to find control %s %d\n", 
-	    snd_mixer_selem_id_get_name(sid), 
+    fprintf(stderr, "unable to find control %s %d\n",
+	    snd_mixer_selem_id_get_name(sid),
 	    snd_mixer_selem_id_get_index(sid));
   }
 
@@ -146,25 +146,25 @@ static void get_volume(Instance *pi, Value *value)
   snd_mixer_selem_id_alloca(&sid);
 
   if (!priv->control_name) {
-    fprintf(stderr, "no control_name!\n");    
+    fprintf(stderr, "no control_name!\n");
     return;
   }
 
   snd_mixer_selem_id_set_name(sid, priv->control_name->bytes);
   snd_mixer_selem_id_set_index(sid, i);  /* get value from the first indexed control */
-  elem = snd_mixer_find_selem(priv->handle, sid);    
+  elem = snd_mixer_find_selem(priv->handle, sid);
 
   if (!elem) {
-    fprintf(stderr, "unable to find control %s %d\n", 
-	    snd_mixer_selem_id_get_name(sid), 
+    fprintf(stderr, "unable to find control %s %d\n",
+	    snd_mixer_selem_id_get_name(sid),
 	    snd_mixer_selem_id_get_index(sid));
     return;
   }
-  
+
   if (!snd_mixer_selem_has_playback_volume(elem)) {
     fprintf(stderr, "playback volume unavailable!\n");
   }
-  
+
   snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_MONO, &vol);
   value->type = RANGE_INTS;
   value->u.int_value = vol;
@@ -188,24 +188,24 @@ static void get_volume_range(Instance *pi, Range *range)
   snd_mixer_selem_id_alloca(&sid);
 
   if (!priv->control_name) {
-    fprintf(stderr, "no control_name!\n");    
+    fprintf(stderr, "no control_name!\n");
     return;
   }
   snd_mixer_selem_id_set_name(sid, priv->control_name->bytes);
   snd_mixer_selem_id_set_index(sid, i);  /* get range from the first indexed control */
-  elem = snd_mixer_find_selem(priv->handle, sid);    
+  elem = snd_mixer_find_selem(priv->handle, sid);
 
   if (!elem) {
-    fprintf(stderr, "unable to find control %s %d\n", 
-	    snd_mixer_selem_id_get_name(sid), 
+    fprintf(stderr, "unable to find control %s %d\n",
+	    snd_mixer_selem_id_get_name(sid),
 	    snd_mixer_selem_id_get_index(sid));
     return;
   }
-  
+
   if (!snd_mixer_selem_has_playback_volume(elem)) {
     fprintf(stderr, "playback volume unavailable!\n");
   }
-  
+
   snd_mixer_selem_get_playback_volume_range(elem, &vmin, &vmax);
   range->type = RANGE_INTS;
   range->ints.min = vmin;
@@ -251,7 +251,7 @@ static void ALSAMixer_tick(Instance *pi)
 static void ALSAMixer_instance_init(Instance *pi)
 {
   ALSAMixer_private *priv = (ALSAMixer_private *)pi;
-  
+
   strcpy(priv->card, "default");
 }
 

@@ -49,7 +49,7 @@ static void MjpegRepair_tick(Instance *pi)
 static void MjpegRepair_instance_init(Instance *pi)
 {
   MjpegRepair_private *priv = (MjpegRepair_private *)pi;
-  
+
 }
 
 

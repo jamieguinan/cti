@@ -113,9 +113,9 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
   }
 
   /* Is the process even there? */
-  if (access(procpath, R_OK) == -1) { 
+  if (access(procpath, R_OK) == -1) {
     fprintf(stderr, "pid %d is already gone\n", pid);
-    goto out; 
+    goto out;
   }
 
   /* Deliver the signal */
@@ -131,12 +131,12 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
       rc = waitpid(pid, &status, WNOHANG);
       // fprintf(stderr, "waitpid(%d) returns %d, status=%d\n", pid, rc, status);
       if (rc == pid) {
-	if (WIFEXITED(status)) { 
+	if (WIFEXITED(status)) {
 	  fprintf(stderr, "pid %d has exited\n", pid);
 	  break;
 	}
 	else {
-	  fprintf(stderr, "pid %d changed state but is still active\n", pid);	  
+	  fprintf(stderr, "pid %d changed state but is still active\n", pid);
 	}
       }
       else if (rc == -1) {
@@ -146,12 +146,12 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
     }
     else {
       /* There is a race condition here, where if the process table numbering
-	 has looped around, another process could have filled in the slot. 
+	 has looped around, another process could have filled in the slot.
 	 But this is the case where we're waiting for non-child processes
 	 anyway, so its already a grey area. */
-      if (access(procpath, R_OK) == -1) { 
+      if (access(procpath, R_OK) == -1) {
 	fprintf(stderr, "%s is gone\n", procpath);
-	break; 
+	break;
       }
     }
   }

@@ -245,7 +245,7 @@ static int set_enable(Instance *pi, const char *value)
       Source_close_current(priv->source);
     }
   }
-  
+
   printf("MjpegDemux enable set to %d\n", priv->enable);
 
   return 0;
@@ -288,11 +288,11 @@ static int do_seek(Instance *pi, const char *value)
   long amount = atol(value);
 
   if (priv->source) {
-    Source_seek(priv->source, amount);  
+    Source_seek(priv->source, amount);
   }
 
   reset_current(priv);
-  
+
   return 0;
 }
 
@@ -327,7 +327,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 {
   MjpegDemux_private *priv = (MjpegDemux_private *)pi;
   Keycode_message *km = msg;
-  
+
   if (km->keycode == CTI__KEY_A && priv->source) {
     priv->a = Source_tell(priv->source);
     priv->b = 0;		/* reset */
@@ -341,11 +341,11 @@ static void Keycode_handler(Instance *pi, void *msg)
     printf("a:%ld b:%ld\n", priv->a, priv->b);
   }
   else if (km->keycode == CTI__KEY_UP) {
-    priv->seek_amount = cti_min(priv->seek_amount*2, 1000000000); 
+    priv->seek_amount = cti_min(priv->seek_amount*2, 1000000000);
     fprintf(stderr, "seek_amount=%ld\n", priv->seek_amount);
   }
   else if (km->keycode == CTI__KEY_DOWN) {
-    priv->seek_amount = cti_max(priv->seek_amount/2, 1); 
+    priv->seek_amount = cti_max(priv->seek_amount/2, 1);
     fprintf(stderr, "seek_amount=%ld\n", priv->seek_amount);
   }
   else if (km->keycode == CTI__KEY_LEFT) {
@@ -356,7 +356,7 @@ static void Keycode_handler(Instance *pi, void *msg)
   }
   else if (km->keycode == CTI__KEY_RIGHT) {
     if (priv->source) {
-      Source_seek(priv->source, priv->seek_amount);  
+      Source_seek(priv->source, priv->seek_amount);
       reset_current(priv);
     }
   }
@@ -415,7 +415,7 @@ static void notify_outputs_eof(Instance *pi)
   }
   if (pi->outputs[OUTPUT_RAWDATA].destination) {
   }
-}  
+}
 
 
 static void MjpegDemux_tick(Instance *pi)
@@ -438,7 +438,7 @@ static void MjpegDemux_tick(Instance *pi)
   if (!priv->enable) {
     sleep_and_return = 1;
   }
-  else { 
+  else {
     if (!priv->source) {
       fprintf(stderr, "MjpegDemux enabled, but no source set!\n");
       priv->enable = 0;
@@ -451,7 +451,7 @@ static void MjpegDemux_tick(Instance *pi)
   }
 
   if (priv->paused) {
-    sleep_and_return = 1;    
+    sleep_and_return = 1;
   }
 
   if (!sleep_and_return && priv->needData) {
@@ -489,7 +489,7 @@ static void MjpegDemux_tick(Instance *pi)
   }
 
   /*
-   * priv->chunk should begin with a boundary string, followed by several 
+   * priv->chunk should begin with a boundary string, followed by several
    * header lines, for example:
    *
    * --0123456789NEXT
@@ -528,14 +528,14 @@ static void MjpegDemux_tick(Instance *pi)
     }
 
     priv->current.eoh = eoh;
-    
+
     int n, eol;
     for (n=soh; n < eoh; n = eol+2) {
       eol = ArrayU8_search(priv->chunk, n, ArrayU8_temp_const("\r\n", 2));
       if (eol != -1) {
 	String *line = ArrayU8_extract_string(priv->chunk, n, eol);
 	int a, b;
-	
+
 	if ((a = String_find(line, 0, "Content-Type:", &b)) != -1) {
 	  String_parse_string(line, b, &priv->current.content_type);
 	}
@@ -586,8 +586,8 @@ static void MjpegDemux_tick(Instance *pi)
 
     if (priv->current.content_type &&
 	priv->current.content_length >= 0) {
-      dpf("content type: %s timestamp:%f\n", 
-	  s(priv->current.content_type), 
+      dpf("content type: %s timestamp:%f\n",
+	  s(priv->current.content_type),
 	  priv->current.timestamp);
       priv->state = PARSING_DATA;
     }
@@ -659,9 +659,9 @@ static void MjpegDemux_tick(Instance *pi)
       Wav_buffer_release(&w);
     }
   }
-  
+
   else if (streq(priv->current.content_type->bytes, "image/jpeg")) {
-    Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
+    Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4,
 				      priv->current.content_length, 0L);
 
     if (!j) {
@@ -674,7 +674,7 @@ static void MjpegDemux_tick(Instance *pi)
 
     if (priv->eof_notify && !priv->buffer.jpeg) {
       /* Save a copy of the first frame. */
-      priv->buffer.jpeg = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4, 
+      priv->buffer.jpeg = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4,
 					   priv->current.content_length, 0L);
       priv->buffer.jpeg->c.timestamp = priv->current.timestamp;
     }
@@ -710,12 +710,12 @@ static void MjpegDemux_tick(Instance *pi)
 
       if (priv->use_fixed_video_period) {
 	//printf("fixed video period..\n");
-	nanosleep( double_to_timespec(priv->fixed_video_period), NULL);	
+	nanosleep( double_to_timespec(priv->fixed_video_period), NULL);
       }
       else if (priv->use_timestamps && !priv->seen_audio) {
 	double tnow;
 	cti_getdoubletime(&tnow);
-	
+
 	if (priv->video.stream_t0 < 0.0) {
 	  /* New stream, or seek occurred. */
 	  priv->video.stream_t0 = priv->current.timestamp;

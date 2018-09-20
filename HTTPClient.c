@@ -46,7 +46,7 @@ void HTTP_process(HTTPTransaction * t)
 
   if (t->state == HTTP_STATE_NONE) {
     /* FIXME:  Error.  Sleep and return? */
-  } 
+  }
   else if (t->state == HTTP_STATE_COMPLETE) {
     /* Nothing to do. */
   }

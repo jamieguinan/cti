@@ -1,6 +1,6 @@
 /*
  * HTTP Server module.
- * 
+ *
  * Normal usage is to associate a VirtualStorage instance, and
  * search that for requests.
  *
@@ -203,7 +203,7 @@ static void * http_thread(void *data)
       op = String_list_get(operation, 0);
       if (String_eq(op, S("GET"))) {
 	// printf("Looks like a GET request\n");
-	path = String_list_get(operation, 1);      
+	path = String_list_get(operation, 1);
       }
       else if (String_eq(op, S("POST"))) {
 	// printf("Looks like a POST request (not handled)\n");
@@ -213,7 +213,7 @@ static void * http_thread(void *data)
 
   if (!path) {
     /* Return 40x code. */
-    static const char * text = 
+    static const char * text =
       "<html>\n"
       "<head>\n"
       "<title>400 bad request</title>\n"
@@ -278,7 +278,7 @@ static void * http_thread(void *data)
   }
   else {
     /* Return 40x code. */
-    static const char * text = 
+    static const char * text =
       "<html>\n"
       "<head>\n"
       "<title>404 path not found</title>\n"
@@ -305,7 +305,7 @@ static void * http_thread(void *data)
     Comm_write_from_string_complete(&comm, result);
     String_free(&result);
   }
-  
+
  out:
   Comm_close(&comm);
 
@@ -399,7 +399,7 @@ static void HTTPServer_instance_init(Instance *pi)
 
 static Template HTTPServer_template = {
   .label = "HTTPServer",
-  .priv_size = sizeof(HTTPServer_private),  
+  .priv_size = sizeof(HTTPServer_private),
   .inputs = HTTPServer_inputs,
   .num_inputs = table_size(HTTPServer_inputs),
   .outputs = HTTPServer_outputs,

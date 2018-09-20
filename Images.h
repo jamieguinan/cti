@@ -30,7 +30,7 @@ typedef enum {
 
 extern ImageType Image_guess_type(uint8_t * data, int len);
 
-enum { 
+enum {
   IMAGE_INTERLACE_NONE,
   IMAGE_INTERLACE_TOP_FIRST,
   IMAGE_INTERLACE_BOTTOM_FIRST,

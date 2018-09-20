@@ -11,7 +11,7 @@ void Array_set_error_handler(void (*handler)(void))
 void Array_grow(void ** items,
 	  int itemsize,
 	  int * available,
-	  int * count) 
+	  int * count)
 {
   *count += 1;
   if (*available == 0) {

@@ -105,7 +105,7 @@ static void TunerControl_instance_init(Instance *pi)
 
 static Template TunerControl_template = {
   .label = "TunerControl",
-  .priv_size = sizeof(TunerControl_private),  
+  .priv_size = sizeof(TunerControl_private),
   .inputs = TunerControl_inputs,
   .num_inputs = table_size(TunerControl_inputs),
   .outputs = TunerControl_outputs,

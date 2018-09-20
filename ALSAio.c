@@ -33,7 +33,7 @@ int ALSAio_set_format_string(ALSAio_common * aic, const char * format)
       }
       break;
     }
-  }  
+  }
   return rc;
 }
 
@@ -79,9 +79,9 @@ static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rat
   else {
     fprintf(stderr, "*** error setting rate %d (%s)\n", rate, snd_strerror(rc));
   }
-  
+
   rc = snd_pcm_hw_params_set_channels(aic->handle, aic->hwparams, channels);
-  
+
   if (rc == 0) {
     fprintf(stderr, "channels set to %d\n", channels);
     aic->channels = channels;
@@ -100,7 +100,7 @@ void ALSAio_open_playback(ALSAio_common * aic, const char * device, int rate, in
 
 void ALSAio_open_capture(ALSAio_common * aic, const char * device, int rate, int channels, const char * format)
 {
-  ALSAio_open_common(aic, device, rate, channels, format, SND_PCM_STREAM_CAPTURE); 
+  ALSAio_open_common(aic, device, rate, channels, format, SND_PCM_STREAM_CAPTURE);
 }
 
 static const char * state_str[] = {
@@ -123,7 +123,7 @@ const char * ALSAio_state_to_string(int state)
   return state_str[state];
 }
 
-static void ALSA_buffer_io(ALSAio_common * aic, 
+static void ALSA_buffer_io(ALSAio_common * aic,
 			   uint8_t * buffer,
 			   int buffer_size,
 			   int * bytes_transferred,
@@ -159,13 +159,13 @@ static void ALSA_buffer_io(ALSAio_common * aic,
     snd_pcm_uframes_t frames = aic->frames_per_io;
 
     rc = snd_pcm_hw_params_set_period_size_near(aic->handle, aic->hwparams, &frames, &dir);
-    fprintf(stderr, "%s: set_period_size_near returns %d (frames %d -> %d) dir=%d\n", 
+    fprintf(stderr, "%s: set_period_size_near returns %d (frames %d -> %d) dir=%d\n",
 	    __func__, rc, (int)aic->frames_per_io, (int)frames, dir);
     aic->frames_per_io = frames;
 
     rc = snd_pcm_hw_params(aic->handle, aic->hwparams);
     if (rc < 0) {
-      fprintf(stderr, "*** snd_pcm_hw_params %s: %s\n", s(aic->device), snd_strerror(rc));      
+      fprintf(stderr, "*** snd_pcm_hw_params %s: %s\n", s(aic->device), snd_strerror(rc));
     }
 
     state = snd_pcm_state(aic->handle);
@@ -209,7 +209,7 @@ static void ALSA_buffer_io(ALSAio_common * aic,
   if (n != frames_to_transfer) {
     fprintf(stderr, "*** snd_pcm_%s %s: %s\n",
 	    rw == ALSAIO_READ ? "readi":"writei",
-	    s(aic->device), 
+	    s(aic->device),
 	    snd_strerror((int)n));
     fprintf(stderr, "*** attempting snd_pcm_prepare() to correct...\n");
     snd_pcm_prepare(aic->handle);
@@ -237,13 +237,13 @@ Audio_buffer * ALSAio_get_samples(ALSAio_common * aic)
 snd_pcm_format_t ALSAio_bps_to_snd_fmt(int bits_per_sample)
 {
   int i;
-  
+
   for (i=0; i < cti_table_size(formats); i++) {
     if (formats[i].bytes * 8 == bits_per_sample) {
       return formats[i].value;
     }
   }
-  
-  fprintf(stderr, "*** format for %d bits-per-sample not found!\n", bits_per_sample);  
+
+  fprintf(stderr, "*** format for %d bits-per-sample not found!\n", bits_per_sample);
   return SND_PCM_FORMAT_UNKNOWN;
 }

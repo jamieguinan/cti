@@ -25,7 +25,7 @@ int main(int argc, char * argv[])
   }
 
   ArrayU8 * msg = File_load_data(S(argv[1]));
-  
+
   if (!msg) {
     printf("Failed to load %s\n", argv[1]);
     return 1;
@@ -36,7 +36,7 @@ int main(int argc, char * argv[])
     printf("connection to %s failed\n", argv[2]);
     return 1;
   }
-  
+
   int rc;
 
   rc = cti_ipc_send(c->io.s, msg->data, msg->len, timeout_ms);
@@ -53,7 +53,7 @@ int main(int argc, char * argv[])
       printf("cti_ipc_recv failed\n");
       return 1;
     }
-    
+
     int i;
     for (i=0; i < response_length; i++) {
       putchar((char)response[i]);

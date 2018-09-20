@@ -4,7 +4,7 @@
  * about it.
 
  * Resizing arrays of things is dangerous if accessor functions ever
- * return things by address. But String and String_list only return 
+ * return things by address. But String and String_list only return
  * things by value,
  */
 
@@ -169,11 +169,11 @@ void String_free(String **s)
 
 void String_trim_right(String *s)
 {
-  while (s->len && 
+  while (s->len &&
 	 ( s->bytes[s->len-1] == ' '
 	   || s->bytes[s->len-1] == '\t'
 	   || s->bytes[s->len-1] == '\r'
-	   || s->bytes[s->len-1] == '\n' )) 
+	   || s->bytes[s->len-1] == '\n' ))
     {
       s->bytes[s->len-1] = '\0';
       s->len -= 1;
@@ -201,7 +201,7 @@ String * String_sprintf(const char *fmt, ...)
 
   while (1) {
     /* p size varies, but its on the stack so no malloc required. */
-    char p[psize]; 
+    char p[psize];
     va_start(ap, fmt);
     n = vsnprintf(p, psize, fmt, ap);
     va_end(ap);
@@ -283,14 +283,14 @@ int String_parse_double(String *s, int offset, double *d)
   /* Allow and skip spaces at beginning. */
   while (s->bytes[offset] == ' ') { offset++; }
 
-  while (s->bytes[offset] >= '0' && s->bytes[offset] <= '9') { 
+  while (s->bytes[offset] >= '0' && s->bytes[offset] <= '9') {
     result = result * 10 + (s->bytes[offset] - '0');
     offset += 1;
   }
   if (s->bytes[offset] == '.') {
     offset += 1;
-    while (s->bytes[offset] >= '0' && s->bytes[offset] <= '9') { 
-      result = result * 10 + (s->bytes[offset] - '0'); 
+    while (s->bytes[offset] >= '0' && s->bytes[offset] <= '9') {
+      result = result * 10 + (s->bytes[offset] - '0');
       divisor *= 10;
       offset += 1;
     }
@@ -309,8 +309,8 @@ int String_parse_int(String *s, int offset, int *i)
   /* Allow and skip spaces at beginning. */
   while (s->bytes[offset] == ' ') { offset++; }
 
-  while (s->bytes[offset] >= '0' && s->bytes[offset] <= '9') { 
-    result = result * 10 + (s->bytes[offset] - '0'); 
+  while (s->bytes[offset] >= '0' && s->bytes[offset] <= '9') {
+    result = result * 10 + (s->bytes[offset] - '0');
     offset += 1;
   }
 
@@ -671,7 +671,7 @@ void String_list_free(String_list **slst)
   for (i=0; i < lst->len; i++) {
     String_free(&(lst->_strings[i]));
   }
-  
+
   *slst = String_list_value_none();
 }
 
@@ -684,7 +684,7 @@ String * String_list_pull_at(String_list * slst, int i)
     fprintf(stderr, "%s: string list is none!\n", __func__);
     return String_value_none();
   }
-  
+
   if (slst->len == 0) {
     fprintf(stderr, "%s: string list is empty!\n", __func__);
     return String_value_none();
@@ -697,7 +697,7 @@ String * String_list_pull_at(String_list * slst, int i)
   if (i < 0 || i >= slst->len) {
     fprintf(stderr, "%s: index %d out of range!\n", __func__, i0);
     return String_value_none();
-  }  
+  }
 
   String * tmp = slst->_strings[i];
   int move_count = slst->len-i;
@@ -743,7 +743,7 @@ void String_list_trim(String_list * slst)
 
 IntStr * IntStr_new(void)
 {
-  IntStr * istr = Mem_calloc(1, sizeof(*istr));  
+  IntStr * istr = Mem_calloc(1, sizeof(*istr));
   istr->str = String_value_none();
   return istr;
 }

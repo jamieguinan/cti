@@ -35,7 +35,7 @@ Node * xml_string_to_nodetree(String *str)
 
   /* This top node has an empty-string tag, and no text.  It serves as the invisible
      top-level "document" node.*/
-  Node * top = node_new("");	
+  Node * top = node_new("");
   Node * current = top;
 
   int i=0;
@@ -110,12 +110,12 @@ Node * xml_string_to_nodetree(String *str)
   }
 
   if (state != WAITING_FOR_TEXT_OR_SUBNODES || depth != 0) {
-    fprintf(stderr, "XML error (state=%d(%s) depth=%d)\n", 
+    fprintf(stderr, "XML error (state=%d(%s) depth=%d)\n",
 	    state, state_labels[state], depth);
     /* FIXME: Clean up node tree... */
     top = NULL;
   }
-  
+
   return top;
 }
 

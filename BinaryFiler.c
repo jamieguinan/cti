@@ -37,7 +37,7 @@ static int set_output(Instance *pi, const char *value)
       return 1;
     }
   }
-  
+
   if (priv->sink) {
     Sink_free(&priv->sink);
   }
@@ -67,7 +67,7 @@ static void H264_handler(Instance *pi, void *data)
   if (priv->sink) {
     Sink_write(priv->sink, h264->data, h264->encoded_length);
   }
-  
+
   H264_buffer_release(h264);
   pi->counter += 1;
 }

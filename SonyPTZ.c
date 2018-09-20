@@ -33,7 +33,7 @@ static int set_device(Instance *pi, const char *value)
 
   priv->device = strdup(value);
   rc = VISCA_open_serial(&priv->interface, priv->device);
-  
+
   return rc;
 }
 

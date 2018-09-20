@@ -32,12 +32,12 @@ int app_code(int argc, char *argv[])
   if (sdl) {
     printf("instance: %s\n", sdl->label);
   }
-  
+
   Instance_loop_thread(sdl);
 
   while (1) {
     sleep(1);
   }
-  
+
   return 0;
 }

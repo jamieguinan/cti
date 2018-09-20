@@ -68,7 +68,7 @@ static int set_file(Instance *pi, const char *value)
       t = IMAGE_TYPE_YUV422P;
     }
   }
-  
+
   switch (t) {
   case IMAGE_TYPE_PGM:
     gray = PGM_buffer_from(fdata->data, fdata->len, 0L);

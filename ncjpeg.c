@@ -25,10 +25,10 @@ void dump_templates(void)
       for (j=0; j < all_templates[i]->num_inputs; j++) {
 	printf("  [%d] %s\n", j, all_templates[i]->inputs[j].type_label);
       }
-      
+
       printf("  Outputs:\n");
       for (j=0; j < all_templates[i]->num_outputs; j++) {
-	printf("  [%d] %s\n", j, all_templates[i]->outputs[j].type_label);      
+	printf("  [%d] %s\n", j, all_templates[i]->outputs[j].type_label);
       }
     }
     else {
@@ -86,17 +86,17 @@ int main(int argc, char *argv[])
 
     Instance *dj = Instantiate("DJpeg");
     printf("instance: %s\n", dj->label);
-    
+
     Connect(dj, "RGB3_buffer", cj);
-    
+
     PostMessage(jpeg, &dj->inputs[0]);
     // Or: PostMessage(jpeg, FindInput(dj, "Jpeg_buffer"));
-    
+
     dj->tick(dj);
   }
 
   Instance_loop_thread(cj);
-  
+
   if (tv) {
     Range *range;
 
@@ -201,7 +201,7 @@ int main(int argc, char *argv[])
     vc->tick(vc);		/* First tick does setup, so don't include in timing. */
 
     SetConfig(cj, "quality", "80");
-    
+
     cti_getdoubletime(&t1);
     for (i=0; i < num_frames; i++) {
       vc->tick(vc);		/* Capture. */

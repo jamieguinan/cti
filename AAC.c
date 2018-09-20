@@ -1,5 +1,5 @@
-/* 
- * AAC encoding using "faac" library. 
+/*
+ * AAC encoding using "faac" library.
  * Reference,
  *   file:///usr/share/doc/faac-1.28-r4/pdf/libfaac.pdf
  */
@@ -63,7 +63,7 @@ static void Audio_handler(Instance *pi, void *msg)
   AAC_private *priv = (AAC_private *)pi;
   Audio_buffer *audio = msg;
   int rc;
-  
+
   if (0) {
     static FILE *f = NULL;
     if (!f) {
@@ -80,7 +80,7 @@ static void Audio_handler(Instance *pi, void *msg)
 			   audio->header.channels,
 			   &priv->samplesToInput,
 			   &priv->maxOutputBytes
-			   );  
+			   );
     if (!priv->fh) {
       printf("%s: faacEncOpen returned NULL\n", __func__);
       return;
@@ -107,8 +107,8 @@ static void Audio_handler(Instance *pi, void *msg)
     static char * mpegids[] = { [MPEG2] = "MPEG2", [MPEG4] = "MPEG4" };
     static char * objectTypes[] = {
       [0] = "UNSET",
-      [MAIN] = "MAIN", 
-      [LOW] = "LOW", 
+      [MAIN] = "MAIN",
+      [LOW] = "LOW",
       [SSR] = "SSR",
       [LTP] = "LTP",
     };
@@ -129,7 +129,7 @@ static void Audio_handler(Instance *pi, void *msg)
 
 
     switch(audio->header.atype) {
-    case CTI_AUDIO_16BIT_SIGNED_LE: 
+    case CTI_AUDIO_16BIT_SIGNED_LE:
       fc->inputFormat = FAAC_INPUT_16BIT;
       break;
     case CTI_AUDIO_8BIT_SIGNED_LE:
@@ -140,14 +140,14 @@ static void Audio_handler(Instance *pi, void *msg)
       fprintf(stderr, "invalid audio format\n");
       return;
     }
-    
-    
+
+
     rc = faacEncSetConfiguration(priv->fh, fc);
     printf("aac: faacEncSetConfiguration returns %d\n", rc);
     if (rc != 1) {
       printf("aac: ERROR!!!!!!!!\n");
     }
-    
+
   }
 
 #if 0
@@ -169,19 +169,19 @@ static void Audio_handler(Instance *pi, void *msg)
     goto out;
   }
 
-  double nominal_period = 
+  double nominal_period =
 	priv->samplesToInput	   /* Total samples. */
 	* 1.0			   /* Convert to float */
 	// /audio->header.frame_size) /* Number of frames */
 	/audio->header.rate;	   /* frames/sec */
   double timestamp = audio->timestamp;
-  
+
   while (priv->num_samples >= priv->samplesToInput) {
     int encoded = faacEncEncode(priv->fh,
 				(int32_t*)(priv->chunk->data), priv->samplesToInput,
 				priv->output_buffer, priv->maxOutputBytes);
-    
-    if (0) { 
+
+    if (0) {
       static FILE *f = NULL;
       if (!f) {
 	f = fopen("test.aac", "wb");
@@ -190,20 +190,20 @@ static void Audio_handler(Instance *pi, void *msg)
 	if (fwrite(priv->output_buffer, 1, encoded, f) != encoded) { perror("fwrite test.aac"); }
       }
     }
-    
+
     //printf("AAC encoded %d bytes, timestamp=%.3f\n",  encoded, timestamp);
     if (encoded <= 0) {
       nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/10}, NULL);
       continue;
     }
-    
+
     if (pi->outputs[OUTPUT_AAC].destination) {
       AAC_buffer * aac = AAC_buffer_from(priv->output_buffer, encoded);
       aac->timestamp = timestamp;
       aac->nominal_period = nominal_period;
       PostData(aac, pi->outputs[OUTPUT_AAC].destination);
     }
-    
+
     priv->num_samples -= priv->samplesToInput;
 
     timestamp += nominal_period;

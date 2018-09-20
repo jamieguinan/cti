@@ -50,7 +50,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void YUV422P_common_handler(Instance *pi, YUV422P_buffer *buffer, int index)
 {
-  VMixer_private *priv = (VMixer_private *)pi; 
+  VMixer_private *priv = (VMixer_private *)pi;
   if (index >= 2) {
     /* Out of range. */
     return;
@@ -65,7 +65,7 @@ static void YUV422P_common_handler(Instance *pi, YUV422P_buffer *buffer, int ind
     YUV422P_buffer * out = YUV422P_buffer_new(priv->width, priv->height, NULL);
     memset(out->cb, 128, out->cb_length);
     memset(out->cr, 128, out->cr_length);
-    
+
     int x, y, i, k;
     k=0;
     for (y=0; y < priv->height; y++) {
@@ -140,7 +140,7 @@ static void VMixer_instance_init(Instance *pi)
 
 static Template VMixer_template = {
   .label = "VMixer",
-  .priv_size = sizeof(VMixer_private),  
+  .priv_size = sizeof(VMixer_private),
   .inputs = VMixer_inputs,
   .num_inputs = table_size(VMixer_inputs),
   .outputs = VMixer_outputs,

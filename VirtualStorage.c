@@ -1,4 +1,4 @@
-/* 
+/*
  * 2014-Jun-03: This is the first CTI module does NOT have a tick
  * function, and thus no associated thread.  My initial use for it is
  * to have various instances push objects into a VirtualStorage
@@ -47,7 +47,7 @@ static void Config_handler(Instance *pi, void *data)
 
 static void cleanup(void *old_data)
 {
-  /* Clean up any Resource that was allocated elsewhere in this module. 
+  /* Clean up any Resource that was allocated elsewhere in this module.
      A Resource should have its mime type set, which allows to figure out
      the cleanup function. */
   Resource * r = old_data;
@@ -66,7 +66,7 @@ static void Jpeg_handler(Instance *pi, void *data)
 {
   VirtualStorage_private *priv = (VirtualStorage_private *)pi;
   Jpeg_buffer *jpeg = data;
-  
+
   if (!jpeg->c.label || String_is_none(jpeg->c.label)) {
     fprintf(stderr, "VirtualStorage requires c.label to be set for Jpegs\n");
     Jpeg_buffer_release(jpeg);
@@ -134,7 +134,7 @@ static void VirtualStorage_instance_init(Instance *pi)
 
 static Template VirtualStorage_template = {
   .label = "VirtualStorage",
-  .priv_size = sizeof(VirtualStorage_private),  
+  .priv_size = sizeof(VirtualStorage_private),
   .inputs = VirtualStorage_inputs,
   .num_inputs = table_size(VirtualStorage_inputs),
   .outputs = VirtualStorage_outputs,

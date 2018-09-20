@@ -72,7 +72,7 @@ int TreeWalker_walk(String *dstr,
       localptr(String, nextdir) = String_sprintf("%s/%s", s(dstr), de->d_name);
       int ignore = 0;
       if (callback) { ignore = callback(nextdir, DT_DIR, cbdata); }
-      if (ignore == 0) { 
+      if (ignore == 0) {
 	ret = TreeWalker_walk(nextdir, callback, cbdata);
       }
     }

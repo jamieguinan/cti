@@ -13,7 +13,7 @@ String *CSV_get(CSV_table *csv, int row, int column)
   }
 
   int i = (row * csv->_columns) + column;
-  
+
   return csv->_entries.items[i];
 }
 
@@ -64,25 +64,25 @@ CSV_table *CSV_load(String *path)
 #if 1
       IndexedSet_add(csv->_entries, String_new(tmp));
 #else
-      { 
+      {
 	if (csv->_entries.items == 0L) {
 	  printf("%d\n", __LINE__);
-	  csv->_entries.avail = 2; 
+	  csv->_entries.avail = 2;
 	  printf("%d\n", __LINE__);
-	  csv->_entries.items = _Mem_calloc(csv->_entries.avail, sizeof(String_new(tmp)), __func__); 
+	  csv->_entries.items = _Mem_calloc(csv->_entries.avail, sizeof(String_new(tmp)), __func__);
 	  printf("%d\n", __LINE__);
 	}
 	else if (csv->_entries.avail == csv->_entries.count) {
 	  printf("%d\n", __LINE__);
-	  csv->_entries.avail *= 2; 
+	  csv->_entries.avail *= 2;
 	  printf("%d\n", __LINE__);
-	  csv->_entries.items = _Mem_realloc(csv->_entries.items, csv->_entries.avail * sizeof(String_new(tmp)), __func__); 
+	  csv->_entries.items = _Mem_realloc(csv->_entries.items, csv->_entries.avail * sizeof(String_new(tmp)), __func__);
 	  printf("%d\n", __LINE__);
 	}
 	printf("%d\n", __LINE__);
-	csv->_entries.items[csv->_entries.count] = String_new(tmp); 
+	csv->_entries.items[csv->_entries.count] = String_new(tmp);
 	printf("%d\n", __LINE__);
-	csv->_entries.count += 1; 
+	csv->_entries.count += 1;
 	printf("%d\n", __LINE__);
       }
 #endif
@@ -107,6 +107,6 @@ CSV_table *CSV_load(String *path)
 
   csv->_rows = rows;
   csv->_columns = columns;
-  
+
   return csv;
 }

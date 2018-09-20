@@ -73,7 +73,7 @@ static void AAC_handler(Instance *pi, void *data)
 }
 
 static void RawData_handler(Instance *pi, void *data)
-{ 
+{
   RawData_buffer *raw = data;
   RawData_buffer_release(raw);
 }
@@ -89,7 +89,7 @@ static void Config_handler(Instance *pi, void *data)
 
 
 enum { INPUT_CONFIG, INPUT_GRAY, INPUT_JPEG, INPUT_YUV422P, INPUT_YUV420P, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_AUDIO, INPUT_H264, INPUT_AAC, INPUT_RAWDATA };
-static Input Null_inputs[] = { 
+static Input Null_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = Gray_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
@@ -105,7 +105,7 @@ static Input Null_inputs[] = {
 };
 
 // enum { };
-static Output Null_outputs[] = { 
+static Output Null_outputs[] = {
 };
 
 typedef struct {
@@ -138,7 +138,7 @@ static Template Null_template = {
   .outputs = Null_outputs,
   .num_outputs = table_size(Null_outputs),
   .tick = Null_tick,
-  .instance_init = Null_instance_init,  
+  .instance_init = Null_instance_init,
 };
 
 void Null_init(void)

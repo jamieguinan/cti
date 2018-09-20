@@ -40,7 +40,7 @@ typedef struct {
   void (*handler)(JsmnContext * jc);
 } JsmnDispatchHandler;
 
-extern void jsmn_dispatch(JsmnContext * jc, const char * firstkey, 
+extern void jsmn_dispatch(JsmnContext * jc, const char * firstkey,
 			   JsmnDispatchHandler * handlers, int num_handlers);
 extern String * jsmn_lookup_string(JsmnContext * jc, const char * key);
 extern int jsmn_lookup_int(JsmnContext * jc, const char * key, int * value);

@@ -98,7 +98,7 @@ static void Keycode_handler(Instance *pi, void *msg)
       priv->current_channel_index += 1;
     }
     goto channelchange;
-  case CTI__KEY_CHANNELDOWN: 
+  case CTI__KEY_CHANNELDOWN:
     if (priv->current_channel_index > 0) {
       priv->current_channel_index -= 1;
     }
@@ -193,7 +193,7 @@ static void DTV_tick(Instance *pi)
 static void DTV_instance_init(Instance *pi)
 {
   DTV_private *priv = (DTV_private *)pi;
-  
+
   priv->channels_csv = CSV_load(String_sprintf("%s/projects/av/channels.csv.000", getenv("HOME")));
   printf("%d rows %d columns\n", priv->channels_csv->_rows, priv->channels_csv->_columns);
   priv->current_channel_index = 0;

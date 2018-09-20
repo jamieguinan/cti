@@ -91,13 +91,13 @@ static void SocketRelay_tick(Instance *pi)
     hm->handler(pi, hm->data);
     ReleaseMessage(&hm,pi);
   }
-  
+
   if (priv->enable && priv->source) {
     ArrayU8 * chunk = Source_read(priv->source);
     if (pi->outputs[OUTPUT_RAWDATA].destination) {
       RawData_buffer *raw = RawData_buffer_new(chunk->len);
       memcpy(raw->data, chunk->data, chunk->len);
-      PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);    
+      PostData(raw, pi->outputs[OUTPUT_RAWDATA].destination);
     }
     ArrayU8_cleanup(&chunk);
   }
@@ -113,7 +113,7 @@ static void SocketRelay_instance_init(Instance *pi)
 
 static Template SocketRelay_template = {
   .label = "SocketRelay",
-  .priv_size = sizeof(SocketRelay_private),  
+  .priv_size = sizeof(SocketRelay_private),
   .inputs = SocketRelay_inputs,
   .num_inputs = table_size(SocketRelay_inputs),
   .outputs = SocketRelay_outputs,

@@ -145,7 +145,7 @@ static int set_paste(Instance *pi, const char *value)
     Array_append(priv->operations, p);
   }
 
-  if (label) { free(label); }  
+  if (label) { free(label); }
   return rc;
 }
 
@@ -177,7 +177,7 @@ static void plane_paste(uint8_t * src, int src_w, int src_h,
   /* Handles cases where source rect exceeds boundaries of source image.
      Copy and rotate are done in a single operation. */
 
-#if PLANE_PASTE_DEBUG  
+#if PLANE_PASTE_DEBUG
   fprintf(stderr, "%s:%s pasteOp@%p src={%d,%d %d,%d} dest={%d,%d} rotation=%d\n"
 	  , __FILE__
 	  , __func__
@@ -198,9 +198,9 @@ static void plane_paste(uint8_t * src, int src_w, int src_h,
   const int d_src_x=1;	/* same for all rotations */
   const int d_src_y = (src_w);
   int d_dest_x=0, d_dest_y=0;
-  
 
-  /* If op source rectangle begins right or below source image. */  
+
+  /* If op source rectangle begins right or below source image. */
   if (op.src.x >= src_w) { return; }
   if (op.src.y >= src_h) { return; }
 
@@ -275,9 +275,9 @@ static void plane_paste(uint8_t * src, int src_w, int src_h,
   for (y = 0; y < y_count; y += 1) {
     /* Note, could do a memcpy if (d_src_x == d_dest_x == 1) */
     for (x = 0; x < x_count; x += 1) {
-#if PLANE_PASTE_DEBUG      
+#if PLANE_PASTE_DEBUG
       if (psrc < src) { fprintf(stderr, RED "psrc underflow at %d,%d" CLEAR "\n", x, y); return;}
-      if (psrc >= src+(src_w*src_h)) { fprintf(stderr, RED "psrc overflow at %d,%d" CLEAR "\n", x, y); return;} 
+      if (psrc >= src+(src_w*src_h)) { fprintf(stderr, RED "psrc overflow at %d,%d" CLEAR "\n", x, y); return;}
       if (pdest < dest) { fprintf(stderr, RED "pdest underflow at %d,%d" CLEAR "\n", x, y); return;}
       if (pdest >= dest+(dest_w*dest_h)) { fprintf(stderr, RED "pdest overflow at %d,%d" CLEAR "\n", x, y); return;}
 #endif
@@ -307,7 +307,7 @@ static void yuv420_paste(YUV420P_buffer * src, YUV420P_buffer * dest, PasteOp * 
 
 static void check_list(Instance *pi)
 {
-  /* Walk the list of images and see if have one of each label. If so, apply the stored 
+  /* Walk the list of images and see if have one of each label. If so, apply the stored
      operations and post the output. */
   Compositor_private *priv = (Compositor_private *)pi;
 
@@ -336,7 +336,7 @@ static void check_list(Instance *pi)
   YUV420P_buffer * outimg = YUV420P_buffer_new(priv->size.width, priv->size.height, NULL);
 
   for (opIndex = 0; opIndex < Array_count(priv->operations); opIndex++) {
-    /* FIXME: Maybe walk the image list backwards to get most recent if multiple 
+    /* FIXME: Maybe walk the image list backwards to get most recent if multiple
        images with same label. */
     PasteOp * p = Array_get(priv->operations, opIndex);
     for (imageIndex = 0; imageIndex < Array_count(priv->yuv420p_images); imageIndex++) {
@@ -365,7 +365,7 @@ static void check_list(Instance *pi)
     fprintf(stderr, "%s:%s caller did not check destination\n", __FILE__, __func__);
     exit(1);
   }
-  
+
   PostData(outimg, pi->outputs[OUTPUT_YUV420P].destination);
 }
 
@@ -407,7 +407,7 @@ static void Compositor_instance_init(Instance *pi)
 
 static Template Compositor_template = {
   .label = "Compositor",
-  .priv_size = sizeof(Compositor_private),  
+  .priv_size = sizeof(Compositor_private),
   .inputs = Compositor_inputs,
   .num_inputs = table_size(Compositor_inputs),
   .outputs = Compositor_outputs,

@@ -20,7 +20,7 @@ static void Config_handler(Instance *pi, void *msg);
 enum { INPUT_CONFIG, INPUT_YUV422P };
 static Input ColorSpaceConvert_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
-  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },  
+  [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
 };
 
 enum { OUTPUT_YUV422P, OUTPUT_YUV420P };
@@ -42,7 +42,7 @@ static void y422p_handler(Instance *pi, void *msg)
     YUV420P_buffer * y420p = YUV422P_to_YUV420P(y422p);
     PostData(y420p, pi->outputs[OUTPUT_YUV420P].destination);
   }
-  
+
   if (pi->outputs[OUTPUT_YUV422P].destination) {
     PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
   }
@@ -82,7 +82,7 @@ static void ColorSpaceConvert_instance_init(Instance *pi)
 
 static Template ColorSpaceConvert_template = {
   .label = "ColorSpaceConvert",
-  .priv_size = sizeof(ColorSpaceConvert_private),  
+  .priv_size = sizeof(ColorSpaceConvert_private),
   .inputs = ColorSpaceConvert_inputs,
   .num_inputs = table_size(ColorSpaceConvert_inputs),
   .outputs = ColorSpaceConvert_outputs,

@@ -43,7 +43,7 @@ static void Config_handler(Instance *pi, void *data)
 static void YUV420P_handler(Instance *pi, void *msg)
 {
   Collator_private *priv = (Collator_private *)pi;
-  YUV420P_buffer *buffer = msg;  
+  YUV420P_buffer *buffer = msg;
   int i, j;
 
   if (!pi->outputs[OUTPUT_YUV420P].destination) {
@@ -102,7 +102,7 @@ static void Collator_instance_init(Instance *pi)
 
 static Template Collator_template = {
   .label = "Collator",
-  .priv_size = sizeof(Collator_private),  
+  .priv_size = sizeof(Collator_private),
   .inputs = Collator_inputs,
   .num_inputs = table_size(Collator_inputs),
   .outputs = Collator_outputs,

@@ -50,8 +50,8 @@ static void Jpeg_handler(Instance *pi, void *msg)
     PostData(jpeg, pi->outputs[OUTPUT_JPEG_1].destination);
   }
   else if (pi->outputs[OUTPUT_JPEG_2].destination) {
-    /* Pass along. */    
-    PostData(jpeg, pi->outputs[OUTPUT_JPEG_2].destination); 
+    /* Pass along. */
+    PostData(jpeg, pi->outputs[OUTPUT_JPEG_2].destination);
   }
   else {
     /* No output, discard buffer! */

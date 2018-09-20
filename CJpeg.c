@@ -22,7 +22,7 @@ static void y420p_handler(Instance *pi, void *msg);
 
 /* CJpeg Instance and Template implementation. */
 enum { INPUT_CONFIG, INPUT_RGB3, INPUT_BGR3, INPUT_YUV422P, INPUT_YUV420P };
-static Input CJpeg_inputs[] = { 
+static Input CJpeg_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = rgb3_handler },
   [ INPUT_BGR3 ] = { .type_label = "BGR3_buffer", .handler = bgr3_handler },
@@ -31,7 +31,7 @@ static Input CJpeg_inputs[] = {
 };
 
 enum { OUTPUT_JPEG };
-static Output CJpeg_outputs[] = { 
+static Output CJpeg_outputs[] = {
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
 };
 
@@ -99,7 +99,7 @@ static int set_time_limit(Instance *pi, const char *value)
 {
   CJpeg_private *priv = (CJpeg_private *)pi;
   priv->time_limit = atof(value);
-  
+
   return 0;
 }
 
@@ -115,7 +115,7 @@ static Config config_table[] = {
 
 enum { COMPRESS_RGB, COMPRESS_Y444, COMPRESS_Y422, COMPRESS_Y420 };
 
-static void compress_and_post(Instance *pi, 
+static void compress_and_post(Instance *pi,
 			      int width, int height,
 			      uint8_t *c1, uint8_t *c2, uint8_t *c3,
 			      Image_common *c,
@@ -129,21 +129,21 @@ static void compress_and_post(Instance *pi,
   double t1, t2;
   int report_time = 0;
 
-  if (0) printf("%s:%s(width=%d height=%d c1=%p c2=%p c3=%p)\n", 
+  if (0) printf("%s:%s(width=%d height=%d c1=%p c2=%p c3=%p)\n",
 	 __FILE__, __func__,
 	 width, height,
 	 c1, c2, c3);
-  
+
   cti_getdoubletime(&t1);
 
-  cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit, 
+  cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit,
 					this may cause the program to call exit()! */
   jpeg_create_compress(&cinfo);
 
   jpeg_out = Jpeg_buffer_new(0, 0L); /* Pass 0 to let libjpeg allocate output buffer */
   jpeg_out->width = width;
   jpeg_out->height = height;
-  
+
   if (c->timestamp == 0.0) {
     jpeg_out->c.timestamp = t1;	/* Save timestamp. */
   }
@@ -179,7 +179,7 @@ static void compress_and_post(Instance *pi,
   if (compress_mode == COMPRESS_Y422) {
     cinfo.raw_data_in = TRUE;
     jpeg_set_colorspace(&cinfo, JCS_YCbCr);
-      
+
     cinfo.do_fancy_downsampling = FALSE;  // http://www.lavrsen.dk/svn/motion/trunk/picture.c
 
     cinfo.comp_info[0].h_samp_factor = 2;
@@ -194,7 +194,7 @@ static void compress_and_post(Instance *pi,
   else if (compress_mode == COMPRESS_Y420) {
     cinfo.raw_data_in = TRUE;
     jpeg_set_colorspace(&cinfo, JCS_YCbCr);
-      
+
     cinfo.do_fancy_downsampling = FALSE;  // http://www.lavrsen.dk/svn/motion/trunk/picture.c
 
     cinfo.comp_info[0].h_samp_factor = 2;
@@ -259,7 +259,7 @@ static void compress_and_post(Instance *pi,
       jpeg_write_scanlines(&cinfo, row_pointer, 1);
     }
   }
-    
+
   jpeg_finish_compress(&cinfo);
 
   jpeg_destroy_compress(&cinfo);
@@ -270,7 +270,7 @@ static void compress_and_post(Instance *pi,
     PostData(jpeg_out, pi->outputs[OUTPUT_JPEG].destination);
   }
   else {
-    /* Discard output buffer! */  
+    /* Discard output buffer! */
     Jpeg_buffer_release(jpeg_out);
   }
 
@@ -290,7 +290,7 @@ static void compress_and_post(Instance *pi,
        should prevent starving other threads, most importantly video
        and audio capture.  Frames will back up on this thread, but on
        systems like 1.6GHz P4 which can just barely handle
-       640x480@30fps, it tends to even out. */ 
+       640x480@30fps, it tends to even out. */
     sched_yield();
 
     /* Turn down quality. */
@@ -308,8 +308,8 @@ static void compress_and_post(Instance *pi,
   }
 
   if (report_time) {
-    dpf("* %.5f (q=%d)\n", 
-	tdiff, 
+    dpf("* %.5f (q=%d)\n",
+	tdiff,
 	priv->adjusted_quality);
   }
 }
@@ -322,7 +322,7 @@ static void Config_handler(Instance *pi, void *data)
 static void rgb3_handler(Instance *pi, void *data)
 {
   RGB3_buffer *rgb3_in = data;
-  compress_and_post(pi, 
+  compress_and_post(pi,
 		    rgb3_in->width, rgb3_in->height,
 		    rgb3_in->data, 0L, 0L,
 		    &rgb3_in->c,
@@ -335,7 +335,7 @@ static void bgr3_handler(Instance *pi, void *data)
   BGR3_buffer *bgr3_in = data;
   RGB3_buffer *rgb3_in = 0L;
   bgr3_to_rgb3(&bgr3_in, &rgb3_in);
-  compress_and_post(pi, 
+  compress_and_post(pi,
 		    rgb3_in->width, rgb3_in->height,
 		    rgb3_in->data, 0L, 0L,
 		    &rgb3_in->c,
@@ -346,7 +346,7 @@ static void bgr3_handler(Instance *pi, void *data)
 static void y422p_handler(Instance *pi, void *data)
 {
   YUV422P_buffer *y422p_in = data;
-  compress_and_post(pi, 
+  compress_and_post(pi,
 		    y422p_in->width, y422p_in->height,
 		    y422p_in->y, y422p_in->cb, y422p_in->cr,
 		    &y422p_in->c,
@@ -357,7 +357,7 @@ static void y422p_handler(Instance *pi, void *data)
 static void y420p_handler(Instance *pi, void *data)
 {
   YUV420P_buffer *y420p_in = data;
-  compress_and_post(pi, 
+  compress_and_post(pi,
 		    y420p_in->width, y420p_in->height,
 		    y420p_in->y, y420p_in->cb, y420p_in->cr,
 		    &y420p_in->c,
@@ -396,7 +396,7 @@ static Template CJpeg_template = {
   .outputs = CJpeg_outputs,
   .num_outputs = table_size(CJpeg_outputs),
   .tick = CJpeg_tick,
-  .instance_init = CJpeg_instance_init,  
+  .instance_init = CJpeg_instance_init,
 };
 
 void CJpeg_init(void)

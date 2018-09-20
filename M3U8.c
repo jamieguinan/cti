@@ -101,7 +101,7 @@ static void M3U8_instance_init(Instance *pi)
 
 static Template M3U8_template = {
   .label = "M3U8",
-  .priv_size = sizeof(M3U8_private),  
+  .priv_size = sizeof(M3U8_private),
   .inputs = M3U8_inputs,
   .num_inputs = table_size(M3U8_inputs),
   .outputs = M3U8_outputs,

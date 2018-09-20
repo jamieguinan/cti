@@ -112,7 +112,7 @@ static void PushQueue_instance_init(Instance *pi)
 
 static Template PushQueue_template = {
   .label = "PushQueue",
-  .priv_size = sizeof(PushQueue_private),  
+  .priv_size = sizeof(PushQueue_private),
   .inputs = PushQueue_inputs,
   .num_inputs = table_size(PushQueue_inputs),
   .outputs = PushQueue_outputs,

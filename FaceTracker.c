@@ -1,4 +1,4 @@
-/* 
+/*
  * Face tracker.  I don't know how hard this is going to be to
  * implement.  I initially want it for controlling the cockpit
  * view in X-Plane.
@@ -38,13 +38,13 @@ typedef struct {
 } coord2d;
 
 
-enum { 
+enum {
   FACETRACKER_BACKGROUND_WAITING_LEFT,
   FACETRACKER_BACKGROUND_WAITING_RIGHT,
   FACETRACKER_BACKGROUND_READY,
 };
 
-enum { 
+enum {
   FT_INIT,
   FT_BLINK_1,
   FT_BLINK_2,
@@ -101,8 +101,8 @@ static void analysis_00(FaceTracker_private *priv, Gray_buffer *gray)
   /* Hm, finding my Nostrils might be easy. */
 
   /* Idea: sit still and blink eyes to start.  Track eyes and nostrils. */
-  
-  
+
+
 }
 #endif
 
@@ -134,9 +134,9 @@ static void analysis_001(FaceTracker_private *priv, Gray_buffer *gray)
 
   /* Absolute value difference between frames. */
   for (i=0; i < num_pixels; i++) {
-    //priv->sum->data[i] += (priv->fir[priv->fir_index]->data[i] + 256 - 
+    //priv->sum->data[i] += (priv->fir[priv->fir_index]->data[i] + 256 -
     //priv->fir[prev_index]->data[i]);
-    priv->sum->data[i] += abs((int)(priv->fir[priv->fir_index]->data[i]) - 
+    priv->sum->data[i] += abs((int)(priv->fir[priv->fir_index]->data[i]) -
 			   (int)(priv->fir[prev_index]->data[i]));
   }
 
@@ -149,7 +149,7 @@ static void analysis_001(FaceTracker_private *priv, Gray_buffer *gray)
     //priv->fir[prev2_index]->data[i]);
     priv->sum->data[i] -= abs((int)(priv->fir[prev_index]->data[i]) -
 			      (int)(priv->fir[prev2_index]->data[i]));
-    
+
   }
 
   /* Diagnostic output: */
@@ -201,8 +201,8 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
     uint32_t pixel = priv->sum->data[i];
     pixel *= priv->iir_decay;
     int d = abs((int)(gray->data[i]) - (int)(priv->iir_last->data[i]));
-    if (d < priv->chop) { 
-      d = 0; 
+    if (d < priv->chop) {
+      d = 0;
     }
     else {
       d = d * d;
@@ -224,7 +224,7 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
   y_step = priv->sum->height / 35;
   x_step = priv->sum->width / 22;
   memset(&maximums, 0, sizeof(maximums));
-  
+
   /* Search only center portion of screen. */
   for (y=priv->sum->height/4; y < priv->sum->height*3/4; y += 1) {
     for (x=priv->sum->width/3; x <  priv->sum->width*2/3; x += 1) {
@@ -245,7 +245,7 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
       }
     }
   }
-  
+
   /* Search for other eye, either to left or right */
   for (y=maximums[0].y, dx = -1 ; dx <= 1; dx += 2) {
     for (x=maximums[0].x + (dx*x_step); (x > 0) && (x < priv->sum->width - x_step); x += dx) {
@@ -265,10 +265,10 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
       }
     }
   }
-  
+
   if (maximums[1].sum) {
     for (ii=0; ii < 2; ii++) {
-      printf("maximums[%d] (%d, %d): %d\n",  
+      printf("maximums[%d] (%d, %d): %d\n",
 	     ii, maximums[ii].x,  maximums[ii].y,  maximums[ii].sum);
     }
   }
@@ -280,12 +280,12 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
        matching. */
     /* Or find mouth, nostrils, cheek patches and use them for calculations. */
   }
-  
-  
+
+
  postcalc:
   /* Save a copy of the frame. */
   memcpy(priv->iir_last->data, gray->data, gray->data_length);
-  
+
   /* Replace grey image with diagnostic output. */
   for (i=0; i < num_pixels; i++) {
     uint32_t pixel = priv->sum->data[i];
@@ -300,8 +300,8 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
 	gray->data[gray->width*yy + maximums[ii].x] = 255;
 	gray->data[gray->width*yy + maximums[ii].x+x_step] = 255;
       }
-      
-    
+
+
       for (xx=maximums[ii].x; xx < maximums[ii].x+x_step; xx++) {
 	if (xx < 0) xx = 0;
 	gray->data[gray->width*maximums[ii].y + xx] = 255;
@@ -326,7 +326,7 @@ static void analysis_01(FaceTracker_private *priv, YUV422P_buffer *y422p)
   int width;
   int target_size_x;
   int target_size_y;
-  
+
   for (y = (0 + y_step); y < (height - target_size_y); y += y_step) {
     for (x = (0 + x_step); x < (width - target_size_x); x += x_step) {
       if (color_match(x, y)) {
@@ -356,7 +356,7 @@ static void gray_handler(Instance *pi, void *msg)
     }
   }
   else if (priv->state == 1) {
-    
+
   }
 
   if (pi->outputs[OUTPUT_GRAY].destination) {

@@ -59,7 +59,7 @@ void Lock_release__event_wait__lock_acquire(Lock *lock, Event *event)
   rc = pthread_cond_wait(&event->event, &lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_cond_wait returned %d\n", rc);
-    Stack_dump(); 
+    Stack_dump();
     exit(1);
   }
 #else
@@ -101,7 +101,7 @@ void Event_signal(Event *ev)
 void Sem_init(Sem *sem)
 {
 #ifdef __linux__
-  int rc = sem_init(&sem->sem, 
+  int rc = sem_init(&sem->sem,
 		    0, /* shared between threads only */
 		    0  /* initial value */
     );
@@ -158,7 +158,7 @@ void LockedRef_increment(LockedRef *ref, int *count)
   Lock_acquire(&ref->lock);
   ref->_count += 1;
   *count = ref->_count;
-  Lock_release(&ref->lock);  
+  Lock_release(&ref->lock);
 }
 
 

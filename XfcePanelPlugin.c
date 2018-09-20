@@ -50,7 +50,7 @@ static void XfcePanelPlugin_tick(Instance *pi)
 static void XfcePanelPlugin_instance_init(Instance *pi)
 {
   XfcePanelPlugin_private *priv = (XfcePanelPlugin_private *)pi;
-  
+
 }
 
 

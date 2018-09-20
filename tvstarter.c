@@ -15,8 +15,8 @@ int app_code(int argc, char *argv[])
   Config_buffer *cb;
 
   Instance *lirc = Instantiate("Lirc");
-  
-  
+
+
 
   return rc;
 }

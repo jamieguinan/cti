@@ -89,12 +89,12 @@ static void ResourceMonitor_tick(Instance *pi)
     String_parse_int(data, end+1, &rss_value);
     dpf("VmRSS %d\n", rss_value);
     if (priv->rss_limit && rss_value > priv->rss_limit)   {
-      fprintf(stderr, "%s: rss_limit exceded (%d > %d)!\n", __func__, 
+      fprintf(stderr, "%s: rss_limit exceded (%d > %d)!\n", __func__,
               rss_value, priv->rss_limit);
       _shutdown_();
     }
   }
-    
+
   pi->counter++;
 }
 

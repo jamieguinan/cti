@@ -1,4 +1,4 @@
-/* 
+/*
  * Read from a file or socket, and pass raw data to output.  Can also
  * hard-set certain kinds of input. Restart if EOF on source.
  */
@@ -78,7 +78,7 @@ static void RawSource_move_data(Instance *pi)
     Source_close_current(priv->source);
     Source_reopen(priv->source);
   }
-  
+
   if (!priv->source) {
     return;
   }
@@ -93,14 +93,14 @@ static void RawSource_move_data(Instance *pi)
     Source_reopen(priv->source);
   }
 
-  dpf("%s: %ld bytes, %" PRIu64 " bytes total (%" PRIu64 "MB)\n", 
+  dpf("%s: %ld bytes, %" PRIu64 " bytes total (%" PRIu64 "MB)\n",
       __func__, chunk->len, priv->bytes_total, (priv->bytes_total/(1024*1024)));
 
   if (chunk->len && pi->outputs[OUTPUT_AUDIO].destination && chunk->len >= 44) {
     if (!priv->audio.rate) {
       /* Expect first chunk of data to be in WAV format with 44-byte header. */
       /* FIXME: Test return value, disable if invalid. */
-      Wav_parse_header_values(chunk->data, chunk->len, 
+      Wav_parse_header_values(chunk->data, chunk->len,
 			      &priv->audio.rate,
 			      &priv->audio.channels,
 			      &priv->audio.frame_size,

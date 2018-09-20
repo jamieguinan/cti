@@ -52,7 +52,7 @@ void Signals_handle(int signo, void (*handler)(int))
 {
 
   if (signal(signo, handler) == SIG_ERR) {
-    fprintf(stderr, "signal(%d) failed\n", signo); 
+    fprintf(stderr, "signal(%d) failed\n", signo);
   }
 }
 

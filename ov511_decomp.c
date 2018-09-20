@@ -467,7 +467,7 @@ struct ov51x_decomp_ops ov511_decomp_ops = {
 #endif
 
 #ifdef STANDALONE
-/* 
+/*
  * Standalone app build.  Decompresses input to YUV420 output.
  */
 #include <sys/mman.h>		/* mmap */
@@ -488,11 +488,11 @@ int main(int argc, char *argv[])
 		perror(argv[1]);
 		return 1;
 	}
-	
+
 	int n = read(fd, input, sizeof(input));
 	printf("read %d bytes\n", n);
 	close(fd);
-	
+
 	ov511_decomp_420(input, output, temp, 640, 480, n);
 
 	printf("decompress done\n");

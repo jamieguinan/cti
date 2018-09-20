@@ -16,7 +16,7 @@ static Input JpegSource_inputs[] = {
 };
 
 enum { OUTPUT_JPEG, OUTPUT_CONFIG };
-static Output JpegSource_outputs[] = { 
+static Output JpegSource_outputs[] = {
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
 };

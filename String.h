@@ -1,7 +1,7 @@
 #ifndef _CTI_STRING_H_
 #define _CTI_STRING_H_
 
-/* 
+/*
  * String data structure and functions.  Written for 7-bit ASCII,
  * although I might allow UTF-8, and functions to convert to/from
  * other encodings.
@@ -64,7 +64,7 @@ extern void String_clear(String **s);
 extern void String_set_sprintf(String **s, const char *fmt, ...);
 
 /* These return new strings. */
-extern String * 
+extern String *
 __attribute__ ((format (printf, 1, 2))) /* gcc format checking */
 String_sprintf(const char *fmt, ...);
 

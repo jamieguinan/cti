@@ -1,4 +1,4 @@
-/* 
+/*
  * Clones or references inputs, distributes to outputs.
  */
 #include <stdio.h>		/* fprintf */
@@ -27,8 +27,8 @@ static Input Splitter_inputs[] = {
   [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
 };
 
-enum { OUTPUT_YUV420P_1, OUTPUT_YUV420P_2, 
-       OUTPUT_YUV422P_1, OUTPUT_YUV422P_2, 
+enum { OUTPUT_YUV420P_1, OUTPUT_YUV420P_2,
+       OUTPUT_YUV422P_1, OUTPUT_YUV422P_2,
        OUTPUT_JPEG_1, OUTPUT_JPEG_2,
        OUTPUT_WAV_1, OUTPUT_WAV_2 };
 static Output Splitter_outputs[] = {
@@ -79,12 +79,12 @@ static void y420p_handler(Instance *pi, void *data)
       if (out_count) {
 	/* Clone and post buffer. */
 	YUV420P_buffer *y420p_tmp = YUV420P_clone(y420p_in);
-	PostData(y420p_tmp, pi->outputs[j].destination); 
+	PostData(y420p_tmp, pi->outputs[j].destination);
 	y420p_tmp = NULL;
       }
       else {
 	/* Post buffer. */
-	PostData(y420p_in, pi->outputs[j].destination); 
+	PostData(y420p_in, pi->outputs[j].destination);
 	y420p_in = 0L;
       }
     }
@@ -118,12 +118,12 @@ static void y422p_handler(Instance *pi, void *data)
       if (out_count) {
 	/* Clone and post buffer. */
 	YUV422P_buffer *y422p_tmp = YUV422P_clone(y422p_in);
-	PostData(y422p_tmp, pi->outputs[j].destination); 
+	PostData(y422p_tmp, pi->outputs[j].destination);
 	y422p_tmp = NULL;
       }
       else {
 	/* Post buffer. */
-	PostData(y422p_in, pi->outputs[j].destination); 
+	PostData(y422p_in, pi->outputs[j].destination);
 	y422p_in = 0L;
       }
     }
@@ -157,12 +157,12 @@ static void Jpeg_handler(Instance *pi, void *data)
       if (out_count) {
 	/* Ref and post buffer. */
 	Jpeg_buffer *Jpeg_tmp = Jpeg_buffer_ref(jpeg_in);
-	PostData(Jpeg_tmp, pi->outputs[j].destination); 
+	PostData(Jpeg_tmp, pi->outputs[j].destination);
 	Jpeg_tmp = NULL;
       }
       else {
 	/* Post buffer. */
-	PostData(jpeg_in, pi->outputs[j].destination); 
+	PostData(jpeg_in, pi->outputs[j].destination);
 	jpeg_in = 0L;
       }
     }
@@ -196,12 +196,12 @@ static void Wav_handler(Instance *pi, void *data)
       if (out_count) {
 	/* Ref and post buffer. */
 	Wav_buffer *Wav_tmp = Wav_ref(wav_in);
-	PostData(Wav_tmp, pi->outputs[j].destination); 
+	PostData(Wav_tmp, pi->outputs[j].destination);
 	Wav_tmp = NULL;
       }
       else {
 	/* Post buffer. */
-	PostData(wav_in, pi->outputs[j].destination); 
+	PostData(wav_in, pi->outputs[j].destination);
 	wav_in = 0L;
       }
     }

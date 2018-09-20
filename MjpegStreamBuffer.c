@@ -1,4 +1,4 @@
-/* 
+/*
  * This module handles buffering and saving stream data (usually from an
  * MjpegDemux instance) to disk.
  */
@@ -85,14 +85,14 @@ static void Config_handler(Instance *pi, void *data)
 
 
 static void RawData_handler(Instance *pi, void *data)
-{ 
+{
   MjpegStreamBuffer_private *priv = (MjpegStreamBuffer_private *)pi;
   RawData_buffer *raw = data;
 
   if (priv->put == priv->get) {
     priv->get += 1;
   }
-  
+
   RawData_buffer_release(raw);
 }
 

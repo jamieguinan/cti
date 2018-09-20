@@ -1,4 +1,4 @@
-/* 
+/*
  * SocketServer supports this mode of operation: receive RawData
  * messages, keep them in a ring buffer, and send the data to all
  * connected clients.  If a client can't keep up, (that is, too much
@@ -81,7 +81,7 @@ typedef struct {
   RawData_node *raw_first;
   RawData_node *raw_last;
   int raw_seq;
-  IndexedSet(Instance) notify_instances; 
+  IndexedSet(Instance) notify_instances;
 } SocketServer_private;
 
 
@@ -130,7 +130,7 @@ static int set_notify(Instance *pi, const char *value)
   }
 
   IndexedSet_add(priv->notify_instances, px);
-  
+
   return 0;
 }
 
@@ -191,7 +191,7 @@ static void toggle_services(SocketServer_private *priv)
     }
   }
   else if (priv->num_client_connections == 1) {
-    /* Turn on. */    
+    /* Turn on. */
     for (i=0; i < priv->notify_instances.count; i++) {
       Instance *px = priv->notify_instances.items[i];
       printf("enable 1 to %s\n", px->label);
@@ -231,7 +231,7 @@ static void SocketServer_tick(Instance *pi)
   FD_ZERO(&rfds);
   FD_ZERO(&wfds);
 
-  cc = priv->cc_first; 
+  cc = priv->cc_first;
 
   while (cc) {
     if (cc->state == CC_CLOSEME) {
@@ -245,7 +245,7 @@ static void SocketServer_tick(Instance *pi)
 	 cc_last. */
       if (cc->prev) {
 	cc->prev->next = cc->next;
-      } 
+      }
       else {
 	/* Was at beginning of list. */
 	priv->cc_first = cc->next;
@@ -253,7 +253,7 @@ static void SocketServer_tick(Instance *pi)
 
       if (cc->next) {
 	cc->next->prev = cc->prev;
-      }      
+      }
       else {
 	/* Was at end of list. */
 	priv->cc_last = cc->prev;
@@ -261,7 +261,7 @@ static void SocketServer_tick(Instance *pi)
 
       cc_tmp = cc->next;
       Mem_free(cc);
-      cc = cc_tmp; 
+      cc = cc_tmp;
       priv->num_client_connections -= 1;
       toggle_services(priv);
       continue;
@@ -312,7 +312,7 @@ static void SocketServer_tick(Instance *pi)
      it to 1ms can be expensive.  If CTI were a "pull" design instead
      of "push", this might not have become a concern, but for now CTI
      is "push" and that works well enough for my purposes.
-     
+
      Update: reduced from 3ms to 1ms, because the large number of
      short audio samples was backing up the queues on the birdcam
      installation.
@@ -378,7 +378,7 @@ static void SocketServer_tick(Instance *pi)
     to_send = cti_min(16384, cc->raw_node->buffer->data_length - cc->raw_offset);
 
     if (to_send <= 0) {
-      fprintf(stderr, "Whoa, to_send is %d (cc->raw_node->buffer->data_length=%d cc->raw_offset=%d)\n", 
+      fprintf(stderr, "Whoa, to_send is %d (cc->raw_node->buffer->data_length=%d cc->raw_offset=%d)\n",
 	      to_send, cc->raw_node->buffer->data_length, cc->raw_offset);
       n = 0;
       goto nextraw;
@@ -428,10 +428,10 @@ static void SocketServer_tick(Instance *pi)
       fprintf(stderr, "%s:%s: BAD: no nodes left.  Too large buffer, or too small max?\n", __FILE__, __func__);
       while (1) { sleep (1); }
     }
-    
+
     priv->total_buffered_data -= raw_tmp->buffer->data_length;
     // printf("* priv->total_buffered_data=%d\n", priv->total_buffered_data);
-  
+
     RawData_buffer_release(raw_tmp->buffer);
     Mem_free(raw_tmp);
   }
@@ -444,7 +444,7 @@ static void SocketServer_instance_init(Instance *pi)
    /* Default to 2MB buffered data. */
   priv->max_total_buffered_data = 2*1024*1024;
 
-  
+
 }
 
 

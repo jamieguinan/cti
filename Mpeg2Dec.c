@@ -56,7 +56,7 @@ static void Mpeg2Dec_instance_init(Instance *pi)
 
 static Template Mpeg2Dec_template = {
   .label = "Mpeg2Dec",
-  .priv_size = sizeof(Mpeg2Dec_private),  
+  .priv_size = sizeof(Mpeg2Dec_private),
   .inputs = Mpeg2Dec_inputs,
   .num_inputs = table_size(Mpeg2Dec_inputs),
   .outputs = Mpeg2Dec_outputs,

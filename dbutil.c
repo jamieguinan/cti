@@ -28,7 +28,7 @@ int sql_exec_free_query(sqlite3 *pdb,
   return rc;
 }
 
-static int schema_check_callback(void *i_ptr, 
+static int schema_check_callback(void *i_ptr,
 				 int num_columns, char **column_strings, char **column_headers)
 {
   SchemaColumn_check * sdc = i_ptr;
@@ -38,7 +38,7 @@ static int schema_check_callback(void *i_ptr,
   if (sdc->index > 0) { String_cat1(sdc->existing_schema, ",");  }
   String_cat2(sdc->existing_schema, " ", existing_column_name); /* Column name */
   String_cat2(sdc->existing_schema, " ", existing_column_type); /* Column type */
-  
+
   if (sdc->error != 0) {
     /* Already seen one error, skip remaining checks. */
     goto out;
@@ -65,7 +65,7 @@ static int schema_check_callback(void *i_ptr,
   if (v) fprintf(stderr, "%s %s matches (%d %s)\n",
 	 sdc->columns[sdc->index].name,
 	 sdc->columns[sdc->index].type,
-	 sdc->index, 
+	 sdc->index,
 	 column_strings[0]);
 
  out:
@@ -88,13 +88,13 @@ static int schema_check_callback(void *i_ptr,
       }
     }
   }
-  
+
   sdc->index += 1;
   return 0;
 }
 
 
-int db_check(sqlite3 *db, const char * table_name, 
+int db_check(sqlite3 *db, const char * table_name,
 	     SchemaColumn * schema, int num_columns, const char * constraints)
 {
   /*
@@ -102,13 +102,13 @@ int db_check(sqlite3 *db, const char * table_name,
    * like, but it works well enough and I have several programs using
    * it, so I'm keeping it. See also db_schema_test() below for a simpler
    * function that only tests whether a table matches a schema.
-   * 
+   *
    * This function does several things:
    *   . Tests whether named (existing) table matches the supplied schema.
    *   . Creates the table if it doesn't already exist.
    *   . Reorganizes existing table columns to match current schema.
    */
-  
+
   /* Check for same number of columns, with same names and types. */
   SchemaColumn_check sdc = { schema, 0, num_columns, 0, String_new(""), String_new("") };
   int rc;
@@ -147,7 +147,7 @@ int db_check(sqlite3 *db, const char * table_name,
     if (sdc.index == 0) {
       /* Table was not found */
       fprintf(stderr, "Creating table %s\n", table_name);
-      sql_exec_free_query(db, sqlite3_mprintf("CREATE TABLE %s (%s);", 
+      sql_exec_free_query(db, sqlite3_mprintf("CREATE TABLE %s (%s);",
 					      table_name, s(table_schema)),
 			  no_callback, 0, no_errmsg);
     }
@@ -156,7 +156,7 @@ int db_check(sqlite3 *db, const char * table_name,
       fprintf(stderr, "Regenerating table '%s'\n", table_name);
       // db_push_verbose(1);
       sql_exec_free_query(db, sqlite3_mprintf("DROP TABLE backup_tbl"),
-			  no_callback, 0, no_errmsg);		
+			  no_callback, 0, no_errmsg);
       sql_exec_free_query(db, sqlite3_mprintf("CREATE TABLE backup_tbl(%s);", s(sdc.existing_schema)),
 			  no_callback, 0, no_errmsg);
       sql_exec_free_query(db, sqlite3_mprintf("INSERT INTO backup_tbl SELECT * FROM %s;", table_name),
@@ -166,7 +166,7 @@ int db_check(sqlite3 *db, const char * table_name,
       sql_exec_free_query(db, sqlite3_mprintf("CREATE TABLE %s (%s);",
 					      table_name, s(table_schema)),
 			  no_callback, 0, no_errmsg);
-      sql_exec_free_query(db, sqlite3_mprintf("INSERT INTO %s (%s) SELECT %s FROM backup_tbl", 
+      sql_exec_free_query(db, sqlite3_mprintf("INSERT INTO %s (%s) SELECT %s FROM backup_tbl",
 					      table_name, s(sdc.common_columns), s(sdc.common_columns)),
 			  no_callback, 0, no_errmsg);
       // db_pop_verbose();
@@ -185,7 +185,7 @@ int db_check(sqlite3 *db, const char * table_name,
 int db_schema_test(sqlite3 *db, const char * table_name, SchemaColumn * schema, int num_columns)
 {
   /* Test whether table matches schema. Returns 0 if match, error code if not match. */
-  
+
   /* Check for same number of columns, with same names and types. */
   localptr(String, existing_schema) = String_new("");
   localptr(String, existing_columns) = String_new("");

@@ -64,8 +64,8 @@ static void Jpeg_handler(Instance *pi, void *msg)
 
   while (1) {
     priv->fnumber += 1;
-    sprintf(name, "%s%09d.jpg", 
-	    priv->prefix ? s(priv->prefix) : "", 
+    sprintf(name, "%s%09d.jpg",
+	    priv->prefix ? s(priv->prefix) : "",
 	    priv->fnumber);
     if (File_exists(S(name))) {
       continue;
@@ -83,7 +83,7 @@ static void Jpeg_handler(Instance *pi, void *msg)
     }
     fclose(f);
   }
-  
+
   if (jpeg_in->c.eof) {
     fprintf(stderr, "%s detected EOF\n", __func__);
     exit(0);

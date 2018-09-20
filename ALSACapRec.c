@@ -43,7 +43,7 @@ static Output ALSACapture_outputs[] = {
 
 static int rates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 96000, 192000 };
 
-static int channels[] = { 
+static int channels[] = {
   1,				/* mono */
   2, 				/* stereo */
   3,				/* 2.1 */
@@ -100,13 +100,13 @@ static int set_device(Instance *pi, const char *value)
     /* Not found, try value as supplied. */
     priv->c.device = String_new(value);
   }
-  
+
   rc = snd_pcm_open(&priv->c.handle, s(priv->c.device), priv->c.mode, 0);
   if (rc < 0) {
     fprintf(stderr, "*** snd_pcm_open %s: %s\n", s(priv->c.device), snd_strerror(rc));
     goto out;
   }
-  
+
   fprintf(stderr, "ALSA device %s opened, handle=%p\n", s(priv->c.device), priv->c.handle);
 
   /* Allocate hardware parameter structure, and call "any", and use
@@ -186,14 +186,14 @@ static int set_rate(Instance *pi, const char *value)
   rc = snd_pcm_hw_params_set_rate(priv->c.handle,
 				  priv->c.hwparams,
 				  rate, 0);
-  
+
   if (rc == 0) {
     fprintf(stderr, "rate set to %d\n", rate);
     priv->c.rate = rate;
   }
   else {
     fprintf(stderr, "*** error setting rate %d (%s)\n", rate, snd_strerror(rc));
-    
+
   }
 
   return rc;
@@ -238,7 +238,7 @@ static int set_channels(Instance *pi, const char *value)
   rc = snd_pcm_hw_params_set_channels(priv->c.handle,
 				      priv->c.hwparams,
 				      channels);
-  
+
   if (rc == 0) {
     fprintf(stderr, "channels set to %d\n", channels);
     priv->c.channels = channels;
@@ -285,7 +285,7 @@ static int set_format(Instance *pi, const char *value)
     fprintf(stderr, "*** device is not open!\n");
     return 1;
   }
-  
+
   strcpy(tmp, value);
   for (j=0; tmp[j]; j++) {
     if (tmp[j] == '.') {
@@ -294,7 +294,7 @@ static int set_format(Instance *pi, const char *value)
   }
 
   rc = ALSAio_set_format_string(&priv->c, tmp);
-  
+
   return rc;
 }
 
@@ -334,7 +334,7 @@ static int set_frames_per_io(Instance *pi, const char *value)
   else {
     priv->c.frames_per_io = atol(value);
   }
-  
+
   fprintf(stderr, "ALSACapture frames_per_io set to %ld\n", priv->c.frames_per_io);
 
   return 0;
@@ -351,7 +351,7 @@ static int set_enable(Instance *pi, const char *value)
   else {
     priv->c.enable = atoi(value);
   }
-  
+
   fprintf(stderr, "ALSA enable set to %d\n", priv->c.enable);
 
   return 0;
@@ -430,12 +430,12 @@ static void Wav_handler(Instance *pi, void *data)
 
     rc = snd_pcm_hw_params_set_periods(priv->c.handle, priv->c.hwparams, periods, 0);
     if (rc < 0) {
-      fprintf(stderr, "*** snd_pcm_hw_params_set_periods %s: %s\n", s(priv->c.device), snd_strerror(rc));      
+      fprintf(stderr, "*** snd_pcm_hw_params_set_periods %s: %s\n", s(priv->c.device), snd_strerror(rc));
     }
-      
+
     rc = snd_pcm_hw_params(priv->c.handle, priv->c.hwparams);
     if (rc < 0) {
-      fprintf(stderr, "*** snd_pcm_hw_params %s: %s\n", s(priv->c.device), snd_strerror(rc));      
+      fprintf(stderr, "*** snd_pcm_hw_params %s: %s\n", s(priv->c.device), snd_strerror(rc));
     }
 
     state = snd_pcm_state(priv->c.handle);
@@ -495,7 +495,7 @@ static void ALSAPlayback_tick(Instance *pi)
     /* Enabled and rate set, will generate filler if needed. */
     wait_flag = 0;
   }
-  
+
   Handler_message *hm;
 
   hm = GetData(pi, wait_flag);
@@ -549,7 +549,7 @@ static void ALSAPlayback_tick(Instance *pi)
     fprintf(stderr, "WTF?\n");
     sleep(1);
   }
-   
+
 
 }
 
@@ -601,7 +601,7 @@ static void ALSACapture_tick(Instance *pi)
     /* Not enabled or no handle, don't try to capture anything. */
     return;
   }
- 
+
   /* Read a block of data. */
   int rc;
   snd_pcm_sframes_t n;
@@ -618,12 +618,12 @@ static void ALSACapture_tick(Instance *pi)
     fprintf(stderr, "%s: state=%s\n", __func__, ALSAio_state_to_string(state));
 
     rc = snd_pcm_hw_params_set_period_size_near(priv->c.handle, priv->c.hwparams, &frames, &dir);
-    fprintf(stderr, "%s: set_period_size_near returns %d (frames %d:%d)\n", 
+    fprintf(stderr, "%s: set_period_size_near returns %d (frames %d:%d)\n",
 	    __func__, rc, (int)priv->c.frames_per_io, (int)frames);
 
     rc = snd_pcm_hw_params(priv->c.handle, priv->c.hwparams);
     if (rc < 0) {
-      fprintf(stderr, "*** snd_pcm_hw_params %s: %s\n", s(priv->c.device), snd_strerror(rc));      
+      fprintf(stderr, "*** snd_pcm_hw_params %s: %s\n", s(priv->c.device), snd_strerror(rc));
     }
 
     state = snd_pcm_state(priv->c.handle);
@@ -677,14 +677,14 @@ static void ALSACapture_tick(Instance *pi)
   }
 
   // fprintf(stderr, "*** read %d frames\n", (int) n);
-  
+
   double calculated_period = frames*1.0/(priv->c.rate);
-  
+
   priv->c.running_timestamp += calculated_period;
-  
+
   double tnow;
   cti_getdoubletime(&tnow);
-  
+
   /* Do coarse adjustment if necessary, this can happen after a
      system date change via ntp or htpdate. */
   if (fabs(priv->c.running_timestamp - tnow) > 5.0) {
@@ -692,27 +692,27 @@ static void ALSACapture_tick(Instance *pi)
 	    priv->c.running_timestamp, tnow);
     priv->c.running_timestamp = tnow;
   }
-  
+
   /* Adjust running timestamp if it slips too far either way.  Smoothing, I guess. */
   if (priv->c.running_timestamp - tnow > calculated_period) {
-    dpf("priv->c.rate=%d,  %.3f - %.3f (%.5f) > %.5f : - running timestamp\n", 
-	priv->c.rate, 
+    dpf("priv->c.rate=%d,  %.3f - %.3f (%.5f) > %.5f : - running timestamp\n",
+	priv->c.rate,
 	priv->c.running_timestamp, tnow,
 	(tnow - priv->c.running_timestamp),
 	calculated_period);
-    priv->c.running_timestamp -= (calculated_period/2.0);      
+    priv->c.running_timestamp -= (calculated_period/2.0);
   }
   else if (tnow - priv->c.running_timestamp > calculated_period) {
     dpf("priv->c.rate=%d, %.3f - %.3f (%.5f) > %.5f : + running timestamp\n",
-	priv->c.rate, 
-	tnow, priv->c.running_timestamp, 
+	priv->c.rate,
+	tnow, priv->c.running_timestamp,
 	(tnow - priv->c.running_timestamp),
 	calculated_period);
     priv->c.running_timestamp += (calculated_period/2.0);
   }
-  
+
   int buffer_bytes = n * priv->c.format_bytes * priv->c.channels;
-  
+
   if (pi->outputs[OUTPUT_AUDIO].destination) {
     Audio_buffer * audio = Audio_buffer_new(priv->c.rate,
 					    priv->c.channels, priv->c.atype);
@@ -723,20 +723,20 @@ static void ALSACapture_tick(Instance *pi)
     /* TESTING: disable after posting once */
     //pi->outputs[OUTPUT_AUDIO].destination = NULL;
   }
-  
+
   if (pi->outputs[OUTPUT_WAV].destination) {
     Wav_buffer *wav = Wav_buffer_new(priv->c.rate, priv->c.channels, priv->c.format_bytes);
     wav->timestamp = priv->c.running_timestamp;
-    
+
     dpf("%s allocated wav @ %p\n", __func__, wav);
     wav->data = buffer;  buffer = 0L;	/* Assign, do not free below. */
     wav->data_length = buffer_bytes;
     Wav_buffer_finalize(wav);
-    
+
     if (priv->c.analyze) {
       analyze_rate(priv, wav);
     }
-    
+
     PostData(wav, pi->outputs[OUTPUT_WAV].destination);
     static int x = 0;
     wav->seq = x++;
@@ -755,7 +755,7 @@ static void ALSAPlayback_instance_init(Instance *pi)
   ALSAio_private *priv = (ALSAio_private *)pi;
   priv->c.frames_per_io = 64;
   priv->c.mode = SND_PCM_STREAM_PLAYBACK;
-  
+
 }
 
 static Template ALSAPlayback_template = {
@@ -778,7 +778,7 @@ static void ALSACapture_instance_init(Instance *pi)
   priv->c.total_encoded_delta = 48000*2*2*1;
   priv->c.total_encoded_next = priv->c.total_encoded_delta;
   priv->c.total_wait_for_it = 1000;
-  
+
 }
 
 static Template ALSACapture_template = {

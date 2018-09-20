@@ -104,7 +104,7 @@ static int set_enable(Instance *pi, const char *value)
     fprintf(stderr, "Y4MInput: cannot enable because source not set!\n");
     priv->enable = 0;
   }
-  
+
   printf("Y4MInput enable set to %d\n", priv->enable);
 
   return 0;
@@ -124,7 +124,7 @@ static int do_seek(Instance *pi, const char *value)
   long amount = atol(value);
 
   if (priv->source) {
-    Source_seek(priv->source, amount);  
+    Source_seek(priv->source, amount);
   }
 
   /* Reset current stuff. */
@@ -136,7 +136,7 @@ static int do_seek(Instance *pi, const char *value)
   priv->current.width = 0;
   priv->current.height = 0;
   priv->state = PARSING_HEADER;
-  
+
   return 0;
 }
 
@@ -269,7 +269,7 @@ static void Y4MInput_tick(Instance *pi)
 	case 't': priv->video_common.interlace_mode = IMAGE_INTERLACE_TOP_FIRST; break;
 	case 'b': priv->video_common.interlace_mode = IMAGE_INTERLACE_BOTTOM_FIRST; break;
 	case 'm': priv->video_common.interlace_mode = IMAGE_INTERLACE_MIXEDMODE; break;
-	case 'p': 
+	case 'p':
 	default:
 	  priv->video_common.interlace_mode = IMAGE_INTERLACE_NONE; break;
 	}
@@ -278,7 +278,7 @@ static void Y4MInput_tick(Instance *pi)
 	priv->video_common.nominal_period = (1.0*frame_denominator/frame_numerator);
 	priv->video_common.fps_numerator = frame_numerator;
 	priv->video_common.fps_denominator = frame_denominator;
-	printf("frame rate %d:%d (%.5f period)\n", 
+	printf("frame rate %d:%d (%.5f period)\n",
 	       priv->video_common.fps_numerator,
 	       priv->video_common.fps_denominator,
 	       priv->video_common.nominal_period);
@@ -290,7 +290,7 @@ static void Y4MInput_tick(Instance *pi)
     }
 
     String_list_free(&ls);
-    
+
     priv->state = PARSING_FRAME;
     /* Trim out header plus newline. */
     ArrayU8_trim_left(priv->chunk, eoh+1);
@@ -324,7 +324,7 @@ static void Y4MInput_tick(Instance *pi)
 
   /* Data begins after eol. */
   /* FIXME: frame_size should be calculated from subsampling */
-  int frame_size = (priv->current.width * priv->current.height) 
+  int frame_size = (priv->current.width * priv->current.height)
     + ((priv->current.width * priv->current.height)/4)
     + ((priv->current.width * priv->current.height)/4);
 
@@ -340,12 +340,12 @@ static void Y4MInput_tick(Instance *pi)
        the first timestamp and use the nominal period to increment. */
     cti_getdoubletime(&priv->video_common.timestamp);
 
-    YUV420P_buffer * yuv = YUV420P_buffer_from(priv->chunk->data+eol+1, 
-					       priv->current.width, priv->current.height, 
+    YUV420P_buffer * yuv = YUV420P_buffer_from(priv->chunk->data+eol+1,
+					       priv->current.width, priv->current.height,
 					       &priv->video_common);
 
     dpf("%s posting data\n", __func__);
-    
+
     if (priv->synchronous) {
       int result;
       PostDataGetResult(yuv, pi->outputs[OUTPUT_YUV420P].destination, &result);

@@ -19,14 +19,14 @@ static void mask_handler(Instance *pi, void *msg);
 
 /* MotionDetect Instance and Template implementation. */
 enum { INPUT_CONFIG, INPUT_GRAY, INPUT_MASK };
-static Input MotionDetect_inputs[] = { 
+static Input MotionDetect_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_GRAY] = { .type_label = "GRAY_buffer", .handler = gray_handler },
   [ INPUT_MASK] = { .type_label = "MASK_buffer", .handler = mask_handler },
 };
 
 enum { OUTPUT_CONFIG, OUTPUT_MOTIONDETECT };
-static Output MotionDetect_outputs[] = { 
+static Output MotionDetect_outputs[] = {
   [ OUTPUT_CONFIG ] = { .type_label = "Config_msg", .destination = 0L },
   [ OUTPUT_MOTIONDETECT ] = { .type_label = "MotionDetect_result", .destination = 0L },
 };
@@ -74,14 +74,14 @@ static void gray_handler(Instance *pi, void *msg)
     /* Size has changed.  Discard accumulator buffer. */
     Gray_buffer_release(priv->accum); priv->accum = 0L;
   }
-		    
+
   if (!priv->accum) {
     priv->accum = Gray_buffer_new(gray->width, gray->height, 0L);
     memcpy(priv->accum->data, gray->data, gray->data_length);
   }
 
   if (priv->mask &&
-      priv->mask->height == gray->height && 
+      priv->mask->height == gray->height &&
       priv->mask->width == gray->width) {
     mask_check = 1;
   }
@@ -102,7 +102,7 @@ static void gray_handler(Instance *pi, void *msg)
 
       /* The abs() is redundant with the squaring (d*d) below, but I'm
          keeping it anyway in case I remove or change the squaring. */
-      int d = abs(priv->accum->data[offset] - gray->data[offset]); 
+      int d = abs(priv->accum->data[offset] - gray->data[offset]);
       sum += (d*d);
 
       /* Store with minimal IIR filtering. */

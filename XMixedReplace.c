@@ -6,7 +6,7 @@
 
 #define BOUNDARY "--0123456789NEXT"
 
-static const char part_format[] = 
+static const char part_format[] =
   "%s\r\nContent-Type: %s\r\n"
   "Timestamp:%.6f\r\n"
   "Content-Length: %d\r\n\r\n";
@@ -21,9 +21,9 @@ XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, cons
   cti_getdoubletime(&buffer->timestamp, NULL);
 
   /* Format header... */
-  n = sprintf(header, 
-	      part_format, 
-	      BOUNDARY, 
+  n = sprintf(header,
+	      part_format,
+	      BOUNDARY,
 	      mime_type,
 	      buffer->tiemstamp,
 	      data_length);
@@ -37,7 +37,7 @@ XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, cons
   buffer->data = Mem_malloc(buffer->data_length);
   memcpy(buffer->data, header, strlen(header));
   memcpy(buffer->data+strlen(header), data, data_length);
-  
+
   return buffer;
 }
 
