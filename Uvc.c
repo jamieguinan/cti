@@ -7,33 +7,33 @@
 #include "uvcvideo.h"
 
 /* begin lucview/v4l2uvc.c sample code */
-#define GUID_SIZE		16
+#define GUID_SIZE               16
 #include <math.h>
 #include <float.h>
 
 #if 0
 static int float_to_fraction_recursive(double f, double p, int *num, int *den)
 {
-	int whole = (int)f;
-	f = fabs(f - whole);
+        int whole = (int)f;
+        f = fabs(f - whole);
 
-	if(f > p) {
-		int n, d;
-		int a = float_to_fraction_recursive(1 / f, p + p / f, &n, &d);
-		*num = d;
-		*den = d * a + n;
-	}
-	else {
-		*num = 0;
-		*den = 1;
-	}
-	return whole;
+        if(f > p) {
+                int n, d;
+                int a = float_to_fraction_recursive(1 / f, p + p / f, &n, &d);
+                *num = d;
+                *den = d * a + n;
+        }
+        else {
+                *num = 0;
+                *den = 1;
+        }
+        return whole;
 }
 
 static void float_to_fraction(float f, int *num, int *den)
 {
-	int whole = float_to_fraction_recursive(f, FLT_EPSILON, num, den);
-	*num += whole * *den;
+        int whole = float_to_fraction_recursive(f, FLT_EPSILON, num, den);
+        *num += whole * *den;
 }
 #endif
 
@@ -104,7 +104,7 @@ void add_led1_control(int camfd)
 {
   int rc;
   // 63610682-5070-49ab-b8cc-b3855e8d221f
-#define GUID_SIZE		16
+#define GUID_SIZE               16
   unsigned char guid[GUID_SIZE] = {
     [3] = 0x63,
     [2] = 0x61,

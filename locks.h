@@ -56,7 +56,7 @@ typedef struct {
 
 typedef struct {
   Lock lock;
-  int _count;			/* should only be accessed within API functions */
+  int _count;                   /* should only be accessed within API functions */
 } LockedRef;
 
 extern void Lock_init(Lock *lock);

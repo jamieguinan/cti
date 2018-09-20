@@ -170,10 +170,10 @@ void String_free(String **s)
 void String_trim_right(String *s)
 {
   while (s->len &&
-	 ( s->bytes[s->len-1] == ' '
-	   || s->bytes[s->len-1] == '\t'
-	   || s->bytes[s->len-1] == '\r'
-	   || s->bytes[s->len-1] == '\n' ))
+         ( s->bytes[s->len-1] == ' '
+           || s->bytes[s->len-1] == '\t'
+           || s->bytes[s->len-1] == '\r'
+           || s->bytes[s->len-1] == '\n' ))
     {
       s->bytes[s->len-1] = '\0';
       s->len -= 1;
@@ -209,7 +209,7 @@ String * String_sprintf(const char *fmt, ...)
        In C99, it returns the number of characters that would have been formatted.
        They changed the semantics!  What the fuck were they thinking?
        Either way, if it didn't fit, double the size of the stack buffer. */
-    if ((n < 0)	|| (n >= psize)) {
+    if ((n < 0) || (n >= psize)) {
       psize *= 2;
     }
     else {
@@ -244,12 +244,12 @@ int String_find(String *s, int offset, const char *s1, int *end)
   for (i = offset; i <= (s->len - s1len); i++) {
     for (j = 0; j < s1len; j++) {
       if (s->bytes[i+j] != s1[j]) {
-	break;
+        break;
       }
     }
     if (j == s1len) {
       if (end) {
-	*end = (i+j);
+        *end = (i+j);
       }
       return i;
     }
@@ -532,7 +532,7 @@ String_list * String_list_new(void)
 void String_list_add(String_list *slst, String **add)
 {
   slst->_strings[slst->len] = *add;
-  *add = _String_none;		/* List takes ownership. */
+  *add = _String_none;          /* List takes ownership. */
   slst->len += 1;
   if (slst->len == slst->available) {
     slst->available *= 2;

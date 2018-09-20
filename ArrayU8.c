@@ -15,7 +15,7 @@ ArrayU8 * ArrayU8_new(void)
 void ArrayU8_extend(ArrayU8 *a, int newlen)
 {
   if (a->available == 0) {
-    a->available = 32;		/* Reasonable default. */
+    a->available = 32;          /* Reasonable default. */
   }
 
   while (newlen > a->available) {
@@ -58,7 +58,7 @@ void ArrayU8_take_data(ArrayU8 *a, uint8_t **data, int data_len)
   }
   a->data = *data;
   a->len = a->available = data_len;
-  *data = 0L;			/* Clear caller copy, data belongs to array now. */
+  *data = 0L;                   /* Clear caller copy, data belongs to array now. */
 }
 
 
@@ -95,7 +95,7 @@ int ArrayU8_search(ArrayU8 *a, int offset, const ArrayU8 *target)
   for (i = offset; i <= (a->len - target->len); i++) {
     for (j = 0; j < target->len; j++) {
       if (a->data[i+j] != target->data[j]) {
-	break;
+        break;
       }
     }
     if (j == target->len) {
@@ -122,7 +122,7 @@ void ArrayU8_extract_uint32le(ArrayU8 *a, int offset, uint32_t *value)
     return;
   }
   *value = (uint32_t) ( (a->data[offset+3] << 24) |
-			(a->data[offset+2] << 16) |
-			(a->data[offset+1] << 8) |
-			(a->data[offset+0] << 0) );
+                        (a->data[offset+2] << 16) |
+                        (a->data[offset+1] << 8) |
+                        (a->data[offset+0] << 0) );
 }

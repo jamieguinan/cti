@@ -2,13 +2,13 @@
  * Socket/file-descriptor based interprocess communication.
  * This is rather low-level, uses malloc/free and bare read/write calls.
  */
-#include <stdio.h>		/* fprintf */
-#include <string.h>		/* memcpy */
-#include <stdint.h>		/* int types */
-#include <stdlib.h>		/* malloc, free */
-#include <unistd.h>		/* read, write */
-#include <sys/uio.h>		/* writev */
-#include <poll.h>		/* poll */
+#include <stdio.h>              /* fprintf */
+#include <string.h>             /* memcpy */
+#include <stdint.h>             /* int types */
+#include <stdlib.h>             /* malloc, free */
+#include <unistd.h>             /* read, write */
+#include <sys/uio.h>            /* writev */
+#include <poll.h>               /* poll */
 
 #include "cti_ipc.h"
 
@@ -43,7 +43,7 @@ int cti_ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout
     uint8_t msglen = message_length;
 
     struct iovec iov[2] = { { .iov_base = &msglen, .iov_len = 1 },
-			    { .iov_base = message, .iov_len = message_length } };
+                            { .iov_base = message, .iov_len = message_length } };
     if (!writable(fd, timeout_ms)) { fprintf(stderr, "%s: not writable\n", __func__); return 1; }
     n = writev(fd, iov, 2);
     if (n < 1) { fprintf(stderr, "%s: writev case 1 failed\n", __func__); return 1; }
@@ -58,8 +58,8 @@ int cti_ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout
     msglen32[3] = (message_length >> 24) & 0xff;
 
     struct iovec iov[3] = { { .iov_base = &code, .iov_len = 1 },
-			    { .iov_base = &msglen32, .iov_len = 4 },
-			    { .iov_base = message, .iov_len = message_length } };
+                            { .iov_base = &msglen32, .iov_len = 4 },
+                            { .iov_base = message, .iov_len = message_length } };
     if (!writable(fd, timeout_ms)) { fprintf(stderr, "%s: not writable\n", __func__); return 1; }
     n = writev(fd, iov, 3);
     if (n < 1) { fprintf(stderr, "%s: writev case 2 failed\n", __func__); return 1; }
@@ -67,8 +67,8 @@ int cti_ipc_send(int fd, uint8_t * message, uint32_t message_length, int timeout
       /* Rare case, sent code but only sent part of length. Send remainder of length. */
       int ii;
       for (ii = (n - 1); ii<4; ii+=n) {
-	n = write(fd, msglen32+ii, (4-ii));
-	if (n < 1) { fprintf(stderr, "%s: write message length remainder failed\n", __func__); return 1; }
+        n = write(fd, msglen32+ii, (4-ii));
+        if (n < 1) { fprintf(stderr, "%s: write message length remainder failed\n", __func__); return 1; }
       }
     }
     else {

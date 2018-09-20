@@ -1,7 +1,7 @@
-#include <arpa/inet.h>		/* htons */
-#include <string.h>		/* memset */
+#include <arpa/inet.h>          /* htons */
+#include <string.h>             /* memset */
 
-#include <sys/types.h>		/* sendto */
+#include <sys/types.h>          /* sendto */
 #include <sys/socket.h>
 
 #if 0
@@ -16,9 +16,9 @@ xint send_failed=(sendto(my_socket,data_send,data_len,0,(const struct sockaddr*)
 #endif
 
 /* Search and replace "XPlaneControl" with new module name. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "XPlaneControl.h"

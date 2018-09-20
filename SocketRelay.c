@@ -5,9 +5,9 @@
  * count transitions to zero.
  */
 
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "SocketRelay.h"

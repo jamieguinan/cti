@@ -1,7 +1,7 @@
 /* Resource usage monitor. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include <sys/time.h>
 #include <sys/resource.h>

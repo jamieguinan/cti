@@ -1,7 +1,7 @@
 /* This module should at least be able to encode in a similar manner as "ffmpeg2theora".  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "OggOutput.h"

@@ -1,7 +1,7 @@
 /* Search and replace "VMixer" with new module name. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "VMixer.h"
@@ -70,31 +70,31 @@ static void YUV422P_common_handler(Instance *pi, YUV422P_buffer *buffer, int ind
     k=0;
     for (y=0; y < priv->height; y++) {
       for (x=0; x < priv->width; x++) {
-	int ysum = 0;
-	for (i=0; i < 2; i++) {
-	  ysum += priv->bufs[i]->y[k];
-	}
-	out->y[k] = ysum/2;
-	k++;
+        int ysum = 0;
+        for (i=0; i < 2; i++) {
+          ysum += priv->bufs[i]->y[k];
+        }
+        out->y[k] = ysum/2;
+        k++;
       }
     }
 
     k=0;
     for (y=0; y < priv->bufs[0]->cr_height; y++) {
       for (x=0; x < priv->bufs[0]->cr_width; x++) {
-	int crsum = 0;
-	int cbsum = 0;
-	for (i=0; i < 2; i++) {
-	  crsum += priv->bufs[i]->cr[k];
-	  cbsum += priv->bufs[i]->cb[k];
-	}
-	out->cr[k] = crsum/2;
-	out->cb[k] = cbsum/2;
-	k++;
+        int crsum = 0;
+        int cbsum = 0;
+        for (i=0; i < 2; i++) {
+          crsum += priv->bufs[i]->cr[k];
+          cbsum += priv->bufs[i]->cb[k];
+        }
+        out->cr[k] = crsum/2;
+        out->cb[k] = cbsum/2;
+        k++;
       }
     }
 
-    priv->mask = 0;		/* reset */
+    priv->mask = 0;             /* reset */
 
     if (pi->outputs[OUTPUT_YUV422P].destination) {
       PostData(out, pi->outputs[OUTPUT_YUV422P].destination);

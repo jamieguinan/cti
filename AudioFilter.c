@@ -1,7 +1,7 @@
 /* Search and replace "AudioFilter" with new module name. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Audio.h"

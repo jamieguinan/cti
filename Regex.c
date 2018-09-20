@@ -74,7 +74,7 @@ String_list * Regex_get_matches(const char * input, const char * pattern)
       which = 1;
     }
     String * s = String_from_char(input+offset+matches[which].rm_so,
-				  (matches[which].rm_eo - matches[which].rm_so));
+                                  (matches[which].rm_eo - matches[which].rm_so));
     // fprintf(stderr, "%s\n", s(s));
     String_list_add(result, &s);
     offset += matches[0].rm_eo + 1;

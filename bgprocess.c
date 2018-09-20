@@ -1,12 +1,12 @@
 /* Simple API for background processes. */
-#include <unistd.h>		/* fork */
-#include <string.h>		/* strlen, strcpy */
-#include <stdio.h>		/* fprintf, NULL */
-#include <stdlib.h>		/* exit */
-#include <sys/types.h>		/* kill, wait */
-#include <signal.h>		/* kill */
-#include <sys/wait.h>		/* wait */
-#include <errno.h>		/* errno */
+#include <unistd.h>             /* fork */
+#include <string.h>             /* strlen, strcpy */
+#include <stdio.h>              /* fprintf, NULL */
+#include <stdlib.h>             /* exit */
+#include <sys/types.h>          /* kill, wait */
+#include <signal.h>             /* kill */
+#include <sys/wait.h>           /* wait */
+#include <errno.h>              /* errno */
 
 #include "bgprocess.h"
 #include "cti_utils.h"
@@ -51,23 +51,23 @@ void bgstart(const char * cmdline, int * pidptr)
   while (i < 63 && *p) {
     if (*p == ' ') {
       if (!in_quote) {
-	*p = 0;
-	in_arg = 0;
+        *p = 0;
+        in_arg = 0;
       }
     }
     else if (*p == SINGLE_QUOTE) {
       if (in_quote) {
-	*p = 0;
-	in_quote = 0;
+        *p = 0;
+        in_quote = 0;
       }
       else {
-	in_quote = 1;
+        in_quote = 1;
       }
     }
     else {
       if (!in_arg) {
-	args[i++] = p;
-	in_arg = 1;
+        args[i++] = p;
+        in_arg = 1;
       }
     }
     p++;
@@ -131,27 +131,27 @@ void bgstopsigtimeout(int * pidptr, int signal, int timeout_seconds)
       rc = waitpid(pid, &status, WNOHANG);
       // fprintf(stderr, "waitpid(%d) returns %d, status=%d\n", pid, rc, status);
       if (rc == pid) {
-	if (WIFEXITED(status)) {
-	  fprintf(stderr, "pid %d has exited\n", pid);
-	  break;
-	}
-	else {
-	  fprintf(stderr, "pid %d changed state but is still active\n", pid);
-	}
+        if (WIFEXITED(status)) {
+          fprintf(stderr, "pid %d has exited\n", pid);
+          break;
+        }
+        else {
+          fprintf(stderr, "pid %d changed state but is still active\n", pid);
+        }
       }
       else if (rc == -1) {
-	fprintf(stderr, "pid %d is gone\n", pid);
-	break;
+        fprintf(stderr, "pid %d is gone\n", pid);
+        break;
       }
     }
     else {
       /* There is a race condition here, where if the process table numbering
-	 has looped around, another process could have filled in the slot.
-	 But this is the case where we're waiting for non-child processes
-	 anyway, so its already a grey area. */
+         has looped around, another process could have filled in the slot.
+         But this is the case where we're waiting for non-child processes
+         anyway, so its already a grey area. */
       if (access(procpath, R_OK) == -1) {
-	fprintf(stderr, "%s is gone\n", procpath);
-	break;
+        fprintf(stderr, "%s is gone\n", procpath);
+        break;
       }
     }
   }

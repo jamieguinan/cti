@@ -1,8 +1,8 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <time.h>		/* localtime */
-#include <math.h>		/* M_2_PI */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <time.h>               /* localtime */
+#include <math.h>               /* M_2_PI */
 
 #include "CTI.h"
 #include "CairoContext.h"
@@ -166,13 +166,13 @@ static int add_command(Instance *pi, const char *value)
   int found = 0;
 
   n = sscanf(value, "%255s %lf %lf %lf %lf %lf %lf",
-	     label,
-	     &cmd.args[0],
-	     &cmd.args[1],
-	     &cmd.args[2],
-	     &cmd.args[3],
-	     &cmd.args[4],
-	     &cmd.args[5]);
+             label,
+             &cmd.args[0],
+             &cmd.args[1],
+             &cmd.args[2],
+             &cmd.args[3],
+             &cmd.args[4],
+             &cmd.args[5]);
 
   fprintf(stderr, "add_command label=%s\n", label[0] ? label : "" );
   fprintf(stderr, "%d %d\n", streq(value, "system_text") , value[strlen(value)] != 0);
@@ -195,11 +195,11 @@ static int add_command(Instance *pi, const char *value)
 
   for (i=0; i < table_size(CairoCommandMap); i++) {
     if (streq(label, CairoCommandMap[i].label)
-	&& (n-1) == CairoCommandMap[i].num_double_args) {
+        && (n-1) == CairoCommandMap[i].num_double_args) {
       cmd.command = CairoCommandMap[i].command;
       printf("cairo_%s", label);
       for (j=0; j < CairoCommandMap[i].num_double_args; j++) {
-	printf(" %lf", cmd.args[j]);
+        printf(" %lf", cmd.args[j]);
       }
       printf("\n");
       Array_append(priv->commands, cmd);
@@ -210,7 +210,7 @@ static int add_command(Instance *pi, const char *value)
 
   if (!found) {
     n = sscanf(value, "%255s",
-	       label);
+               label);
     if (streq(label, "reset")) {
       Array_free(priv->commands, CairoCommand, NULL);
     }
@@ -295,13 +295,13 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
       break;
     case CC_COMMAND_SHOW_TEXT:
       if (s(priv->text)) {
-	cairo_show_text(priv->context, s(priv->text));
+        cairo_show_text(priv->context, s(priv->text));
       }
       break;
 
     case CC_COMMAND_SET_TEXT:
       if (cmd.text) {
-	cairo_show_text(priv->context, cmd.text->bytes);
+        cairo_show_text(priv->context, cmd.text->bytes);
       }
       break;
     case CC_COMMAND_SYSTEM_TEXT:
@@ -343,10 +343,10 @@ static void apply_commands(CairoContext_private *priv, RGB3_buffer * rgb3)
 
   /* Now merge into RGB buffer. */
   RGB_buffer_merge_rgba(rgb3,
-			cairo_image_surface_get_data(priv->surface),
-			cairo_image_surface_get_width(priv->surface),
-			cairo_image_surface_get_height(priv->surface),
-			cairo_image_surface_get_stride(priv->surface));
+                        cairo_image_surface_get_data(priv->surface),
+                        cairo_image_surface_get_width(priv->surface),
+                        cairo_image_surface_get_height(priv->surface),
+                        cairo_image_surface_get_stride(priv->surface));
 
   if (!String_is_none(priv->label) && !rgb3->c.label) {
     rgb3->c.label = String_dup(priv->label);
@@ -409,7 +409,7 @@ static void y422p_handler(Instance *pi, void *msg)
        code. */
     temp = YUV422P_copy(y422p, 0, 0, priv->width, priv->height);
     rgb3 = YUV422P_to_RGB3(temp);
-    rgb3->c.timestamp = y422p->c.timestamp;	/* Preserve timestamp! */
+    rgb3->c.timestamp = y422p->c.timestamp;     /* Preserve timestamp! */
     YUV422P_buffer_release(temp);
     apply_commands(priv, rgb3);
     temp = RGB3_to_YUV422P(rgb3);

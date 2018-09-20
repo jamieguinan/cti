@@ -3,10 +3,10 @@
  *   http://dvswitch.alioth.debian.org/wiki/DV_format/
  *   av/soup/nuvx/dvtorgb.c
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <unistd.h>		/* sleep */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <unistd.h>             /* sleep */
 
 #include "CTI.h"
 #include "LibDV.h"
@@ -46,7 +46,7 @@ typedef struct {
   Source *source;
   ArrayU8 *chunk;
   int needData;
-  int enable;			/* Set this to start processing. */
+  int enable;                   /* Set this to start processing. */
   int use_feedback;
   int pending_feedback;
   int feedback_threshold;
@@ -219,7 +219,7 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
     /* Interleave data into wav buffer. */
     for (i=0; i < ns; i++) {
       for (j=0; j < nc; j++) {
-	di16[n++] = priv->audio_buffers[j][i];
+        di16[n++] = priv->audio_buffers[j][i];
       }
     }
 
@@ -241,8 +241,8 @@ static void consume_data(Instance *pi /* would have preferred to use: LibDV_priv
   if (pi->outputs[OUTPUT_RGB3].destination) {
     RGB3_buffer *rgb3 = RGB3_buffer_new(priv->decoder->width, priv->decoder->height, 0L);
     uint8_t *pixels[3] = { rgb3->data,
-			   0L,
-			   0L };
+                           0L,
+                           0L };
     int pitches[3] = { rgb3->width * 3, 0, 0 };
 
     //dv_report_video_error (priv->decoder,  // rgb3->data);

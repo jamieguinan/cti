@@ -2,7 +2,7 @@
 #include "StackDebug.h"
 
 #include <stdio.h>
-#include <stdlib.h>		/* malloc */
+#include <stdlib.h>             /* malloc */
 #include <signal.h>
 #include <unistd.h>
 

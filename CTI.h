@@ -17,7 +17,7 @@
 extern pthread_key_t instance_key;
 extern int instance_key_initialized;
 extern void instance_key_init(void); /* Call once at startup. */
-extern int g_synchronous;	     /* Make all message passing synchronous. */
+extern int g_synchronous;            /* Make all message passing synchronous. */
 
 /*
  * The IndexedSet() macro is for declaring structures compatible with the
@@ -30,20 +30,20 @@ struct _Instance;
 
 /* Input, Output, Instance, Template. */
 typedef struct {
-  const char *type_label;	/* Must match up with corresponding Output. */
+  const char *type_label;       /* Must match up with corresponding Output. */
   struct _Instance *parent;
   void (*handler)(struct _Instance *pi, void *data);
   int max_pending_messages;
 } Input;
 
 typedef struct {
-  const char *type_label;	/* Must match up with corresponding Input. */
-  Input *destination;		/* Pointer to an Input. */
+  const char *type_label;       /* Must match up with corresponding Input. */
+  Input *destination;           /* Pointer to an Input. */
 } Output;
 
 /* Range, set of values that a config item can take. */
 enum {
-  RANGE_UNKNOWN=0, 	/* default for unset */
+  RANGE_UNKNOWN=0,      /* default for unset */
   RANGE_STRINGS,
   RANGE_INTS,
   RANGE_FLOATS,
@@ -63,7 +63,7 @@ typedef struct {
 } FloatRange;
 
 typedef struct {
-  int type;			/* One of the enum values just above. */
+  int type;                     /* One of the enum values just above. */
   IndexedSet(String) strings;
   IndexedSet(String) descriptions;
   IntRange ints;
@@ -79,10 +79,10 @@ extern void Range_free(Range **r);
 typedef struct {
   int type;
   union {
-    String *string_value;  		/* Dynamically allocated. */
+    String *string_value;               /* Dynamically allocated. */
     int int_value;
     float float_value;
-  } u;				/* Please use accessor functions... */
+  } u;                          /* Please use accessor functions... */
 } Value;
 
 extern Value *Value_new(int type);
@@ -116,9 +116,9 @@ typedef struct _Handler_message {
   struct _Handler_message *prev;
   void (*handler)(struct _Instance *pi, void *data);
   void *data;
-  Sem * reply_sem;		/* Provide if want response. */
-  int * result;			/* Provide if want response. */
-  // String * result_str;	/* Provide if want response. */
+  Sem * reply_sem;              /* Provide if want response. */
+  int * result;                 /* Provide if want response. */
+  // String * result_str;       /* Provide if want response. */
 } Handler_message;
 
 typedef enum {
@@ -128,11 +128,11 @@ typedef enum {
 } MessageResult;
 
 typedef struct _Instance {
-  const char *label;		/* Copied from corresponding Template */
+  const char *label;            /* Copied from corresponding Template */
 
-  String *instance_label;	/* Copied at instantiation. A
-				   container may also have a copy, but
-				   that's Ok. */
+  String *instance_label;       /* Copied at instantiation. A
+                                   container may also have a copy, but
+                                   that's Ok. */
 
   /* priv structure should include Instance as first member, priv_size is size of
      the enclosing structure. */
@@ -148,20 +148,20 @@ typedef struct _Instance {
   int num_outputs;
 
   int state;
-  int counter;			/* Update in tick function. */
+  int counter;                  /* Update in tick function. */
 
   Lock inputs_lock;
   Event inputs_event;
-  int waiting; 			/* 0 or 1, better to treat as boolean than counter. */
+  int waiting;                  /* 0 or 1, better to treat as boolean than counter. */
 
   Handler_message *msg_first;
   Handler_message *msg_last;
-  int pending_messages;		/* FIXME: get rid of this? */
+  int pending_messages;         /* FIXME: get rid of this? */
 
-  int result;			/* Destination for messages results. */
+  int result;                   /* Destination for messages results. */
 
 #define CTI_INSTANCE_STACK_MAX 32
-  void * stack[CTI_INSTANCE_STACK_MAX];	/* call stack debugging */
+  void * stack[CTI_INSTANCE_STACK_MAX]; /* call stack debugging */
   int stack_index;
 } Instance;
 
@@ -250,7 +250,7 @@ typedef struct {
   IndexedSet(Instance) instances;
 } InstanceGroup;
 
-extern InstanceGroup *gig;		/* global instance group */
+extern InstanceGroup *gig;              /* global instance group */
 
 /* I admit C++ would do a better job at keeping code size down here.
    On the other hand, data sets are typically huge compared to code
@@ -269,10 +269,10 @@ extern InstanceGroup *gig;		/* global instance group */
   iset.count += 1; \
 }
 
-#define IndexedSet_add_keyed(iset, key, pitem, err) {	\
+#define IndexedSet_add_keyed(iset, key, pitem, err) {   \
   IndexedSet_add(iset, pitem); \
   if (!iset.index) iset.index = Index_new(); \
-  Index_add_string(iset.index, key, pitem, err);	\
+  Index_add_string(iset.index, key, pitem, err);        \
 }
 
 #define IndexedSet_pop(iset, pitem) {  \
@@ -284,8 +284,8 @@ extern InstanceGroup *gig;		/* global instance group */
 
 #define IndexedSet_clear(iset) { \
   if (iset.items) Mem_free(iset.items); \
-  if (iset.index) Index_clear(&iset.index);	\
-  memset(&iset, 0, sizeof(iset));	\
+  if (iset.index) Index_clear(&iset.index);     \
+  memset(&iset, 0, sizeof(iset));       \
   /* FIXME: Clear the index! */ \
 }
 
@@ -295,15 +295,15 @@ extern Instance * InstanceGroup_find(InstanceGroup *g, String *instanceLabel);
 extern void InstanceGroup_wait(InstanceGroup *g);
 extern void InstanceGroup_free(InstanceGroup **g);
 extern void InstanceGroup_connect(InstanceGroup *g,
-				  String * instanceLabel1,
-				  const char *ioLabel,
-				  String * instanceLabel2);
+                                  String * instanceLabel1,
+                                  const char *ioLabel,
+                                  String * instanceLabel2);
 
 extern void InstanceGroup_connect2(InstanceGroup *g,
-				   String * instanceLabel1,
-				   const char *ioLabel1,
-				   String * instanceLabel2,
-				   const char *ioLabel2);
+                                   String * instanceLabel1,
+                                   const char *ioLabel1,
+                                   String * instanceLabel2,
+                                   const char *ioLabel2);
 
 extern void Instance_list(int verbose);
 extern void CTI_pending_messages(void);
@@ -311,7 +311,7 @@ extern void CTI_pending_messages(void);
 /* Callback function, with one parameter. */
 typedef struct {
   int (*func)(void *data);
-  void *data;			/* passed to .func */
+  void *data;                   /* passed to .func */
   Lock lock;
   Event event;
 } Callback;

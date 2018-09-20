@@ -1,14 +1,14 @@
 /*
  * SDL video output, keyboard input.
  */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 #include <unistd.h>
-#include <math.h>		/* fabs */
+#include <math.h>               /* fabs */
 #include <SDL.h>
 #include <gl.h>
 // #include <glu.h>
-#include <time.h>		/* clock_gettime */
+#include <time.h>               /* clock_gettime */
 
 #include "CTI.h"
 #include "Images.h"
@@ -183,9 +183,9 @@ static void update_display_times()
     FILE *f = fopen("tcount.csv", "w");
     if (f) {
       for (i=1; i < 600; i++) {
-	double t0 = field_times[i-1];
-	double t1 = field_times[i];
-	fprintf(f, "%.9f, %.9f\n", t0, (t1-t0));
+        double t0 = field_times[i-1];
+        double t1 = field_times[i];
+        fprintf(f, "%.9f, %.9f\n", t0, (t1-t0));
       }
       fclose(f);
       printf("field times saved\n");
@@ -208,7 +208,7 @@ static void Keycode_handler(Instance *pi, void *msg)
   }
   else if (km->keycode == CTI__KEY_PLUS || km->keycode == CTI__KEY_EQUALS) {
     if (priv->renderMode == RENDER_MODE_OVERLAY
-	&& priv->width < 1440) {
+        && priv->width < 1440) {
       priv->new_width = priv->width * 4 / 3;
       priv->new_height = priv->height * 4 / 3;
     }
@@ -217,7 +217,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 
   else if (km->keycode == CTI__KEY_MINUS) {
     if (priv->renderMode == RENDER_MODE_OVERLAY
-	&& priv->width > 320) {
+        && priv->width > 320) {
       priv->new_width = priv->width * 3 / 4;
       priv->new_height = priv->height * 3 / 4;
     }
@@ -396,7 +396,7 @@ static void _gl_setup(SDLstuff_private *priv)
     int i;
     for(i=0; extensions[i]; i++) {
       if (extensions[i] == ' ') {
-	extensions[i] = '\n';
+        extensions[i] = '\n';
       }
     }
 
@@ -447,23 +447,23 @@ static void _reset_video(SDLstuff_private *priv, const char *func)
 
     sdl_vid_flags |= SDL_OPENGL;
     priv->surface = SDL_SetVideoMode(priv->width, priv->height, 32,
-				    sdl_vid_flags
-				    );
+                                    sdl_vid_flags
+                                    );
   }
 
   else if (priv->renderMode == RENDER_MODE_OVERLAY) {
     sdl_vid_flags |= SDL_HWSURFACE | SDL_HWPALETTE | SDL_ANYFORMAT;
     priv->surface= SDL_SetVideoMode(priv->width, priv->height, 0,
-				    sdl_vid_flags
-				    );
+                                    sdl_vid_flags
+                                    );
 
     printf("[%s] reset_video(%d, %d)\n", func, priv->width, priv->height);
   }
 
   else  {
     priv->surface= SDL_SetVideoMode(priv->width, priv->height, 24,
-				    sdl_vid_flags
-				    );
+                                    sdl_vid_flags
+                                    );
   }
 
   if (!priv->surface) {
@@ -595,8 +595,8 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
 
     if (priv->fullscreen
         && priv->screen_aspect
-	&& (global.display.width != 0)
-	&& (global.display.height != 0)) {
+        && (global.display.width != 0)
+        && (global.display.height != 0)) {
       overlayWidth = yuv420p_in->height * (global.display.width/(global.display.height*1.0));
       while (overlayWidth % 4 != 0) {
         /* Overlay should be a multiple of 4 to avoid green edge. */
@@ -611,9 +611,9 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     }
 
     priv->overlay = SDL_CreateYUVOverlay(overlayWidth, overlayHeight,
-					 SDL_YV12_OVERLAY,
-					 // SDL_IYUV_OVERLAY,
-					 priv->surface);
+                                         SDL_YV12_OVERLAY,
+                                         // SDL_IYUV_OVERLAY,
+                                         priv->surface);
     if (!priv->overlay) {
       fprintf(stderr, "SDL_CreateYUVOverlay: SDL_error %s\n", SDL_GetError());
       exit(1);
@@ -625,12 +625,12 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     }
 
     fprintf(stderr,
-	    "Overlay:\n"
-	    "  %d, %d\n"
-	    "  %d planes\n"
-	    "  %s\n"
-	    "", priv->overlay->w, priv->overlay->h, priv->overlay->planes,
-	    priv->overlay->hw_overlay ? "hardware accelerated":"*** software only!");
+            "Overlay:\n"
+            "  %d, %d\n"
+            "  %d planes\n"
+            "  %s\n"
+            "", priv->overlay->w, priv->overlay->h, priv->overlay->planes,
+            priv->overlay->hw_overlay ? "hardware accelerated":"*** software only!");
     for (i=0; i < priv->overlay->planes; i++) {
       fprintf(stderr, "  %d:%p\n", priv->overlay->pitches[i], priv->overlay->pixels[i]);
     }
@@ -641,7 +641,7 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
   }
 
   int iy, next_iy; /* Start line, to allow rendering interlace fields. */
-  int dy;	   /* Line increment. */
+  int dy;          /* Line increment. */
   int n;      /* Number of passes, to allow for rendering 2 fields. */
 
   switch (yuv420p_in->c.interlace_mode) {
@@ -677,18 +677,18 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     /* Copy Y */
     if (1) {
       /* Pitch may be different if width is not evenly divisible by 4.
-	 So its a bunch of smaller memcpys instead of a single bigger
-	 one. */
+         So its a bunch of smaller memcpys instead of a single bigger
+         one. */
       int y;
       unsigned char *src = yuv420p_in->y + (iy * yuv420p_in->width);
       unsigned char *dst = priv->overlay->pixels[0] + (iy * priv->overlay->pitches[0]);
       // printf("Copy Y: iy=%d h=%d dy=%d src=%p dst=%p\n", iy, priv->overlay->h, dy, src, dst);
       for (y=iy; y < priv->overlay->h; y += dy) {
-	memset(dst, 16, priv->padLeft);
-	memcpy(dst+priv->padLeft, src, yuv420p_in->width);
-	memset(dst+priv->padLeft+yuv420p_in->width, 16, priv->padRight);
-	src += yuv420p_in->width * dy;
-	dst += (priv->overlay->pitches[0] * dy);
+        memset(dst, 16, priv->padLeft);
+        memcpy(dst+priv->padLeft, src, yuv420p_in->width);
+        memset(dst+priv->padLeft+yuv420p_in->width, 16, priv->padRight);
+        src += yuv420p_in->width * dy;
+        dst += (priv->overlay->pitches[0] * dy);
       }
     }
 
@@ -701,22 +701,22 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
       pad_left = priv->padLeft/2;
       pad_right = priv->padRight/2;
       for (y=iy; y < src_height; y+=dy) {
-	dst_index = y * priv->overlay->pitches[1];
+        dst_index = y * priv->overlay->pitches[1];
 
-	memset(&priv->overlay->pixels[1][dst_index], 128, pad_left);
-	memcpy(&priv->overlay->pixels[1][dst_index] + pad_left,
-	       &yuv420p_in->cr[src_index],
-	       src_width);
-	memset(&priv->overlay->pixels[1][dst_index]+pad_left+src_width, 128, pad_right);
+        memset(&priv->overlay->pixels[1][dst_index], 128, pad_left);
+        memcpy(&priv->overlay->pixels[1][dst_index] + pad_left,
+               &yuv420p_in->cr[src_index],
+               src_width);
+        memset(&priv->overlay->pixels[1][dst_index]+pad_left+src_width, 128, pad_right);
 
 
-	memset(&priv->overlay->pixels[2][dst_index], 128, pad_left);
-	memcpy(&priv->overlay->pixels[2][dst_index] + pad_left,
-	       &yuv420p_in->cb[src_index],
-	       src_width);
-	memset(&priv->overlay->pixels[2][dst_index]+pad_left+src_width, 128, pad_right);
+        memset(&priv->overlay->pixels[2][dst_index], 128, pad_left);
+        memcpy(&priv->overlay->pixels[2][dst_index] + pad_left,
+               &yuv420p_in->cb[src_index],
+               src_width);
+        memset(&priv->overlay->pixels[2][dst_index]+pad_left+src_width, 128, pad_right);
 
-	src_index += (src_width * dy);
+        src_index += (src_width * dy);
       }
     }
 
@@ -730,9 +730,9 @@ static void render_frame_overlay(SDLstuff_private *priv, YUV420P_buffer *yuv420p
     n -= 1;
     if (1) {
       clock_nanosleep(CLOCK_MONOTONIC,
-		      0,
-		      &(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/70},
-		      NULL);
+                      0,
+                      &(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/70},
+                      NULL);
       iy = next_iy;
     }
 
@@ -760,9 +760,9 @@ static void render_frame_software(SDLstuff_private *priv, BGR3_buffer *bgr3_in)
       unsigned char *src = bgr3_in->data;
       unsigned char *dst = priv->surface->pixels;
       for (y=0; y < priv->surface->h; y++) {
-	memcpy(dst, src, img_pitch);
-	src += img_pitch;
-	dst += priv->surface->pitch;
+        memcpy(dst, src, img_pitch);
+        src += img_pitch;
+        dst += priv->surface->pitch;
       }
     }
     SDL_UpdateRect(priv->surface, 0, 0, priv->surface->w, priv->surface->h);
@@ -802,7 +802,7 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
 
   if (priv->new_width && priv->new_height) {
     if (priv->new_width != priv->width ||
-	priv->new_height != priv->height) {
+        priv->new_height != priv->height) {
       /* Resize based on config-adjusted size. */
       priv->width = priv->new_width;
       priv->height = priv->new_height;
@@ -810,8 +810,8 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
     }
   }
   else if (!priv->fullscreen
-	   && width != priv->width
-	   && height != priv->height) {
+           && width != priv->width
+           && height != priv->height) {
     /* Resize based on incoming frame. */
     priv->width = width;
     priv->height = height;
@@ -835,8 +835,8 @@ static void pre_render_frame(SDLstuff_private *priv, int width, int height, Imag
 
   if (priv->smoother) {
     VSmoother_smooth(priv->smoother,
-		     c->timestamp,
-		     ((Instance *)priv)->pending_messages);
+                     c->timestamp,
+                     ((Instance *)priv)->pending_messages);
   }
 }
 
@@ -874,21 +874,21 @@ static void YUV420P_handler(Instance *pi, void *data)
       FILE *f;
       f = fopen("y.pgm", "wb");
       if (f) {
-	fprintf(f, "P5\n%d %d\n255\n", yuv420p->width, yuv420p->height);
-	if (fwrite(yuv420p->y, yuv420p->y_length, 1, f) != 1) { perror("fwrite"); }
-	fclose(f);
+        fprintf(f, "P5\n%d %d\n255\n", yuv420p->width, yuv420p->height);
+        if (fwrite(yuv420p->y, yuv420p->y_length, 1, f) != 1) { perror("fwrite"); }
+        fclose(f);
       }
       f = fopen("cr.pgm", "wb");
       if (f) {
-	fprintf(f, "P5\n%d %d\n255\n", yuv420p->width/2, yuv420p->height/2);
-	if (fwrite(yuv420p->cr, yuv420p->cr_length, 1, f) != 1) { perror("fwrite"); }
-	fclose(f);
+        fprintf(f, "P5\n%d %d\n255\n", yuv420p->width/2, yuv420p->height/2);
+        if (fwrite(yuv420p->cr, yuv420p->cr_length, 1, f) != 1) { perror("fwrite"); }
+        fclose(f);
       }
       f = fopen("cb.pgm", "wb");
       if (f) {
-	fprintf(f, "P5\n%d %d\n255\n", yuv420p->width/2, yuv420p->height/2);
-	if (fwrite(yuv420p->cb, yuv420p->cb_length, 1, f) != 1) { perror("fwrite"); }
-	fclose(f);
+        fprintf(f, "P5\n%d %d\n255\n", yuv420p->width/2, yuv420p->height/2);
+        if (fwrite(yuv420p->cb, yuv420p->cb_length, 1, f) != 1) { perror("fwrite"); }
+        fclose(f);
       }
     }
   }
@@ -1007,9 +1007,9 @@ static void RGB3_handler(Instance *pi, void *data)
       FILE *f;
       f = fopen("x.ppm", "wb");
       if (f) {
-	fprintf(f, "P6\n%d %d\n255\n", rgb3->width, rgb3->height);
-	if (fwrite(rgb3->data, rgb3->width * rgb3->height *3, 1, f) != 1) { perror("fwrite"); }
-	fclose(f);
+        fprintf(f, "P6\n%d %d\n255\n", rgb3->width, rgb3->height);
+        if (fwrite(rgb3->data, rgb3->width * rgb3->height *3, 1, f) != 1) { perror("fwrite"); }
+        fclose(f);
       }
     }
   }
@@ -1115,8 +1115,8 @@ static void GRAY_handler(Instance *pi, void *data)
       int j = 0;
       /* FIXME: Do this efficiently...*/
       for (i=0; i < gray->width*gray->height; i++) {
-	rgb3->data[j] = rgb3->data[j+1] = rgb3->data[j+2] = gray->data[i];
-	j += 3;
+        rgb3->data[j] = rgb3->data[j+1] = rgb3->data[j+2] = gray->data[i];
+        j += 3;
       }
       render_frame_gl(priv, rgb3);
     }
@@ -1137,8 +1137,8 @@ static void GRAY_handler(Instance *pi, void *data)
       int j = 0;
       /* FIXME: Do this efficiently...*/
       for (i=0; i < gray->width*gray->height; i++) {
-	bgr3->data[j] = bgr3->data[j+1] = bgr3->data[j+2] = gray->data[i];
-	j += 3;
+        bgr3->data[j] = bgr3->data[j+1] = bgr3->data[j+2] = gray->data[i];
+        j += 3;
       }
       render_frame_software(priv, bgr3);
     }
@@ -1179,8 +1179,8 @@ void sdl_event_loop(void)
   int rc;
   Instance *pi = my_instance;
 
-  CTI_register_instance(pi);	/* Required for stack debugging, since not using
-				   Instance_thread_main(). */
+  CTI_register_instance(pi);    /* Required for stack debugging, since not using
+                                   Instance_thread_main(). */
 
   SDLstuff_private *priv = (SDLstuff_private *)pi;
 
@@ -1218,16 +1218,16 @@ void sdl_event_loop(void)
     }
     else if (ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP) {
       if (pi->outputs[OUTPUT_POINTER].destination) {
-	Pointer_event *p = Pointer_event_new(ev.button.x,ev.button.y,
-					     ev.button.button, ev.button.state);
-	PostData(p, pi->outputs[OUTPUT_POINTER].destination);
+        Pointer_event *p = Pointer_event_new(ev.button.x,ev.button.y,
+                                             ev.button.button, ev.button.state);
+        PostData(p, pi->outputs[OUTPUT_POINTER].destination);
       }
     }
     else if (ev.type == SDL_KEYUP) {
       /* Handle ranges here. */
       if (pi->outputs[OUTPUT_KEYCODE].destination) {
-	PostData(Keycode_message_new(SDLtoCTI_Keymap[ev.key.keysym.sym]),
-		 pi->outputs[OUTPUT_KEYCODE].destination);
+        PostData(Keycode_message_new(SDLtoCTI_Keymap[ev.key.keysym.sym]),
+                 pi->outputs[OUTPUT_KEYCODE].destination);
       }
     }
     else if (ev.type == SDL_QUIT) {
@@ -1252,9 +1252,9 @@ static void SDLstuff_tick(Instance *pi)
 
   if (hm) {
     SDL_Event ev = {  .user.type = SDL_USEREVENT,
-		      .user.code = 0,
-		      .user.data1 = hm,
-		      .user.data2 = 0L
+                      .user.code = 0,
+                      .user.data1 = hm,
+                      .user.data2 = 0L
     };
 
     /* PushEvent will fail until SDL is initialized in the other thread. */
@@ -1287,7 +1287,7 @@ static void SDLstuff_instance_init(Instance *pi)
   priv->iir_factor = 0.0;
 
 #if 0
-  extern Callback *ui_callback;	/* cti_app.c */
+  extern Callback *ui_callback; /* cti_app.c */
   Callback_fill(ui_callback, my_event_loop, pi);
 #endif
 

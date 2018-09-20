@@ -1,8 +1,8 @@
 /* Collate inputs to a single output. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <float.h>		/* DBL_MAX */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <float.h>              /* DBL_MAX */
 
 #include "CTI.h"
 #include "Collator.h"
@@ -67,10 +67,10 @@ static void YUV420P_handler(Instance *pi, void *msg)
       double oldest_time = DBL_MAX;
       int oldest_index = 0;
       for (i=0; i < MAX_BUFFERED; i++) {
-	if (priv->bufs[i] && priv->bufs[i]->c.timestamp < oldest_time) {
-	  oldest_index = i;
-	  oldest_time = priv->bufs[i]->c.timestamp;
-	}
+        if (priv->bufs[i] && priv->bufs[i]->c.timestamp < oldest_time) {
+          oldest_index = i;
+          oldest_time = priv->bufs[i]->c.timestamp;
+        }
       }
       dpf("posting buffer timestamp %.2f\n", priv->bufs[oldest_index]->c.timestamp);
       PostData(priv->bufs[oldest_index], pi->outputs[OUTPUT_YUV420P].destination);

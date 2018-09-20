@@ -1,6 +1,6 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 #include "CTI.h"
 #include "String.h"
 #include "Images.h"
@@ -24,7 +24,7 @@ static Output Mp2Enc_outputs[] = {
 typedef struct {
   Instance i;
   String *vout;
-  FILE *po;			/* File or pipe output... */
+  FILE *po;                     /* File or pipe output... */
   int header_sent;
 } Mp2Enc_private;
 

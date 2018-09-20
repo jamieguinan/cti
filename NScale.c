@@ -1,9 +1,9 @@
 /*
  * Scale image width and/or height by 1/N.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "NScale.h"
 #include "Images.h"
@@ -38,7 +38,7 @@ static Config config_table[] = {
 };
 
 static void N_scale(NScale_private *priv, uint8_t *indata, int in_width, int in_height,
-		    uint8_t *outdata, int out_width, int out_height)
+                    uint8_t *outdata, int out_width, int out_height)
 {
   int i, j, k;
   int x, y;
@@ -51,10 +51,10 @@ static void N_scale(NScale_private *priv, uint8_t *indata, int in_width, int in_
     for (j=0; j < priv->Ny; j++) { /* For each input row */
       k = 0;
       for (x=0; x < out_width; x++) { /* For each temporary output pixel sum */
-	for (i=0; i < priv->Nx; i++) { /* For each group of horizontal pixels */
-	  tmp_out[k] += *indata++;
-	}
-	k++;
+        for (i=0; i < priv->Nx; i++) { /* For each group of horizontal pixels */
+          tmp_out[k] += *indata++;
+        }
+        k++;
       }
     }
     for (x=0; x < out_width; x++) { /* Divide and copy out the temporary output pixel sums */
@@ -79,13 +79,13 @@ static void y422p_handler(Instance *pi, void *data)
     /* else... */
 
     YUV422P_buffer *y422p_out = YUV422P_buffer_new(y422p_in->width/priv->Nx, y422p_in->height/priv->Ny,
-					       &y422p_in->c);
+                                               &y422p_in->c);
     N_scale(priv, y422p_in->y, y422p_in->width, y422p_in->height,
-	    y422p_out->y, y422p_out->width, y422p_out->height);
+            y422p_out->y, y422p_out->width, y422p_out->height);
     N_scale(priv, y422p_in->cr, y422p_in->cr_width, y422p_in->cr_height,
-	    y422p_out->cr, y422p_out->cr_width, y422p_out->cr_height);
+            y422p_out->cr, y422p_out->cr_width, y422p_out->cr_height);
     N_scale(priv, y422p_in->cb, y422p_in->cb_width, y422p_in->cb_height,
-	    y422p_out->cb, y422p_out->cb_width, y422p_out->cb_height);
+            y422p_out->cb, y422p_out->cb_width, y422p_out->cb_height);
     dpf("posting %dx%d image to output\n", y422p_out->width, y422p_out->height);
     y422p_out->c.timestamp = y422p_in->c.timestamp;
     PostData(y422p_out, pi->outputs[OUTPUT_YUV422P].destination);

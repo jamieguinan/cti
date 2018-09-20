@@ -6,11 +6,11 @@
  * this module requires complete Jpeg files and fails on streams that
  * elide common header data.
  */
-#include <string.h>		/* memcpy */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* free */
-#include <math.h>		/* modf */
-#include <unistd.h>		/* sleep */
+#include <string.h>             /* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* free */
+#include <math.h>               /* modf */
+#include <unistd.h>             /* sleep */
 
 #include "CTI.h"
 #include "Images.h"
@@ -55,16 +55,16 @@ typedef struct {
   int needData;
   int max_chunk_size;
 
-  int enable;			/* Set this to start processing. */
+  int enable;                   /* Set this to start processing. */
 
-  Sink *output_sink;		/* Side channel. */
+  Sink *output_sink;            /* Side channel. */
   int output_enable;
 
   int rec_key;
 
   Sink *wavout_sink;
 
-  long stop_source_at;			/* Stop and close source once it passes this offset. */
+  long stop_source_at;                  /* Stop and close source once it passes this offset. */
 
   struct {
     int eoh;
@@ -90,13 +90,13 @@ typedef struct {
   int feedback_threshold;
   int use_timestamps;
   int retry;
-  long a, b;			/* For a/b looping. */
-  long seek_amount;		/* For forware/back seeks. */
+  long a, b;                    /* For a/b looping. */
+  long seek_amount;             /* For forware/back seeks. */
   FPS fps;
   int snapshot;
 
-  int eof_notify;		/* Whether to notify outputs of EOF condition. */
-  int eof_notified;		/* Set after notification. */
+  int eof_notify;               /* Whether to notify outputs of EOF condition. */
+  int eof_notified;             /* Set after notification. */
   struct {
     /* Save a copy of first frames for EOF notification. */
     Jpeg_buffer *jpeg;
@@ -105,9 +105,9 @@ typedef struct {
 
   int exit_on_eof;
 
-  int show_offset;		/* Display a file offset suitable for editing. */
+  int show_offset;              /* Display a file offset suitable for editing. */
 
-  int paused;			/* Toggle pause. */
+  int paused;                   /* Toggle pause. */
 } MjpegDemux_private;
 
 
@@ -235,7 +235,7 @@ static int set_enable(Instance *pi, const char *value)
     }
     else {
       if (!IO_ok(priv->source)) {
-	Source_reopen(priv->source);
+        Source_reopen(priv->source);
       }
     }
   }
@@ -330,7 +330,7 @@ static void Keycode_handler(Instance *pi, void *msg)
 
   if (km->keycode == CTI__KEY_A && priv->source) {
     priv->a = Source_tell(priv->source);
-    priv->b = 0;		/* reset */
+    priv->b = 0;                /* reset */
     printf("a:%ld b:%ld\n", priv->a, priv->b);
   }
   else if (km->keycode == CTI__KEY_B && priv->source && (priv->a != -1) ) {
@@ -428,7 +428,7 @@ static void MjpegDemux_tick(Instance *pi)
      might want something like GetData_timeout(), or GetData(pi, >=2)
      for millisecond timeout. */
 
-  hm = GetData(pi, 0);		/* This has to be 0 for mjxplay... */
+  hm = GetData(pi, 0);          /* This has to be 0 for mjxplay... */
 
   if (hm) {
     hm->handler(pi, hm->data);
@@ -465,19 +465,19 @@ static void MjpegDemux_tick(Instance *pi)
 
     if (priv->source->eof) {
       if (priv->eof_notify && !priv->eof_notified) {
-	notify_outputs_eof(pi);
-	priv->eof_notified = 1;
+        notify_outputs_eof(pi);
+        priv->eof_notified = 1;
       }
 
       if (priv->retry) {
-	fprintf(stderr, "%s: retrying\n", __func__);
-	Source_close_current(priv->source);
-	Source_reopen(priv->source);
+        fprintf(stderr, "%s: retrying\n", __func__);
+        Source_close_current(priv->source);
+        Source_reopen(priv->source);
       }
       sleep_and_return = 1;
 
       if (priv->exit_on_eof) {
-	exit(0);
+        exit(0);
       }
     }
 
@@ -516,13 +516,13 @@ static void MjpegDemux_tick(Instance *pi)
 
     if (soh == -1 || eoh == -1) {
       if (priv->chunk->len > priv->max_chunk_size) {
-	fprintf(stderr, "%s: header size too big, bogus data??\n", __func__);
-	priv->enable = 0;
+        fprintf(stderr, "%s: header size too big, bogus data??\n", __func__);
+        priv->enable = 0;
       }
       else {
-	/* Need more data, will get it on next call. */
-	// dpf("needData = 1\n");
-	priv->needData = 1;
+        /* Need more data, will get it on next call. */
+        // dpf("needData = 1\n");
+        priv->needData = 1;
       }
       return;
     }
@@ -533,62 +533,62 @@ static void MjpegDemux_tick(Instance *pi)
     for (n=soh; n < eoh; n = eol+2) {
       eol = ArrayU8_search(priv->chunk, n, ArrayU8_temp_const("\r\n", 2));
       if (eol != -1) {
-	String *line = ArrayU8_extract_string(priv->chunk, n, eol);
-	int a, b;
+        String *line = ArrayU8_extract_string(priv->chunk, n, eol);
+        int a, b;
 
-	if ((a = String_find(line, 0, "Content-Type:", &b)) != -1) {
-	  String_parse_string(line, b, &priv->current.content_type);
-	}
-	else if ((a = String_find(line, 0, "Timestamp:", &b)) != -1) {
-	  int n, dot = 0;
-	  n = String_find(line, 0, ".", &dot);
-	  if (n != -1  && strlen(line->bytes+dot) == 5) {
-	    /* Fix up early mjx files that misformatted Timestamp. */
-	    printf("%s -> ", line->bytes);
-	    String_cat1(line, " ");
-	    memmove(line->bytes+dot+1, line->bytes+dot, 5);
-	    line->bytes[dot] = '0';
-	    printf("%s\n", line->bytes);
-	  }
-	  String_parse_double(line, b, &priv->current.timestamp);
-	  if (priv->use_timestamps && priv->current.timestamp <= 0.001) {
-	    /* Some of my early recordings were messed up, so disable
-	       timestamp checking. */
-	    priv->use_timestamps = 0;
-	    // priv->use_feedback = 0;
-	  }
-	}
-	else if ((a = String_find(line, 0, "Period:", &b)) != -1) {
-	  String_parse_double(line, b, &priv->current.period);
-	}
-	else if ((a = String_find(line, 0, "Width:", &b)) != -1) {
-	  String_parse_int(line, b, &priv->current.width);
-	}
-	else if ((a = String_find(line, 0, "Height:", &b)) != -1) {
-	  String_parse_int(line, b, &priv->current.height);
-	}
-	else if ((a = String_find(line, 0, "Content-Length:", &b)) != -1) {
-	  String_parse_int(line, b, &priv->current.content_length);
-	}
-	else if (String_begins_with(line, "--")) {
-	  if (!priv->boundary) {
-	    priv->boundary = String_dup(line);
-	  }
-	  else {
-	    /* FIXME: Test boundary versus previous boundary.  Or not,
-	       if its not important.  Besides, I'm setting soh to "Content-type",
-	       which comes after the "--" boundary. */
-	  }
-	}
-	String_free(&line);
+        if ((a = String_find(line, 0, "Content-Type:", &b)) != -1) {
+          String_parse_string(line, b, &priv->current.content_type);
+        }
+        else if ((a = String_find(line, 0, "Timestamp:", &b)) != -1) {
+          int n, dot = 0;
+          n = String_find(line, 0, ".", &dot);
+          if (n != -1  && strlen(line->bytes+dot) == 5) {
+            /* Fix up early mjx files that misformatted Timestamp. */
+            printf("%s -> ", line->bytes);
+            String_cat1(line, " ");
+            memmove(line->bytes+dot+1, line->bytes+dot, 5);
+            line->bytes[dot] = '0';
+            printf("%s\n", line->bytes);
+          }
+          String_parse_double(line, b, &priv->current.timestamp);
+          if (priv->use_timestamps && priv->current.timestamp <= 0.001) {
+            /* Some of my early recordings were messed up, so disable
+               timestamp checking. */
+            priv->use_timestamps = 0;
+            // priv->use_feedback = 0;
+          }
+        }
+        else if ((a = String_find(line, 0, "Period:", &b)) != -1) {
+          String_parse_double(line, b, &priv->current.period);
+        }
+        else if ((a = String_find(line, 0, "Width:", &b)) != -1) {
+          String_parse_int(line, b, &priv->current.width);
+        }
+        else if ((a = String_find(line, 0, "Height:", &b)) != -1) {
+          String_parse_int(line, b, &priv->current.height);
+        }
+        else if ((a = String_find(line, 0, "Content-Length:", &b)) != -1) {
+          String_parse_int(line, b, &priv->current.content_length);
+        }
+        else if (String_begins_with(line, "--")) {
+          if (!priv->boundary) {
+            priv->boundary = String_dup(line);
+          }
+          else {
+            /* FIXME: Test boundary versus previous boundary.  Or not,
+               if its not important.  Besides, I'm setting soh to "Content-type",
+               which comes after the "--" boundary. */
+          }
+        }
+        String_free(&line);
       }
     }
 
     if (priv->current.content_type &&
-	priv->current.content_length >= 0) {
+        priv->current.content_length >= 0) {
       dpf("content type: %s timestamp:%f\n",
-	  s(priv->current.content_type),
-	  priv->current.timestamp);
+          s(priv->current.content_type),
+          priv->current.timestamp);
       priv->state = PARSING_DATA;
     }
     else {
@@ -631,10 +631,10 @@ static void MjpegDemux_tick(Instance *pi)
 
     if (priv->wavout_sink) {
       if (!priv->seen_audio) {
-	Sink_write(priv->wavout_sink, priv->chunk->data + priv->current.eoh + 4, (priv->current.content_length));
+        Sink_write(priv->wavout_sink, priv->chunk->data + priv->current.eoh + 4, (priv->current.content_length));
       }
       else {
-	Sink_write(priv->wavout_sink, priv->chunk->data + priv->current.eoh + 4 + 44, (priv->current.content_length-44));
+        Sink_write(priv->wavout_sink, priv->chunk->data + priv->current.eoh + 4 + 44, (priv->current.content_length-44));
       }
     }
 
@@ -644,14 +644,14 @@ static void MjpegDemux_tick(Instance *pi)
 
     if (pi->outputs[OUTPUT_WAV].destination) {
       while (pi->outputs[OUTPUT_WAV].destination->parent->pending_messages > 250) {
-	/* Throttle output.  25ms sleep. */
-	// printf("MjpegDemux throttle on OUTPUT_WAV\n");
-	nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
+        /* Throttle output.  25ms sleep. */
+        // printf("MjpegDemux throttle on OUTPUT_WAV\n");
+        nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
       }
       PostData(w, pi->outputs[OUTPUT_WAV].destination);
       if (priv->use_feedback & (1<<0)) {
-      	priv->pending_feedback += 1;
-	// printf("feedback +1 = %d\n", priv->pending_feedback);
+        priv->pending_feedback += 1;
+        // printf("feedback +1 = %d\n", priv->pending_feedback);
       }
     }
     else {
@@ -662,7 +662,7 @@ static void MjpegDemux_tick(Instance *pi)
 
   else if (streq(priv->current.content_type->bytes, "image/jpeg")) {
     Jpeg_buffer *j = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4,
-				      priv->current.content_length, 0L);
+                                      priv->current.content_length, 0L);
 
     if (!j) {
       /* This can happen if corrupt data is sent. */
@@ -675,7 +675,7 @@ static void MjpegDemux_tick(Instance *pi)
     if (priv->eof_notify && !priv->buffer.jpeg) {
       /* Save a copy of the first frame. */
       priv->buffer.jpeg = Jpeg_buffer_from(priv->chunk->data + priv->current.eoh + 4,
-					   priv->current.content_length, 0L);
+                                           priv->current.content_length, 0L);
       priv->buffer.jpeg->c.timestamp = priv->current.timestamp;
     }
 
@@ -699,42 +699,42 @@ static void MjpegDemux_tick(Instance *pi)
 
     if (pi->outputs[OUTPUT_JPEG].destination) {
       /* Use timestamps if configured to do so, and only if haven't
-	 seen any audio, which is normally used with feedback. */
+         seen any audio, which is normally used with feedback. */
       // printf("%d %d\n", priv->use_timestamps, !priv->seen_audio);
 
       while (pi->outputs[OUTPUT_JPEG].destination->parent->pending_messages > 250) {
-	/* Throttle output.  25ms sleep. */
-	nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
-	//printf("MjpegDemux throttle on OUTPUT_JPEG\n");
+        /* Throttle output.  25ms sleep. */
+        nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = 25 * 1000 * 1000}, NULL);
+        //printf("MjpegDemux throttle on OUTPUT_JPEG\n");
       }
 
       if (priv->use_fixed_video_period) {
-	//printf("fixed video period..\n");
-	nanosleep( double_to_timespec(priv->fixed_video_period), NULL);
+        //printf("fixed video period..\n");
+        nanosleep( double_to_timespec(priv->fixed_video_period), NULL);
       }
       else if (priv->use_timestamps && !priv->seen_audio) {
-	double tnow;
-	cti_getdoubletime(&tnow);
+        double tnow;
+        cti_getdoubletime(&tnow);
 
-	if (priv->video.stream_t0 < 0.0) {
-	  /* New stream, or seek occurred. */
-	  priv->video.stream_t0 = priv->current.timestamp;
-	  priv->video.playback_t0 = tnow;
-	}
-	else {
-	  double stream_diff = priv->current.timestamp - priv->video.stream_t0;
-	  double playback_diff = tnow - priv->video.playback_t0;
-	  double delay = stream_diff - playback_diff;
-	  if (delay > 0.0) {
-	    dpf("%f %f\n", stream_diff, playback_diff);
-	    nanosleep( double_to_timespec(delay), NULL);
-	  }
-	}
+        if (priv->video.stream_t0 < 0.0) {
+          /* New stream, or seek occurred. */
+          priv->video.stream_t0 = priv->current.timestamp;
+          priv->video.playback_t0 = tnow;
+        }
+        else {
+          double stream_diff = priv->current.timestamp - priv->video.stream_t0;
+          double playback_diff = tnow - priv->video.playback_t0;
+          double delay = stream_diff - playback_diff;
+          if (delay > 0.0) {
+            dpf("%f %f\n", stream_diff, playback_diff);
+            nanosleep( double_to_timespec(delay), NULL);
+          }
+        }
       }
 
       PostData(j, pi->outputs[OUTPUT_JPEG].destination);
       if (priv->use_feedback & (1<<1)) {
-	priv->pending_feedback += 1;
+        priv->pending_feedback += 1;
       }
     }
     else {
@@ -746,18 +746,18 @@ static void MjpegDemux_tick(Instance *pi)
   else if (streq(priv->current.content_type->bytes, "image/o511")) {
     if (priv->current.width == 0 || priv->current.height == 0) {
       fprintf(stderr, "ov511 header missing width or height (%d, %d)\n",
-	      priv->current.width, priv->current.height);
+              priv->current.width, priv->current.height);
     }
     else if (pi->outputs[OUTPUT_O511].destination) {
       O511_buffer *ob = 0L;
       ob = O511_buffer_from(priv->chunk->data + priv->current.eoh + 4,
-			    priv->current.content_length,
-			    priv->current.width,
-			    priv->current.height,
-			    0L);
+                            priv->current.content_length,
+                            priv->current.width,
+                            priv->current.height,
+                            0L);
       PostData(ob, pi->outputs[OUTPUT_O511].destination);
       if (priv->use_feedback & (1<<2)) {
-	priv->pending_feedback += 1;
+        priv->pending_feedback += 1;
       }
     }
     /* If neither of the above cases were hit, the ov511 block will be
@@ -814,7 +814,7 @@ static void MjpegDemux_instance_init(Instance *pi)
   priv->video.stream_t0 = -1.0;
   priv->feedback_threshold = 20;
   priv->seek_amount = 10000000;
-  priv->rec_key = -1;		/* invalid key */
+  priv->rec_key = -1;           /* invalid key */
 }
 
 static Template MjpegDemux_template = {

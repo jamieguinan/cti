@@ -16,7 +16,7 @@ typedef struct _Node {
 
   char *text;
 
-  struct _Node *parent;		/* optional back-pointer */
+  struct _Node *parent;         /* optional back-pointer */
 } Node;
 
 extern Node * node_new(const char * tag);

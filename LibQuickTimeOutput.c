@@ -1,7 +1,7 @@
 /* Search and replace "Example" with new module name. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Images.h"
@@ -118,11 +118,11 @@ static void push_ycc(LibQuickTimeOutput_private *priv, YUV422P_buffer *ycc)
 
   if (priv->ycc_track == -1) {
     priv->ycc_track = lqt_add_video_track(priv->qt,
-			     ycc->width, /* frame_w */
-			     ycc->height, /* frame_h */
-			     1001,	/* frame_duration */
-			     30000,	/* timescale */
-			     priv->ycc_encoder);
+                             ycc->width, /* frame_w */
+                             ycc->height, /* frame_h */
+                             1001,      /* frame_duration */
+                             30000,     /* timescale */
+                             priv->ycc_encoder);
 
     printf("lqt_add_video_track returns %d\n", priv->ycc_track);
   }
@@ -145,10 +145,10 @@ static void push_ycc(LibQuickTimeOutput_private *priv, YUV422P_buffer *ycc)
   //memcpy(video_buffer+ycc->y_length+ycc->cr_length, ycc->cr, ycc->cb_length);
 
   rc = quicktime_write_frame(priv->qt,
-			     video_buffer,
-			     bytes,
-			     priv->ycc_track
-			     );
+                             video_buffer,
+                             bytes,
+                             priv->ycc_track
+                             );
 
   Mem_free(video_buffer);
 }
@@ -169,11 +169,11 @@ static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
 
   if (priv->rgb_track == -1) {
     priv->rgb_track = lqt_add_video_track(priv->qt,
-			     rgb->width, /* frame_w */
-			     rgb->height, /* frame_h */
-			     1001,	/* frame_duration */
-			     30000,	/* timescale */
-			     priv->rgb_encoder);
+                             rgb->width, /* frame_w */
+                             rgb->height, /* frame_h */
+                             1001,      /* frame_duration */
+                             30000,     /* timescale */
+                             priv->rgb_encoder);
 
     printf("lqt_add_video_track returns %d\n", priv->rgb_track);
   }
@@ -192,10 +192,10 @@ static void push_rgb(LibQuickTimeOutput_private *priv, RGB3_buffer *rgb)
   memcpy(video_buffer, rgb->data, rgb->data_length);
 
   int rc = quicktime_write_frame(priv->qt,
-			     video_buffer,
-			     rgb->data_length,
-			     priv->rgb_track
-			     );
+                             video_buffer,
+                             rgb->data_length,
+                             priv->rgb_track
+                             );
 
   dpf("quicktime_write_frame returns %d\n", rc);
 
@@ -279,16 +279,16 @@ static void Wav_handler(Instance *pi, void *data)
 
   if (priv->audio_track == -1) {
     priv->audio_track = lqt_add_audio_track(priv->qt,
-					    wav->params.channels,
-					    wav->params.rate,
-					    wav->params.bits_per_sample,
-					    priv->audio_encoder);
+                                            wav->params.channels,
+                                            wav->params.rate,
+                                            wav->params.bits_per_sample,
+                                            priv->audio_encoder);
 
     printf("lqt_add_audio_track (%d %d %d) returns %d\n",
-	   wav->params.channels,
-	   wav->params.rate,
-	   wav->params.bits_per_sample,
-	   priv->audio_track);
+           wav->params.channels,
+           wav->params.rate,
+           wav->params.bits_per_sample,
+           priv->audio_track);
   }
 
   if (priv->ycc_track == -1 && priv->rgb_track == -1) {
@@ -302,9 +302,9 @@ static void Wav_handler(Instance *pi, void *data)
 
 
   lqt_encode_audio_raw(priv->qt,
-		       wav->data,
-		       wav->data_length/4,
-		       priv->audio_track);
+                       wav->data,
+                       wav->data_length/4,
+                       priv->audio_track);
 }
 
 static void Config_handler(Instance *pi, void *data)
@@ -349,7 +349,7 @@ static void LibQuickTimeOutput_instance_init(Instance *pi)
     }
     priv->ycc_encoder = encoders[0];
     //lqt_destroy_codec_info(encoders);
-    priv->ycc_track = -1;		/* Unset. */
+    priv->ycc_track = -1;               /* Unset. */
   }
 
   /* "raw " is RGB triplets. */

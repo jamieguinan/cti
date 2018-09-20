@@ -3,9 +3,9 @@
  * implement.  I initially want it for controlling the cockpit
  * view in X-Plane.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "FaceTracker.h"
@@ -137,7 +137,7 @@ static void analysis_001(FaceTracker_private *priv, Gray_buffer *gray)
     //priv->sum->data[i] += (priv->fir[priv->fir_index]->data[i] + 256 -
     //priv->fir[prev_index]->data[i]);
     priv->sum->data[i] += abs((int)(priv->fir[priv->fir_index]->data[i]) -
-			   (int)(priv->fir[prev_index]->data[i]));
+                           (int)(priv->fir[prev_index]->data[i]));
   }
 
   /* Clean up oldest frame's contribution. */
@@ -148,7 +148,7 @@ static void analysis_001(FaceTracker_private *priv, Gray_buffer *gray)
     //priv->sum->data[i] -= (priv->fir[prev_index]->data[i] + 256 -
     //priv->fir[prev2_index]->data[i]);
     priv->sum->data[i] -= abs((int)(priv->fir[prev_index]->data[i]) -
-			      (int)(priv->fir[prev2_index]->data[i]));
+                              (int)(priv->fir[prev2_index]->data[i]));
 
   }
 
@@ -229,19 +229,19 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
   for (y=priv->sum->height/4; y < priv->sum->height*3/4; y += 1) {
     for (x=priv->sum->width/3; x <  priv->sum->width*2/3; x += 1) {
       /* Search for contiguous area with maximum sum, which should correspond
-	 to one of the eyes being blinked. */
+         to one of the eyes being blinked. */
       localsum = 0;
       for (yy = 0; yy < y_step; yy++) {
-	for (xx = 0; xx < x_step; xx++) {
-	  int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
-	  localsum += value;
-	}
+        for (xx = 0; xx < x_step; xx++) {
+          int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
+          localsum += value;
+        }
       }
       if (localsum > maximums[0].sum) {
-	//printf("localsum=%d  %d %d\n", localsum,  maximums[0].sum, maximums[1].sum);
-	maximums[0].sum = localsum;
-	maximums[0].x = x;
-	maximums[0].y = y;
+        //printf("localsum=%d  %d %d\n", localsum,  maximums[0].sum, maximums[1].sum);
+        maximums[0].sum = localsum;
+        maximums[0].x = x;
+        maximums[0].y = y;
       }
     }
   }
@@ -252,16 +252,16 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
       /* Search for contiguous area with maximum sum, which should correspond the other eye. */
       localsum = 0;
       for (yy = 0; yy < y_step; yy++) {
-	for (xx = 0; xx < x_step; xx++) {
-	  int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
-	  localsum += value;
-	}
+        for (xx = 0; xx < x_step; xx++) {
+          int value = priv->sum->data[priv->sum->width*(yy+y) + (x+xx)];
+          localsum += value;
+        }
       }
       /* Sum should be at least 1/3 of other sum. */
       if (localsum > maximums[1].sum && localsum > (maximums[0].sum * 1 / 3 )) {
-	maximums[1].sum = localsum;
-	maximums[1].x = x;
-	maximums[1].y = y;
+        maximums[1].sum = localsum;
+        maximums[1].x = x;
+        maximums[1].y = y;
       }
     }
   }
@@ -269,7 +269,7 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
   if (maximums[1].sum) {
     for (ii=0; ii < 2; ii++) {
       printf("maximums[%d] (%d, %d): %d\n",
-	     ii, maximums[ii].x,  maximums[ii].y,  maximums[ii].sum);
+             ii, maximums[ii].x,  maximums[ii].y,  maximums[ii].sum);
     }
   }
 
@@ -297,15 +297,15 @@ static void analysis_002(FaceTracker_private *priv, Gray_buffer *gray, RGB3_buff
   if (maximums[1].sum) {
     for (ii=0; ii < 2; ii++) {
       for (yy=maximums[ii].y; yy < maximums[ii].y+y_step; yy++) {
-	gray->data[gray->width*yy + maximums[ii].x] = 255;
-	gray->data[gray->width*yy + maximums[ii].x+x_step] = 255;
+        gray->data[gray->width*yy + maximums[ii].x] = 255;
+        gray->data[gray->width*yy + maximums[ii].x+x_step] = 255;
       }
 
 
       for (xx=maximums[ii].x; xx < maximums[ii].x+x_step; xx++) {
-	if (xx < 0) xx = 0;
-	gray->data[gray->width*maximums[ii].y + xx] = 255;
-	gray->data[gray->width*(maximums[ii].y+y_step) + xx] = 255;
+        if (xx < 0) xx = 0;
+        gray->data[gray->width*maximums[ii].y + xx] = 255;
+        gray->data[gray->width*(maximums[ii].y+y_step) + xx] = 255;
       }
     }
   }
@@ -330,10 +330,10 @@ static void analysis_01(FaceTracker_private *priv, YUV422P_buffer *y422p)
   for (y = (0 + y_step); y < (height - target_size_y); y += y_step) {
     for (x = (0 + x_step); x < (width - target_size_x); x += x_step) {
       if (color_match(x, y)) {
-	/* Scan region around (x,y), count matching pixels and take average of
-	   matching coordinates. */
-	/* If results are acceptable, store the "point".  */
-	puts("ohai");
+        /* Scan region around (x,y), count matching pixels and take average of
+           matching coordinates. */
+        /* If results are acceptable, store the "point".  */
+        puts("ohai");
       }
     }
   }

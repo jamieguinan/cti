@@ -1,9 +1,9 @@
 /*
  * See /tmp/libmpeg2-0.5.1/src/mpeg2dec.c for reference.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Mpeg2Dec.h"

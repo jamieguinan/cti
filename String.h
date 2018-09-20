@@ -9,8 +9,8 @@
 
 /* Please see accompanying String.licence for copyright and licensing information. */
 
-#include <string.h>		/* strlen */
-#include <sys/uio.h>		/* struct iovec */
+#include <string.h>             /* strlen */
+#include <sys/uio.h>            /* struct iovec */
 
 
 typedef struct {
@@ -31,7 +31,7 @@ typedef struct {
    data pointers may be reallocated and moved. So these should only
    be used in expressions and not held in variables. */
 #define s(x) ((x)->bytes)
-#define sl(x) ((x).bytes)  	/* sl for 's'tring 'l'ocal variable */
+#define sl(x) ((x).bytes)       /* sl for 's'tring 'l'ocal variable */
 
 /* "Upcast" a char* to a String for easy access to the functions here. */
 #define S(x) (& (String){ .bytes = x, .len = strlen(x), .available = 0} )

@@ -1,7 +1,7 @@
 #include "CSV.h"
 #include "File.h"
-#include <string.h>		/* strchr */
-#include <stdio.h>		/* fprintf */
+#include <string.h>             /* strchr */
+#include <stdio.h>              /* fprintf */
 
 String *CSV_get(CSV_table *csv, int row, int column)
 {
@@ -51,13 +51,13 @@ CSV_table *CSV_load(String *path)
       ccount += 1;
       comma = strchr(p, ',');
       if (!comma) {
-	comma = newline;	/* allow trailing comma or newline to end a row */
+        comma = newline;        /* allow trailing comma or newline to end a row */
       }
 
-      int len = comma - p + 1; 	/* leave room to null-terminate tmp */
+      int len = comma - p + 1;  /* leave room to null-terminate tmp */
       char tmp[len];
-      strncpy(tmp, p, len);	/* does not copy the comma */
-      tmp[len-1] = 0;		/* null-terminate */
+      strncpy(tmp, p, len);     /* does not copy the comma */
+      tmp[len-1] = 0;           /* null-terminate */
 
       //printf("%s\n", tmp);
 
@@ -65,25 +65,25 @@ CSV_table *CSV_load(String *path)
       IndexedSet_add(csv->_entries, String_new(tmp));
 #else
       {
-	if (csv->_entries.items == 0L) {
-	  printf("%d\n", __LINE__);
-	  csv->_entries.avail = 2;
-	  printf("%d\n", __LINE__);
-	  csv->_entries.items = _Mem_calloc(csv->_entries.avail, sizeof(String_new(tmp)), __func__);
-	  printf("%d\n", __LINE__);
-	}
-	else if (csv->_entries.avail == csv->_entries.count) {
-	  printf("%d\n", __LINE__);
-	  csv->_entries.avail *= 2;
-	  printf("%d\n", __LINE__);
-	  csv->_entries.items = _Mem_realloc(csv->_entries.items, csv->_entries.avail * sizeof(String_new(tmp)), __func__);
-	  printf("%d\n", __LINE__);
-	}
-	printf("%d\n", __LINE__);
-	csv->_entries.items[csv->_entries.count] = String_new(tmp);
-	printf("%d\n", __LINE__);
-	csv->_entries.count += 1;
-	printf("%d\n", __LINE__);
+        if (csv->_entries.items == 0L) {
+          printf("%d\n", __LINE__);
+          csv->_entries.avail = 2;
+          printf("%d\n", __LINE__);
+          csv->_entries.items = _Mem_calloc(csv->_entries.avail, sizeof(String_new(tmp)), __func__);
+          printf("%d\n", __LINE__);
+        }
+        else if (csv->_entries.avail == csv->_entries.count) {
+          printf("%d\n", __LINE__);
+          csv->_entries.avail *= 2;
+          printf("%d\n", __LINE__);
+          csv->_entries.items = _Mem_realloc(csv->_entries.items, csv->_entries.avail * sizeof(String_new(tmp)), __func__);
+          printf("%d\n", __LINE__);
+        }
+        printf("%d\n", __LINE__);
+        csv->_entries.items[csv->_entries.count] = String_new(tmp);
+        printf("%d\n", __LINE__);
+        csv->_entries.count += 1;
+        printf("%d\n", __LINE__);
       }
 #endif
       p = comma + 1;

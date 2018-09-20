@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>		/* abs */
+#include <stdlib.h>             /* abs */
 #include "jpeglib.h"
 
 //#include "cdjpeg.h"
@@ -95,9 +95,9 @@ static void gray_handler(Instance *pi, void *msg)
       int offset = y * gray->width + x;
 
       if (mask_check) {
-	if (priv->mask->data[offset] == 0) {
-	  continue;
-	}
+        if (priv->mask->data[offset] == 0) {
+          continue;
+        }
       }
 
       /* The abs() is redundant with the squaring (d*d) below, but I'm

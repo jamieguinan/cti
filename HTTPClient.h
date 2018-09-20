@@ -15,7 +15,7 @@ typedef enum {
 
 typedef struct {
   Comm * comm;
-  int code;			/* 200, 404, 500, whatever */
+  int code;                     /* 200, 404, 500, whatever */
   String * url;
   ArrayU8 * postdata;
   int postdata_offset;

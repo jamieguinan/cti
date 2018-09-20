@@ -2,7 +2,7 @@
 #include "Mem.h"
 #include "String.h"
 #include "dpf.h"
-//#include "CTI.h"		/* dpf */
+//#include "CTI.h"              /* dpf */
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -10,12 +10,12 @@
 #include <ctype.h>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/stat.h>		/* fstat */
+#include <sys/stat.h>           /* fstat */
 #include <sys/socket.h>
 #include <netdb.h>
-#include <unistd.h>		/* close, fcntl */
-#include <poll.h>		/* poll */
-#include <fcntl.h>		/* fcntl */
+#include <unistd.h>             /* close, fcntl */
+#include <poll.h>               /* poll */
+#include <fcntl.h>              /* fcntl */
 #include <errno.h>
 
 
@@ -49,10 +49,10 @@ static void io_open(IO_common *io, const char *mode)
   int rc;
   struct addrinfo *results = 0L;
 
-  io->s = -1;			/* Default to invalid socket value. */
+  io->s = -1;                   /* Default to invalid socket value. */
   io->state = IO_CLOSED;
 
-  char * path = s(io->path);	/* convenience */
+  char * path = s(io->path);    /* convenience */
 
   char * colon = strchr(path, ':');
   if (colon && isdigit(colon[1])) {
@@ -69,8 +69,8 @@ static void io_open(IO_common *io, const char *mode)
     };
     struct addrinfo *rp = 0L;
     rc = getaddrinfo(host, port,
-			 &hints,
-			 &results);
+                         &hints,
+                         &results);
     if (rc != 0) {
       perror("getaddrinfo"); goto out;
     }
@@ -88,7 +88,7 @@ static void io_open(IO_common *io, const char *mode)
       //  rc, io->s, rp->ai_family, rp->ai_socktype, rp->ai_protocol, rp->ai_addrlen, errno);
       if (rc == 0) {
         fprintf(stderr, "connect Ok\n");
-	break;
+        break;
       }
       if (rc == -1) {
         perror("connect");
@@ -115,13 +115,13 @@ static void io_open(IO_common *io, const char *mode)
 
     if (path[0] == '|' && mode[0] == 'w') {
       /* Open as pipe.  I noted at one point this worked only for
-	 output.  Don't remember why, but I'm keeping the 'w' test
-	 above just in case. */
+         output.  Don't remember why, but I'm keeping the 'w' test
+         above just in case. */
       strftime(out_path, sizeof(out_path), path, lt);
       io->p = popen(out_path+1, "w");
       if (io->p) {
-	io->state = IO_OPEN_PIPE;
-	String_set(&io->generated_path, out_path);
+        io->state = IO_OPEN_PIPE;
+        String_set(&io->generated_path, out_path);
       }
     }
     else {
@@ -129,8 +129,8 @@ static void io_open(IO_common *io, const char *mode)
       strftime(out_path, sizeof(out_path), path, lt);
       io->f = fopen(out_path, mode);
       if (io->f) {
-	io->state = IO_OPEN_FILE;
-	String_set(&io->generated_path, out_path);
+        io->state = IO_OPEN_FILE;
+        String_set(&io->generated_path, out_path);
       }
     }
   }
@@ -166,16 +166,16 @@ static void io_write(IO_common * io, void *data, int length)
     int sent = 0;
     while (sent < length) {
       /* FIXME: This send() can block, which can cause the calling
-	 Instance's Inputs to back up.  Not sure how to resolve this,
-	 but should have some kind of solution or at least a
-	 recommendation or note.  Maybe a timeout, and fill in an
-	 error value if couldn't send all in time? */
+         Instance's Inputs to back up.  Not sure how to resolve this,
+         but should have some kind of solution or at least a
+         recommendation or note.  Maybe a timeout, and fill in an
+         error value if couldn't send all in time? */
       //if (io_writable(io)) {
       //}
       n = send(io->s, ((char*)data)+sent, length, 0);
       if (n <= 0) {
-	perror("send");
-	break;
+        perror("send");
+        break;
       }
       sent += n;
     }
@@ -318,17 +318,17 @@ ArrayU8 * io_read(IO_common *io)
     if (len == 0) {
       //perror("fread");
       if (feof(io->f)) {
-	//printf("EOF on file\n");
+        //printf("EOF on file\n");
       }
       if (ferror(io->f)) {
-	//printf("error on file\n");
+        //printf("error on file\n");
       }
-      clearerr(io->f);	/* Clear the EOF so that we can seek backwards. */
+      clearerr(io->f);  /* Clear the EOF so that we can seek backwards. */
       if (feof(io->f)) {
-	printf("EOF remains on file\n");
+        printf("EOF remains on file\n");
       }
       if (ferror(io->f)) {
-	printf("error remains on file\n");
+        printf("error remains on file\n");
       }
     }
   }
@@ -337,17 +337,17 @@ ArrayU8 * io_read(IO_common *io)
     if (len == 0) {
       //perror("fread");
       if (feof(io->p)) {
-	//printf("EOF on file\n");
+        //printf("EOF on file\n");
       }
       if (ferror(io->p)) {
-	//printf("error on file\n");
+        //printf("error on file\n");
       }
-      clearerr(io->p);	/* Clear the EOF so that we can seek backwards. */
+      clearerr(io->p);  /* Clear the EOF so that we can seek backwards. */
       if (feof(io->p)) {
-	printf("EOF remains on file\n");
+        printf("EOF remains on file\n");
       }
       if (ferror(io->p)) {
-	printf("error remains on file\n");
+        printf("error remains on file\n");
       }
     }
   }
@@ -427,7 +427,7 @@ int Source_seek(Source *source, long amount)
     rc = fseek(source->io.f, amount, SEEK_CUR);
     if (rc != 0) {
       fprintf(stderr, "fseek(%ld) error, feof=%d ferror=%d ftell=%ld\n",
-	      amount, feof(source->io.f), feof(source->io.f), ftell(source->io.f));
+              amount, feof(source->io.f), feof(source->io.f), ftell(source->io.f));
       perror("fseek");
     }
     pos = ftell(source->io.f);
@@ -525,11 +525,11 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
     if (!newChunk) {
       source->eof = 1;
       if (!source->eof_flagged) {
-	fprintf(stderr, "%s: EOF on source\n", __func__);
-	source->eof_flagged = 1;
-	/* Adding a short sleep here will tend to sort things out, when a player
-	   is trying to keep up with a live stream and hits the end. */
-	nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/50}, NULL);
+        fprintf(stderr, "%s: EOF on source\n", __func__);
+        source->eof_flagged = 1;
+        /* Adding a short sleep here will tend to sort things out, when a player
+           is trying to keep up with a live stream and hits the end. */
+        nanosleep(&(struct timespec){.tv_sec = 0, .tv_nsec = (999999999+1)/50}, NULL);
       }
       // Source_close_current(source);
       return;
@@ -541,11 +541,11 @@ void Source_acquire_data(Source *source, ArrayU8 *chunk, int *needData)
       static time_t t_last = 0;
       time_t tnow = time(NULL);
       if (tnow > t_last) {
-	dpf("source bytes/sec %.1f %.1f %1.f\n",
-	    source->bytes_per_sec.records[0].value,
-	    source->bytes_per_sec.records[1].value,
-	    source->bytes_per_sec.records[2].value);
-	t_last = tnow;
+        dpf("source bytes/sec %.1f %.1f %1.f\n",
+            source->bytes_per_sec.records[0].value,
+            source->bytes_per_sec.records[1].value,
+            source->bytes_per_sec.records[2].value);
+        t_last = tnow;
       }
     }
 
@@ -573,7 +573,7 @@ Comm * Comm_new(char * path)
 {
   Comm * comm = Mem_calloc(1, sizeof(*comm));
 
-  comm->io.s = -1;			/* Default to invalid socket value. */
+  comm->io.s = -1;                      /* Default to invalid socket value. */
   comm->io.state = IO_CLOSED;
   String_set(&comm->io.path, path);
   io_open(&comm->io, "w+b");
@@ -611,15 +611,15 @@ String * Comm_read_string_to_byte(Comm * comm, char byteval)
     for (i=0; i < chunk->len; i++) {
       //fprintf(stderr, "chunk->data[i] = 0x%x [%c]\n", chunk->data[i], chunk->data[i]);
       if (chunk->data[i] == byteval) {
-	//fprintf(stderr, "found at offset %d\n", i);
-	String *result = String_new("");
-	String_append_bytes(result, (char*)chunk->data, i);
-	if (chunk->len > i && !comm->io.extra) {
-	  comm->io.extra = ArrayU8_new();
-	  ArrayU8_append(comm->io.extra, ArrayU8_temp_const(chunk->data+i, chunk->len-i));
-	}
-	ArrayU8_free(&chunk);
-	return result;
+        //fprintf(stderr, "found at offset %d\n", i);
+        String *result = String_new("");
+        String_append_bytes(result, (char*)chunk->data, i);
+        if (chunk->len > i && !comm->io.extra) {
+          comm->io.extra = ArrayU8_new();
+          ArrayU8_append(comm->io.extra, ArrayU8_temp_const(chunk->data+i, chunk->len-i));
+        }
+        ArrayU8_free(&chunk);
+        return result;
       }
     }
 

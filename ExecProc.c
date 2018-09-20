@@ -3,9 +3,9 @@
  * This was started as a copy of SubProc.c, but intended to be a simpler
  * open-loop handler.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc, system */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc, system */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "ExecProc.h"

@@ -3,9 +3,9 @@
  * just a sequence of Jpeg frames (JFIF) and Wav blocks, prefixed with
  * HTTP headers.  Use other tools to convert to AVI, OGG, etc.
  */
-#include <string.h>		/* memcpy */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* free */
+#include <string.h>             /* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* free */
 
 #include "CTI.h"
 #include "String.h"
@@ -93,7 +93,7 @@ static void Config_handler(Instance *pi, void *data)
 static const char part_format[] =
   "%sContent-Type: %s\r\n"
   "Timestamp:%.6f\r\n"
-  "%s"				/* extra headers... */
+  "%s"                          /* extra headers... */
   "Content-Length: %lu\r\n\r\n";
 
 static void Jpeg_handler(Instance *pi, void *data)
@@ -116,11 +116,11 @@ static void Jpeg_handler(Instance *pi, void *data)
   }
 
   String *header = String_sprintf(part_format,
-				  BOUNDARY,
-				  "image/jpeg",
-				  jpeg_in->c.timestamp,
-				  s(period),
-				  jpeg_in->encoded_length);
+                                  BOUNDARY,
+                                  "image/jpeg",
+                                  jpeg_in->c.timestamp,
+                                  s(period),
+                                  jpeg_in->encoded_length);
 
 
   if (priv->sink) {
@@ -159,11 +159,11 @@ static void O511_handler(Instance *pi, void *data)
   /* Format header. */
   String *dimensions = String_sprintf("Width:%d\r\nHeight:%d\r\n", o511_in->width, o511_in->height);
   String *header = String_sprintf(part_format,
-				  BOUNDARY,
-				  "image/o511",
-				  o511_in->c.timestamp,
-				  dimensions->bytes,
-				  o511_in->encoded_length);
+                                  BOUNDARY,
+                                  "image/o511",
+                                  o511_in->c.timestamp,
+                                  dimensions->bytes,
+                                  o511_in->encoded_length);
 
   if (priv->sink) {
     Sink_write(priv->sink, header->bytes, header->len);
@@ -194,11 +194,11 @@ static void Wav_handler(Instance *pi, void *data)
 
   /* Format header. */
   String *header = String_sprintf(part_format,
-				  BOUNDARY,
-				  "audio/x-wav",
-				  wav_in->timestamp,
-				  "",
-				  wav_in->header_length+wav_in->data_length);
+                                  BOUNDARY,
+                                  "audio/x-wav",
+                                  wav_in->timestamp,
+                                  "",
+                                  wav_in->header_length+wav_in->data_length);
 
   if (priv->sink) {
     Sink_write(priv->sink, header->bytes, header->len);
@@ -228,11 +228,11 @@ static void AAC_handler(Instance *pi, void *data)
 
   /* Format header. */
   String *header = String_sprintf(part_format,
-				  BOUNDARY,
-				  "audio/aac",
-				  aac->timestamp,
-				  "",
-				  aac->data_length);
+                                  BOUNDARY,
+                                  "audio/aac",
+                                  aac->timestamp,
+                                  "",
+                                  aac->data_length);
 
   if (priv->sink) {
     Sink_write(priv->sink, header->bytes, header->len);

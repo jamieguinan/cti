@@ -102,8 +102,8 @@ void Sem_init(Sem *sem)
 {
 #ifdef __linux__
   int rc = sem_init(&sem->sem,
-		    0, /* shared between threads only */
-		    0  /* initial value */
+                    0, /* shared between threads only */
+                    0  /* initial value */
     );
   if (rc != 0) {
     perror("sem_init");

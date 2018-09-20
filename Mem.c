@@ -1,7 +1,7 @@
 #include "Mem.h"
-#include <string.h>		/* memcpy */
+#include <string.h>             /* memcpy */
 #include <stdlib.h>
-#include <inttypes.h>		/* PRIu64 */
+#include <inttypes.h>           /* PRIu64 */
 #include <unistd.h>
 #include <stdio.h>
 //#include <execinfo.h>
@@ -34,11 +34,11 @@ static void mt3(void * ptr, int size, const char * func, int line)
     /* free or realloc */
     for (i=Mem.top-1; i >= 0; i--) {
       if (ptr == Mem.allocations[i].ptr) {
-	Mem.total -= Mem.allocations[i].size;
-	Mem.active -= 1;
-	Mem.allocations[i].ptr = NULL;
-	Mem.allocations[i].size = 0;
-	break;
+        Mem.total -= Mem.allocations[i].size;
+        Mem.active -= 1;
+        Mem.allocations[i].ptr = NULL;
+        Mem.allocations[i].size = 0;
+        break;
       }
     }
   }
@@ -46,7 +46,7 @@ static void mt3(void * ptr, int size, const char * func, int line)
     /* malloc or calloc */
     for (i=Mem.top-1; i >= 0; i--) {
       if (Mem.allocations[i].ptr == NULL) {
-	break;
+        break;
       }
     }
     if (i == -1) {
@@ -101,11 +101,11 @@ void mdump(void)
   for (i=0; i < Mem.top; i++) {
     if (Mem.allocations[i].ptr) {
       fprintf(f,"%p %d %s:%d\n"
-	      , Mem.allocations[i].ptr
-	      , Mem.allocations[i].size
-	      , Mem.allocations[i].func
-	      , Mem.allocations[i].line
-	      );
+              , Mem.allocations[i].ptr
+              , Mem.allocations[i].size
+              , Mem.allocations[i].func
+              , Mem.allocations[i].line
+              );
     }
   }
   fprintf(stderr, "done\n");

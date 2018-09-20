@@ -51,67 +51,67 @@ Node * xml_string_to_nodetree(String *str)
 
     if (state == IN_TAG) {
       if (ch == '>') {
-	state = WAITING_FOR_TEXT_OR_SUBNODES;
-	if (debug) printf("tag: %s\n", s(tag_buffer));
-	if (String_get_char(tag_buffer, 0) == '/') {
-	  /* Compare tags, close existing node, adjust current */
-	  if (streq(current->tag, s(tag_buffer)+1)) {
-	    depth -=1;
-	    if (debug) printf("-depth=%d\n", depth);
-	    current = current->parent;
-	  }
-	  else {
-	    fprintf(stderr, "tags do not match: %s /%s\n", current->tag, s(tag_buffer)+1);
-	    state = INVALID_XML;
-	    break;
-	  }
-	}
-	else {
-	  /* Append new node, adjust current */
-	  current = node_add_new(current, s(tag_buffer));
-	  depth += 1;
-	  if (debug) printf("+depth=%d\n", depth);
-	  if (String_begins_with(tag_buffer, "?xml")) {
-	    /* XML declaration, back up one level. */
-	    current = current->parent;
-	    depth -= 1;
-	  }
-	}
-	/* Clear the tag buffer. */
-	String_set_local(tag_buffer, "");
+        state = WAITING_FOR_TEXT_OR_SUBNODES;
+        if (debug) printf("tag: %s\n", s(tag_buffer));
+        if (String_get_char(tag_buffer, 0) == '/') {
+          /* Compare tags, close existing node, adjust current */
+          if (streq(current->tag, s(tag_buffer)+1)) {
+            depth -=1;
+            if (debug) printf("-depth=%d\n", depth);
+            current = current->parent;
+          }
+          else {
+            fprintf(stderr, "tags do not match: %s /%s\n", current->tag, s(tag_buffer)+1);
+            state = INVALID_XML;
+            break;
+          }
+        }
+        else {
+          /* Append new node, adjust current */
+          current = node_add_new(current, s(tag_buffer));
+          depth += 1;
+          if (debug) printf("+depth=%d\n", depth);
+          if (String_begins_with(tag_buffer, "?xml")) {
+            /* XML declaration, back up one level. */
+            current = current->parent;
+            depth -= 1;
+          }
+        }
+        /* Clear the tag buffer. */
+        String_set_local(tag_buffer, "");
       }
       else {
-	String_append_bytes(tag_buffer, &ch, 1);
+        String_append_bytes(tag_buffer, &ch, 1);
       }
     }
     else if (state == WAITING_FOR_TEXT_OR_SUBNODES) {
       if (ch == '<') {
-	state = IN_TAG;
+        state = IN_TAG;
       }
       else if (!isspace(ch)) {
-	state = IN_TEXT;
-	String_append_bytes(text_buffer, &ch, 1);
+        state = IN_TEXT;
+        String_append_bytes(text_buffer, &ch, 1);
       }
       else {
-	/* isspace(ch) is true, continue along... */
+        /* isspace(ch) is true, continue along... */
       }
     }
     else if (state == IN_TEXT) {
       if (ch == '<') {
-	node_add(current, Text(s(text_buffer)));
-	if (debug) printf("  %s\n", s(text_buffer));
-	String_set_local(text_buffer, "");
-	state = IN_TAG;
+        node_add(current, Text(s(text_buffer)));
+        if (debug) printf("  %s\n", s(text_buffer));
+        String_set_local(text_buffer, "");
+        state = IN_TAG;
       }
       else {
-	String_append_bytes(text_buffer, &ch, 1);
+        String_append_bytes(text_buffer, &ch, 1);
       }
     }
   }
 
   if (state != WAITING_FOR_TEXT_OR_SUBNODES || depth != 0) {
     fprintf(stderr, "XML error (state=%d(%s) depth=%d)\n",
-	    state, state_labels[state], depth);
+            state, state_labels[state], depth);
     /* FIXME: Clean up node tree... */
     top = NULL;
   }

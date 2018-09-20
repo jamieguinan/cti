@@ -5,13 +5,13 @@
  */
 
 
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <sys/types.h>		/* opendir, stat */
-#include <dirent.h>		/* opendir, readdir */
-#include <sys/stat.h>		/* stat */
-#include <unistd.h>		/* stat */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <sys/types.h>          /* opendir, stat */
+#include <dirent.h>             /* opendir, readdir */
+#include <sys/stat.h>           /* stat */
+#include <unistd.h>             /* stat */
 #include <errno.h>              /* errno */
 
 //#include "CTI.h"
@@ -49,31 +49,31 @@ int TreeWalker_walk(String *dstr,
       localptr(String, path) = String_sprintf("%s/%s", s(dstr), de->d_name);
       struct stat st;
       if (lstat(s(path), &st) == 0) {
-	if (S_ISLNK(st.st_mode)) {
-	  d_type = DT_LNK;
-	}
-	else if (S_ISREG(st.st_mode)) {
-	  d_type = DT_REG;
-	}
-	else if (S_ISDIR(st.st_mode)) {
-	  d_type = DT_DIR;
-	}
-	else {
-	  d_type = DT_UNKNOWN;
-	}
+        if (S_ISLNK(st.st_mode)) {
+          d_type = DT_LNK;
+        }
+        else if (S_ISREG(st.st_mode)) {
+          d_type = DT_REG;
+        }
+        else if (S_ISDIR(st.st_mode)) {
+          d_type = DT_DIR;
+        }
+        else {
+          d_type = DT_UNKNOWN;
+        }
       }
     }
 
     if (d_type == DT_DIR) {
       if (streq(de->d_name, ".")
-	  || streq(de->d_name, "..")) {
-	continue;
+          || streq(de->d_name, "..")) {
+        continue;
       }
       localptr(String, nextdir) = String_sprintf("%s/%s", s(dstr), de->d_name);
       int ignore = 0;
       if (callback) { ignore = callback(nextdir, DT_DIR, cbdata); }
       if (ignore == 0) {
-	ret = TreeWalker_walk(nextdir, callback, cbdata);
+        ret = TreeWalker_walk(nextdir, callback, cbdata);
       }
     }
     else if (d_type == DT_REG || d_type == DT_LNK) {

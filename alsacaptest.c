@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>		/* sleep */
+#include <unistd.h>             /* sleep */
 #include <string.h>
 #define streq(a, b) (strcmp(a, b) == 0 ? 1 : 0)
 //#include "CJpeg.h"
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
       abort();
     }
     else if (streq(buffer, "e")) {
-      Mem_free((void*)12345);	/* Unlikely to be an allocated address... */
+      Mem_free((void*)12345);   /* Unlikely to be an allocated address... */
     }
     else if (streq(buffer, "l")) {
       Log_dump();

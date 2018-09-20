@@ -1,7 +1,7 @@
 #ifndef _CTI_STRING_JSMN_H_
 #define _CTI_STRING_JSMN_H_
 
-#include "jsmn.h"		/* Use -I cpp flag to find header. */
+#include "jsmn.h"               /* Use -I cpp flag to find header. */
 
 extern int jsmn_extra_verbose;
 
@@ -15,7 +15,7 @@ extern void jsmn_copy_skip(String * json_text, jsmntok_t * tokens, int num_token
 #define jsf(s, t) ((t).end-(t).start),((s)+(t).start)
 
 extern void jsmn_parse_alloc(String * json_str, jsmntok_t ** tokens_ptr, int * num_tokens_ptr,
-			     int * allocated_tokens_ptr);
+                             int * allocated_tokens_ptr);
 extern void jsmn_parse_free(jsmntok_t ** tokens_ptr, int * num_tokens_ptr);
 
 typedef struct {
@@ -41,7 +41,7 @@ typedef struct {
 } JsmnDispatchHandler;
 
 extern void jsmn_dispatch(JsmnContext * jc, const char * firstkey,
-			   JsmnDispatchHandler * handlers, int num_handlers);
+                           JsmnDispatchHandler * handlers, int num_handlers);
 extern String * jsmn_lookup_string(JsmnContext * jc, const char * key);
 extern int jsmn_lookup_int(JsmnContext * jc, const char * key, int * value);
 

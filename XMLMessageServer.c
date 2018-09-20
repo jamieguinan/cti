@@ -4,10 +4,10 @@
  * "intent" is mapped to a instance/value pair via "intent" control
  * messages.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <unistd.h>		/* close */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <unistd.h>             /* close */
 
 #include "CTI.h"
 #include "XMLMessageServer.h"
@@ -137,20 +137,20 @@ static void handle_client_message(XMLMessageServer_private *priv, IO_common *io,
     String *value_str = xml_simple_node_value(value_node);
 
     if (!String_is_none(instance_str) &&
-	!String_is_none(key_str) &&
-	!String_is_none(value_str)) {
+        !String_is_none(key_str) &&
+        !String_is_none(value_str)) {
       // What about return values?  Return on "reponse" node tree.
       fprintf(stderr, "config %s %s %s\n",
-	      s(instance_str),
-	      s(key_str),
-	      s(value_str));
+              s(instance_str),
+              s(key_str),
+              s(value_str));
       Instance *inst = InstanceGroup_find(gig, instance_str);
       if (inst) {
-	Config_buffer *c = Config_buffer_new(s(key_str), s(value_str));
-	PostData(c, &inst->inputs[0]);
+        Config_buffer *c = Config_buffer_new(s(key_str), s(value_str));
+        PostData(c, &inst->inputs[0]);
       }
       else {
-	/* note instance not found */
+        /* note instance not found */
       }
     }
   }
@@ -161,15 +161,15 @@ static void handle_client_message(XMLMessageServer_private *priv, IO_common *io,
     String *value_str = xml_simple_node_value(value_node);
 
     if (!String_is_none(intent_str) &&
-	!String_is_none(value_str)) {
+        !String_is_none(value_str)) {
       // What about return values?  Return on "reponse" node tree.
       Intent *i = Intent_lookup(priv, intent_str);
       if (i) {
-	Config_buffer *c = Config_buffer_new(s(i->key_str), s(value_str));
-	PostData(c, &i->instance->inputs[0]);
+        Config_buffer *c = Config_buffer_new(s(i->key_str), s(value_str));
+        PostData(c, &i->instance->inputs[0]);
       }
       else {
-	/* note instance not found */
+        /* note instance not found */
       }
     }
   }
@@ -227,14 +227,14 @@ static void XMLMessageServer_tick(Instance *pi)
     // fprintf(stderr, "%s: new connection!\n", __func__);
     if (comm.io.s == -1) {
       /* This is unlikely but possible.  If it happens, just clean up
-	 and return... */
+         and return... */
       perror("accept");
     }
     else {
       /* Read, parse, respond, close.... */
       String *message = Comm_read_string_to_byte(&comm, '$');
       if (!String_is_none(message)) {
-	handle_client_message(priv, &comm.io, message, resp);
+        handle_client_message(priv, &comm.io, message, resp);
       }
     }
     String *resp_str = node_to_string(resp);

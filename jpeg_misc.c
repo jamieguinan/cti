@@ -1,6 +1,6 @@
-#include <stdio.h>		/* FILE for jpeglib.h */
-#include <setjmp.h>		/* setjmp */
-#include <stdlib.h>		/* exit */
+#include <stdio.h>              /* FILE for jpeglib.h */
+#include <setjmp.h>             /* setjmp */
+#include <stdlib.h>             /* exit */
 
 #include "Images.h"
 #include "Mem.h"
@@ -78,13 +78,13 @@ Jpeg_buffer *Jpeg_buffer_from(uint8_t *data, unsigned long data_length, Image_co
 
   if (Image_guess_type(data, 5) != IMAGE_TYPE_JPEG) {
     fprintf(stderr, "%s: data does not look like a jpeg file [%02x %02x %02x %02x]\n",
-	    __func__, data[0], data[1], data[2], data[3]);
+            __func__, data[0], data[1], data[2], data[3]);
     return NULL;
   }
 
   cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit,
-					this may cause the program to call
-					exit()! */
+                                        this may cause the program to call
+                                        exit()! */
   jerr.error_exit = jerr_error_handler;
 
   jpeg_create_decompress(&cinfo);
@@ -125,10 +125,10 @@ static void jerr_warning_noop(j_common_ptr cinfo, int msg_level)
 
 
 void Jpeg_decompress(Jpeg_buffer * jpeg_in,
-		     int dct_method,
-		     YUV420P_buffer ** yuv420p_result,
-		     YUV422P_buffer ** yuv422p_result,
-		     FormatInfo ** pfmt)
+                     int dct_method,
+                     YUV420P_buffer ** yuv420p_result,
+                     YUV422P_buffer ** yuv422p_result,
+                     FormatInfo ** pfmt)
 {
   //int save_width = 0;
   //int save_height = 0;
@@ -144,7 +144,7 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
   jmp_buf jb;
 
   cinfo.err = jpeg_std_error(&jerr); /* NOTE: See ERREXIT, error_exit,
-					this may cause the program to call exit()! */
+                                        this may cause the program to call exit()! */
   jerr.emit_message = jerr_warning_noop;
   jerr.error_exit = jerr_error_handler;
 
@@ -188,17 +188,17 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
 
   if (!fmt) {
     printf("jpeg colorspace is %s\n",
-	   cinfo.jpeg_color_space == JCS_GRAYSCALE ? "JCS_GRAYSCALE" :
-	   cinfo.jpeg_color_space == JCS_RGB ? "JCS_RGB" :
-	   cinfo.jpeg_color_space == JCS_YCbCr ? "JCS_YCbCr" :
-	   "unknown");
+           cinfo.jpeg_color_space == JCS_GRAYSCALE ? "JCS_GRAYSCALE" :
+           cinfo.jpeg_color_space == JCS_RGB ? "JCS_RGB" :
+           cinfo.jpeg_color_space == JCS_YCbCr ? "JCS_YCbCr" :
+           "unknown");
     printf("%s: unhandled colorspace and/or subsampling: { %d, %d, %d, %d, %d, %d }\n", __func__,
-	   samp_factors[0],
-	   samp_factors[1],
-	   samp_factors[2],
-	   samp_factors[3],
-	   samp_factors[4],
-	   samp_factors[5]);
+           samp_factors[0],
+           samp_factors[1],
+           samp_factors[2],
+           samp_factors[3],
+           samp_factors[4],
+           samp_factors[5]);
     goto out;
   }
 
@@ -281,11 +281,11 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
     JSAMPROW cr[16];
     for (n=0; n < 16; n++) {
       y[n] = buffers[0] +
-	((n+cinfo.output_scanline) * cinfo.image_width);
+        ((n+cinfo.output_scanline) * cinfo.image_width);
       cb[n] = buffers[1] +
-	((n+cinfo.output_scanline/fmt->crcb_height_divisor) * cinfo.image_width/fmt->crcb_width_divisor);
+        ((n+cinfo.output_scanline/fmt->crcb_height_divisor) * cinfo.image_width/fmt->crcb_width_divisor);
       cr[n] = buffers[2] +
-	((n+cinfo.output_scanline/fmt->crcb_height_divisor) * cinfo.image_width/fmt->crcb_width_divisor);
+        ((n+cinfo.output_scanline/fmt->crcb_height_divisor) * cinfo.image_width/fmt->crcb_width_divisor);
     }
 
     JSAMPARRAY array[3] = { y, cb, cr};
@@ -314,22 +314,22 @@ void Jpeg_decompress(Jpeg_buffer * jpeg_in,
     FILE *Cb = fopen("cb.pgm", "wb");
     if (Cb) {
       fprintf(Cb, "P5\n%d %d\n255\n",
-	      cinfo.image_width/fmt->crcb_width_divisor,
-	      cinfo.image_height/fmt->crcb_height_divisor);
+              cinfo.image_width/fmt->crcb_width_divisor,
+              cinfo.image_height/fmt->crcb_height_divisor);
       fwrite(buffers[1],
-	     cinfo.image_width*cinfo.image_height/(fmt->crcb_width_divisor*fmt->crcb_height_divisor), 1,
-	     Cb);
+             cinfo.image_width*cinfo.image_height/(fmt->crcb_width_divisor*fmt->crcb_height_divisor), 1,
+             Cb);
       fclose(Cb);
     }
 
     FILE *Cr = fopen("cr.pgm", "wb");
     if (Cr) {
       fprintf(Cb, "P5\n%d %d\n255\n",
-	      cinfo.image_width/fmt->crcb_width_divisor,
-	      cinfo.image_height/fmt->crcb_height_divisor);
+              cinfo.image_width/fmt->crcb_width_divisor,
+              cinfo.image_height/fmt->crcb_height_divisor);
       fwrite(buffers[2],
-	     cinfo.image_width*cinfo.image_height/(fmt->crcb_width_divisor*fmt->crcb_height_divisor), 1,
-	     Cr);
+             cinfo.image_width*cinfo.image_height/(fmt->crcb_width_divisor*fmt->crcb_height_divisor), 1,
+             Cr);
       fclose(Cr);
     }
   }
@@ -456,30 +456,30 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
       len += jpeg->data[i+3];
       i += (len + 2);
       while (1) {
-	uint8_t x[1] = { 0xff};
-	j = ArrayU8_search(ArrayU8_temp_const(jpeg->data, jpeg->data_length),
-			   i,
-			   ArrayU8_temp_const(x, 1));
-	if (j == -1) {
-	  fprintf(stderr, "reached end of data without finding closing tag!\n");
-	  goto out;
-	}
-	if (jpeg->data[j+1] == 0x00) {
-	  // Data contained literal 0xff.
-	  i = j+1;
-	  continue;
-	}
-	else if ( (jpeg->data[j+1] & 0xf0) == 0xd0
-		  && (jpeg->data[j+1] & 0x0f) <= 7) {
-	  // Restart marker.  Keep searching inside SOS.
-	  i = j+2;
-	  continue;
-	}
-	else {
-	  // Advance, keep searching...
-	  i = j;
-	  break;
-	}
+        uint8_t x[1] = { 0xff};
+        j = ArrayU8_search(ArrayU8_temp_const(jpeg->data, jpeg->data_length),
+                           i,
+                           ArrayU8_temp_const(x, 1));
+        if (j == -1) {
+          fprintf(stderr, "reached end of data without finding closing tag!\n");
+          goto out;
+        }
+        if (jpeg->data[j+1] == 0x00) {
+          // Data contained literal 0xff.
+          i = j+1;
+          continue;
+        }
+        else if ( (jpeg->data[j+1] & 0xf0) == 0xd0
+                  && (jpeg->data[j+1] & 0x0f) <= 7) {
+          // Restart marker.  Keep searching inside SOS.
+          i = j+2;
+          continue;
+        }
+        else {
+          // Advance, keep searching...
+          i = j;
+          break;
+        }
       }
       // block = jpegdata[i0:i];
       blockL = i0;
@@ -509,8 +509,8 @@ void Jpeg_fix(Jpeg_buffer *jpeg)
 
     if (saw_sof && marker != DHT) {
       /* Add huffman tables.  Using the same tables that are set
-	 during decompression if they are found to be missing
-	 there. */
+         during decompression if they are found to be missing
+         there. */
       static const uint8_t hdr1[4] = {0xff, 0xc4, 0x00, 0x1f};
       static const uint8_t hdr2[4] = {0xff, 0xc4, 0x00, 0xb5};
 

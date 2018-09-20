@@ -19,7 +19,7 @@
 
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
 //#include "jinclude.h"
-#include <stdio.h>		/* size_t, FILE */
+#include <stdio.h>              /* size_t, FILE */
 #include "jpeglib.h"
 #include "jerror.h"
 
@@ -28,17 +28,17 @@
 /* Expanded data source object for stdio input */
 
 typedef struct {
-  struct jpeg_source_mgr pub;	/* public fields */
+  struct jpeg_source_mgr pub;   /* public fields */
 
-  JOCTET * buffer;		/* start of buffer */
+  JOCTET * buffer;              /* start of buffer */
   int buffer_length;
 
-  boolean start_of_file;	/* have we gotten any data yet? */
+  boolean start_of_file;        /* have we gotten any data yet? */
 } my_source_mgr;
 
 typedef my_source_mgr * my_src_ptr;
 
-#define INPUT_BUF_SIZE  4096	/* choose an efficiently fread'able size */
+#define INPUT_BUF_SIZE  4096    /* choose an efficiently fread'able size */
 
 
 /*
@@ -149,10 +149,10 @@ jpeg_mem_src (j_decompress_ptr cinfo, JOCTET *buffer, int buffer_length)
    * This makes it unsafe to use this manager and a different source
    * manager serially with the same JPEG object.  Caveat programmer.
    */
-  if (cinfo->src == NULL) {	/* first time for this JPEG object? */
+  if (cinfo->src == NULL) {     /* first time for this JPEG object? */
     cinfo->src = (struct jpeg_source_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  sizeof(my_source_mgr));
+                                  sizeof(my_source_mgr));
   }
 
   src = (my_src_ptr) cinfo->src;

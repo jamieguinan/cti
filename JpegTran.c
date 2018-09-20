@@ -4,7 +4,7 @@
  * Also adds standard quantization tables if absent.
  */
 #include <stdio.h>
-#include <stdlib.h>		/* exit */
+#include <stdlib.h>             /* exit */
 #include <string.h>
 #include <setjmp.h>
 
@@ -86,7 +86,7 @@ static int set_crop(Instance *pi, const char *value)
 
 static Config config_table[] = {
   { "transform",  set_transform, 0L, 0L},
-  { "crop", set_crop, 0L, 0L},	/* Use jtransform_parse_crop_spec */
+  { "crop", set_crop, 0L, 0L},  /* Use jtransform_parse_crop_spec */
 };
 
 
@@ -178,8 +178,8 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
   // fprintf(stderr, "dstinfo.jpeg_color_space=%d\n", dstinfo.jpeg_color_space);
 
   dst_coef_arrays = jtransform_adjust_parameters(&srcinfo, &dstinfo,
-						 src_coef_arrays,
-						 &priv->info);
+                                                 src_coef_arrays,
+                                                 &priv->info);
 
   /* Specify data destination for compression */
 
@@ -199,8 +199,8 @@ static void transform(JpegTran_private *priv, Jpeg_buffer *jpeg_in, Jpeg_buffer 
 
   /* Execute image transformation, if any */
   jtransform_execute_transformation(&srcinfo, &dstinfo,
-				    src_coef_arrays,
-				    &priv->info);
+                                    src_coef_arrays,
+                                    &priv->info);
 
  out_check_errors:
   if (!error) {

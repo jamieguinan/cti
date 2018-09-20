@@ -23,12 +23,12 @@ void dump_templates(void)
     if (1) {  // i == 0
       printf("  Inputs:\n");
       for (j=0; j < all_templates[i]->num_inputs; j++) {
-	printf("  [%d] %s\n", j, all_templates[i]->inputs[j].type_label);
+        printf("  [%d] %s\n", j, all_templates[i]->inputs[j].type_label);
       }
 
       printf("  Outputs:\n");
       for (j=0; j < all_templates[i]->num_outputs; j++) {
-	printf("  [%d] %s\n", j, all_templates[i]->outputs[j].type_label);
+        printf("  [%d] %s\n", j, all_templates[i]->outputs[j].type_label);
       }
     }
     else {
@@ -146,13 +146,13 @@ int main(int argc, char *argv[])
       SetConfig(vc, "format", "YUV422P");
       SetConfig(vc, "std", "NTSC");
       if (T) {
-	SetConfig(vc, "input", "Television");
-	// This works, but can PCM audio be captured without unmuting?  As it turns out,
-	// yes!  So mute on bt878 only affects line-out, not PCM record.
-	// SetConfig(vc, "mute", "0");
+        SetConfig(vc, "input", "Television");
+        // This works, but can PCM audio be captured without unmuting?  As it turns out,
+        // yes!  So mute on bt878 only affects line-out, not PCM record.
+        // SetConfig(vc, "mute", "0");
       }
       else {
-	SetConfig(vc, "input", "Composite1");
+        SetConfig(vc, "input", "Composite1");
       }
     }
     else {
@@ -198,13 +198,13 @@ int main(int argc, char *argv[])
 
     double t1, t2;
     int num_frames = 30*3;
-    vc->tick(vc);		/* First tick does setup, so don't include in timing. */
+    vc->tick(vc);               /* First tick does setup, so don't include in timing. */
 
     SetConfig(cj, "quality", "80");
 
     cti_getdoubletime(&t1);
     for (i=0; i < num_frames; i++) {
-      vc->tick(vc);		/* Capture. */
+      vc->tick(vc);             /* Capture. */
     }
     cti_getdoubletime(&t2);
 

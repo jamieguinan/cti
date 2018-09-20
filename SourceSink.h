@@ -4,7 +4,7 @@
 #include "ArrayU8.h"
 #include "Stats.h"
 #include <stdint.h>
-#include <stdio.h>		/* FILE * */
+#include <stdio.h>              /* FILE * */
 #include <time.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -17,17 +17,17 @@ typedef enum {
 } IO_state;
 
 typedef struct {
-  String * path;		/* name of file or socket path */
-  String * generated_path;	/* strftime output */
-  FILE *f;			/* file */
-  FILE *p;			/* pipe (popen) */
-  int s;			/* socket */
-  struct sockaddr_in addr;	/* socket details... */
-  socklen_t addrlen;		/* socket details... */
+  String * path;                /* name of file or socket path */
+  String * generated_path;      /* strftime output */
+  FILE *f;                      /* file */
+  FILE *p;                      /* pipe (popen) */
+  int s;                        /* socket */
+  struct sockaddr_in addr;      /* socket details... */
+  socklen_t addrlen;            /* socket details... */
   IO_state state;
   long offset;
   unsigned int read_timeout_ms;
-  ArrayU8 * extra;		/* extra data left over after certain operations */
+  ArrayU8 * extra;              /* extra data left over after certain operations */
 } IO_common;
 
 typedef struct {
@@ -35,7 +35,7 @@ typedef struct {
   long file_size;
   int eof;
   int eof_flagged;
-  int persist;			/* return on EOF */
+  int persist;                  /* return on EOF */
   Items_per_sec bytes_per_sec;
 } Source;
 

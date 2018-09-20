@@ -1,13 +1,13 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <stdint.h>		/* uint8_t */
-#include <string.h>		/* strcmp */
-#include <unistd.h>		/* sleep */
-#include <time.h>		/* nanosleep */
-#include <sys/time.h>		/* gettimeofday */
-#include <stdarg.h>		/* vprintf */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <stdint.h>             /* uint8_t */
+#include <string.h>             /* strcmp */
+#include <unistd.h>             /* sleep */
+#include <time.h>               /* nanosleep */
+#include <sys/time.h>           /* gettimeofday */
+#include <stdarg.h>             /* vprintf */
 #ifdef __linux__
-#include <sys/prctl.h>	/* prctl */
+#include <sys/prctl.h>  /* prctl */
 #endif
 
 #ifndef streq
@@ -22,7 +22,7 @@ int (*ui_main)(int argc, char *argv[]) = NULL;
 
 pthread_key_t instance_key;
 int instance_key_initialized;
-int g_synchronous = 0;		/* Can be toggled in ScriptV00.c */
+int g_synchronous = 0;          /* Can be toggled in ScriptV00.c */
 
 /* instance_key_init() should be called only once, by the main thread
    in a CTI application, before any instance threads are
@@ -41,7 +41,7 @@ void CTI_register_instance(Instance *pi)
 #ifdef __linux__
   prctl(PR_SET_NAME, pi->label);
 #endif
-  pthread_setspecific(instance_key, (void*)pi);	/* For later retrieval */
+  pthread_setspecific(instance_key, (void*)pi); /* For later retrieval */
 }
 
 
@@ -74,7 +74,7 @@ void PostDataGetResult(void *data, Input *input, int * result)
     /* Error, send calling thread to tar pit... */
     while (1) {
       fprintf(stderr, "instance %s input %s does not have a handler!\n",
-	      input->parent->label, input->type_label);
+              input->parent->label, input->type_label);
       sleep(1);
     }
   }
@@ -100,14 +100,14 @@ void PostDataGetResult(void *data, Input *input, int * result)
     {
       /* Add node to list. */
       if (input->parent->msg_first == 0L) {
-	/* input->parent->msg_last should also be 0L in this case... */
-	input->parent->msg_first = hm;
-	input->parent->msg_last = hm;
+        /* input->parent->msg_last should also be 0L in this case... */
+        input->parent->msg_first = hm;
+        input->parent->msg_last = hm;
       }
       else {
-	/* At least one node. */
-	input->parent->msg_last->prev = hm;
-	input->parent->msg_last = hm;
+        /* At least one node. */
+        input->parent->msg_last->prev = hm;
+        input->parent->msg_last = hm;
       }
     }
 
@@ -119,9 +119,9 @@ void PostDataGetResult(void *data, Input *input, int * result)
 
     if (input->parent->pending_messages > 5) {
       dpf("%s (%p): %d queued messages\n",
-	  input->parent->label,
-	  input,
-	  input->parent->pending_messages);
+          input->parent->label,
+          input,
+          input->parent->pending_messages);
     }
 
     Lock_release(&input->parent->inputs_lock);
@@ -131,9 +131,9 @@ void PostDataGetResult(void *data, Input *input, int * result)
     /* This one indicates a configuration problem or misestimation, so
        make it an fprintf instead of a dpf. */
     fprintf(stderr, "sleeping to drain %s message queue (%p) (%d)\n",
-	    input->parent->label,
-	    input,
-	    input->parent->pending_messages);
+            input->parent->label,
+            input,
+            input->parent->pending_messages);
     sleep(1);
   }
 
@@ -260,20 +260,20 @@ void Template_list(int verbose)
     printf("  Inputs:\n");
     for (j=0; j < templates.items[i]->num_inputs; j++) {
       if (templates.items[i]->inputs[j].type_label) {
-	printf("  [%d] %s\n", j, templates.items[i]->inputs[j].type_label);
+        printf("  [%d] %s\n", j, templates.items[i]->inputs[j].type_label);
       }
       else {
-	printf("  [%d] *** UNINITIALIZED\n", j);
+        printf("  [%d] *** UNINITIALIZED\n", j);
       }
     }
 
     printf("  Outputs:\n");
     for (j=0; j < templates.items[i]->num_outputs; j++) {
       if (templates.items[i]->outputs[j].type_label) {
-	printf("  [%d] %s\n", j, templates.items[i]->outputs[j].type_label);
+        printf("  [%d] %s\n", j, templates.items[i]->outputs[j].type_label);
       }
       else {
-	printf("  [%d] *** UNINITIALIZED\n", j);
+        printf("  [%d] *** UNINITIALIZED\n", j);
       }
     }
   }
@@ -294,11 +294,11 @@ static void Instance_print_verbose(Index_node *node)
   for (i=0; i < pi->num_outputs; i++) {
     if (pi->outputs[i].destination) {
       printf("    %s.%s -> %s.%s\n"
-	     , s(node->stringKey)
-	     , pi->outputs[i].type_label
-	     , s(pi->outputs[i].destination->parent->instance_label)
-	     , pi->outputs[i].destination->type_label
-	     );
+             , s(node->stringKey)
+             , pi->outputs[i].type_label
+             , s(pi->outputs[i].destination->parent->instance_label)
+             , pi->outputs[i].destination->type_label
+             );
     }
   }
 }
@@ -340,11 +340,11 @@ static Instance * _Instantiate_local(const char *label, String * instanceLabel, 
       Template *t = templates.items[i];
       Instance *pi;
       if (t->priv_size) {
-	/* New-style, where priv structure includes Instance member. */
-	pi = Mem_calloc(1, t->priv_size);
+        /* New-style, where priv structure includes Instance member. */
+        pi = Mem_calloc(1, t->priv_size);
       }
       else {
-	pi = Mem_calloc(1, sizeof(*pi));
+        pi = Mem_calloc(1, sizeof(*pi));
       }
 
       pi->label = t->label;
@@ -353,33 +353,33 @@ static Instance * _Instantiate_local(const char *label, String * instanceLabel, 
       pi->priv_size = t->priv_size;
 
       /* Inputs and Ouputs are declared statically in each module
-	 file.  Here we make a copy and initialize instance-specific
-	 structure fields. */
+         file.  Here we make a copy and initialize instance-specific
+         structure fields. */
       copy_list(t->inputs, t->num_inputs, &pi->inputs, &pi->num_inputs);
       copy_list(t->outputs, t->num_outputs, &pi->outputs, &pi->num_outputs);
       /* When a message is posted, the caller needs to find the Input's parent
-	 and add to the notification queue. */
+         and add to the notification queue. */
       for (i=0; i < t->num_inputs; i++) {
-	pi->inputs[i].parent = pi;
+        pi->inputs[i].parent = pi;
       }
 
       Lock_init(&pi->inputs_lock);
 
       /* Type-specific instance initialization. */
       if (t->instance_init) {
-	t->instance_init(pi);
+        t->instance_init(pi);
       }
 
       /* Run or start thread, only if tick function is defined. */
       if (pi->tick) {
-	if (run) {
-	  /* Run instance main loop, blocking the caller. */
-	  Instance_thread_main(pi);
-	}
-	else {
-	  /* Start a new thread. */
-	  Instance_loop_thread(pi);
-	}
+        if (run) {
+          /* Run instance main loop, blocking the caller. */
+          Instance_thread_main(pi);
+        }
+        else {
+          /* Start a new thread. */
+          Instance_loop_thread(pi);
+        }
       }
       return pi;
     }
@@ -431,7 +431,7 @@ Config_buffer *Config_buffer_new(const char *label, const char *value)
 
 
 Config_buffer *Config_buffer_vrreq_new(const char *label, const char *value, Value *vreq, Range *rreq,
-				       Event *event)
+                                       Event *event)
 {
   Config_buffer *cb = Config_buffer_new(label, value);
   cb->vreq = vreq;
@@ -466,28 +466,28 @@ void Generic_config_handler(Instance *pi, void *data, Config *config_table, int 
 
       /* If value is passed in, call the set function. */
       if (cb_in->value && config_table[i].vset) {
-	/* Generic setter. */
-	config_table[i].vset((uint8_t*)pi + config_table[i].value_offset,
-			     s(cb_in->value));
+        /* Generic setter. */
+        config_table[i].vset((uint8_t*)pi + config_table[i].value_offset,
+                             s(cb_in->value));
       }
       else if (cb_in->value && config_table[i].set) {
-	/* Template-specific setter. */
-	// int rc = ...		/* FIXME: What to do with this? */
-	config_table[i].set(pi, s(cb_in->value));
+        /* Template-specific setter. */
+        // int rc = ...         /* FIXME: What to do with this? */
+        config_table[i].set(pi, s(cb_in->value));
       }
 
       /* Check and fill range/value requests. */
       if (cb_in->vreq && config_table[i].get_value) {
-	config_table[i].get_value(pi, cb_in->vreq);
+        config_table[i].get_value(pi, cb_in->vreq);
       }
 
       if (cb_in->rreq && config_table[i].get_range) {
-	config_table[i].get_range(pi, cb_in->rreq);
+        config_table[i].get_range(pi, cb_in->rreq);
       }
 
       /* Wake caller if they asked for it. */
       if (cb_in->wake) {
-	Event_signal(cb_in->wake); // FIXME: Is this necessary?
+        Event_signal(cb_in->wake); // FIXME: Is this necessary?
       }
       break;
     }
@@ -571,9 +571,9 @@ void Connect(Instance *from, const char *label, Instance *to)
     if (from->outputs[i].type_label && streq(from->outputs[i].type_label, label)) {
       from_index = i;
       if (from->outputs[i].destination == 0L) {
-	/* This is a bit subtle.  The code will set the output to the first matching
-	   and unset output, or override the last set output. */
-	break;
+        /* This is a bit subtle.  The code will set the output to the first matching
+           and unset output, or override the last set output. */
+        break;
       }
     }
   }
@@ -614,9 +614,9 @@ void Connect2(Instance *from, const char *fromlabel, Instance *to, const char *t
     if (from->outputs[i].type_label && streq(from->outputs[i].type_label, fromlabel)) {
       from_index = i;
       if (from->outputs[i].destination == 0L) {
-	/* This is a bit subtle.  The code will set the output to the first matching
-	   and unset output, or override the last set output. */
-	break;
+        /* This is a bit subtle.  The code will set the output to the first matching
+           and unset output, or override the last set output. */
+        break;
       }
     }
   }
@@ -663,7 +663,7 @@ void InstanceGroup_add(InstanceGroup *g, const char *typeLabel, String *instance
   Instance *check;
 
   check = 0L;  /* FIXME: Make sure there isn't already an instance
-		  with the same instanceLabel. */
+                  with the same instanceLabel. */
   if (check) {
     return;
   }
@@ -697,9 +697,9 @@ Instance *InstanceGroup_find(InstanceGroup *g, String *ilabel)
 
 
 void InstanceGroup_connect(InstanceGroup *g,
-			   String * instanceLabel1,
-			   const char *ioLabel,
-			   String * instanceLabel2)
+                           String * instanceLabel1,
+                           const char *ioLabel,
+                           String * instanceLabel2)
 {
   Instance *pi1 = InstanceGroup_find(g, instanceLabel1);
   if (!pi1) {  fprintf(stderr, "could not find instance '%s'\n", s(instanceLabel1)); return; }
@@ -710,11 +710,11 @@ void InstanceGroup_connect(InstanceGroup *g,
 
 
 void InstanceGroup_connect2(InstanceGroup *g,
-			    String * instanceLabel1,
-			    const char *oLabel,
-			    String * instanceLabel2,
-			    const char *iLabel
-			    )
+                            String * instanceLabel1,
+                            const char *oLabel,
+                            String * instanceLabel2,
+                            const char *iLabel
+                            )
 {
   Instance *pi1 = InstanceGroup_find(g, instanceLabel1);
   if (!pi1) {  fprintf(stderr, "could not find instance '%s'\n", s(instanceLabel1)); return; }
@@ -789,7 +789,7 @@ RawData_buffer *RawData_buffer_new(int size)
 {
   RawData_buffer *raw = Mem_malloc(sizeof(*raw));
   raw->data_length = size;
-  raw->data = Mem_calloc(1, raw->data_length); 	/* Caller must fill in data! */
+  raw->data = Mem_calloc(1, raw->data_length);  /* Caller must fill in data! */
   return raw;
 }
 

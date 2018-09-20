@@ -6,9 +6,9 @@
  * frame period time. As it develops, I'd like this module to
  * automatically convert any input image to all connected outputs.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "ColorSpaceConvert.h"

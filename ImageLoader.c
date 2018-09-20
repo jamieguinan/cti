@@ -4,9 +4,9 @@
  * source image files without overwhelming the destination inputs.
  */
 
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "ImageLoader.h"
@@ -74,10 +74,10 @@ static int set_file(Instance *pi, const char *value)
     gray = PGM_buffer_from(fdata->data, fdata->len, 0L);
     if (gray) {
       if (pi->outputs[OUTPUT_GRAY].destination) {
-	PostDataGetResult(gray, pi->outputs[OUTPUT_GRAY].destination, &result);
+        PostDataGetResult(gray, pi->outputs[OUTPUT_GRAY].destination, &result);
       }
       else {
-	// discard
+        // discard
       }
     }
     break;
@@ -86,11 +86,11 @@ static int set_file(Instance *pi, const char *value)
     printf("rgb=%p\n", rgb);
     if (rgb) {
       if (pi->outputs[OUTPUT_RGB3].destination) {
-	printf("posting...\n");
-	PostDataGetResult(rgb, pi->outputs[OUTPUT_RGB3].destination, &result);
+        printf("posting...\n");
+        PostDataGetResult(rgb, pi->outputs[OUTPUT_RGB3].destination, &result);
       }
       else {
-	// discard
+        // discard
       }
     }
     break;
@@ -98,10 +98,10 @@ static int set_file(Instance *pi, const char *value)
     jpeg = Jpeg_buffer_from(fdata->data, fdata->len, 0L);
     if (jpeg) {
       if (pi->outputs[OUTPUT_JPEG].destination) {
-	PostDataGetResult(jpeg, pi->outputs[OUTPUT_JPEG].destination, &result);
+        PostDataGetResult(jpeg, pi->outputs[OUTPUT_JPEG].destination, &result);
       }
       else {
-	// discard
+        // discard
       }
     }
     break;
@@ -109,15 +109,15 @@ static int set_file(Instance *pi, const char *value)
     // y422p = ...
     if (y422p) {
       if (pi->outputs[OUTPUT_GRAY].destination) {
-	gray = Gray_buffer_from(y422p->y, y422p->width, y422p->height, 0L);
-	PostDataGetResult(gray, pi->outputs[OUTPUT_GRAY].destination, &result);
-	// Gray_buffer_release();
+        gray = Gray_buffer_from(y422p->y, y422p->width, y422p->height, 0L);
+        PostDataGetResult(gray, pi->outputs[OUTPUT_GRAY].destination, &result);
+        // Gray_buffer_release();
       }
       if (pi->outputs[OUTPUT_YUV422P].destination) {
-	PostDataGetResult(y422p, pi->outputs[OUTPUT_YUV422P].destination, &result);
+        PostDataGetResult(y422p, pi->outputs[OUTPUT_YUV422P].destination, &result);
       }
       else {
-	// discard
+        // discard
       }
     }
     break;
@@ -126,8 +126,8 @@ static int set_file(Instance *pi, const char *value)
     h264 = H264_buffer_from(fdata->data, fdata->len, 0, 0, NULL);
     if (h264) {
       if (pi->outputs[OUTPUT_H264].destination) {
-	PostDataGetResult(h264, pi->outputs[OUTPUT_H264].destination, &result);
-	// printf("H264 result=%d\n", result);
+        PostDataGetResult(h264, pi->outputs[OUTPUT_H264].destination, &result);
+        // printf("H264 result=%d\n", result);
       }
     }
     break;
@@ -135,11 +135,11 @@ static int set_file(Instance *pi, const char *value)
     aac = AAC_buffer_from(fdata->data, fdata->len);
     if (aac) {
       if (pi->outputs[OUTPUT_AAC].destination) {
-	PostDataGetResult(aac, pi->outputs[OUTPUT_AAC].destination, &result);
-	// printf("AAC result=%d\n", result);
+        PostDataGetResult(aac, pi->outputs[OUTPUT_AAC].destination, &result);
+        // printf("AAC result=%d\n", result);
       }
       else {
-	// discard
+        // discard
       }
     }
     break;

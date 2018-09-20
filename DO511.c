@@ -1,6 +1,6 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Images.h"
@@ -50,25 +50,25 @@ static void junk(O511_buffer *o511_in, YUV420P_buffer *y420p_out)
       FILE *f;
       f = fopen("/tmp/y.pgm", "wb");
       if (f) {
-	fprintf(f, "P5\n%d %d\n255\n",  o511_in->width, o511_in->height);
-	if (fwrite(y420p_out->data, o511_in->width * o511_in->height, 1, f) != 1) {
-	  perror("fwrite");
-	}
-	fclose(f);
+        fprintf(f, "P5\n%d %d\n255\n",  o511_in->width, o511_in->height);
+        if (fwrite(y420p_out->data, o511_in->width * o511_in->height, 1, f) != 1) {
+          perror("fwrite");
+        }
+        fclose(f);
 
-	f = fopen("/tmp/u.pgm", "wb");
-	fprintf(f, "P5\n%d %d\n255\n",  o511_in->width/2, o511_in->height/2);
-	if (fwrite(y420p_out->data + o511_in->width * o511_in->height, (o511_in->width * o511_in->height)/4, 1, f) != 1) {
-	  perror("fwrite");
-	}
-	fclose(f);
+        f = fopen("/tmp/u.pgm", "wb");
+        fprintf(f, "P5\n%d %d\n255\n",  o511_in->width/2, o511_in->height/2);
+        if (fwrite(y420p_out->data + o511_in->width * o511_in->height, (o511_in->width * o511_in->height)/4, 1, f) != 1) {
+          perror("fwrite");
+        }
+        fclose(f);
 
-	f = fopen("/tmp/v.pgm", "wb");
-	fprintf(f, "P5\n%d %d\n255\n",  o511_in->width/2, o511_in->height/2);
-	if (fwrite(y420p_out->data + (o511_in->width * o511_in->height)*5/4, (o511_in->width * o511_in->height)/4, 1, f) != 1) {
-	  perror("fwrite");
-	}
-	fclose(f);
+        f = fopen("/tmp/v.pgm", "wb");
+        fprintf(f, "P5\n%d %d\n255\n",  o511_in->width/2, o511_in->height/2);
+        if (fwrite(y420p_out->data + (o511_in->width * o511_in->height)*5/4, (o511_in->width * o511_in->height)/4, 1, f) != 1) {
+          perror("fwrite");
+        }
+        fclose(f);
       }
     }
   }
@@ -87,8 +87,8 @@ static void remove0blocks(unsigned char *pIn, unsigned long *inSize)
     int all_zero = 1;
     for (j = 0; j < 4; j++)
       if (in[j]) {
-	all_zero = 0;
-	break;
+        all_zero = 0;
+        break;
       }
 
     /* Skip 32 byte blocks of all 0 */
@@ -127,11 +127,11 @@ static void O511_handler(Instance *pi, void *data)
 
   // printf("o511_in->data_length=%d\n", o511_in->data_length);
   ov511_decomp_420(o511_in->data+magic_offset,
-		   y420p_out->data,
-		   temp,
-		   o511_in->width,
-		   o511_in->height,
-		   o511_in->data_length);
+                   y420p_out->data,
+                   temp,
+                   o511_in->width,
+                   o511_in->height,
+                   o511_in->data_length);
   free(temp);
 
   if (pi->outputs[OUTPUT_RGB3].destination) {

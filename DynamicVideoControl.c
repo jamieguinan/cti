@@ -2,9 +2,9 @@
  * Dynamically control a V4L2Capture instance based on captured video
  * frames.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc, abs */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc, abs */
+#include <string.h>             /* memcpy */
 #include <math.h>               /* round */
 
 #include "CTI.h"

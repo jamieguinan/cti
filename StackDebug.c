@@ -7,14 +7,14 @@
  */
 
 #include "CTI.h"
-#include <stdio.h>		/* FILE, sprintf, printf */
-#include <string.h>		/* strstr */
+#include <stdio.h>              /* FILE, sprintf, printf */
+#include <string.h>             /* strstr */
 
 #ifdef STACK_DEBUG_INSTRUMENT_FUNCTIONS
 
 __attribute__((no_instrument_function))
 void __cyg_profile_func_enter (void *this_fn,
-			       void *call_site)
+                               void *call_site)
 {
   if (!instance_key_initialized) { return ; }
 
@@ -30,7 +30,7 @@ void __cyg_profile_func_enter (void *this_fn,
 
 __attribute__((no_instrument_function))
 void __cyg_profile_func_exit  (void *this_fn,
-			       void *call_site)
+                               void *call_site)
 {
   if (!instance_key_initialized) { return ; }
 

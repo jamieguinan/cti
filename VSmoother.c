@@ -35,8 +35,8 @@ static Config config_table[] = {
 
 
 void VSmoother_smooth(VSmoother *priv,
-		      double frame_timestamp,
-		      int pending_messages)
+                      double frame_timestamp,
+                      int pending_messages)
 {
   /* Compare current frame time and previous frame time, and
      keep a running average of frame periods.  Sleep for difference
@@ -58,7 +58,7 @@ void VSmoother_smooth(VSmoother *priv,
   ftdiff = ftime - priv->last_ftime;
 
   printf("ftime=%.2f last_ftime=%.2f ftdiff=%.2f\n",
-	 ftime, priv->last_ftime, ftdiff);
+         ftime, priv->last_ftime, ftdiff);
 
   if (ftdiff <= 0.0 || ftdiff > 10.0) {
     /* Unreasonable frame rates. */
@@ -74,7 +74,7 @@ void VSmoother_smooth(VSmoother *priv,
   priv->period = ((priv->period * (IIR_SIZE-1)) +  (ftdiff)) / IIR_SIZE;
 
   printf("tnow=%.6f eta=%.6f period=%.6f sleep=%.6f\n",
-  	 tnow, priv->eta, priv->period, (priv->eta - tnow));
+         tnow, priv->eta, priv->period, (priv->eta - tnow));
 
   if (tnow < priv->eta) {
     struct timespec ts;
@@ -92,7 +92,7 @@ void VSmoother_smooth(VSmoother *priv,
     }
     else {
       /* Frames are starting to queue up, try to catch up by moving eta
-	 closer in. */
+         closer in. */
       printf("catch up: %d\n", pending_messages);
       x = priv->period / pending_messages;
       priv->eta += x;

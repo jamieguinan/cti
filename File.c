@@ -114,8 +114,8 @@ String_list *Files_glob(String *path, String *pattern)
   //fprintf(stderr, "%s\n", s(path));
   String *full_pattern = String_sprintf("%s/%s", s(path), s(pattern));
   int rc = glob(s(full_pattern), 0,
-		NULL,
-		&g);
+                NULL,
+                &g);
   if (rc == 0) {
     for (i=0; i < g.gl_pathc; i++) {
       String *tmp = String_new(g.gl_pathv[i]);

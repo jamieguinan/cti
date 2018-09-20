@@ -2,7 +2,7 @@
  * Jpeg decompression module.
  */
 #include <stdio.h>
-#include <stdlib.h>		/* exit */
+#include <stdlib.h>             /* exit */
 #include <string.h>
 #include <setjmp.h>
 #include <jpeglib.h>
@@ -112,16 +112,16 @@ static void Jpeg_handler(Instance *pi, void *data)
   if (priv->max_messages && pi->pending_messages > priv->max_messages) {
     /* Skip without decoding. */
     fprintf(stderr, "DJpeg skipping %d (%d %d)\n", pi->counter,
-	    pi->pending_messages, priv->max_messages);
+            pi->pending_messages, priv->max_messages);
     goto out;
   }
 
   cti_getdoubletime(&t1);
 
   if (!(pi->outputs[OUTPUT_YUV422P].destination ||
-	pi->outputs[OUTPUT_YUV420P].destination ||
-	pi->outputs[OUTPUT_RGB3].destination ||
-	pi->outputs[OUTPUT_GRAY].destination)) {
+        pi->outputs[OUTPUT_YUV420P].destination ||
+        pi->outputs[OUTPUT_RGB3].destination ||
+        pi->outputs[OUTPUT_GRAY].destination)) {
     /* No decompressed outputs set up. */
     goto out;
   }
@@ -224,9 +224,9 @@ static void DJpeg_tick(Instance *pi)
     /* There's one of these in CTI.c too, but it can get too noisy when
        network instances like UDPTransmit are running. */
     dpf("%s (%s): %d queued messages\n",
-	pi->label,
-	s(pi->instance_label),
-	pi->pending_messages);
+        pi->label,
+        s(pi->instance_label),
+        pi->pending_messages);
   }
 }
 

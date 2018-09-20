@@ -14,13 +14,13 @@
  * handler.
  */
 
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
-#include <sys/select.h>		/* select, POSIX (see man page) */
-#include <sys/socket.h>		/* shutdown */
-#include <unistd.h>		/* close */
+#include <sys/select.h>         /* select, POSIX (see man page) */
+#include <sys/socket.h>         /* shutdown */
+#include <unistd.h>             /* close */
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -55,8 +55,8 @@ typedef struct _Client_connection {
   socklen_t addrlen;
   int fd;
   int state;
-  int raw_seq;			/* sequence number in node-being-transmitted */
-  RawData_node *raw_node;	/* node-being-transmitted */
+  int raw_seq;                  /* sequence number in node-being-transmitted */
+  RawData_node *raw_node;       /* node-being-transmitted */
   int raw_offset;
   uint64_t bytes_sent;
   time_t t0;
@@ -72,9 +72,9 @@ typedef enum {
 
 typedef struct {
   Instance i;
-  int max_total_buffered_data;	/* Start dropping after this is exceeded. */
+  int max_total_buffered_data;  /* Start dropping after this is exceeded. */
   int total_buffered_data;
-  listen_common lsc;		/* listen socket_common */
+  listen_common lsc;            /* listen socket_common */
   Client_connection *cc_first;
   Client_connection *cc_last;
   int num_client_connections;
@@ -241,22 +241,22 @@ static void SocketServer_tick(Instance *pi)
       close(cc->fd);
 
       /* Delete from list.  Note, single node will have been at
-	 beginning and end, result will be empty cc_first and
-	 cc_last. */
+         beginning and end, result will be empty cc_first and
+         cc_last. */
       if (cc->prev) {
-	cc->prev->next = cc->next;
+        cc->prev->next = cc->next;
       }
       else {
-	/* Was at beginning of list. */
-	priv->cc_first = cc->next;
+        /* Was at beginning of list. */
+        priv->cc_first = cc->next;
       }
 
       if (cc->next) {
-	cc->next->prev = cc->prev;
+        cc->next->prev = cc->prev;
       }
       else {
-	/* Was at end of list. */
-	priv->cc_last = cc->prev;
+        /* Was at end of list. */
+        priv->cc_last = cc->prev;
       }
 
       cc_tmp = cc->next;
@@ -269,23 +269,23 @@ static void SocketServer_tick(Instance *pi)
 
     if (cc->state == CC_INIT) {
       if (priv->raw_last) {
-	/* Always start at the end, client can figure out buffering... */
-	cc->raw_node = priv->raw_last;
-	cc->raw_seq = cc->raw_node->seq;
-	cc->raw_offset = 0;
-	cc->state = CC_READY_TO_SEND;
+        /* Always start at the end, client can figure out buffering... */
+        cc->raw_node = priv->raw_last;
+        cc->raw_seq = cc->raw_node->seq;
+        cc->raw_offset = 0;
+        cc->state = CC_READY_TO_SEND;
       }
     }
 
     if (cc->state == CC_WAITING_FOR_NODE) {
       if (cc->raw_node->next) {
-	cc->raw_node = cc->raw_node->next;
-	cc->raw_seq = cc->raw_node->seq;
-	cc->raw_offset = 0;
-	cc->state = CC_READY_TO_SEND;
+        cc->raw_node = cc->raw_node->next;
+        cc->raw_seq = cc->raw_node->seq;
+        cc->raw_offset = 0;
+        cc->state = CC_READY_TO_SEND;
       }
       else {
-	/* State remains CC_WAITING_FOR_NODE, will not call FD_SET for this node. */
+        /* State remains CC_WAITING_FOR_NODE, will not call FD_SET for this node. */
       }
     }
 
@@ -318,7 +318,7 @@ static void SocketServer_tick(Instance *pi)
      installation.
   */
   tv.tv_sec = 0;
-  tv.tv_usec = 1000  * 1;	/* ms */
+  tv.tv_usec = 1000  * 1;       /* ms */
 
   sn = select(maxfd+1, &rfds, &wfds, 0L, &tv);
 
@@ -335,7 +335,7 @@ static void SocketServer_tick(Instance *pi)
     cc->fd = accept(priv->lsc.fd, (struct sockaddr *)&cc->addr, &cc->addrlen);
     if (cc->fd == -1) {
       /* This is unlikely but possible.  If it happens, just clean up
-	 and return... */
+         and return... */
       perror("accept");
       Mem_free(cc);
       goto out;
@@ -379,7 +379,7 @@ static void SocketServer_tick(Instance *pi)
 
     if (to_send <= 0) {
       fprintf(stderr, "Whoa, to_send is %d (cc->raw_node->buffer->data_length=%d cc->raw_offset=%d)\n",
-	      to_send, cc->raw_node->buffer->data_length, cc->raw_offset);
+              to_send, cc->raw_node->buffer->data_length, cc->raw_offset);
       n = 0;
       goto nextraw;
     }
@@ -403,14 +403,14 @@ static void SocketServer_tick(Instance *pi)
     if (cc->raw_offset == cc->raw_node->buffer->data_length) {
       /* Finished sending current raw node. */
       if (cc->raw_node->next) {
-	/* Move on to next node... */
-	cc->raw_node = cc->raw_node->next;
-	cc->raw_seq = cc->raw_node->seq;
-	cc->raw_offset = 0;
+        /* Move on to next node... */
+        cc->raw_node = cc->raw_node->next;
+        cc->raw_seq = cc->raw_node->seq;
+        cc->raw_offset = 0;
       }
       else {
-	/* Or flag to wait for more nodes. */
-	cc->state = CC_WAITING_FOR_NODE;
+        /* Or flag to wait for more nodes. */
+        cc->state = CC_WAITING_FOR_NODE;
       }
     }
   }
@@ -424,7 +424,7 @@ static void SocketServer_tick(Instance *pi)
     RawData_node *raw_tmp = priv->raw_first;
     priv->raw_first = priv->raw_first->next;
     if (priv->raw_first == 0L) {
-      priv->raw_last = 0L;	/* for consistency */
+      priv->raw_last = 0L;      /* for consistency */
       fprintf(stderr, "%s:%s: BAD: no nodes left.  Too large buffer, or too small max?\n", __FILE__, __func__);
       while (1) { sleep (1); }
     }

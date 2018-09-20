@@ -1,9 +1,9 @@
 /* TV controller module.  An TV instance listens for IR or other input,
    maintains state, and sends configuration messages to other
    instances that do the actual work.*/
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "TV.h"
@@ -90,7 +90,7 @@ static void change_channel(Instance *pi)
 
   if (freq_str && pi->outputs[OUTPUT_VC_CONFIG].destination) {
     PostData(Config_buffer_new("frequency", freq_str),
-	     pi->outputs[OUTPUT_VC_CONFIG].destination);
+             pi->outputs[OUTPUT_VC_CONFIG].destination);
   }
 
   printf("channel %d\n", priv->current_channel);
@@ -134,9 +134,9 @@ static void Keycode_handler(Instance *pi, void *msg)
     }
     else {
       if (pi->outputs[OUTPUT_CAIRO_CONFIG].destination) {
-	char temp[64];
-	snprintf(temp, sizeof(temp), "%d", priv->new_channel);
-	PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
+        char temp[64];
+        snprintf(temp, sizeof(temp), "%d", priv->new_channel);
+        PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
       }
     }
     break;
@@ -154,7 +154,7 @@ static void Keycode_handler(Instance *pi, void *msg)
     while (priv->current_channel < 78) {
       priv->current_channel += 1;
       if (_get_skip_channel(priv, priv->current_channel) == 0) {
-	break;
+        break;
       }
     }
     goto channelchange;
@@ -162,7 +162,7 @@ static void Keycode_handler(Instance *pi, void *msg)
     while (priv->current_channel > 2) {
       priv->current_channel -= 1;
       if (_get_skip_channel(priv, priv->current_channel) == 0) {
-	break;
+        break;
       }
     }
   channelchange:
@@ -191,22 +191,22 @@ static void Keycode_handler(Instance *pi, void *msg)
       GetConfigValue(pi->outputs[OUTPUT_MIXER_CONFIG].destination, "volume", &value);
       vol = value.u.int_value  + d;
       if (mute) {
-	if (!priv->muted) {
-	  priv->mute_save_vol = vol;
-	  vol = 0;
-	  priv->muted = 1;
-	}
-	else {
-	  vol = priv->mute_save_vol;
-	  priv->muted = 0;
-	}
+        if (!priv->muted) {
+          priv->mute_save_vol = vol;
+          vol = 0;
+          priv->muted = 1;
+        }
+        else {
+          vol = priv->mute_save_vol;
+          priv->muted = 0;
+        }
       }
       else {
-	/* Volume up/down selected. */
-	if (priv->muted) {
-	  vol = priv->mute_save_vol;
-	  priv->muted = 0;
-	}
+        /* Volume up/down selected. */
+        if (priv->muted) {
+          vol = priv->mute_save_vol;
+          priv->muted = 0;
+        }
       }
       if (vol < range.ints.min) vol = range.ints.min;
       else if (vol > range.ints.max) vol = range.ints.max;
@@ -214,10 +214,10 @@ static void Keycode_handler(Instance *pi, void *msg)
       PostData(Config_buffer_new("volume", temp), pi->outputs[OUTPUT_MIXER_CONFIG].destination);
 
       if (priv->muted) {
-	snprintf(temp, sizeof(temp), "MUTE");
+        snprintf(temp, sizeof(temp), "MUTE");
       }
       else {
-	snprintf(temp, sizeof(temp), "VOL %d%%", (vol*100/range.ints.max));
+        snprintf(temp, sizeof(temp), "VOL %d%%", (vol*100/range.ints.max));
       }
       PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
     }

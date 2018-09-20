@@ -1,7 +1,7 @@
 /* Search and replace "Y4MOverlay" with new module name. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Y4MOverlay.h"
@@ -53,7 +53,7 @@ static void parse_y4m_header(ArrayU8 *data, uint8_t ** framestart, int * pwidth,
     for (i=0; i < String_list_len(ls); i++) {
       String *t = String_list_get(ls, i);
       if (String_is_none(t)) {
-	continue;
+        continue;
       }
 
       int width;
@@ -74,38 +74,38 @@ static void parse_y4m_header(ArrayU8 *data, uint8_t ** framestart, int * pwidth,
       //int interlacing_set = 0;
 
       if (sscanf(t->bytes, "W%d", &width) == 1) {
-	printf("width %d\n", width);
-	*pwidth = width;
+        printf("width %d\n", width);
+        *pwidth = width;
       }
       else if (sscanf(t->bytes, "H%d", &height) == 1) {
-	printf("height %d\n", height);
-	*pheight = height;
+        printf("height %d\n", height);
+        *pheight = height;
       }
       else if (sscanf(t->bytes, "C%32s", chroma_subsamping) == 1) {
-	printf("chroma subsampling %s\n", chroma_subsamping);
+        printf("chroma subsampling %s\n", chroma_subsamping);
       }
       else if (sscanf(t->bytes, "I%c", &interlacing) == 1) {
-	printf("interlacing I%c\n", interlacing);
-	//switch (interlacing) {
-	//case 't': priv->video_common.interlace_mode = IMAGE_INTERLACE_TOP_FIRST; break;
-	//case 'b': priv->video_common.interlace_mode = IMAGE_INTERLACE_BOTTOM_FIRST; break;
-	//case 'm': priv->video_common.interlace_mode = IMAGE_INTERLACE_MIXEDMODE; break;
-	//case 'p':
-	//default:
-	//priv->video_common.interlace_mode = IMAGE_INTERLACE_NONE; break;
-	//}
+        printf("interlacing I%c\n", interlacing);
+        //switch (interlacing) {
+        //case 't': priv->video_common.interlace_mode = IMAGE_INTERLACE_TOP_FIRST; break;
+        //case 'b': priv->video_common.interlace_mode = IMAGE_INTERLACE_BOTTOM_FIRST; break;
+        //case 'm': priv->video_common.interlace_mode = IMAGE_INTERLACE_MIXEDMODE; break;
+        //case 'p':
+        //default:
+        //priv->video_common.interlace_mode = IMAGE_INTERLACE_NONE; break;
+        //}
       }
       else if (sscanf(t->bytes, "F%d:%d", &frame_numerator, &frame_denominator) == 2) {
-	//priv->video_common.nominal_period = (1.0*frame_denominator/frame_numerator);
-	//priv->video_common.fps_numerator = frame_numerator;
-	//priv->video_common.fps_denominator = frame_denominator;
-	//printf("frame rate %d:%d (%.5f period)\n",
-	//priv->video_common.fps_numerator,
-	//priv->video_common.fps_denominator,
-	//priv->video_common.nominal_period);
+        //priv->video_common.nominal_period = (1.0*frame_denominator/frame_numerator);
+        //priv->video_common.fps_numerator = frame_numerator;
+        //priv->video_common.fps_denominator = frame_denominator;
+        //printf("frame rate %d:%d (%.5f period)\n",
+        //priv->video_common.fps_numerator,
+        //priv->video_common.fps_denominator,
+        //priv->video_common.nominal_period);
       }
       else if (sscanf(t->bytes, "A%d:%d", &aspect_numerator, &aspect_denominator) == 2) {
-	printf("aspect %d:%d\n", aspect_numerator, aspect_denominator);
+        printf("aspect %d:%d\n", aspect_numerator, aspect_denominator);
       }
       // else if (sscanf(t->bytes, "X%s", metadata) == 1) { }
     }
@@ -156,8 +156,8 @@ static void y420p_handler(Instance *pi, void *msg)
   if (pi->outputs[OUTPUT_YUV420P].destination) {
     /* Compose overlay, pass along. */
     if (priv->img
-	&& priv->img->width == buf->width
-	&& priv->img->height == buf->height) {
+        && priv->img->width == buf->width
+        && priv->img->height == buf->height) {
       int y, x;
 
       uint8_t * py = priv->img->y;
@@ -169,21 +169,21 @@ static void y420p_handler(Instance *pi, void *msg)
       uint8_t * bcr = buf->cr;
 
       for (y=0; y < buf->height; y++) {
-	for (x=0; x < buf->width; x++) {
-	  if ( 1/* *py != 0x10 */ ) {
-	    *by = *py;
-	    *bcb = *pcb;
-	    *bcr = *pcr;
-	  }
-	  py++;
-	  by++;
-	  if (x%4 == 0) {
-	    pcb++;
-	    pcr++;
-	    bcb++;
-	    bcr++;
-	  }
-	}
+        for (x=0; x < buf->width; x++) {
+          if ( 1/* *py != 0x10 */ ) {
+            *by = *py;
+            *bcb = *pcb;
+            *bcr = *pcr;
+          }
+          py++;
+          by++;
+          if (x%4 == 0) {
+            pcb++;
+            pcr++;
+            bcb++;
+            bcr++;
+          }
+        }
       }
     }
     PostData(buf, pi->outputs[OUTPUT_YUV420P].destination);

@@ -1,6 +1,6 @@
-#include <stdio.h>		/* sprintf */
-#include <stdlib.h>		/* malloc */
-#include <string.h>		/* memset */
+#include <stdio.h>              /* sprintf */
+#include <stdlib.h>             /* malloc */
+#include <string.h>             /* memset */
 
 #include "XMixedReplace.h"
 
@@ -22,11 +22,11 @@ XMixedReplace_buffer *XMixedReplace_buffer_new(void *data, int data_length, cons
 
   /* Format header... */
   n = sprintf(header,
-	      part_format,
-	      BOUNDARY,
-	      mime_type,
-	      buffer->tiemstamp,
-	      data_length);
+              part_format,
+              BOUNDARY,
+              mime_type,
+              buffer->tiemstamp,
+              data_length);
 
   if (n >= sizeof(header)) {
     fprintf(stderr, "Oops! header buffer not big enough (%d >= %d)\n", n, (int) sizeof(header));

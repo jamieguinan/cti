@@ -1,12 +1,12 @@
 /* ClearQAM/mplayer controller module.  Listens for IR or other input,
    maintains state, runs mplayer dvb://channel */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <unistd.h>		/* fork */
-#include <sys/types.h>		/* kill, waitpid */
-#include <signal.h>		/* kill */
-#include <sys/wait.h>		/* waitpid */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <unistd.h>             /* fork */
+#include <sys/types.h>          /* kill, waitpid */
+#include <signal.h>             /* kill */
+#include <sys/wait.h>           /* waitpid */
 
 #include "CTI.h"
 #include "DTV.h"
@@ -126,22 +126,22 @@ static void Keycode_handler(Instance *pi, void *msg)
       GetConfigValue(pi->outputs[OUTPUT_MIXER_CONFIG].destination, "volume", &value);
       vol = value.u.int_value  + d;
       if (mute) {
-	if (!priv->muted) {
-	  priv->mute_save_vol = vol;
-	  vol = 0;
-	  priv->muted = 1;
-	}
-	else {
-	  vol = priv->mute_save_vol;
-	  priv->muted = 0;
-	}
+        if (!priv->muted) {
+          priv->mute_save_vol = vol;
+          vol = 0;
+          priv->muted = 1;
+        }
+        else {
+          vol = priv->mute_save_vol;
+          priv->muted = 0;
+        }
       }
       else {
-	/* Volume up/down selected. */
-	if (priv->muted) {
-	  vol = priv->mute_save_vol;
-	  priv->muted = 0;
-	}
+        /* Volume up/down selected. */
+        if (priv->muted) {
+          vol = priv->mute_save_vol;
+          priv->muted = 0;
+        }
       }
       if (vol < range.ints.min) vol = range.ints.min;
       else if (vol > range.ints.max) vol = range.ints.max;
@@ -149,13 +149,13 @@ static void Keycode_handler(Instance *pi, void *msg)
       PostData(Config_buffer_new("volume", temp), pi->outputs[OUTPUT_MIXER_CONFIG].destination);
 
       if (pi->outputs[OUTPUT_CAIRO_CONFIG].destination) {
-	if (priv->muted) {
-	  snprintf(temp, sizeof(temp), "MUTE");
-	}
-	else {
-	  snprintf(temp, sizeof(temp), "VOL %d%%", (vol*100/range.ints.max));
-	}
-	PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
+        if (priv->muted) {
+          snprintf(temp, sizeof(temp), "MUTE");
+        }
+        else {
+          snprintf(temp, sizeof(temp), "VOL %d%%", (vol*100/range.ints.max));
+        }
+        PostData(Config_buffer_new("text", temp), pi->outputs[OUTPUT_CAIRO_CONFIG].destination);
       }
     }
     break;

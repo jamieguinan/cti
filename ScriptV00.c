@@ -210,7 +210,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   }
 
   if (n == 1 && streq(token0, "abort")) {
-    puts("");			/* Wrap line on console. */
+    puts("");                   /* Wrap line on console. */
     abort();
     return;
   }
@@ -220,7 +220,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
       cfg.pause = 1;
       /* Wait until newline then reset. */
       if (fgets(token1, 255, stdin) == NULL) {
-	fprintf(stderr, "note: got EOF after pause.\n");
+        fprintf(stderr, "note: got EOF after pause.\n");
       }
       cfg.pause = 0;
     }
@@ -253,7 +253,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     if (is_stdin) {
       /* Wait until newline then reset. */
       if (fgets(token1, 255, stdin) == NULL) {
-	fprintf(stderr, "note: got EOF after verbose toggle.\n");
+        fprintf(stderr, "note: got EOF after verbose toggle.\n");
       }
       cfg.verbosity = 0;
     }
@@ -266,7 +266,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     if (is_stdin) {
       /* Wait until newline then reset. */
       if (fgets(token1, 255, stdin) == NULL) {
-	fprintf(stderr, "note: got EOF after dpt.\n");
+        fprintf(stderr, "note: got EOF after dpt.\n");
       }
     }
     cti_debug_printf_toggle(index);
@@ -431,7 +431,7 @@ static void ScriptV00_instance_init(Instance *pi)
 {
   ScriptV00_private *priv = (ScriptV00_private *)pi;
 
-  priv->g = gig;		/* Use global instance group. */
+  priv->g = gig;                /* Use global instance group. */
   priv->exit_on_eof = 1;
 }
 

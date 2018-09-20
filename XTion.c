@@ -1,7 +1,7 @@
 /* Search and replace "XTion" with new module name. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "XTion.h"
@@ -84,9 +84,9 @@ void gray_draw_box(Gray_buffer *gb, int x, int y, int width, int height, uint8_t
     if (iy == y || iy == ((y+height-1))) {
       /* Draw line. */
       for (ix=x; ix <= (x+width); ix++) {
-	if (ix > 0 && ix < (gb->width)) {
-	  p[ix] = value;
-	}
+        if (ix > 0 && ix < (gb->width)) {
+          p[ix] = value;
+        }
       }
     }
     else {

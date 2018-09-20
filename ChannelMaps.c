@@ -113,10 +113,10 @@ const char *ChannelMaps_channel_to_frequency(const char *map, const char *channe
     if (streq(map, all_maps[i].map_name)) {
       int n = all_maps[i].channel_map_size;
       for (j=0; j < n; j++) {
-	if (streq(channel, all_maps[i].channel_map[j].channel)) {
-	  frequency_HZ = all_maps[i].channel_map[j].frequency_HZ;
-	  goto out;
-	}
+        if (streq(channel, all_maps[i].channel_map[j].channel)) {
+          frequency_HZ = all_maps[i].channel_map[j].frequency_HZ;
+          goto out;
+        }
       }
       break;
     }

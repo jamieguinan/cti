@@ -1,6 +1,6 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "PGMFiler.h"
 #include "Images.h"
@@ -49,7 +49,7 @@ static void Gray_handler(Instance *pi, void *msg)
     if (f) {
       fprintf(f, "P5\n%d %d\n255\n", gray_in->width, gray_in->height);
       if (fwrite(gray_in->data, gray_in->data_length, 1, f) != 1) {
-	perror("fwrite");
+        perror("fwrite");
       }
       fclose(f);
     }

@@ -2,9 +2,9 @@
  * Repair timestamps in mjx streams from earlier versions of my code, where I was generating
  * timestamps with "%d.%d instead of "%d.%06d".
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "MjxRepair.h"
@@ -34,7 +34,7 @@ static Output MjxRepair_outputs[] = {
 #define BUFFER_SIZE 15
 typedef struct {
   Instance i;
-  Sink *sink;		/* File or host:port, used to intialize sink. */
+  Sink *sink;           /* File or host:port, used to intialize sink. */
 
   struct {
     Jpeg_buffer jpeg;
@@ -71,8 +71,8 @@ static void Config_handler(Instance *pi, void *data)
 
 static const char part_format[] =
   "%s\r\nContent-Type: %s\r\n"
-  "Timestamp:%.6f\r\n"  	/* very important to use six digits for microseconds! :) */
-  "%s"				/* extra headers... */
+  "Timestamp:%.6f\r\n"          /* very important to use six digits for microseconds! :) */
+  "%s"                          /* extra headers... */
   "Content-Length: %lu\r\n\r\n";
 
 static void Jpeg_handler(Instance *pi, void *data)
@@ -81,11 +81,11 @@ static void Jpeg_handler(Instance *pi, void *data)
   Jpeg_buffer *jpeg_in = data;
 
   String *header = String_sprintf(part_format,
-				  BOUNDARY,
-				  "image/jpeg",
-				  jpeg_in->c.timestamp,
-				  "",
-				  jpeg_in->encoded_length);
+                                  BOUNDARY,
+                                  "image/jpeg",
+                                  jpeg_in->c.timestamp,
+                                  "",
+                                  jpeg_in->encoded_length);
 
 
   if (priv->sink) {
@@ -108,11 +108,11 @@ static void Wav_handler(Instance *pi, void *data)
 
   /* Format header. */
   String *header = String_sprintf(part_format,
-				  BOUNDARY,
-				  "audio/x-wav",
-				  wav_in->timestamp,
-				  "",
-				  wav_in->header_length+wav_in->data_length);
+                                  BOUNDARY,
+                                  "audio/x-wav",
+                                  wav_in->timestamp,
+                                  "",
+                                  wav_in->header_length+wav_in->data_length);
 
 
   if (priv->sink) {

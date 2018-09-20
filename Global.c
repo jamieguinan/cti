@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdlib.h>		/* getenv */
+#include <stdlib.h>             /* getenv */
 
 #include "Global.h"
 #include "localptr.h"
@@ -32,9 +32,9 @@ static void x11_info()
   global.display.height = XHeightOfScreen(rootscr);
 
   fprintf(stderr, "global display %d, %d\n"
-	  , global.display.width
-	  , global.display.height
-	  );
+          , global.display.width
+          , global.display.height
+          );
 }
 #endif
 

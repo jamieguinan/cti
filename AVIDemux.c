@@ -1,7 +1,7 @@
 /* Maybe rename this "RIFFDemux"? */
 #include <stdio.h>
-#include <string.h>		/* memcpy */
-#include <stdlib.h>		/* free */
+#include <string.h>             /* memcpy */
+#include <stdlib.h>             /* free */
 
 #include "CTI.h"
 #include "Mem.h"
@@ -38,7 +38,7 @@ typedef struct {
   ArrayU8 *chunk;
   int needData;
   int done;
-  int enable;			/* Set this to start processing. */
+  int enable;                   /* Set this to start processing. */
   int synchronized;
 
   int video_frame_period_ms;
@@ -190,20 +190,20 @@ static void AVIDemux_tick(Instance *pi)
     j_index = ArrayU8_search(priv->chunk, 0, jpeg_marker);
     if (j_index >= 0) {
       if (index == -1) {
-	index = j_index;
+        index = j_index;
       }
       else if (j_index < index) {
-	index = j_index;
+        index = j_index;
       }
     }
 
     i_index = ArrayU8_search(priv->chunk, 0, idx_marker);
     if (i_index >= 0) {
       if (index == -1) {
-	index = i_index;
+        index = i_index;
       }
       else if (i_index < index) {
-	index = i_index;
+        index = i_index;
       }
     }
 

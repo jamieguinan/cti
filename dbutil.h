@@ -25,16 +25,16 @@ typedef struct {
 } SchemaColumn_check;
 
 extern int db_check(sqlite3 *db, const char * table_name,
-		    SchemaColumn * schema, int num_columns, const char * constraints);
+                    SchemaColumn * schema, int num_columns, const char * constraints);
 
 extern int db_schema_test(sqlite3 *db, const char * table_name,
                           SchemaColumn * schema, int num_columns);
 
 extern int sql_exec_free_query(sqlite3 *pdb,
-			       char * query,
-			       int (*callback)(void*,int,char**,char**),
-			       void * data,
-			       char **errmsg);
+                               char * query,
+                               int (*callback)(void*,int,char**,char**),
+                               void * data,
+                               char **errmsg);
 
 /* Convenience structures and generic callbacks. */
 extern int sql_String_callback(void *i_ptr, int num_columns, char **column_strings, char **column_headers);

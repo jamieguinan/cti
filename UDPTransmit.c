@@ -1,14 +1,14 @@
 /* UDP transmitter. Should be able to do unicast, broadcst, or
    multicast by setting addr. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <unistd.h>		/* sleep */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <unistd.h>             /* sleep */
 
 #include "CTI.h"
 #include "UDPTransmit.h"
 #include "ArrayU8.h"
-#include "socket_common.h"	/* all the usual headers */
+#include "socket_common.h"      /* all the usual headers */
 
 typedef struct {
   Instance i;
@@ -95,13 +95,13 @@ static void RawData_handler(Instance *pi, void *data)
     ArrayU8_append(priv->buffer, ArrayU8_temp_const(raw->data, raw->data_length));
     if (priv->buffer->len >= priv->buffer_level) {
       n = sendto(priv->socket, priv->buffer->data, priv->buffer->len, 0,
-		 (struct sockaddr *) &priv->remote, sizeof(priv->remote));
+                 (struct sockaddr *) &priv->remote, sizeof(priv->remote));
       ArrayU8_trim_left(priv->buffer, priv->buffer->len);
     }
   }
   else {
     n = sendto(priv->socket, raw->data, raw->data_length, 0,
-	       (struct sockaddr *) &priv->remote, sizeof(priv->remote));
+               (struct sockaddr *) &priv->remote, sizeof(priv->remote));
   }
 
   if (n == -1) {

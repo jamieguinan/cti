@@ -9,9 +9,9 @@ void Array_set_error_handler(void (*handler)(void))
 }
 
 void Array_grow(void ** items,
-	  int itemsize,
-	  int * available,
-	  int * count)
+          int itemsize,
+          int * available,
+          int * count)
 {
   *count += 1;
   if (*available == 0) {
@@ -30,8 +30,8 @@ void Array_grow(void ** items,
 
 
 void Array_clear(void ** items,
-		 int * available,
-		 int * count)
+                 int * available,
+                 int * count)
 {
   if (*items) {
     Mem_free(*items);

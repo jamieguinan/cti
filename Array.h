@@ -16,13 +16,13 @@
    Array_grow() directly with any set of compatible variables.  But
    they should be initialized properly before calling. */
 extern void Array_grow(void ** items,
-		       int itemsize,
-		       int * available,
-		       int * count);
+                       int itemsize,
+                       int * available,
+                       int * count);
 
 extern void Array_clear(void ** items,
-			int * available,
-			int * count);
+                        int * available,
+                        int * count);
 
 extern void Array_set_error_handler(void (*handler)(void));
 

@@ -1,6 +1,6 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "UI001.h"
@@ -102,16 +102,16 @@ static int add_button(Instance *pi, const char *init)
   while (*p) {
     if (state == PARSING_KEY) {
       if (*p == '=') {
-	value = p+1;
-	state = PARSING_VALUE;
+        value = p+1;
+        state = PARSING_VALUE;
       }
     }
     else if (state == PARSING_VALUE) {
       if (*p == ';') {
-	state = PARSING_KEY;
-	set_kv(w, key, value, p);
-	key = p+1;
-	value = NULL;
+        state = PARSING_KEY;
+        set_kv(w, key, value, p);
+        key = p+1;
+        value = NULL;
       }
     }
     p++;
@@ -142,14 +142,14 @@ static void pointer_handler(Instance *pi, void *msg)
     if (w->x <= p->x && p->x <= (w->x + w->width) && w->y <= p->y && p->y <= (w->y + w->height)) {
       if (w->text) printf("FOUND: %s\n", w->text->bytes);
       if (p->state == 1) {
-	priv->down_flag = 1;
-	priv->down_x = p->x;
-	priv->down_y = p->y;
+        priv->down_flag = 1;
+        priv->down_x = p->x;
+        priv->down_y = p->y;
       }
       else {
-	priv->down_flag = 0;
-	priv->down_x = 0;
-	priv->down_y = 0;
+        priv->down_flag = 0;
+        priv->down_x = 0;
+        priv->down_y = 0;
       }
       break;
     }

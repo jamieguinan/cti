@@ -37,10 +37,10 @@ void post_callback(Index_node *node)
       int err;
       String * addrstr = String_list_get(parts, i);
       String * symstr = Index_find_string(symbol_map,
-					  addrstr,
-					  &err);
+                                          addrstr,
+                                          &err);
       if (i > 1) {
-	printf("/");
+        printf("/");
       }
       printf("%s", s(symstr));
     }
@@ -85,9 +85,9 @@ static void load_map(const char *mapfile)
       String * addrstr_shortened = String_sprintf("0x%lx", addr);
       int err;
       Index_add_string(symbol_map,
-		       addrstr_shortened,
-		       String_dup(symstr),
-		       &err);
+                       addrstr_shortened,
+                       String_dup(symstr),
+                       &err);
     }
 
     String_list_free(&parts);
@@ -140,30 +140,30 @@ int main(int argc, char *argv[])
 
     int err;
     if (String_eq(op, S("+"))) {
-      Index_add_string(idx, 	/* idx */
-		       addr, 	/* stringKey */
-		       String_dup(stackpath), /* value */
-		       &err);
+      Index_add_string(idx,     /* idx */
+                       addr,    /* stringKey */
+                       String_dup(stackpath), /* value */
+                       &err);
       allocations += 1;
       // Index_analyze(idx);
       // printf("allocations - frees = %d - %d = %d\n", allocations, frees, allocations - frees);
       if (err) {
-	{ printf("[%s] + err = %d\n", s(addr), err); }
-	Index_walk(idx, post_callback);
-	return 1;
+        { printf("[%s] + err = %d\n", s(addr), err); }
+        Index_walk(idx, post_callback);
+        return 1;
       }
     }
     else if (String_eq(op, S("-"))) {
       Index_pull_string(idx,
-		       addr,
-		       &err);
+                       addr,
+                       &err);
       frees += 1;
       // Index_analyze(idx);
       // printf("allocations - frees = %d - %d = %d\n", allocations, frees, allocations - frees);
       if (err) {
-	{ printf("[%s] - err = %d\n", s(addr), err); }
-	//Index_walk(idx, post_callback);
-	//return 1;
+        { printf("[%s] - err = %d\n", s(addr), err); }
+        //Index_walk(idx, post_callback);
+        //return 1;
       }
     }
     String_list_free(&parts);

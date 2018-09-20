@@ -1,6 +1,6 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "JpegFiler.h"
 #include "Images.h"
@@ -65,8 +65,8 @@ static void Jpeg_handler(Instance *pi, void *msg)
   while (1) {
     priv->fnumber += 1;
     sprintf(name, "%s%09d.jpg",
-	    priv->prefix ? s(priv->prefix) : "",
-	    priv->fnumber);
+            priv->prefix ? s(priv->prefix) : "",
+            priv->fnumber);
     if (File_exists(S(name))) {
       continue;
     }

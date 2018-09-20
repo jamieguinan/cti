@@ -1,14 +1,14 @@
 /* Linux input event handling. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
-#include <sys/types.h>		/* open */
-#include <sys/stat.h>		/* open */
-#include <fcntl.h>		/* open */
-#include <unistd.h>		/* close, read */
+#include <sys/types.h>          /* open */
+#include <sys/stat.h>           /* open */
+#include <fcntl.h>              /* open */
+#include <unistd.h>             /* close, read */
 
-#include <linux/input.h>	/* event structures */
+#include <linux/input.h>        /* event structures */
 
 #include "CTI.h"
 #include "LinuxEvent.h"
@@ -46,7 +46,7 @@ static Output LinuxEvent_outputs[] = {
 
 typedef struct {
   Instance i;
-  int grab;			/* Set before opening to grab device on open. */
+  int grab;                     /* Set before opening to grab device on open. */
   int devfd;
   String * devpath;
 } LinuxEvent_private;
@@ -121,7 +121,7 @@ static void handle_next_event(Instance *pi)
   if (ev.type == EV_KEY && ev.value == 1) {
     int cti_key = Keycode_from_linux_event(ev.code);
     printf("%s code=%d (transalted=%d) value=%d\n", ev_type_string(ev.type), ev.code, cti_key,
-	   ev.value);
+           ev.value);
 
     if (pi->outputs[OUTPUT_KEYCODE].destination) {
       PostData(Keycode_message_new(cti_key), pi->outputs[OUTPUT_KEYCODE].destination);

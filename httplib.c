@@ -1,6 +1,6 @@
-#include <stdio.h>		/* fopen */
-#include <stdlib.h>		/* getenv */
-#include <stdint.h>		/* uint32_t */
+#include <stdio.h>              /* fopen */
+#include <stdlib.h>             /* getenv */
+#include <stdint.h>             /* uint32_t */
 #include "String.h"
 
 String_list * cookies_from_env(void)

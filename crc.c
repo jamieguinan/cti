@@ -22,9 +22,9 @@ static void make_crc32_table(void)
     c = (uint32_t) n;
     for (k = 0; k < 8; k++) {
       if (c & 1)
-	c = 0xedb88320 ^ (c >> 1);
+        c = 0xedb88320 ^ (c >> 1);
       else
-	c = c >> 1;
+        c = c >> 1;
     }
     crc32_table[n] = c;
   }
@@ -42,7 +42,7 @@ uint32_t init_crc32()
       is the 1's complement of the final running CRC (see the
       crc32() routine below)). */
 uint32_t update_crc32(uint32_t crc32, const unsigned char *buf,
-			 int len)
+                         int len)
 {
   uint32_t c = crc32;
   int n;

@@ -14,10 +14,10 @@ typedef struct {
 } FormatInfo;
 
 extern void Jpeg_decompress(Jpeg_buffer * jpeg_in,
-			    int dct_method,
-			    YUV420P_buffer ** yuv420p_result,
-			    YUV422P_buffer ** yuv422p_result,
-			    FormatInfo ** pfmt);
+                            int dct_method,
+                            YUV420P_buffer ** yuv420p_result,
+                            YUV422P_buffer ** yuv422p_result,
+                            FormatInfo ** pfmt);
 
 
 #endif

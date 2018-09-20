@@ -1,7 +1,7 @@
 /* Provide a single YUV422P buffer repeatedly, for benchmarking. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Y4MSource.h"
@@ -54,7 +54,7 @@ static int do_run(Instance *pi, const char *value)
 
     if (cfg.verbosity) {
       printf("%d/%d (%d)\n", i, count,
-	     pi->outputs[OUTPUT_YUV422P].destination->parent->pending_messages);
+             pi->outputs[OUTPUT_YUV422P].destination->parent->pending_messages);
     }
 
     while (pi->outputs[OUTPUT_YUV422P].destination->parent->pending_messages > 5) {

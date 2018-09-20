@@ -1,4 +1,4 @@
-#include <stdio.h>		/* NULL */
+#include <stdio.h>              /* NULL */
 #include "FPS.h"
 #include "Cfg.h"
 #include "CTI.h"

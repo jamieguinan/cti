@@ -2,9 +2,9 @@
  * This module handles buffering and saving stream data (usually from an
  * MjpegDemux instance) to disk.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "MjpegStreamBuffer.h"
@@ -36,8 +36,8 @@ static Output MjpegStreamBuffer_outputs[] = {
 typedef struct {
   Instance i;
   String *basename;
-  int backbuffer;		/* Seconds of buffered data to flush when recording turned on */
-  int forwardbuffer;		/* Seconds to keep recording after last trigger */
+  int backbuffer;               /* Seconds of buffered data to flush when recording turned on */
+  int forwardbuffer;            /* Seconds to keep recording after last trigger */
   double record_until;
   int recording;
   FILE *output;

@@ -1,23 +1,23 @@
 #ifndef _ALSAIO_H_
 #define _ALSAIO_H_
 
-#include <alsa/asoundlib.h>	/* ALSA library */
+#include <alsa/asoundlib.h>     /* ALSA library */
 #include <stdint.h>
 #include "String.h"
-#include "Audio.h"		/*  Audio_type */
+#include "Audio.h"              /*  Audio_type */
 
 typedef enum { ALSAIO_READ=1, ALSAIO_WRITE } ALSAio_rw_enum;
 
 typedef struct {
   snd_pcm_t *handle;
-  String * device;		/* "hw:0", etc. */
+  String * device;              /* "hw:0", etc. */
   int useplug;
   snd_pcm_hw_params_t *hwparams;
   snd_pcm_stream_t mode;
 
   int rate;
   int channels;
-  snd_pcm_format_t format;	/* translate to/from string using formats[] */
+  snd_pcm_format_t format;      /* translate to/from string using formats[] */
   Audio_type atype;
   int format_bytes;
 

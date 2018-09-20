@@ -29,9 +29,9 @@ typedef struct {
 
 typedef struct {
   Audio_params header;
-  uint8_t *data;		/* Might be better if this was `void *` */
+  uint8_t *data;                /* Might be better if this was `void *` */
   uint64_t data_length;
-  uint64_t num_frames;		/* convenience member */
+  uint64_t num_frames;          /* convenience member */
   double timestamp;
   int seq;
 } Audio_buffer;
@@ -68,16 +68,16 @@ typedef struct {
   Wav_params params;
   int seq;
   int no_feedback;
-  int eof;			/* EOF marker. */
+  int eof;                      /* EOF marker. */
   LockedRef ref;
 } Wav_buffer;
 
 extern int Wav_parse_header_values(unsigned char *src_bytes,
-				   int src_length,
-				   uint32_t * rate,
-				   uint16_t * channels,
-				   uint32_t * frame_size,
-				   Audio_type *atype);
+                                   int src_length,
+                                   uint32_t * rate,
+                                   uint16_t * channels,
+                                   uint32_t * frame_size,
+                                   Audio_type *atype);
 
 extern Wav_buffer *Wav_buffer_new(int rate, int channels, int format_bytes);
 extern void Wav_buffer_finalize(Wav_buffer *buffer);

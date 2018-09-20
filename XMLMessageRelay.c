@@ -1,7 +1,7 @@
 /* Translate messages to XML and send to host:port */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "XMLMessageRelay.h"
@@ -24,7 +24,7 @@ static Output XMLMessageRelay_outputs[] = {
 
 typedef struct {
   Instance i;
-  String * destination; 	/* host:port */
+  String * destination;         /* host:port */
 } XMLMessageRelay_private;
 
 
@@ -55,13 +55,13 @@ static void Keycode_handler(Instance *pi, void *msg)
   if (c->io.state == IO_OPEN_SOCKET) {
     char keycode_str[64]; sprintf(keycode_str, "%d", km->keycode);
     String * xmlmsg = String_sprintf("<config>\n"
-				  "<instance>%s</instance>\n"
-				  "<key>%s</key>\n"
-				  "<value>%s</value>\n"
-				  "</config>",
-				  "relay",
-				  "token",
-				  keycode_str);
+                                  "<instance>%s</instance>\n"
+                                  "<key>%s</key>\n"
+                                  "<value>%s</value>\n"
+                                  "</config>",
+                                  "relay",
+                                  "token",
+                                  keycode_str);
     Comm_write_string_with_byte(c, xmlmsg, '$');
     String * response = Comm_read_string_to_byte(c, '$');
     String_free(&response);

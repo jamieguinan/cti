@@ -1,7 +1,7 @@
 /* Interface to Raspberry PI H264 encoder. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "RPiH264Enc.h"
@@ -9,18 +9,18 @@
 #include "ArrayU8.h"
 #include "dpf.h"
 
-struct appctx;			/* Type for opaque pointers. */
+struct appctx;                  /* Type for opaque pointers. */
 
 /* These externs match the functions in "rpi-encode-yuv.c" */
 extern void encode_init(struct appctx ** p_ctx,
-			int video_width, int video_height, int video_framerate, int gop_seconds, int video_bitrate);
+                        int video_width, int video_height, int video_framerate, int gop_seconds, int video_bitrate);
 extern void rpi_get_sizes(struct appctx * ctx, int * y_size, int * u_size, int * v_size);
 extern void do_frame_io(struct appctx * ctx,
-			uint8_t * y_in, int y_size,
-			uint8_t * u_in, int u_size,
-			uint8_t * v_in, int v_size,
-			uint8_t ** encoded_out, int * encoded_len,
-			int * keyframe);
+                        uint8_t * y_in, int y_size,
+                        uint8_t * u_in, int u_size,
+                        uint8_t * v_in, int v_size,
+                        uint8_t ** encoded_out, int * encoded_len,
+                        int * keyframe);
 extern void encode_cleanup(struct appctx * ctx);
 extern int rpi_encode_yuv_c__analysis_enabled;
 extern int rpi_encode_yuv_c__nal_dump;
@@ -78,11 +78,11 @@ static void y420p_handler(Instance *pi, void *msg)
       priv->video_framerate = y420p->c.fps_numerator/y420p->c.fps_denominator;
     }
     encode_init(&priv->ctx,
-		priv->video_width,
-		priv->video_height,
-		priv->video_framerate,
-		priv->gop_seconds,
-		priv->video_bitrate);
+                priv->video_width,
+                priv->video_height,
+                priv->video_framerate,
+                priv->gop_seconds,
+                priv->video_bitrate);
     priv->initialized = 1;
   }
 
@@ -92,11 +92,11 @@ static void y420p_handler(Instance *pi, void *msg)
   int y_size, u_size, v_size;
   rpi_get_sizes(priv->ctx, &y_size, &u_size, &v_size);
   do_frame_io(priv->ctx,
-	      y420p->y, y_size,
-	      y420p->cb, u_size,
-	      y420p->cr, v_size,
-	      &output, &output_size,
-	      &keyframe);
+              y420p->y, y_size,
+              y420p->cb, u_size,
+              y420p->cr, v_size,
+              &output, &output_size,
+              &keyframe);
 
   if (output) {
     if (pi->outputs[OUTPUT_H264].destination) {
@@ -110,11 +110,11 @@ static void y420p_handler(Instance *pi, void *msg)
   /* Try a second call to flush output buffer. */
   output = NULL;
   do_frame_io(priv->ctx,
-	      NULL, 0,
-	      NULL, 0,
-	      NULL, 0,
-	      &output, &output_size,
-	      &keyframe);
+              NULL, 0,
+              NULL, 0,
+              NULL, 0,
+              &output, &output_size,
+              &keyframe);
 
   if (output) {
     dpf("%s: do_frame_io second call got output\n", __func__);

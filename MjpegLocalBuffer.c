@@ -3,9 +3,9 @@
  * or passes them to an MjpegMux instance, which should either save or
  * forward.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "MjpegLocalBuffer.h"
@@ -65,7 +65,7 @@ static void check_record_state(MjpegLocalBuffer_private *priv)
     if (tnow > priv->record_until) {
       priv->recording = 0;
       fprintf(stderr, "md recording OFF (%.3f > %.3f)\n",
-	      tnow, priv->record_until);
+              tnow, priv->record_until);
     }
   }
 }
@@ -89,8 +89,8 @@ static void MotionDetect_handler(Instance *pi, void *data)
     if (!priv->recording) {
       priv->recording = 1;
       if (pi->outputs[OUTPUT_CONFIG].destination) {
-	/* Start new output. */
-	PostData(Config_buffer_new("restart", "1"), pi->outputs[OUTPUT_CONFIG].destination);
+        /* Start new output. */
+        PostData(Config_buffer_new("restart", "1"), pi->outputs[OUTPUT_CONFIG].destination);
       }
     }
   }

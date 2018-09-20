@@ -10,12 +10,12 @@
  *   http://mewiki.project357.com/wiki/X264_Settings
  *
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <inttypes.h>		/* PRIu32 */
-#include <math.h>		/* round */
-#include <unistd.h>		/* sleep */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <inttypes.h>           /* PRIu32 */
+#include <math.h>               /* round */
+#include <unistd.h>             /* sleep */
 
 #ifndef __tune_pentium4__
 
@@ -49,7 +49,7 @@ typedef struct {
   Instance i;
   int pts;
   x264_t *encoder;
-  Sink *output_sink;		/* Side channel. */
+  Sink *output_sink;            /* Side channel. */
 
   /* These next few values should point to x264_preset_*[] from x264.h */
   const char * preset;
@@ -65,10 +65,10 @@ typedef struct {
 
   int cqp;
   int crf;
-  int keyint_max;		/* Generate a keyframe after this many input frames. */
+  int keyint_max;               /* Generate a keyframe after this many input frames. */
 
   int processed_frames;
-  int max_frames;		/* exit after this many frames if set */
+  int max_frames;               /* exit after this many frames if set */
 } H264_private;
 
 
@@ -358,12 +358,12 @@ static void YUV420P_handler(Instance *pi, void *msg)
     for (i=0; i < pi_nal; i++) {
       //printf
       dpf
-	("  nal[%d]: priority %s, type %s, startcode=%d, payloadsize=%d,\n",
-	     i,
-	     nal_priority_e_str(nal[i].i_ref_idc),
-	     nal_unit_type_e_str(nal[i].i_type),
-	     nal[i].b_long_startcode,
-	     nal[i].i_payload);
+        ("  nal[%d]: priority %s, type %s, startcode=%d, payloadsize=%d,\n",
+             i,
+             nal_priority_e_str(nal[i].i_ref_idc),
+             nal_unit_type_e_str(nal[i].i_type),
+             nal[i].b_long_startcode,
+             nal[i].i_payload);
     }
 
     //printf("\n");
@@ -374,11 +374,11 @@ static void YUV420P_handler(Instance *pi, void *msg)
 
     if (0) {
       for (i=0; i < frame_size && i < 64;) {
-	printf(" %02x", nal[0].p_payload[i]);
-	i++;
-	if (i % 16 == 0) {
-	  printf("\n");
-	}
+        printf(" %02x", nal[0].p_payload[i]);
+        i++;
+        if (i % 16 == 0) {
+          printf("\n");
+        }
       }
       printf("\n");
     }

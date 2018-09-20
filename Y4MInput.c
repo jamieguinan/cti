@@ -2,11 +2,11 @@
  * YUV4MPEG[2] input.  Reads a file or network stream and feeds
  # the output to other instances.
  */
-#include <string.h>		/* memcpy */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* free */
-#include <math.h>		/* modf */
-#include <unistd.h>		/* sleep */
+#include <string.h>             /* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* free */
+#include <math.h>               /* modf */
+#include <unistd.h>             /* sleep */
 
 #include "CTI.h"
 #include "Images.h"
@@ -41,7 +41,7 @@ typedef struct {
   int needData;
   int max_chunk_size;
 
-  int enable;			/* Set this to start processing. */
+  int enable;                   /* Set this to start processing. */
 
   struct {
     int eoh;
@@ -62,7 +62,7 @@ typedef struct {
   int retry;
   int synchronous;
 
-  int max_frames;		/* Stop after max_frames if set. */
+  int max_frames;               /* Stop after max_frames if set. */
 } Y4MInput_private;
 
 
@@ -212,13 +212,13 @@ static void Y4MInput_tick(Instance *pi)
 
     if (soh != 0 || eoh == -1) {
       if (priv->chunk->len > priv->max_chunk_size) {
-	fprintf(stderr, "%s: header size too big, bogus data??\n", __func__);
-	priv->enable = 0;
+        fprintf(stderr, "%s: header size too big, bogus data??\n", __func__);
+        priv->enable = 0;
       }
       else {
-	/* Need more data, will get it on next call. */
-	dpf("%s needData = 1\n", __func__);
-	priv->needData = 1;
+        /* Need more data, will get it on next call. */
+        dpf("%s needData = 1\n", __func__);
+        priv->needData = 1;
       }
       return;
     }
@@ -232,7 +232,7 @@ static void Y4MInput_tick(Instance *pi)
     for (i=0; i < String_list_len(ls); i++) {
       String *t = String_list_get(ls, i);
       if (String_is_none(t)) {
-	continue;
+        continue;
       }
 
       int width;
@@ -253,38 +253,38 @@ static void Y4MInput_tick(Instance *pi)
       //int interlacing_set = 0;
 
       if (sscanf(t->bytes, "W%d", &width) == 1) {
-	printf("width %d\n", width);
-	priv->current.width = width;
+        printf("width %d\n", width);
+        priv->current.width = width;
       }
       else if (sscanf(t->bytes, "H%d", &height) == 1) {
-	printf("height %d\n", height);
-	priv->current.height = height;
+        printf("height %d\n", height);
+        priv->current.height = height;
       }
       else if (sscanf(t->bytes, "C%32s", chroma_subsamping) == 1) {
-	printf("chroma subsampling %s\n", chroma_subsamping);
+        printf("chroma subsampling %s\n", chroma_subsamping);
       }
       else if (sscanf(t->bytes, "I%c", &interlacing) == 1) {
-	printf("interlacing I%c\n", interlacing);
-	switch (interlacing) {
-	case 't': priv->video_common.interlace_mode = IMAGE_INTERLACE_TOP_FIRST; break;
-	case 'b': priv->video_common.interlace_mode = IMAGE_INTERLACE_BOTTOM_FIRST; break;
-	case 'm': priv->video_common.interlace_mode = IMAGE_INTERLACE_MIXEDMODE; break;
-	case 'p':
-	default:
-	  priv->video_common.interlace_mode = IMAGE_INTERLACE_NONE; break;
-	}
+        printf("interlacing I%c\n", interlacing);
+        switch (interlacing) {
+        case 't': priv->video_common.interlace_mode = IMAGE_INTERLACE_TOP_FIRST; break;
+        case 'b': priv->video_common.interlace_mode = IMAGE_INTERLACE_BOTTOM_FIRST; break;
+        case 'm': priv->video_common.interlace_mode = IMAGE_INTERLACE_MIXEDMODE; break;
+        case 'p':
+        default:
+          priv->video_common.interlace_mode = IMAGE_INTERLACE_NONE; break;
+        }
       }
       else if (sscanf(t->bytes, "F%d:%d", &frame_numerator, &frame_denominator) == 2) {
-	priv->video_common.nominal_period = (1.0*frame_denominator/frame_numerator);
-	priv->video_common.fps_numerator = frame_numerator;
-	priv->video_common.fps_denominator = frame_denominator;
-	printf("frame rate %d:%d (%.5f period)\n",
-	       priv->video_common.fps_numerator,
-	       priv->video_common.fps_denominator,
-	       priv->video_common.nominal_period);
+        priv->video_common.nominal_period = (1.0*frame_denominator/frame_numerator);
+        priv->video_common.fps_numerator = frame_numerator;
+        priv->video_common.fps_denominator = frame_denominator;
+        printf("frame rate %d:%d (%.5f period)\n",
+               priv->video_common.fps_numerator,
+               priv->video_common.fps_denominator,
+               priv->video_common.nominal_period);
       }
       else if (sscanf(t->bytes, "A%d:%d", &aspect_numerator, &aspect_denominator) == 2) {
-	printf("aspect %d:%d\n", aspect_numerator, aspect_denominator);
+        printf("aspect %d:%d\n", aspect_numerator, aspect_denominator);
       }
       // else if (sscanf(t->bytes, "X%s", metadata) == 1) { }
     }
@@ -341,8 +341,8 @@ static void Y4MInput_tick(Instance *pi)
     cti_getdoubletime(&priv->video_common.timestamp);
 
     YUV420P_buffer * yuv = YUV420P_buffer_from(priv->chunk->data+eol+1,
-					       priv->current.width, priv->current.height,
-					       &priv->video_common);
+                                               priv->current.width, priv->current.height,
+                                               &priv->video_common);
 
     dpf("%s posting data\n", __func__);
 

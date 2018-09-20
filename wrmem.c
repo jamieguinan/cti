@@ -19,7 +19,7 @@
  * an ordinary stdio stream.
  */
 
-#include "cdjpeg.h"		/* Common decls for cjpeg/djpeg applications */
+#include "cdjpeg.h"             /* Common decls for cjpeg/djpeg applications */
 
 #include "wrmem.h"
 
@@ -44,11 +44,11 @@
 #define PPM_MAXVAL 255
 #else
 /* The word-per-sample format always puts the MSB first. */
-#define PUTPPMSAMPLE(ptr,v)			\
-	{ register int val_ = v;		\
-	  *ptr++ = (char) ((val_ >> 8) & 0xFF);	\
-	  *ptr++ = (char) (val_ & 0xFF);	\
-	}
+#define PUTPPMSAMPLE(ptr,v)                     \
+        { register int val_ = v;                \
+          *ptr++ = (char) ((val_ >> 8) & 0xFF); \
+          *ptr++ = (char) (val_ & 0xFF);        \
+        }
 #define BYTESPERSAMPLE 2
 #define PPM_MAXVAL ((1<<BITS_IN_JSAMPLE)-1)
 #endif
@@ -69,13 +69,13 @@
 /* Private version of data destination object */
 
 typedef struct {
-  struct djpeg_dest_struct pub;	/* public fields */
+  struct djpeg_dest_struct pub; /* public fields */
 
   /* Usually these two pointers point to the same place: */
-  char *iobuffer;		/* fwrite's I/O buffer */
-  JSAMPROW pixrow;		/* decompressor output buffer */
-  size_t buffer_width;		/* width of I/O buffer */
-  JDIMENSION samples_per_row;	/* JSAMPLEs per output row */
+  char *iobuffer;               /* fwrite's I/O buffer */
+  JSAMPROW pixrow;              /* decompressor output buffer */
+  size_t buffer_width;          /* width of I/O buffer */
+  JDIMENSION samples_per_row;   /* JSAMPLEs per output row */
 
   JOCTET *output_buffer;
   int output_length;
@@ -109,7 +109,7 @@ static void dest_output(mem_dest_ptr dest)
 
 METHODDEF(void)
 put_pixel_rows (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
-		JDIMENSION rows_supplied)
+                JDIMENSION rows_supplied)
 {
   mem_dest_ptr dest = (mem_dest_ptr) dinfo;
 
@@ -124,7 +124,7 @@ put_pixel_rows (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
 
 METHODDEF(void)
 copy_pixel_rows (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
-		 JDIMENSION rows_supplied)
+                 JDIMENSION rows_supplied)
 {
   mem_dest_ptr dest = (mem_dest_ptr) dinfo;
   register char * bufferptr;
@@ -148,7 +148,7 @@ copy_pixel_rows (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
 
 METHODDEF(void)
 put_demapped_rgb (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
-		  JDIMENSION rows_supplied)
+                  JDIMENSION rows_supplied)
 {
   mem_dest_ptr dest = (mem_dest_ptr) dinfo;
   register char * bufferptr;
@@ -174,7 +174,7 @@ put_demapped_rgb (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
 
 METHODDEF(void)
 put_demapped_gray (j_decompress_ptr cinfo, djpeg_dest_ptr dinfo,
-		   JDIMENSION rows_supplied)
+                   JDIMENSION rows_supplied)
 {
   mem_dest_ptr dest = (mem_dest_ptr) dinfo;
   register char * bufferptr;
@@ -218,7 +218,7 @@ jinit_write_mem (j_decompress_ptr cinfo, JOCTET *buffer, int buffer_length)
   /* Create module interface object, fill in method pointers */
   dest = (mem_dest_ptr)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-				  SIZEOF(mem_dest_struct));
+                                  SIZEOF(mem_dest_struct));
   dest->pub.start_output = start_output_mem;
   dest->pub.finish_output = finish_output_mem;
 

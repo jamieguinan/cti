@@ -2,9 +2,9 @@
  * Compose input images into output images.
  */
 
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Compositor.h"
@@ -71,9 +71,9 @@ static int set_size(Instance *pi, const char *value)
   Compositor_private *priv = (Compositor_private *)pi;
   int rc = 0;
   int n = sscanf(value, "%dx%d"
-		 , &priv->size.width
-		 , &priv->size.height
-		 );
+                 , &priv->size.width
+                 , &priv->size.height
+                 );
   if (n != 2) {
     fprintf(stderr, "bad size specifier\n");
     rc = 1;
@@ -115,17 +115,17 @@ static int set_paste(Instance *pi, const char *value)
   Compositor_private *priv = (Compositor_private *)pi;
   PasteOp * p = Mem_calloc(1, sizeof(*p));
   int rc = 0;
-  char * label = NULL;		/* Allocated by sscanf() */
+  char * label = NULL;          /* Allocated by sscanf() */
   int n = sscanf(value, "%m[A-Za-z0-9]:%d,%d,%d,%d:%d,%d:%d"
-		 , &label
-		 , &p->src.x
-		 , &p->src.y
-		 , &p->src.w
-		 , &p->src.h
-		 , &p->dest.x
-		 , &p->dest.y
-		 , &p->rotation
-		 );
+                 , &label
+                 , &p->src.x
+                 , &p->src.y
+                 , &p->src.w
+                 , &p->src.h
+                 , &p->dest.x
+                 , &p->dest.y
+                 , &p->rotation
+                 );
   if ((n != 8)
       || (p->src.x % 2 != 0)
       || (p->src.y % 2 != 0)
@@ -171,31 +171,31 @@ static void Config_handler(Instance *pi, void *data)
 #define PLANE_PASTE_DEBUG 0
 
 static void plane_paste(uint8_t * src, int src_w, int src_h,
-			uint8_t * dest, int dest_w, int dest_h,
-			PasteOp * p)
+                        uint8_t * dest, int dest_w, int dest_h,
+                        PasteOp * p)
 {
   /* Handles cases where source rect exceeds boundaries of source image.
      Copy and rotate are done in a single operation. */
 
 #if PLANE_PASTE_DEBUG
   fprintf(stderr, "%s:%s pasteOp@%p src={%d,%d %d,%d} dest={%d,%d} rotation=%d\n"
-	  , __FILE__
-	  , __func__
-	  , p
-	  , p->src.x
-	  , p->src.y
-	  , p->src.w
-	  , p->src.h
-	  , p->dest.x
-	  , p->dest.y
-	  , p->rotation);
+          , __FILE__
+          , __func__
+          , p
+          , p->src.x
+          , p->src.y
+          , p->src.w
+          , p->src.h
+          , p->dest.x
+          , p->dest.y
+          , p->rotation);
 #endif
   uint8_t * psrc=NULL;
   uint8_t * pdest=NULL;
   PasteOp op = *p;  /* Use a local copy of the operation, so it can be modified. */
   int x, y;
   int x_count, y_count;
-  const int d_src_x=1;	/* same for all rotations */
+  const int d_src_x=1;  /* same for all rotations */
   const int d_src_y = (src_w);
   int d_dest_x=0, d_dest_y=0;
 
@@ -317,8 +317,8 @@ static void check_list(Instance *pi)
     for (imageIndex = 0; imageIndex < Array_count(priv->yuv420p_images); imageIndex++) {
       YUV420P_buffer * img = Array_get(priv->yuv420p_images, imageIndex);
       if (String_eq(img->c.label, String_list_get(priv->required_labels, labelIndex))) {
-	labelsFound += 1;
-	break;
+        labelsFound += 1;
+        break;
       }
     }
     if (imageIndex == Array_count(priv->yuv420p_images)) {
@@ -342,12 +342,12 @@ static void check_list(Instance *pi)
     for (imageIndex = 0; imageIndex < Array_count(priv->yuv420p_images); imageIndex++) {
       YUV420P_buffer * img = Array_get(priv->yuv420p_images, imageIndex);
       if (String_eq(p->label, img->c.label)) {
-	/* Apply operation. */
-	yuv420_paste(img, outimg, p);
-	/* Update common info. */
-	if (outimg->c.timestamp < img->c.timestamp) { outimg->c.timestamp = img->c.timestamp; }
-	if (outimg->c.nominal_period < img->c.nominal_period) { outimg->c.nominal_period = img->c.nominal_period; }
-	break;
+        /* Apply operation. */
+        yuv420_paste(img, outimg, p);
+        /* Update common info. */
+        if (outimg->c.timestamp < img->c.timestamp) { outimg->c.timestamp = img->c.timestamp; }
+        if (outimg->c.nominal_period < img->c.nominal_period) { outimg->c.nominal_period = img->c.nominal_period; }
+        break;
       }
     }
   }

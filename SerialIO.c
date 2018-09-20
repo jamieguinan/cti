@@ -1,7 +1,7 @@
 /* Serial port module. Some code comes from my 2001 "pv-dv400" project. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 #include <sys/types.h>          /* open */
 #include <sys/stat.h>           /* open */
 #include <fcntl.h>              /* open */

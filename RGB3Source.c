@@ -1,8 +1,8 @@
 /* Provide a single, possible blank, RGB3 buffer repeatedly, for
    animation or other purposes. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "RGB3Source.h"
@@ -29,7 +29,7 @@ typedef struct {
   int width;
   int height;
   unsigned long color;
-  int period_ms;	/* Frame repeat period. */
+  int period_ms;        /* Frame repeat period. */
   RGB3_buffer *rgb3;
   int enable;
 } RGB3Source_private;

@@ -2,10 +2,10 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
-#include <unistd.h>		/* close, fcntl */
+#include <unistd.h>             /* close, fcntl */
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <fcntl.h>		/* fcntl */
+#include <fcntl.h>              /* fcntl */
 
 
 #include "socket_common.h"

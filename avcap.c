@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>		/* sleep */
+#include <unistd.h>             /* sleep */
 #include <sys/time.h>
 #include <string.h>
 #define streq(a, b) (strcmp(a, b) == 0 ? 1 : 0)
@@ -135,14 +135,14 @@ int main(int argc, char *argv[])
       system("amixer sset Capture 25%,25% cap");
 
       if (streq(mode, "vcr")) {
-	/* Insert a half-width scaler. */
-	Instance *hw = Instantiate("HalfWidth");
-	Connect(vc, "YUV422P_buffer", hw);
-	Connect(hw, "YUV422P_buffer", cj);
-	Instance_loop_thread(hw);
+        /* Insert a half-width scaler. */
+        Instance *hw = Instantiate("HalfWidth");
+        Connect(vc, "YUV422P_buffer", hw);
+        Connect(hw, "YUV422P_buffer", cj);
+        Instance_loop_thread(hw);
       }
       else { /* wii */
-	Connect(vc, "YUV422P_buffer", cj);
+        Connect(vc, "YUV422P_buffer", cj);
       }
 
       SetConfig(vc, "size", "704x480");
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
       abort();
     }
     else if (streq(buffer, "e")) {
-      Mem_free((void*)12345);	/* Unlikely to be an allocated address... */
+      Mem_free((void*)12345);   /* Unlikely to be an allocated address... */
     }
     else if (streq(buffer, "l")) {
       Log_dump();
@@ -271,23 +271,23 @@ int main(int argc, char *argv[])
     else {
       n = sscanf(buffer, "%s %s", arg1, arg2);
       if (n == 2 && streq(arg1, "b")) {
-	SetConfig(vc, "brightness", arg2);
+        SetConfig(vc, "brightness", arg2);
       }
       else if (n == 2 && streq(arg1, "s")) {
-	SetConfig(vc, "saturation", arg2);
+        SetConfig(vc, "saturation", arg2);
       }
       else if (n == 2 && streq(arg1, "c")) {
-	SetConfig(vc, "contrast", arg2);
+        SetConfig(vc, "contrast", arg2);
       }
       else if (n == 2 && streq(arg1, "ae")) {
-	SetConfig(vc, "autoexpose", arg2);
+        SetConfig(vc, "autoexpose", arg2);
       }
       else if (n == 2 && streq(arg1, "e")) {
-	SetConfig(vc, "exposure", arg2);
+        SetConfig(vc, "exposure", arg2);
       }
       else if (n == 2) {
-	/* This should look up the named parameter and try to set it. */
-	SetConfig(vc, arg1, arg2);
+        /* This should look up the named parameter and try to set it. */
+        SetConfig(vc, arg1, arg2);
       }
     }
   }

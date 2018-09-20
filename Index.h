@@ -5,7 +5,7 @@
  * kinds are allowed, values are always "void *".  Values are treated
  * as opaque, caller must free.
  */
-#include <stdint.h>		/* uint32_t */
+#include <stdint.h>             /* uint32_t */
 
 #include "String.h"
 
@@ -21,14 +21,14 @@ typedef struct _index_node {
   String * stringKey;
   void * voidKey;
 
-  uint32_t key;			/* hash-generated numeric key for searching */
+  uint32_t key;                 /* hash-generated numeric key for searching */
 
   void * value;
 } Index_node;
 
 
 typedef struct {
-  struct _index_node * _nodes;			/* storage for key/value pairs */
+  struct _index_node * _nodes;                  /* storage for key/value pairs */
   int count;
 } Index;
 

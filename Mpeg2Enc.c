@@ -1,6 +1,6 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 #include "CTI.h"
 #include "String.h"
 #include "Images.h"
@@ -23,7 +23,7 @@ static Output Mpeg2Enc_outputs[] = {
 typedef struct {
   Instance i;
   String *vout;
-  FILE *po;			/* File or pipe output... */
+  FILE *po;                     /* File or pipe output... */
   int header_sent;
 } Mpeg2Enc_private;
 
@@ -106,9 +106,9 @@ static void Y422p_handler(Instance *pi, void *msg)
      *   C422: 4:2:2 chroma subsampling
      */
     fprintf(priv->po, "YUV4MPEG2 W%d H%d F30000:1001 A10:11 It C422\n",
-	    y422p_in->width,
-	    y422p_in->height
-	    );
+            y422p_in->width,
+            y422p_in->height
+            );
     priv->header_sent = 1;
   }
 

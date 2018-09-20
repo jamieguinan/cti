@@ -21,10 +21,10 @@ typedef enum {
   IMAGE_TYPE_JPEG,
   IMAGE_TYPE_PGM,
   IMAGE_TYPE_PPM,
-  IMAGE_TYPE_YUV420P,		/* decompressed iPhone Jpegs */
-  IMAGE_TYPE_YUV422P,		/* raw dumps from V4L2Capture module, some decompressed Jpegs */
+  IMAGE_TYPE_YUV420P,           /* decompressed iPhone Jpegs */
+  IMAGE_TYPE_YUV422P,           /* raw dumps from V4L2Capture module, some decompressed Jpegs */
   IMAGE_TYPE_O511,
-  IMAGE_TYPE_H264,		/* One unit of compressor output */
+  IMAGE_TYPE_H264,              /* One unit of compressor output */
   AUDIO_TYPE_AAC,
 } ImageType;
 
@@ -46,9 +46,9 @@ typedef struct {
   uint32_t fps_denominator;
   double nominal_period;
   int interlace_mode;
-  int eof;			/* EOF marker. */
+  int eof;                      /* EOF marker. */
   LockedRef ref;
-  String * label;		/* Optional source label. */
+  String * label;               /* Optional source label. */
 } Image_common;
 
 
@@ -158,9 +158,9 @@ typedef struct {
   int width;
   int height;
   uint8_t *data;
-  unsigned long data_length;	  /* Provisional. */
-  unsigned long encoded_length;	  /* Actual encoded jpeg size. */
-  int has_huffman_tables;	  /* Set by Jpeg_fix(). */
+  unsigned long data_length;      /* Provisional. */
+  unsigned long encoded_length;   /* Actual encoded jpeg size. */
+  int has_huffman_tables;         /* Set by Jpeg_fix(). */
 
   Image_common c;
 } Jpeg_buffer;
@@ -172,8 +172,8 @@ typedef struct {
   int width;
   int height;
   uint8_t *data;
-  unsigned long data_length;		/* Provisional. */
-  unsigned long encoded_length;		/* Actual encoded size. */
+  unsigned long data_length;            /* Provisional. */
+  unsigned long encoded_length;         /* Actual encoded size. */
 
   Image_common c;
 } O511_buffer;
@@ -184,11 +184,11 @@ typedef struct {
   MemObject mo;
   int width;
   int height;
-  uint8_t *data;		/* NAL unit data (may include several) */
-  int data_length;		/* Provisional. */
-  int encoded_length;		/* Actual encoded size. */
+  uint8_t *data;                /* NAL unit data (may include several) */
+  int data_length;              /* Provisional. */
+  int encoded_length;           /* Actual encoded size. */
 
-  int keyframe;			/* IDR keyframe present */
+  int keyframe;                 /* IDR keyframe present */
 
   Image_common c;
 } H264_buffer;

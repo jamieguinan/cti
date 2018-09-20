@@ -8,7 +8,7 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>		/* calloc, free */
+#include <stdlib.h>             /* calloc, free */
 #include "Images.h"
 #include "Audio.h"
 #include "ArrayU8.h"
@@ -56,7 +56,7 @@ Gray_buffer *Gray_buffer_new(int width, int height, Image_common *c)
   gray->width = width;
   gray->height = height;
   gray->data_length = width * height;
-  gray->data = Mem_calloc(1, gray->data_length); 	/* Caller must fill in data! */
+  gray->data = Mem_calloc(1, gray->data_length);        /* Caller must fill in data! */
   return gray;
 }
 
@@ -86,13 +86,13 @@ Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c)
     if (!x) {
       n = sscanf((char*)a->data+i, "%d %d", &x, &y);
       if (n == 2) {
-	printf("%dx%d\n", x, y);
+        printf("%dx%d\n", x, y);
       }
     }
     else {
       n = sscanf((char*)a->data+i, "%d", &maxval);
       if (n == 1) {
-	printf("%d\n", maxval);
+        printf("%d\n", maxval);
       }
     }
 
@@ -104,7 +104,7 @@ Gray_buffer *PGM_buffer_from(uint8_t *data, int len, Image_common *c)
     i = j+1;
   }
 
-  j += 1;			/* skip newline */
+  j += 1;                       /* skip newline */
 
   fprintf(stderr, "PGM: %dx%d %d expected %d found\n", x, y, x*y, len - j);
   if (x*y == len-j) {
@@ -142,13 +142,13 @@ RGB3_buffer * PPM_buffer_from(uint8_t *data, int len, Image_common *c)
     if (!x) {
       n = sscanf((char*)a->data+i, "%d %d", &x, &y);
       if (n == 2) {
-	printf("%dx%d\n", x, y);
+        printf("%dx%d\n", x, y);
       }
     }
     else {
       n = sscanf((char*)a->data+i, "%d", &maxval);
       if (n == 1) {
-	printf("%d\n", maxval);
+        printf("%d\n", maxval);
       }
     }
 
@@ -160,7 +160,7 @@ RGB3_buffer * PPM_buffer_from(uint8_t *data, int len, Image_common *c)
     i = j+1;
   }
 
-  j += 1;			/* skip newline */
+  j += 1;                       /* skip newline */
 
   fprintf(stderr, "PPM: %dx%d %d expected %d found\n", x, y, x*y*3, len - j);
   if (x*y*3 == len-j) {
@@ -199,7 +199,7 @@ Gray32_buffer *Gray32_buffer_new(int width, int height, Image_common *c)
   gray32->width = width;
   gray32->height = height;
   gray32->data_length = width * height;
-  gray32->data = Mem_calloc(1, sizeof(*gray32->data) * gray32->data_length); 	/* Caller must fill in data! */
+  gray32->data = Mem_calloc(1, sizeof(*gray32->data) * gray32->data_length);    /* Caller must fill in data! */
   return gray32;
 }
 
@@ -221,7 +221,7 @@ RGB3_buffer *RGB3_buffer_new(int width, int height, Image_common *c)
   rgb->width = width;
   rgb->height = height;
   rgb->data_length = width * height * 3;
-  rgb->data = Mem_calloc(1, rgb->data_length); 	/* Caller must fill in data! */
+  rgb->data = Mem_calloc(1, rgb->data_length);  /* Caller must fill in data! */
   LockedRef_init(&rgb->c.ref);
   return rgb;
 }
@@ -285,13 +285,13 @@ void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int heigh
     uint8_t *p = rgba;
     for (y=0; y < height; y++) {
       for (x=0; x < width; x++) {
-	uint8_t data[3];
-	data[0] = p[0];
-	data[1] = p[1];
-	data[2] = p[2];
-	if (fwrite(data, 3, 1, f) != 1) { perror("fwrite"); }
-	if (fwrite(p+3, 1, 1, g) != 1) { perror("fwrite"); }
-	p += 4;
+        uint8_t data[3];
+        data[0] = p[0];
+        data[1] = p[1];
+        data[2] = p[2];
+        if (fwrite(data, 3, 1, f) != 1) { perror("fwrite"); }
+        if (fwrite(p+3, 1, 1, g) != 1) { perror("fwrite"); }
+        p += 4;
       }
     }
     fclose(g);
@@ -299,9 +299,9 @@ void RGB_buffer_merge_rgba(RGB3_buffer *rgb, uint8_t *rgba, int width, int heigh
   }
 
   dpf("%d pixels copied (%d,%d) to (%d,%d)\n",
-	   copied,
-	   offsetx, offsety,
-	   x, y);
+           copied,
+           offsetx, offsety,
+           x, y);
 }
 
 
@@ -327,7 +327,7 @@ BGR3_buffer *BGR3_buffer_new(int width, int height, Image_common *c)
   bgr->width = width;
   bgr->height = height;
   bgr->data_length = width * height * 3;
-  bgr->data = Mem_calloc(1, bgr->data_length); 	/* Caller must fill in data! */
+  bgr->data = Mem_calloc(1, bgr->data_length);  /* Caller must fill in data! */
   LockedRef_init(&bgr->c.ref);
   return bgr;
 }
@@ -487,10 +487,10 @@ static void YUV422P_to_xGx(YUV422P_buffer *yuv422p, RGB3_buffer *rgb, BGR3_buffe
     for (x = 0; x < yuv422p->width; x+=1) {
       /* FIXME: Should use averaging, or something... */
       if (x % 2 == 0) {
-	pCr++;
-	pCb++;
-	Cr = *pCr;
-	Cb = *pCb;
+        pCr++;
+        pCb++;
+        Cr = *pCr;
+        Cb = *pCb;
       }
 
       Y = *pY;
@@ -503,17 +503,17 @@ static void YUV422P_to_xGx(YUV422P_buffer *yuv422p, RGB3_buffer *rgb, BGR3_buffe
       if (B > 255) { B = 255; } else if (B < 0) { B = 0; }
 
       if (prgb) {
-	prgb[0] = R;
-	prgb[1] = G;
-	prgb[2] = B;
-	prgb += 3;
+        prgb[0] = R;
+        prgb[1] = G;
+        prgb[2] = B;
+        prgb += 3;
       }
 
       if (pbgr) {
-	pbgr[0] = B;
-	pbgr[1] = G;
-	pbgr[2] = R;
-	pbgr += 3;
+        pbgr[0] = B;
+        pbgr[1] = G;
+        pbgr[2] = R;
+        pbgr += 3;
       }
       pY++;
     }
@@ -553,10 +553,10 @@ static void YUV420P_to_xGx(YUV420P_buffer *yuv420p, RGB3_buffer *rgb, BGR3_buffe
     for (x = 0; x < yuv420p->width; x+=1) {
       /* FIXME: Should use averaging, or something... */
       if (x % 2 == 0) {
-	Cr = *pCr;
-	Cb = *pCb;
-	pCr++;
-	pCb++;
+        Cr = *pCr;
+        Cb = *pCb;
+        pCr++;
+        pCb++;
       }
 
       Y = *pY;
@@ -569,17 +569,17 @@ static void YUV420P_to_xGx(YUV420P_buffer *yuv420p, RGB3_buffer *rgb, BGR3_buffe
       if (B > 255) { B = 255; } else if (B < 0) { B = 0; }
 
       if (prgb) {
-	prgb[0] = R;
-	prgb[1] = G;
-	prgb[2] = B;
-	prgb += 3;
+        prgb[0] = R;
+        prgb[1] = G;
+        prgb[2] = B;
+        prgb += 3;
       }
 
       if (pbgr) {
-	pbgr[0] = B;
-	pbgr[1] = G;
-	pbgr[2] = R;
-	pbgr += 3;
+        pbgr[0] = B;
+        pbgr[1] = G;
+        pbgr[2] = R;
+        pbgr += 3;
       }
       pY++;
     }
@@ -645,10 +645,10 @@ YUV422P_buffer *RGB3_to_YUV422P(RGB3_buffer *rgb)
       *pY = Y;
 
       if (x % 2 == 0) {
-	*pCb = _min((B - Y)*0.565 + 128, 255);
-	*pCr = _min((R - Y)*0.713 + 128, 255);
-	pCr++;
-	pCb++;
+        *pCb = _min((B - Y)*0.565 + 128, 255);
+        *pCr = _min((R - Y)*0.713 + 128, 255);
+        pCr++;
+        pCb++;
       }
 
       p += 3;
@@ -686,15 +686,15 @@ YUV420P_buffer *RGB3_to_YUV420P(RGB3_buffer *rgb)
       *pY = Y;
 
       if (x % 2 == 0 && y % 2 == 0) {
-	*pCb = _min((B - Y)*0.565 + 128, 255);
-	*pCr = _min((R - Y)*0.713 + 128, 255);
-	pCr++;
-	pCb++;
+        *pCb = _min((B - Y)*0.565 + 128, 255);
+        *pCr = _min((R - Y)*0.713 + 128, 255);
+        pCr++;
+        pCb++;
       }
       else {
-	/* FIXME: Store RGB, and average them with the subsequent set
-	   of values in the "if" case above.  Maybe swap the if/else
-	   bodies, too. */
+        /* FIXME: Store RGB, and average them with the subsequent set
+           of values in the "if" case above.  Maybe swap the if/else
+           bodies, too. */
       }
 
       p += 3;
@@ -732,10 +732,10 @@ YUV422P_buffer *BGR3_toYUV422P(BGR3_buffer *bgr)
       *pY = Y;
 
       if (x % 2 == 0) {
-	*pCb = _min((B - Y)*0.565 + 128, 255);
-	*pCr = _min((R - Y)*0.713 + 128, 255);
-	pCr++;
-	pCb++;
+        *pCb = _min((B - Y)*0.565 + 128, 255);
+        *pCr = _min((R - Y)*0.713 + 128, 255);
+        pCr++;
+        pCb++;
       }
 
       p += 3;
@@ -766,7 +766,7 @@ YUV420P_buffer * YUV420P_buffer_new(int width, int height, Image_common *c)
 
   /* One data allocation, component pointers are set within it. */
   yuv420p->data = Mem_calloc(1, yuv420p->y_length + yuv420p->cr_length + yuv420p->cb_length
-			     + (width*3*16));  // [1]
+                             + (width*3*16));  // [1]
 
   yuv420p->y = yuv420p->data;
   yuv420p->cr = yuv420p->data + yuv420p->y_length + (width*16);
@@ -892,8 +892,8 @@ YUV422P_buffer *YUV422P_copy(YUV422P_buffer *yuv422p, int xoffset, int yoffset, 
       *ydst++ = *ysrc++;
 
       if (x % 2 == 0) {
-	*crdst++ = *crsrc++;
-	*cbdst++ = *cbsrc++;
+        *crdst++ = *crsrc++;
+        *cbdst++ = *cbsrc++;
       }
     }
   }
@@ -928,8 +928,8 @@ void YUV422P_paste(YUV422P_buffer *dest, YUV422P_buffer *src, int xoffset, int y
       *ydst++ = *ysrc++;
 
       if (x % 2 == 0) {
-	*crdst++ = *crsrc++;
-	*cbdst++ = *cbsrc++;
+        *crdst++ = *crsrc++;
+        *cbdst++ = *cbsrc++;
       }
     }
   }
@@ -959,8 +959,8 @@ YUV420P_buffer *YUV420P_copy(YUV420P_buffer *yuv420p, int xoffset, int yoffset, 
       *ydst++ = *ysrc++;
 
       if (y % 2 == 0 && x % 2 == 0) {
-	*crdst++ = *crsrc++;
-	*cbdst++ = *cbsrc++;
+        *crdst++ = *crsrc++;
+        *cbdst++ = *cbsrc++;
       }
     }
   }
@@ -1004,7 +1004,7 @@ void Jpeg_buffer_release(Jpeg_buffer *jpeg)
     Image_common_cleanup(&(jpeg->c));
     if (jpeg->data) {
       /* This may be allocated by Jpeg_buffer_new or libjpeg, so use
-	 standard malloc/calloc/free. */
+         standard malloc/calloc/free. */
       free(jpeg->data);
     }
     memset(jpeg, 0, sizeof(*jpeg));

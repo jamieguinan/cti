@@ -1,8 +1,8 @@
 #include "cti_utils.h"
-#include <time.h>		/* nanosleep */
-#include <sys/time.h>		/* gettimeofday */
-#include <string.h>		/* strlen */
-#include <stdio.h>		/* stderr */
+#include <time.h>               /* nanosleep */
+#include <sys/time.h>           /* gettimeofday */
+#include <string.h>             /* strlen */
+#include <stdio.h>              /* stderr */
 
 
 void cti_msleep(unsigned long msecs)

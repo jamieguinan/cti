@@ -1,7 +1,7 @@
 /* I hope this will be cleaner than using blocks with WAV headers. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* malloc */
-#include <string.h>		/* memset */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* malloc */
+#include <string.h>             /* memset */
 #include <inttypes.h>
 
 #include "Audio.h"
@@ -42,7 +42,7 @@ void Audio_buffer_add_samples(Audio_buffer *audio, uint8_t *data, int data_len)
 
   if ((audio->data_length % audio->header.frame_size) != 0) {
     fprintf(stderr, "Audio data_len %" PRIu64 " is not an even number of frames, frame_size=%d\n",
-	    audio->data_length, audio->header.frame_size);
+            audio->data_length, audio->header.frame_size);
     return;
   }
 
@@ -78,19 +78,19 @@ double Audio_buffer_period(Audio_buffer *audio)
 
 
 static uint8_t templateHeader[44] = {
-  'R', 'I', 'F', 'F',		/* RIFF file format chunk id */
-  0,0,0,0,			/* LE32 file length */
-  'W', 'A', 'V', 'E',		/* WAVE chunk id */
-  'f', 'm', 't', ' ',		/* format subchunk id (padded) */
+  'R', 'I', 'F', 'F',           /* RIFF file format chunk id */
+  0,0,0,0,                      /* LE32 file length */
+  'W', 'A', 'V', 'E',           /* WAVE chunk id */
+  'f', 'm', 't', ' ',           /* format subchunk id (padded) */
   0x10, 0x00, 0x00, 0x00,       /* LE32 length of following (sub)chunk data (16) */
-  0x01, 0x00,			/* LE16 Codec ID (WAVE_FORMAT_PCM=1)  */
-  0x00, 0x00,			/* LE16 number of channels */
-  0,0,0,0,			/* LE32 samples per second */
-  0,0,0,0,			/* LE32 bytes per second */
-  0,0,				/* LE16 block alignment */
-  0,0,				/* LE16 bits per sample */
-  'd', 'a', 't', 'a',		/* data subchunk id */
-  0,0,0,0,			/* length of following (sub)chunk data */
+  0x01, 0x00,                   /* LE16 Codec ID (WAVE_FORMAT_PCM=1)  */
+  0x00, 0x00,                   /* LE16 number of channels */
+  0,0,0,0,                      /* LE32 samples per second */
+  0,0,0,0,                      /* LE32 bytes per second */
+  0,0,                          /* LE16 block alignment */
+  0,0,                          /* LE16 bits per sample */
+  'd', 'a', 't', 'a',           /* data subchunk id */
+  0,0,0,0,                      /* length of following (sub)chunk data */
 };
 
 #define FILE_LENGTH_OFFSET 4
@@ -191,16 +191,16 @@ void Wav_buffer_release(Wav_buffer **buffer)
     Mem_free(w);
   }
 
-  *buffer = 0L;			/* Clear buffer in any case. */
+  *buffer = 0L;                 /* Clear buffer in any case. */
 }
 
 
 int Wav_parse_header_values(unsigned char *src_bytes,
-			    int src_length,
-			    uint32_t * rate,
-			    uint16_t * channels,
-			    uint32_t * frame_size,
-			    Audio_type *atype)
+                            int src_length,
+                            uint32_t * rate,
+                            uint16_t * channels,
+                            uint32_t * frame_size,
+                            Audio_type *atype)
 {
   if (src_length < 44) {
     fprintf(stderr, "not even enough data for WAV header!\n");
@@ -257,7 +257,7 @@ Wav_buffer * Wav_buffer_from(unsigned char *src_bytes, int src_length)
 
   if (44+wav_data_length != src_length) {
     fprintf(stderr, "wrong number of source bytes, expected %d got %d)!\n",
-	    44+wav_data_length, src_length);
+            44+wav_data_length, src_length);
     return 0L;
   }
 

@@ -1,7 +1,7 @@
 /* YUV4MPEG2 output streaming. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "SourceSink.h"
@@ -100,11 +100,11 @@ static void YUV422P_handler(Instance *pi, void *data)
       priv->width = y422p_in->width;
       priv->height = y422p_in->height;
       localptr(String, header) = String_sprintf("YUV4MPEG2 W%d H%d C422 I%s F%d:%d A1:1\n",
-	       priv->width,
-	       priv->height,
-	       sl(priv->interlace),
-	       priv->fps_nom,
-	       priv->fps_denom);
+               priv->width,
+               priv->height,
+               sl(priv->interlace),
+               priv->fps_nom,
+               priv->fps_denom);
       Sink_write(priv->sink, s(header), String_len(header));
       priv->state = Y4MOUTPUT_STATE_SENDING_DATA;
     }
@@ -143,10 +143,10 @@ static void YUV420P_handler(Instance *pi, void *data)
       priv->width = y420p->width;
       priv->height = y420p->height;
       localptr(String, header) = String_sprintf("YUV4MPEG2 W%d H%d C420jpeg Ip F%d:%d A1:1\n",
-	       priv->width,
-	       priv->height,
-	       priv->fps_nom,
-	       priv->fps_denom);
+               priv->width,
+               priv->height,
+               priv->fps_nom,
+               priv->fps_denom);
       Sink_write(priv->sink, s(header), String_len(header));
       priv->state = Y4MOUTPUT_STATE_SENDING_DATA;
     }

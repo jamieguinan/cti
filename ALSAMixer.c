@@ -4,10 +4,10 @@
  *   $ amixer | grep Simple
  *
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <alsa/asoundlib.h>	/* ALSA library */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <alsa/asoundlib.h>     /* ALSA library */
 
 #include "CTI.h"
 #include "ALSAMixer.h"
@@ -99,22 +99,22 @@ static int set_volume(Instance *pi, const char *value)
       elem = snd_mixer_find_selem(priv->handle, sid);
 
       if (!elem) {
-	/* Break if not found.  So this should work with single-index
-	   controls, as well as 4-index controls like M66. */
-	break;
+        /* Break if not found.  So this should work with single-index
+           controls, as well as 4-index controls like M66. */
+        break;
       }
 
       if (!snd_mixer_selem_has_playback_volume(elem)) {
-	fprintf(stderr, "playback volume unavailable!\n");
+        fprintf(stderr, "playback volume unavailable!\n");
       }
 
       snd_mixer_selem_get_playback_volume_range(elem, &vmin, &vmax);
       snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_MONO, &vol);
 
       if (vmin <= temp && temp < vmax) {
-	priv->volume = temp;
-	snd_mixer_selem_set_playback_volume(elem, SND_MIXER_SCHN_MONO, temp);
-	printf("volume: %ld -> %d\n", vol, temp);
+        priv->volume = temp;
+        snd_mixer_selem_set_playback_volume(elem, SND_MIXER_SCHN_MONO, temp);
+        printf("volume: %ld -> %d\n", vol, temp);
       }
 
   }
@@ -122,8 +122,8 @@ static int set_volume(Instance *pi, const char *value)
   if (i == 0) {
     /* Warn if no controls matching control_name were found. */
     fprintf(stderr, "unable to find control %s %d\n",
-	    snd_mixer_selem_id_get_name(sid),
-	    snd_mixer_selem_id_get_index(sid));
+            snd_mixer_selem_id_get_name(sid),
+            snd_mixer_selem_id_get_index(sid));
   }
 
   return 0;
@@ -156,8 +156,8 @@ static void get_volume(Instance *pi, Value *value)
 
   if (!elem) {
     fprintf(stderr, "unable to find control %s %d\n",
-	    snd_mixer_selem_id_get_name(sid),
-	    snd_mixer_selem_id_get_index(sid));
+            snd_mixer_selem_id_get_name(sid),
+            snd_mixer_selem_id_get_index(sid));
     return;
   }
 
@@ -197,8 +197,8 @@ static void get_volume_range(Instance *pi, Range *range)
 
   if (!elem) {
     fprintf(stderr, "unable to find control %s %d\n",
-	    snd_mixer_selem_id_get_name(sid),
-	    snd_mixer_selem_id_get_index(sid));
+            snd_mixer_selem_id_get_name(sid),
+            snd_mixer_selem_id_get_index(sid));
     return;
   }
 

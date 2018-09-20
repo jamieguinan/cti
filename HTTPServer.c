@@ -58,10 +58,10 @@
 
   */
 
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <unistd.h>		/* close */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <unistd.h>             /* close */
 
 #include "CTI.h"
 #include "HTTPServer.h"
@@ -84,8 +84,8 @@ static Output HTTPServer_outputs[] = {
 
 typedef struct {
   Instance i;
-  listen_common lsc;		/* listen socket_common */
-  VirtualStorage *vs;		/* virtual storage object */
+  listen_common lsc;            /* listen socket_common */
+  VirtualStorage *vs;           /* virtual storage object */
 } HTTPServer_private;
 
 
@@ -202,11 +202,11 @@ static void * http_thread(void *data)
     if (String_list_len(operation) >= 2) {
       op = String_list_get(operation, 0);
       if (String_eq(op, S("GET"))) {
-	// printf("Looks like a GET request\n");
-	path = String_list_get(operation, 1);
+        // printf("Looks like a GET request\n");
+        path = String_list_get(operation, 1);
       }
       else if (String_eq(op, S("POST"))) {
-	// printf("Looks like a POST request (not handled)\n");
+        // printf("Looks like a POST request (not handled)\n");
       }
     }
   }
@@ -224,19 +224,19 @@ static void * http_thread(void *data)
       "</html>\n"
       ;
     String *result = String_sprintf("HTTP/1.1 400 Bad Request\r\n"
-				    // Date:
-				    // Server:
-				    // Last-modified:
-				    // Etag:
-				    // Accept-Ranges:
-				    "Content-length: %zd\r\n"
-				    "Content-type: %s\r\n"
-				    "\r\n"
-				    "%s",
-				    strlen(text),
-				    "text/html",
-				    text
-				    );
+                                    // Date:
+                                    // Server:
+                                    // Last-modified:
+                                    // Etag:
+                                    // Accept-Ranges:
+                                    "Content-length: %zd\r\n"
+                                    "Content-type: %s\r\n"
+                                    "\r\n"
+                                    "%s",
+                                    strlen(text),
+                                    "text/html",
+                                    text
+                                    );
     Comm_write_from_string_complete(&comm, result);
     String_free(&result);
     goto out;
@@ -254,17 +254,17 @@ static void * http_thread(void *data)
     /* Return 20x code, try sending. */
     do {
       String *hdr = String_sprintf("HTTP/1.1 200 OK\r\n"
-				   // Date:
-				   // Server:
-				   // Last-modified:
-				   // Etag:
-				   // Accept-Ranges:
-				   "Content-length: %ld\r\n"
-				   "Content-type: %s\r\n"
-				   "\r\n",
-				   resource->size,
-				   resource->mime_type
-				   );
+                                   // Date:
+                                   // Server:
+                                   // Last-modified:
+                                   // Etag:
+                                   // Accept-Ranges:
+                                   "Content-length: %ld\r\n"
+                                   "Content-type: %s\r\n"
+                                   "\r\n",
+                                   resource->size,
+                                   resource->mime_type
+                                   );
 
       Comm_write_from_string_complete(&comm, hdr);
       String_free(&hdr);
@@ -289,19 +289,19 @@ static void * http_thread(void *data)
       "</html>\n"
       ;
     String *result = String_sprintf("HTTP/1.1 404 Not Found\r\n"
-				    // Date:
-				    // Server:
-				    // Last-modified:
-				    // Etag:
-				    // Accept-Ranges:
-				    "Content-length: %zd\r\n"
-				    "Content-type: %s\r\n"
-				    "\r\n"
-				    "%s",
-				    strlen(text),
-				    "text/html",
-				    text
-				    );
+                                    // Date:
+                                    // Server:
+                                    // Last-modified:
+                                    // Etag:
+                                    // Accept-Ranges:
+                                    "Content-length: %zd\r\n"
+                                    "Content-type: %s\r\n"
+                                    "\r\n"
+                                    "%s",
+                                    strlen(text),
+                                    "text/html",
+                                    text
+                                    );
     Comm_write_from_string_complete(&comm, result);
     String_free(&result);
   }
@@ -363,7 +363,7 @@ static void HTTPServer_tick(Instance *pi)
   maxfd = cti_max(priv->lsc.fd, maxfd);
 
   tv.tv_sec = 0;
-  tv.tv_usec = 1000  * 1;	/* ms */
+  tv.tv_usec = 1000  * 1;       /* ms */
 
   int n = select(maxfd+1, &rfds, &wfds, 0L, &tv);
 
@@ -378,7 +378,7 @@ static void HTTPServer_tick(Instance *pi)
     int fd = accept(priv->lsc.fd, (struct sockaddr *)&addr, &addrlen);
     if (fd == -1) {
       /* This is unlikely but possible.  If it happens, just clean up
-	 and return... */
+         and return... */
       perror("accept");
       goto out;
     }

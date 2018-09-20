@@ -1,8 +1,8 @@
 /* Lirc client.  IR remote control input for Linux.
  * NOTE: This is probably going to be obviated by LinuxInput.c */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Lirc.h"
@@ -100,8 +100,8 @@ static void handle_code(Instance *pi, const char *code)
     if (streq(code, CodeMap[i].keystring)) {
       printf("code %s -> %d\n",  CodeMap[i].keystring, CodeMap[i].keycode);
       if (pi->outputs[OUTPUT_KEYCODE].destination) {
-	PostData(Keycode_message_new(CodeMap[i].keycode),
-		 pi->outputs[OUTPUT_KEYCODE].destination);
+        PostData(Keycode_message_new(CodeMap[i].keycode),
+                 pi->outputs[OUTPUT_KEYCODE].destination);
       }
       break;
     }
@@ -128,18 +128,18 @@ static void Lirc_tick(Instance *pi)
       fcntl(priv->fd, F_SETFL, value);
 
       /* I learned this by experimentation and a gdb session:
-	 "/etc/lirc/lircd.conf" is read by lircd, and the entries in
-	 the "begin codes" section are returned by lirc_nextcode.
-	 lirc_readconfig() is used for client configuration, and does
-	 not even parse the "begin codes" section.  A separate
-	 configuration can be done for client code, see for example
-	 "/usr/share/lirc/remotes/pcmak/lircrc.pcmak" */
+         "/etc/lirc/lircd.conf" is read by lircd, and the entries in
+         the "begin codes" section are returned by lirc_nextcode.
+         lirc_readconfig() is used for client configuration, and does
+         not even parse the "begin codes" section.  A separate
+         configuration can be done for client code, see for example
+         "/usr/share/lirc/remotes/pcmak/lircrc.pcmak" */
       rc = lirc_readconfig("lirc-user.conf", &priv->lircconfig, NULL);
       if (rc == -1) {
-	perror("lirc_readconfig");
+        perror("lirc_readconfig");
       }
     }
-    priv->initialized = 1;	/* set this even if failed. */
+    priv->initialized = 1;      /* set this even if failed. */
   }
 
   if (priv->fd != -1) {
@@ -150,42 +150,42 @@ static void Lirc_tick(Instance *pi)
       do_sleep = 0;
 
       if (0) {
-	/* I could only get every odd-numbered lirc_code2charprog call
-	   to return a valid string.  Other calls returned null or
-	   invalid pointer. */
-	char *string = 0L;
-	char *prog = 0L;
-	rc = lirc_code2charprog(priv->lircconfig, code, &string, &prog);
-	printf("rc=%d string=%s prog=%s\n", rc,
-	       string? string: "(nil)",
-	       prog? prog: "(nil)"
-	       );
-	//if (string && string[0]) {
-	//free(string);
-	//}
+        /* I could only get every odd-numbered lirc_code2charprog call
+           to return a valid string.  Other calls returned null or
+           invalid pointer. */
+        char *string = 0L;
+        char *prog = 0L;
+        rc = lirc_code2charprog(priv->lircconfig, code, &string, &prog);
+        printf("rc=%d string=%s prog=%s\n", rc,
+               string? string: "(nil)",
+               prog? prog: "(nil)"
+               );
+        //if (string && string[0]) {
+        //free(string);
+        //}
       }
 
       if (1) {
-	/* So instead I parse it out manually.  This only works for my
-	   particular configuration, using a Hauppauge remote with a
-	   pcHDTV card using devinput driver.  See sully/notes.txt for
-	   how I set that up.
+        /* So instead I parse it out manually.  This only works for my
+           particular configuration, using a Hauppauge remote with a
+           pcHDTV card using devinput driver.  See sully/notes.txt for
+           how I set that up.
 
             0004000400000014 00 KEY_UP /tmp/lirc.txt
-	*/
-	char *pkey = strstr(code, "KEY_");
-	if (!pkey) {
-	  goto nevermind;
-	}
+        */
+        char *pkey = strstr(code, "KEY_");
+        if (!pkey) {
+          goto nevermind;
+        }
 
-	char *space = strchr(pkey, ' ');
-	if (!space) {
-		  goto nevermind;
-	}
+        char *space = strchr(pkey, ' ');
+        if (!space) {
+                  goto nevermind;
+        }
 
-	*space = 0;
-	handle_code(pi, pkey);
-	*space = ' ';		/* restore */
+        *space = 0;
+        handle_code(pi, pkey);
+        *space = ' ';           /* restore */
 
       nevermind: ;
       }

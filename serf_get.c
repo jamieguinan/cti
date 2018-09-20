@@ -57,7 +57,7 @@ static void closed_connection(serf_connection_t *conn,
 static void print_ssl_cert_errors(int failures)
 {
     if (!serf_ssl_verbose) {
-	return;
+        return;
     }
 
     if (failures) {
@@ -173,7 +173,7 @@ static apr_status_t conn_setup(apr_socket_t *skt,
         serf_ssl_server_cert_chain_callback_set(ctx->ssl_ctx,
                                                 ignore_all_cert_errors,
                                                 print_certs,
-						NULL);
+                                                NULL);
         serf_ssl_set_hostname(ctx->ssl_ctx, ctx->hostinfo);
 
         *output_bkt = serf_bucket_ssl_encrypt_create(*output_bkt, ctx->ssl_ctx,
@@ -281,9 +281,9 @@ static apr_status_t setup_request(serf_request_t *request,
                                            serf_request_get_alloc(request));
     }
     else if (ctx->req_body_string) {
-	body_bkt = serf_bucket_simple_copy_create(ctx->req_body_string,
-						  strlen(ctx->req_body_string),
-						  serf_request_get_alloc(request));
+        body_bkt = serf_bucket_simple_copy_create(ctx->req_body_string,
+                                                  strlen(ctx->req_body_string),
+                                                  serf_request_get_alloc(request));
 
     }
     else {
@@ -351,12 +351,12 @@ static apr_status_t handle_response(serf_request_t *request,
 
         /* got some data. print it out. */
         if (vecs_read) {
-	    if (ctx->output_string) {
-		String_catv(ctx->output_string, vecs, vecs_read);
-	    }
-	    else {
-		apr_file_writev(ctx->output_file, vecs, vecs_read, &bytes_written);
-	    }
+            if (ctx->output_string) {
+                String_catv(ctx->output_string, vecs, vecs_read);
+            }
+            else {
+                apr_file_writev(ctx->output_file, vecs, vecs_read, &bytes_written);
+            }
         }
 
         /* are we done yet? */
@@ -372,13 +372,13 @@ static apr_status_t handle_response(serf_request_t *request,
                         return status;
 
                     if (vecs_read) {
-			if (ctx->output_string) {
-			    String_catv(ctx->output_string, vecs, vecs_read);
-			}
-			else {
-			    apr_file_writev(ctx->output_file, vecs, vecs_read,
-					    &bytes_written);
-			}
+                        if (ctx->output_string) {
+                            String_catv(ctx->output_string, vecs, vecs_read);
+                        }
+                        else {
+                            apr_file_writev(ctx->output_file, vecs, vecs_read,
+                                            &bytes_written);
+                        }
                     }
                     if (APR_STATUS_IS_EOF(status)) {
                         break;
@@ -476,7 +476,7 @@ int serf_get_post(int argc, const char **argv, String * output_string)
       int i;
       puts("");
       for (i=0; i < argc; i++) {
-	fprintf(stderr, "  argv[%d]: %s\n", i, argv[i]);
+        fprintf(stderr, "  argv[%d]: %s\n", i, argv[i]);
       }
     }
 
@@ -674,29 +674,29 @@ int serf_get_post(int argc, const char **argv, String * output_string)
     handler_ctx.completed_requests = 0;
     handler_ctx.print_headers = print_headers;
     if (output_string && String_len(output_string) == 0) {
-	/* Append output to (initially empty) String object. */
-	handler_ctx.output_string = output_string;
+        /* Append output to (initially empty) String object. */
+        handler_ctx.output_string = output_string;
     }
     else {
-	handler_ctx.output_string = NULL;
-	if (output_string) {
-	    /* Open output_string as a file. */
-	    localptr(String, dname) = String_dirname(output_string);
-	    apr_dir_make_recursive(s(dname), APR_FPROT_OS_DEFAULT, pool);
-	    apr_status_t status =
-		apr_file_open(&handler_ctx.output_file,
-			      s(output_string),
-			      APR_FOPEN_WRITE|APR_FOPEN_CREATE|APR_FOPEN_TRUNCATE|APR_FOPEN_BINARY,
-			      APR_FPROT_OS_DEFAULT,
-			      pool);
-	    if (status) {
-		printf("Error opening file (%s)\n", s(output_string));
-		return status;
-	    }
-	}
-	else {
-	    apr_file_open_stdout(&handler_ctx.output_file, pool);
-	}
+        handler_ctx.output_string = NULL;
+        if (output_string) {
+            /* Open output_string as a file. */
+            localptr(String, dname) = String_dirname(output_string);
+            apr_dir_make_recursive(s(dname), APR_FPROT_OS_DEFAULT, pool);
+            apr_status_t status =
+                apr_file_open(&handler_ctx.output_file,
+                              s(output_string),
+                              APR_FOPEN_WRITE|APR_FOPEN_CREATE|APR_FOPEN_TRUNCATE|APR_FOPEN_BINARY,
+                              APR_FPROT_OS_DEFAULT,
+                              pool);
+            if (status) {
+                printf("Error opening file (%s)\n", s(output_string));
+                return status;
+            }
+        }
+        else {
+            apr_file_open_stdout(&handler_ctx.output_file, pool);
+        }
     }
 
     handler_ctx.host = url.hostinfo;
@@ -723,9 +723,9 @@ int serf_get_post(int argc, const char **argv, String * output_string)
     for (i = 0; i < count; i++) {
         request = serf_connection_request_create(connection, setup_request,
                                                  &handler_ctx);
-	if (!request) {
-	  fprintf(stderr, "huh, null request.\n");
-	}
+        if (!request) {
+          fprintf(stderr, "huh, null request.\n");
+        }
     }
 
     while (1) {
@@ -775,7 +775,7 @@ int serf_command_get(String * command, String * url, String * output_string)
     const char *argv[n+1];
     int i;
     for (i=0; i < n; i++) {
-	argv[i] = s(String_list_get(args, i));
+        argv[i] = s(String_list_get(args, i));
     }
     argv[i] = s(url);
     return serf_get_post(n+1, argv, output_string);
@@ -789,7 +789,7 @@ int serf_command_post_data_string(String * command, String * url, String * post_
     const char *argv[n+5];
     int i;
     for (i=0; i < n; i++) {
-	argv[i] = s(String_list_get(args, i));
+        argv[i] = s(String_list_get(args, i));
     }
     argv[i++] = "-m";
     argv[i++] = "POST";
@@ -807,7 +807,7 @@ int serf_command_post_data_file(String * command, String * url, String * file_pa
     const char *argv[n+5];
     int i;
     for (i=0; i < n; i++) {
-	argv[i] = s(String_list_get(args, i));
+        argv[i] = s(String_list_get(args, i));
     }
     argv[i++] = "-m";
     argv[i++] = "POST";

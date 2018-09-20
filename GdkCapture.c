@@ -6,10 +6,10 @@
  * file if/when it disappears.  It all actually works well enough for
  * 30fps video, using /dev/shm or any ramdisk filesystem.
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <unistd.h>		/* access */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <unistd.h>             /* access */
 
 #include "CTI.h"
 #include "GdkCapture.h"
@@ -146,10 +146,10 @@ static void check_files(Instance *pi)
     }
     else {
       if (priv->idle_quit_threshold &&
-	  (priv->seq - priv->last_checksum_seq) > priv->idle_quit_threshold) {
-	printf("quit trigger!\n");
-	exit(0);
-	priv->idle_quit_threshold = 0;
+          (priv->seq - priv->last_checksum_seq) > priv->idle_quit_threshold) {
+        printf("quit trigger!\n");
+        exit(0);
+        priv->idle_quit_threshold = 0;
       }
     }
     gdk_to_rgb(data, width, height, depth, bpp, bpl, rgb);

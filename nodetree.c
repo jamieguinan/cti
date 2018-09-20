@@ -183,14 +183,14 @@ static Node * nfabp2(Node * node, String_list * components, int ci, const char *
     Node * testnode = node->subnodes[i];
     if (streq(testnode->tag, component_tag)) {
       if (leaf_check) {
-	if (node_content_match(testnode, value)) {
-	  /* Found the target value, now check parent tree for desired adjacent node.  */
-	  return node_find_subnode(node, adjacent_label);
-	}
+        if (node_content_match(testnode, value)) {
+          /* Found the target value, now check parent tree for desired adjacent node.  */
+          return node_find_subnode(node, adjacent_label);
+        }
       }
       else {
-	Node * x = nfabp2(testnode, components, ci+1, value, adjacent_label);
-	if (x) return x;
+        Node * x = nfabp2(testnode, components, ci+1, value, adjacent_label);
+        if (x) return x;
       }
     }
   }
@@ -224,27 +224,27 @@ Node * node_find_subnode_by_path_match(Node * node, const char * path, const cha
   }
 
   if (nodetree_debug) printf("\nnode=%p (%s) path=%s\n"
-	 , node
-	 , node->tag ? node->tag : ""
-	 , path ? path:"(empty)"
-	 );
+         , node
+         , node->tag ? node->tag : ""
+         , path ? path:"(empty)"
+         );
 
   if (!path) {
     /* End of path search.  If there is a text subnode, return it,
        first comparing to subnode_text if supplied. */
     if (node->subnodes_count
-	&& node->subnodes[0]->text) {
+        && node->subnodes[0]->text) {
       if (subnode_text) {
-	/* Require a match, or return NULL. */
-	if (streq(node->subnodes[0]->text, subnode_text)) {
-	  return node;
-	}
-	else {
-	  return NULL;
-	}
+        /* Require a match, or return NULL. */
+        if (streq(node->subnodes[0]->text, subnode_text)) {
+          return node;
+        }
+        else {
+          return NULL;
+        }
       }
       else {
-	return node;
+        return node;
       }
     }
     else {
@@ -259,7 +259,7 @@ Node * node_find_subnode_by_path_match(Node * node, const char * path, const cha
   if (nodetree_debug) printf("slash=%p\n", slash);
 
   if (slash) {
-    *slash = 0;			/* Split string by replacing slash with zero. */
+    *slash = 0;                 /* Split string by replacing slash with zero. */
   }
 
   if (nodetree_debug) printf("local_path=%s\n", local_path);
@@ -271,10 +271,10 @@ Node * node_find_subnode_by_path_match(Node * node, const char * path, const cha
       /* Try again with remainder of path. */
       Node *x = node_find_subnode_by_path_match(subnode, slash ? slash+1 : NULL, subnode_text);
       if (x) {
-	return x;
+        return x;
       }
       else {
-	continue;
+        continue;
       }
     }
   }

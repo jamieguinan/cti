@@ -1,9 +1,9 @@
 /* ALSA audio capture and playback. */
 
-#include <string.h>		/* memcpy */
-#include <dirent.h>		/* readdir */
-#include <alsa/asoundlib.h>	/* ALSA library */
-#include <math.h>		/* fabs */
+#include <string.h>             /* memcpy */
+#include <dirent.h>             /* readdir */
+#include <alsa/asoundlib.h>     /* ALSA library */
+#include <math.h>               /* fabs */
 
 #include "CTI.h"
 #include "ALSACapRec.h"
@@ -44,11 +44,11 @@ static Output ALSACapture_outputs[] = {
 static int rates[] = { 8000, 11025, 16000, 22050, 24000, 32000, 44100, 48000, 96000, 192000 };
 
 static int channels[] = {
-  1,				/* mono */
-  2, 				/* stereo */
-  3,				/* 2.1 */
-  6,				/* 5.1 */
-  12,				/* envy24 output (note: input is 10 channels) */
+  1,                            /* mono */
+  2,                            /* stereo */
+  3,                            /* 2.1 */
+  6,                            /* 5.1 */
+  12,                           /* envy24 output (note: input is 10 channels) */
 };
 
 typedef struct {
@@ -118,7 +118,7 @@ static int set_device(Instance *pi, const char *value)
 
   /* Might as well set interleaved here, too. */
   rc = snd_pcm_hw_params_set_access(priv->c.handle, priv->c.hwparams,
-				    SND_PCM_ACCESS_RW_INTERLEAVED);
+                                    SND_PCM_ACCESS_RW_INTERLEAVED);
   if (rc != 0) {
     fprintf(stderr, "*** snd_pcm_hw_params_set_access %s: %s\n", s(priv->c.device), snd_strerror(rc));
   }
@@ -147,17 +147,17 @@ static void get_device_range(Instance *pi, Range *range)
 
     char c = de->d_name[strlen("card")];
     if (strncmp(de->d_name, "card", strlen("card")) == 0
-	&& c >= '0' && c <= '9' ) {
+        && c >= '0' && c <= '9' ) {
       String *s;
       String *hw;
       String *desc;
 
       s = String_sprintf("/proc/asound/%s/id", de->d_name);
       if (priv->c.useplug) {
-	hw = String_sprintf("plughw:%c", c);
+        hw = String_sprintf("plughw:%c", c);
       }
       else {
-	hw = String_sprintf("hw:%c", c);
+        hw = String_sprintf("hw:%c", c);
       }
       desc = File_load_text(s);
 
@@ -165,8 +165,8 @@ static void get_device_range(Instance *pi, Range *range)
 
       String_free(&s);
 
-      IndexedSet_add(range->strings, hw); hw = NULL;		/* IndexedSet takes ownership. */
-      IndexedSet_add(range->descriptions, desc); desc = NULL;		/* IndexedSet takes ownership. */
+      IndexedSet_add(range->strings, hw); hw = NULL;            /* IndexedSet takes ownership. */
+      IndexedSet_add(range->descriptions, desc); desc = NULL;           /* IndexedSet takes ownership. */
     }
   }
 }
@@ -184,8 +184,8 @@ static int set_rate(Instance *pi, const char *value)
   }
 
   rc = snd_pcm_hw_params_set_rate(priv->c.handle,
-				  priv->c.hwparams,
-				  rate, 0);
+                                  priv->c.hwparams,
+                                  rate, 0);
 
   if (rc == 0) {
     fprintf(stderr, "rate set to %d\n", rate);
@@ -236,8 +236,8 @@ static int set_channels(Instance *pi, const char *value)
   }
 
   rc = snd_pcm_hw_params_set_channels(priv->c.handle,
-				      priv->c.hwparams,
-				      channels);
+                                      priv->c.hwparams,
+                                      channels);
 
   if (rc == 0) {
     fprintf(stderr, "channels set to %d\n", channels);
@@ -452,7 +452,7 @@ static void Wav_handler(Instance *pi, void *data)
   int frames_written = 0;
   while (1) {
     n = snd_pcm_writei(priv->c.handle, (uint8_t*)wav_in->data + (frames_written * (priv->c.channels * priv->c.format_bytes)),
-		       out_frames);
+                       out_frames);
     if (n > 0) {
       out_frames -= n;
       frames_written += n;
@@ -468,7 +468,7 @@ static void Wav_handler(Instance *pi, void *data)
     snd_pcm_prepare(priv->c.handle);
   }
 
-  if (wav_in->no_feedback == 0 	/* The default is 0, set to 1 if "filler" code below is called. */
+  if (wav_in->no_feedback == 0  /* The default is 0, set to 1 if "filler" code below is called. */
       && pi->outputs[OUTPUT_FEEDBACK].destination) {
     Feedback_buffer *fb = Feedback_buffer_new();
     fb->seq = wav_in->seq;
@@ -505,20 +505,20 @@ static void ALSAPlayback_tick(Instance *pi)
     ReleaseMessage(&hm,pi);
     while (pi->pending_messages > 8) {
       /* This happens when capture clock is faster than playback
-	 clock.  In cx88play.cmd, it drops a block every ~2s. */
+         clock.  In cx88play.cmd, it drops a block every ~2s. */
       hm = GetData(pi, wait_flag);
       if (hm->handler == Wav_handler) {
-	Wav_buffer *wav_in = hm->data;
-	double s = (1.0*wav_in->data_length)/
-	  (priv->c.rate * priv->c.channels * priv->c.format_bytes);
-	priv->c.total_dropped += s;
-	fprintf(stderr, "dropping %.4fs of audio (%d %d %d) total %.4f\n",
-	       s, priv->c.rate, priv->c.channels, priv->c.format_bytes, priv->c.total_dropped);
-	Wav_buffer_release(&wav_in);
+        Wav_buffer *wav_in = hm->data;
+        double s = (1.0*wav_in->data_length)/
+          (priv->c.rate * priv->c.channels * priv->c.format_bytes);
+        priv->c.total_dropped += s;
+        fprintf(stderr, "dropping %.4fs of audio (%d %d %d) total %.4f\n",
+               s, priv->c.rate, priv->c.channels, priv->c.format_bytes, priv->c.total_dropped);
+        Wav_buffer_release(&wav_in);
       }
       else {
-	/* Should always handle config messages... */
-	hm->handler(pi, hm->data);
+        /* Should always handle config messages... */
+        hm->handler(pi, hm->data);
       }
       ReleaseMessage(&hm,pi);
     }
@@ -534,8 +534,8 @@ static void ALSAPlayback_tick(Instance *pi)
     if (access("/dev/shm/a1", R_OK) == 0) {
       /* Blip. */
       for (i=0; i < wav_in->data_length; i+=2) {
-	//wav_in->data[i] = 0;
-	//wav_in->data[i+1] = (2048 - i);
+        //wav_in->data[i] = 0;
+        //wav_in->data[i+1] = (2048 - i);
       }
       unlink("/dev/shm/a1");
     }
@@ -568,7 +568,7 @@ static void analyze_rate(ALSAio_private *priv, Wav_buffer *wav)
       double d;
       clock_gettime(CLOCK_MONOTONIC, &tnow);
       d = (tnow.tv_sec + tnow.tv_nsec/1000000000.0) -
-	(priv->c.t0.tv_sec + priv->c.t0.tv_nsec/1000000000.0);
+        (priv->c.t0.tv_sec + priv->c.t0.tv_nsec/1000000000.0);
       fprintf(stderr, "encoding %.4f bytes/sec\n", (priv->c.total_encoded_bytes/d));
       priv->c.total_encoded_next += priv->c.total_encoded_delta;
     }
@@ -619,7 +619,7 @@ static void ALSACapture_tick(Instance *pi)
 
     rc = snd_pcm_hw_params_set_period_size_near(priv->c.handle, priv->c.hwparams, &frames, &dir);
     fprintf(stderr, "%s: set_period_size_near returns %d (frames %d:%d)\n",
-	    __func__, rc, (int)priv->c.frames_per_io, (int)frames);
+            __func__, rc, (int)priv->c.frames_per_io, (int)frames);
 
     rc = snd_pcm_hw_params(priv->c.handle, priv->c.hwparams);
     if (rc < 0) {
@@ -689,25 +689,25 @@ static void ALSACapture_tick(Instance *pi)
      system date change via ntp or htpdate. */
   if (fabs(priv->c.running_timestamp - tnow) > 5.0) {
     fprintf(stderr, "coarse timestamp adjustment, %.3f -> %.3f\n",
-	    priv->c.running_timestamp, tnow);
+            priv->c.running_timestamp, tnow);
     priv->c.running_timestamp = tnow;
   }
 
   /* Adjust running timestamp if it slips too far either way.  Smoothing, I guess. */
   if (priv->c.running_timestamp - tnow > calculated_period) {
     dpf("priv->c.rate=%d,  %.3f - %.3f (%.5f) > %.5f : - running timestamp\n",
-	priv->c.rate,
-	priv->c.running_timestamp, tnow,
-	(tnow - priv->c.running_timestamp),
-	calculated_period);
+        priv->c.rate,
+        priv->c.running_timestamp, tnow,
+        (tnow - priv->c.running_timestamp),
+        calculated_period);
     priv->c.running_timestamp -= (calculated_period/2.0);
   }
   else if (tnow - priv->c.running_timestamp > calculated_period) {
     dpf("priv->c.rate=%d, %.3f - %.3f (%.5f) > %.5f : + running timestamp\n",
-	priv->c.rate,
-	tnow, priv->c.running_timestamp,
-	(tnow - priv->c.running_timestamp),
-	calculated_period);
+        priv->c.rate,
+        tnow, priv->c.running_timestamp,
+        (tnow - priv->c.running_timestamp),
+        calculated_period);
     priv->c.running_timestamp += (calculated_period/2.0);
   }
 
@@ -715,7 +715,7 @@ static void ALSACapture_tick(Instance *pi)
 
   if (pi->outputs[OUTPUT_AUDIO].destination) {
     Audio_buffer * audio = Audio_buffer_new(priv->c.rate,
-					    priv->c.channels, priv->c.atype);
+                                            priv->c.channels, priv->c.atype);
     Audio_buffer_add_samples(audio, buffer, buffer_bytes);
     audio->timestamp = priv->c.running_timestamp;
     //fprintf(stderr, "posting audio buffer %d bytes\n", buffer_bytes);
@@ -729,7 +729,7 @@ static void ALSACapture_tick(Instance *pi)
     wav->timestamp = priv->c.running_timestamp;
 
     dpf("%s allocated wav @ %p\n", __func__, wav);
-    wav->data = buffer;  buffer = 0L;	/* Assign, do not free below. */
+    wav->data = buffer;  buffer = 0L;   /* Assign, do not free below. */
     wav->data_length = buffer_bytes;
     Wav_buffer_finalize(wav);
 

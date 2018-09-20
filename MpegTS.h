@@ -27,16 +27,16 @@ extern void MpegTSDemux_init(void);
 #define MpegTS_AF_AFEXT(ptr) ((ptr[5] >> 0) & 1)
 
 #define MpegTS_PCR_90K(pcr)  (uint64_t) ( \
-					 ((pcr)[0]) | ((pcr)[1] << 8) |	\
-					((pcr)[2] << 16) | (((pcr)[3]) << 24))
+                                         ((pcr)[0]) | ((pcr)[1] << 8) | \
+                                        ((pcr)[2] << 16) | (((pcr)[3]) << 24))
 #define MpegTS_PCR_27M(ptr)
 
 #define MpegTS_PTS(ptr)      (uint64_t) ( \
-					(((ptr)[0] & 0x7)  << 30) | \
-					(((ptr)[1] & 0xff) << 22) | \
-					(((ptr)[2] & 0xfe) << 14) | \
-					(((ptr)[3] & 0xff) << 7) | \
-					(((ptr)[4] & 0xf3) >> 1)  )
+                                        (((ptr)[0] & 0x7)  << 30) | \
+                                        (((ptr)[1] & 0xff) << 22) | \
+                                        (((ptr)[2] & 0xfe) << 14) | \
+                                        (((ptr)[3] & 0xff) << 7) | \
+                                        (((ptr)[4] & 0xf3) >> 1)  )
 
 
 #define MpegTS_PSI_PTRFIELD(ptr)  (ptr[4])
@@ -81,7 +81,7 @@ extern void MpegTSDemux_init(void);
 
 typedef struct {
   uint64_t value;
-  unsigned int set:1;			/* boolean */
+  unsigned int set:1;                   /* boolean */
 } MpegTimeStamp;
 
 #endif

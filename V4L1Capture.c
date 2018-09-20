@@ -7,13 +7,13 @@
  */
 
 #include <sys/ioctl.h>
-#include <string.h>		/* memcpy */
+#include <string.h>             /* memcpy */
 #include <stdio.h>
-#include <stdlib.h>		/* exit */
-#include <sys/mman.h>		/* mmap */
-#include <sys/types.h>		/* open */
-#include <sys/stat.h>		/* open */
-#include <fcntl.h>		/* open */
+#include <stdlib.h>             /* exit */
+#include <sys/mman.h>           /* mmap */
+#include <sys/types.h>          /* open */
+#include <sys/stat.h>           /* open */
+#include <fcntl.h>              /* open */
 
 #include "CTI.h"
 #include "V4L1Capture.h"
@@ -49,19 +49,19 @@ typedef struct {
   int brightness;
   int exposure;
 
-  int enable;			/* Set this to start capturing. */
+  int enable;                   /* Set this to start capturing. */
   int msg_handled;
 
   struct video_capability cap;
-  struct video_mbuf vmbuf;	/* Info about mmap-able area. */
-  struct video_mmap vmmap;	/* mmap configuration via ioctl */
-  uint8_t *map;			/* mapped memory */
-  struct video_picture picture;	/* picture, erm, parameters */
-  struct video_window window;	/* needed for setting output size correctly with ov511? */
-  struct video_capture capture;	/* For changing capture size. */
+  struct video_mbuf vmbuf;      /* Info about mmap-able area. */
+  struct video_mmap vmmap;      /* mmap configuration via ioctl */
+  uint8_t *map;                 /* mapped memory */
+  struct video_picture picture; /* picture, erm, parameters */
+  struct video_window window;   /* needed for setting output size correctly with ov511? */
+  struct video_capture capture; /* For changing capture size. */
 
   int next_frame;
-  ArrayU8 *frame;		/* Most recent captured frame. */
+  ArrayU8 *frame;               /* Most recent captured frame. */
 } V4L1Capture_private;
 
 static struct {
@@ -113,17 +113,17 @@ static int set_device(Instance *pi, const char *value)
   rc_check("VIDIOCGPICT");
 
   printf("  brightness: %d\n"
-	 "         hue: %d\n"
-	 "      colour: %d\n"
-	 "    contrast: %d\n"
-	 "   whiteness: %d\n"
-	 "       depth: %d\n",
-	 v->picture.brightness,
-	 v->picture.hue,
-	 v->picture.colour,
-	 v->picture.contrast,
-	 v->picture.whiteness,
-	 v->picture.depth);
+         "         hue: %d\n"
+         "      colour: %d\n"
+         "    contrast: %d\n"
+         "   whiteness: %d\n"
+         "       depth: %d\n",
+         v->picture.brightness,
+         v->picture.hue,
+         v->picture.colour,
+         v->picture.contrast,
+         v->picture.whiteness,
+         v->picture.depth);
 
   v->brightness = v->picture.brightness;
 
@@ -139,24 +139,24 @@ static int set_device(Instance *pi, const char *value)
   v->picture.colour = 15000;
   v->picture.contrast = 4000;
   v->picture.whiteness = 25000;
-  // v->picture.depth = 16;	/* note - can't set this arbitrarily! */
+  // v->picture.depth = 16;     /* note - can't set this arbitrarily! */
   // v->picture.palette = VIDEO_PALETTE_RGB565;
 
   rc = ioctl(v->fd, VIDIOCSPICT, &v->picture);
   rc_check("VIDIOCSPICT");
 
   printf("  brightness: %d\n"
-	 "         hue: %d\n"
-	 "      colour: %d\n"
-	 "    contrast: %d\n"
-	 "   whiteness: %d\n"
-	 "       depth: %d\n",
-	 v->picture.brightness,
-	 v->picture.hue,
-	 v->picture.colour,
-	 v->picture.contrast,
-	 v->picture.whiteness,
-	 v->picture.depth);
+         "         hue: %d\n"
+         "      colour: %d\n"
+         "    contrast: %d\n"
+         "   whiteness: %d\n"
+         "       depth: %d\n",
+         v->picture.brightness,
+         v->picture.hue,
+         v->picture.colour,
+         v->picture.contrast,
+         v->picture.whiteness,
+         v->picture.depth);
 
 #endif
   rc = ioctl(v->fd, VIDIOCGMBUF, &v->vmbuf);
@@ -257,7 +257,7 @@ static int set_w_h(Instance *pi, const char *value)
     perror("VIDIOCSWIN");
   }
   printf("window: %dx%d @(%d,%d)\n", v->window.width, v->window.height,
-	 v->window.x, v->window.y);
+         v->window.x, v->window.y);
 
   /* ... */
   rc = ioctl(v->fd, VIDIOCGPICT, &v->picture);
@@ -338,14 +338,14 @@ static void V4L1Capture_tick(Instance *pi)
   if (pi->outputs[OUTPUT_YUV420P].destination) {
     YUV420P_buffer *y420p = YUV420P_buffer_new(v->w, v->h, 0L);
     memcpy(y420p->y,
-	   v->map + v->vmbuf.offsets[current_frame],
-	   y420p->y_length);
+           v->map + v->vmbuf.offsets[current_frame],
+           y420p->y_length);
     memcpy(y420p->cr,
-	   v->map + v->vmbuf.offsets[current_frame] + y420p->y_length,
-	   y420p->cr_length);
+           v->map + v->vmbuf.offsets[current_frame] + y420p->y_length,
+           y420p->cr_length);
     memcpy(y420p->cb,
-	   v->map + v->vmbuf.offsets[current_frame] + y420p->y_length + y420p->cr_length,
-	   y420p->cb_length);
+           v->map + v->vmbuf.offsets[current_frame] + y420p->y_length + y420p->cr_length,
+           y420p->cb_length);
     PostData(y420p, pi->outputs[OUTPUT_YUV420P].destination);
   }
   else if (pi->outputs[OUTPUT_O511].destination) {
@@ -356,9 +356,9 @@ static void V4L1Capture_tick(Instance *pi)
     }
     dpf("O511 data length = %d\n", dlen);
     O511_buffer *o511 = O511_buffer_from(pdata,
-					 dlen,
-					 v->w, v->h,
-					 0L);
+                                         dlen,
+                                         v->w, v->h,
+                                         0L);
     PostData(o511, pi->outputs[OUTPUT_O511].destination);
   }
 

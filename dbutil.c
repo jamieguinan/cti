@@ -11,10 +11,10 @@
 static int v = 0;
 
 int sql_exec_free_query(sqlite3 *pdb,
-			 char * query,
-			 int (*callback)(void*,int,char**,char**),
-			 void * data,
-			 char **errmsg)
+                         char * query,
+                         int (*callback)(void*,int,char**,char**),
+                         void * data,
+                         char **errmsg)
 {
   /* Convenience wrapper around the sqlite3 convenience wrapper. It is
      assumed that the "query" input parameter is the result of a call
@@ -29,7 +29,7 @@ int sql_exec_free_query(sqlite3 *pdb,
 }
 
 static int schema_check_callback(void *i_ptr,
-				 int num_columns, char **column_strings, char **column_headers)
+                                 int num_columns, char **column_strings, char **column_headers)
 {
   SchemaColumn_check * sdc = i_ptr;
   char * existing_column_name = column_strings[1];
@@ -63,10 +63,10 @@ static int schema_check_callback(void *i_ptr,
   }
 
   if (v) fprintf(stderr, "%s %s matches (%d %s)\n",
-	 sdc->columns[sdc->index].name,
-	 sdc->columns[sdc->index].type,
-	 sdc->index,
-	 column_strings[0]);
+         sdc->columns[sdc->index].name,
+         sdc->columns[sdc->index].type,
+         sdc->index,
+         column_strings[0]);
 
  out:
   if (sdc->error == 0) {
@@ -80,11 +80,11 @@ static int schema_check_callback(void *i_ptr,
     int i;
     for (i=sdc->index; i < sdc->num_columns; i++) {
       if (streq(sdc->columns[i].name, existing_column_name)
-	  && streq(sdc->columns[i].type, existing_column_type)) {
-	if (sdc->common_count > 0) { String_cat1(sdc->common_columns, ","); }
-	String_cat1(sdc->common_columns, existing_column_name);
-	sdc->common_count += 1;
-	break;
+          && streq(sdc->columns[i].type, existing_column_type)) {
+        if (sdc->common_count > 0) { String_cat1(sdc->common_columns, ","); }
+        String_cat1(sdc->common_columns, existing_column_name);
+        sdc->common_count += 1;
+        break;
       }
     }
   }
@@ -95,7 +95,7 @@ static int schema_check_callback(void *i_ptr,
 
 
 int db_check(sqlite3 *db, const char * table_name,
-	     SchemaColumn * schema, int num_columns, const char * constraints)
+             SchemaColumn * schema, int num_columns, const char * constraints)
 {
   /*
    * This function is more {complicated, obtuse, overloaded} than I
@@ -113,10 +113,10 @@ int db_check(sqlite3 *db, const char * table_name,
   SchemaColumn_check sdc = { schema, 0, num_columns, 0, String_new(""), String_new("") };
   int rc;
   rc = sql_exec_free_query(db,
-			   sqlite3_mprintf("PRAGMA main.table_info('%s')", table_name),
-			   schema_check_callback,
-			   &sdc,
-			   no_errmsg);
+                           sqlite3_mprintf("PRAGMA main.table_info('%s')", table_name),
+                           schema_check_callback,
+                           &sdc,
+                           no_errmsg);
 
   if (sdc.index != sdc.num_columns) {
     fprintf(stderr, "schema has %d columns, table has %d\n", sdc.num_columns, sdc.index);
@@ -137,7 +137,7 @@ int db_check(sqlite3 *db, const char * table_name,
       String_cat2(table_schema, schema[i].name, " ");
       String_cat1(table_schema, schema[i].type);
       if (schema[i].constraints) {
-	String_cat2(table_schema, " ", schema[i].constraints);
+        String_cat2(table_schema, " ", schema[i].constraints);
       }
     }
     if (constraints && !streq(constraints, "")) {
@@ -148,27 +148,27 @@ int db_check(sqlite3 *db, const char * table_name,
       /* Table was not found */
       fprintf(stderr, "Creating table %s\n", table_name);
       sql_exec_free_query(db, sqlite3_mprintf("CREATE TABLE %s (%s);",
-					      table_name, s(table_schema)),
-			  no_callback, 0, no_errmsg);
+                                              table_name, s(table_schema)),
+                          no_callback, 0, no_errmsg);
     }
     else {
       /* Table exists, but schema has changed. */
       fprintf(stderr, "Regenerating table '%s'\n", table_name);
       // db_push_verbose(1);
       sql_exec_free_query(db, sqlite3_mprintf("DROP TABLE backup_tbl"),
-			  no_callback, 0, no_errmsg);
+                          no_callback, 0, no_errmsg);
       sql_exec_free_query(db, sqlite3_mprintf("CREATE TABLE backup_tbl(%s);", s(sdc.existing_schema)),
-			  no_callback, 0, no_errmsg);
+                          no_callback, 0, no_errmsg);
       sql_exec_free_query(db, sqlite3_mprintf("INSERT INTO backup_tbl SELECT * FROM %s;", table_name),
-			  no_callback, 0, no_errmsg);
+                          no_callback, 0, no_errmsg);
       sql_exec_free_query(db, sqlite3_mprintf("DROP TABLE %s;", table_name),
-			  no_callback, 0, no_errmsg);
+                          no_callback, 0, no_errmsg);
       sql_exec_free_query(db, sqlite3_mprintf("CREATE TABLE %s (%s);",
-					      table_name, s(table_schema)),
-			  no_callback, 0, no_errmsg);
+                                              table_name, s(table_schema)),
+                          no_callback, 0, no_errmsg);
       sql_exec_free_query(db, sqlite3_mprintf("INSERT INTO %s (%s) SELECT %s FROM backup_tbl",
-					      table_name, s(sdc.common_columns), s(sdc.common_columns)),
-			  no_callback, 0, no_errmsg);
+                                              table_name, s(sdc.common_columns), s(sdc.common_columns)),
+                          no_callback, 0, no_errmsg);
       // db_pop_verbose();
     }
     sdc.error = 0;
@@ -192,10 +192,10 @@ int db_schema_test(sqlite3 *db, const char * table_name, SchemaColumn * schema, 
   SchemaColumn_check sdc = { schema, 0, num_columns, 0, existing_schema, existing_columns };
   int rc;
   rc = sql_exec_free_query(db,
-			   sqlite3_mprintf("PRAGMA main.table_info('%s')", table_name),
-			   schema_check_callback,
-			   &sdc,
-			   no_errmsg);
+                           sqlite3_mprintf("PRAGMA main.table_info('%s')", table_name),
+                           schema_check_callback,
+                           &sdc,
+                           no_errmsg);
 
   return sdc.error;
 }

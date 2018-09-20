@@ -8,8 +8,8 @@
 #endif
 
 typedef struct {
-  const char *file;		/* use streq rather than == for comparison, to allow
-				   registering before first call */
+  const char *file;             /* use streq rather than == for comparison, to allow
+                                   registering before first call */
   int line;
   int *enabled;
   const char *fmt;
@@ -27,14 +27,14 @@ void cti_debug_printf_register(const char *file, int line, int *enabled, const c
   int i;
   for (i=0; i < printfRecords.count; i++) {
     if (streq(file, printfRecords.records[i].file)
-	&& line == printfRecords.records[i].line
-	&& streq(fmt, printfRecords.records[i].fmt))
+        && line == printfRecords.records[i].line
+        && streq(fmt, printfRecords.records[i].fmt))
       {
-	/* This entry was pre-registered. */
-	printfRecords.records[i].enabled = enabled;
-	/* Enable it! */
-	*enabled = 1;
-	return;
+        /* This entry was pre-registered. */
+        printfRecords.records[i].enabled = enabled;
+        /* Enable it! */
+        *enabled = 1;
+        return;
       }
   }
 
@@ -45,7 +45,7 @@ void cti_debug_printf_register(const char *file, int line, int *enabled, const c
   else if (printfRecords.available == (printfRecords.count+1)) {
     printfRecords.available *= 2;
     printfRecords.records = Mem_realloc(printfRecords.records,
-				    printfRecords.available*sizeof(*printfRecords.records));
+                                    printfRecords.available*sizeof(*printfRecords.records));
   }
 
   printfRecords.records[printfRecords.count].file = file;
@@ -63,11 +63,11 @@ void cti_debug_printf_list(void)
   int n;
   for (i=0; i < printfRecords.count; i++) {
     printf("[%d] %s %s:%d %s",
-	   i,
-	   *printfRecords.records[i].enabled ? " *":"",
-	   printfRecords.records[i].file,
-	   printfRecords.records[i].line,
-	   printfRecords.records[i].fmt);
+           i,
+           *printfRecords.records[i].enabled ? " *":"",
+           printfRecords.records[i].file,
+           printfRecords.records[i].line,
+           printfRecords.records[i].fmt);
 
     n = strlen(printfRecords.records[i].fmt);
     if (n && printfRecords.records[i].fmt[n-1] != '\n') {

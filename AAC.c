@@ -3,10 +3,10 @@
  * Reference,
  *   file:///usr/share/doc/faac-1.28-r4/pdf/libfaac.pdf
  */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <unistd.h>		/* sleep */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <unistd.h>             /* sleep */
 
 #include "CTI.h"
 #include "AAC.h"
@@ -40,7 +40,7 @@ typedef struct {
   unsigned long samplesToInput;
   unsigned long maxOutputBytes;
   uint8_t *output_buffer;
-  // Audio_buffer *first_audio;	/* Keep this around for comparison with later blocks. */
+  // Audio_buffer *first_audio; /* Keep this around for comparison with later blocks. */
   ArrayU8 * chunk;
   int num_samples;
 
@@ -77,10 +77,10 @@ static void Audio_handler(Instance *pi, void *msg)
 
   if (!priv->fh) {
     priv->fh = faacEncOpen(audio->header.rate,
-			   audio->header.channels,
-			   &priv->samplesToInput,
-			   &priv->maxOutputBytes
-			   );
+                           audio->header.channels,
+                           &priv->samplesToInput,
+                           &priv->maxOutputBytes
+                           );
     if (!priv->fh) {
       printf("%s: faacEncOpen returned NULL\n", __func__);
       return;
@@ -120,8 +120,8 @@ static void Audio_handler(Instance *pi, void *msg)
     printf("aac: mpegVersion: %s\n", mpegids[fc->mpegVersion]);
     printf("aac: outputFormat: %s\n", fc->outputFormat ? "ADTS":"Raw");
     printf("aac: channel_map: [%d %d %d %d ...]\n",
-	   fc->channel_map[0], fc->channel_map[1],
-	   fc->channel_map[2], fc->channel_map[3]);
+           fc->channel_map[0], fc->channel_map[1],
+           fc->channel_map[2], fc->channel_map[3]);
     printf("aac: objectType: %s\n", objectTypes[fc->aacObjectType]);
     printf("aac: bitRrate: %ld\n", fc->bitRate);
     printf("aac: quantqual: %ld\n", fc->quantqual);
@@ -153,7 +153,7 @@ static void Audio_handler(Instance *pi, void *msg)
 #if 0
   if (priv->first_audio) {
     if (priv->first_audio->header.rate != audio->header.rate ||
-	priv->first_audio->header.channels != audio->header.channels) {
+        priv->first_audio->header.channels != audio->header.channels) {
       fprintf(stderr, "AAC Audio_handler cannot change format mid-stream!\n");
       return;
     }
@@ -170,24 +170,24 @@ static void Audio_handler(Instance *pi, void *msg)
   }
 
   double nominal_period =
-	priv->samplesToInput	   /* Total samples. */
-	* 1.0			   /* Convert to float */
-	// /audio->header.frame_size) /* Number of frames */
-	/audio->header.rate;	   /* frames/sec */
+        priv->samplesToInput       /* Total samples. */
+        * 1.0                      /* Convert to float */
+        // /audio->header.frame_size) /* Number of frames */
+        /audio->header.rate;       /* frames/sec */
   double timestamp = audio->timestamp;
 
   while (priv->num_samples >= priv->samplesToInput) {
     int encoded = faacEncEncode(priv->fh,
-				(int32_t*)(priv->chunk->data), priv->samplesToInput,
-				priv->output_buffer, priv->maxOutputBytes);
+                                (int32_t*)(priv->chunk->data), priv->samplesToInput,
+                                priv->output_buffer, priv->maxOutputBytes);
 
     if (0) {
       static FILE *f = NULL;
       if (!f) {
-	f = fopen("test.aac", "wb");
+        f = fopen("test.aac", "wb");
       }
       if (f) {
-	if (fwrite(priv->output_buffer, 1, encoded, f) != encoded) { perror("fwrite test.aac"); }
+        if (fwrite(priv->output_buffer, 1, encoded, f) != encoded) { perror("fwrite test.aac"); }
       }
     }
 

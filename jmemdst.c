@@ -13,8 +13,8 @@
 #error Use jpeg-8 or greater library version instead.
 
 /* this is not a core library module, so it doesn't define JPEG_INTERNALS */
-#include <stdio.h>		/* FILE in jpeglib.h, fprintf */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* FILE in jpeglib.h, fprintf */
+#include <string.h>             /* memcpy */
 #include "jpeglib.h"
 #include "jerror.h"
 
@@ -26,16 +26,16 @@ typedef struct {
   struct jpeg_destination_mgr pub; /* public fields */
 
   JOCTET *output_buffer;
-  int output_length;		/* size of buffer */
+  int output_length;            /* size of buffer */
   int output_offset;
   int *jpeg_length;
 
-  JOCTET * local_buffer;		/* start of (local) buffer */
+  JOCTET * local_buffer;                /* start of (local) buffer */
 } my_destination_mgr;
 
 typedef my_destination_mgr * my_dest_ptr;
 
-#define OUTPUT_BUF_SIZE  4096	/* choose an efficiently fwrite'able size */
+#define OUTPUT_BUF_SIZE  4096   /* choose an efficiently fwrite'able size */
 
 /* Do all copies in one function here, so error checking is consistent. */
 static void dest_output(my_dest_ptr dest, int length)
@@ -63,7 +63,7 @@ init_destination (j_compress_ptr cinfo)
   /* Allocate the output buffer --- it will be released when done with image */
   dest->local_buffer = (JOCTET *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_IMAGE,
-				  OUTPUT_BUF_SIZE * sizeof(JOCTET));
+                                  OUTPUT_BUF_SIZE * sizeof(JOCTET));
 
   dest->pub.next_output_byte = dest->local_buffer;
   dest->pub.free_in_buffer = OUTPUT_BUF_SIZE;
@@ -151,10 +151,10 @@ jpeg_mem_dest (j_compress_ptr cinfo, JOCTET * buffer, int buffer_length, int *fi
    * manager serially with the same JPEG object, because their private object
    * sizes may be different.  Caveat programmer.
    */
-  if (cinfo->dest == NULL) {	/* first time for this JPEG object? */
+  if (cinfo->dest == NULL) {    /* first time for this JPEG object? */
     cinfo->dest = (struct jpeg_destination_mgr *)
       (*cinfo->mem->alloc_small) ((j_common_ptr) cinfo, JPOOL_PERMANENT,
-				  sizeof(my_destination_mgr));
+                                  sizeof(my_destination_mgr));
   }
 
   dest = (my_dest_ptr) cinfo->dest;

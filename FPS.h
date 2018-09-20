@@ -1,7 +1,7 @@
 #ifndef _FPS_H_
 #define _FPS_H_
 
-#include <sys/time.h>		/* struct timeval */
+#include <sys/time.h>           /* struct timeval */
 
 /* FPS */
 typedef struct {

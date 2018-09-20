@@ -5,7 +5,7 @@
 #include <poll.h>
 #include <stdio.h>
 
-#include <windows.h>		/* Sleep(), ... */
+#include <windows.h>            /* Sleep(), ... */
 
 int readlink(const char *path, char *buf, int bufsiz)
 {
@@ -49,7 +49,7 @@ int poll(struct pollfd *fds, int nfds, int timeout)
   FD_ZERO(&exceptfds);
 
   struct timeval tv = { .tv_sec = timeout / 1000,
-			.tv_usec = (timeout % 1000) * 1000 };
+                        .tv_usec = (timeout % 1000) * 1000 };
 
   for (i=0; i < nfds; i++) {
     if (fds[i].events & POLLIN) { FD_SET(fds[i].fd, &readfds); }

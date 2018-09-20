@@ -1,6 +1,6 @@
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
 
 #include "CTI.h"
 #include "Mem.h"
@@ -66,13 +66,13 @@ static void run_queue(PushQueue_private *priv)
 
   /* The headers here correspond to code in "ws.c" */
   localptr(String, cmd) = String_sprintf("serf_get"
-					 " -rX-Service-Key:%s"
-					 " -rX-Service-File:%s"
-					 "%s%s",
-					 s(service_key_string),
-					 s(pqm->file_to_send),
-					 String_is_none(pqm->file_to_delete) ? "":" -rX-Service-Delete:",
-					 String_is_none(pqm->file_to_delete) ? "":s(pqm->file_to_delete));
+                                         " -rX-Service-Key:%s"
+                                         " -rX-Service-File:%s"
+                                         "%s%s",
+                                         s(service_key_string),
+                                         s(pqm->file_to_send),
+                                         String_is_none(pqm->file_to_delete) ? "":" -rX-Service-Delete:",
+                                         String_is_none(pqm->file_to_delete) ? "":s(pqm->file_to_delete));
 
   int rc = serf_command_post_data_file(cmd, priv->uri, pqm->local_path, NULL);
   if (rc != 0) {

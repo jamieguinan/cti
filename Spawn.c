@@ -1,8 +1,8 @@
 /* Allow spawning a child process in response to an event. */
-#include <stdio.h>		/* fprintf */
-#include <stdlib.h>		/* calloc */
-#include <string.h>		/* memcpy */
-#include <unistd.h>		/* fork */
+#include <stdio.h>              /* fprintf */
+#include <stdlib.h>             /* calloc */
+#include <string.h>             /* memcpy */
+#include <unistd.h>             /* fork */
 #include <sys/types.h>
 #include <sys/wait.h>
 

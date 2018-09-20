@@ -23,13 +23,13 @@ int ALSAio_set_format_string(ALSAio_common * aic, const char * format)
     if (streq(formats[i].label, format)) {
       rc = snd_pcm_hw_params_set_format(aic->handle, aic->hwparams, formats[i].value);
       if (rc < 0) {
-	fprintf(stderr, "*** snd_pcm_hw_params_set_format %s: %s\n", s(aic->device), snd_strerror(rc));
+        fprintf(stderr, "*** snd_pcm_hw_params_set_format %s: %s\n", s(aic->device), snd_strerror(rc));
       }
       else {
-	aic->format = formats[i].value;
-	aic->atype = formats[i].atype;
-	aic->format_bytes = formats[i].bytes;
-	fprintf(stderr, "format set to %s\n", format);
+        aic->format = formats[i].value;
+        aic->atype = formats[i].atype;
+        aic->format_bytes = formats[i].bytes;
+        fprintf(stderr, "format set to %s\n", format);
       }
       break;
     }
@@ -38,7 +38,7 @@ int ALSAio_set_format_string(ALSAio_common * aic, const char * format)
 }
 
 static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rate, int channels, const char * format,
-			       snd_pcm_stream_t mode)
+                               snd_pcm_stream_t mode)
 {
   int rc;
 
@@ -66,7 +66,7 @@ static void ALSAio_open_common(ALSAio_common * aic, const char * device, int rat
   }
 
   rc = snd_pcm_hw_params_set_access(aic->handle, aic->hwparams,
-				    SND_PCM_ACCESS_RW_INTERLEAVED);
+                                    SND_PCM_ACCESS_RW_INTERLEAVED);
 
   if (rc < 0) {
     fprintf(stderr, "*** snd_pcm_hw_set_access: %s %s\n", device, snd_strerror(rc));
@@ -124,17 +124,17 @@ const char * ALSAio_state_to_string(int state)
 }
 
 static void ALSA_buffer_io(ALSAio_common * aic,
-			   uint8_t * buffer,
-			   int buffer_size,
-			   int * bytes_transferred,
-			   ALSAio_rw_enum rw)
+                           uint8_t * buffer,
+                           int buffer_size,
+                           int * bytes_transferred,
+                           ALSAio_rw_enum rw)
 {
   int rc;
   snd_pcm_sframes_t n = 0;
   int state;
-  int dir = 0;			/* Returned by *_near() calls. */
+  int dir = 0;                  /* Returned by *_near() calls. */
 
-  *bytes_transferred = 0;	/* Start with 0, for simple return on error. */
+  *bytes_transferred = 0;       /* Start with 0, for simple return on error. */
 
   if (!aic->rate) {
     fprintf(stderr, "%s: error - rate is 0!\n", __func__);
@@ -160,7 +160,7 @@ static void ALSA_buffer_io(ALSAio_common * aic,
 
     rc = snd_pcm_hw_params_set_period_size_near(aic->handle, aic->hwparams, &frames, &dir);
     fprintf(stderr, "%s: set_period_size_near returns %d (frames %d -> %d) dir=%d\n",
-	    __func__, rc, (int)aic->frames_per_io, (int)frames, dir);
+            __func__, rc, (int)aic->frames_per_io, (int)frames, dir);
     aic->frames_per_io = frames;
 
     rc = snd_pcm_hw_params(aic->handle, aic->hwparams);
@@ -195,7 +195,7 @@ static void ALSA_buffer_io(ALSAio_common * aic,
 
     if (frames_to_transfer * aic->format_bytes * aic->channels > buffer_size) {
       fprintf(stderr, "*** %s: buffer_size %d is too small!\n",
-	      __func__, buffer_size);
+              __func__, buffer_size);
       return;
     }
     n = snd_pcm_readi(aic->handle, buffer, frames_to_transfer);
@@ -208,9 +208,9 @@ static void ALSA_buffer_io(ALSAio_common * aic,
 
   if (n != frames_to_transfer) {
     fprintf(stderr, "*** snd_pcm_%s %s: %s\n",
-	    rw == ALSAIO_READ ? "readi":"writei",
-	    s(aic->device),
-	    snd_strerror((int)n));
+            rw == ALSAIO_READ ? "readi":"writei",
+            s(aic->device),
+            snd_strerror((int)n));
     fprintf(stderr, "*** attempting snd_pcm_prepare() to correct...\n");
     snd_pcm_prepare(aic->handle);
   }

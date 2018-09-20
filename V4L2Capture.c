@@ -12,9 +12,9 @@
 // extern char *strdup(const char *s); /* why not getting this from string.h??  Oh, -std=c99... */
 #define streq(a, b)  (strcmp(a, b) == 0)
 #include <stdlib.h>
-#include <sys/ioctl.h>		/* ioctl */
-#include <sys/mman.h>		/* mmap */
-#include <poll.h>		/* poll */
+#include <sys/ioctl.h>          /* ioctl */
+#include <sys/mman.h>           /* mmap */
+#include <poll.h>               /* poll */
 
 /* open() and other things... */
 #include <sys/types.h>
@@ -24,10 +24,10 @@
 #include <math.h>
 #include <float.h>
 
-#include <unistd.h>		/* close() and other things. */
-#include <dirent.h>		/* opendir */
+#include <unistd.h>             /* close() and other things. */
+#include <dirent.h>             /* opendir */
 
-#include <ctype.h>		/* isdigit */
+#include <ctype.h>              /* isdigit */
 
 #include "linux/videodev2.h"
 
@@ -38,7 +38,7 @@
 #include "File.h"
 #include "Log.h"
 #include "Cfg.h"
-#include "Uvc.h"		/* Special code for UVC devices. */
+#include "Uvc.h"                /* Special code for UVC devices. */
 #include "Keycodes.h"
 #include "FPS.h"
 
@@ -71,7 +71,7 @@ typedef struct  {
   String * drivermatch;            /* Optional, I use this for matching gspca sub-devices. */
   String * devpath;
   int fd;
-  int enable;			/* Set this to start capturing. */
+  int enable;                   /* Set this to start capturing. */
 
   String * format;
 
@@ -96,7 +96,7 @@ typedef struct  {
   // int exposure_value;
   int focus;
   int fps;
-  float nominal_period;	/* calculated from fps */
+  float nominal_period; /* calculated from fps */
   int led1;
 
   FPS calculated_fps;
@@ -112,14 +112,14 @@ typedef struct  {
   } buffers[NUM_BUFFERS];
   int wait_on;
   int last_queued;
-  int timeout_ms;		/* Frame timeout before full reset */
+  int timeout_ms;               /* Frame timeout before full reset */
 
-  int sequence;			/* Keep track of lost frames. */
-  int check_sequence;		/* Set to N to check for up to N lost frames. Note: some cards (cx88) don't set sequence! */
+  int sequence;                 /* Keep track of lost frames. */
+  int check_sequence;           /* Set to N to check for up to N lost frames. Note: some cards (cx88) don't set sequence! */
 
   struct v4l2_buffer vbuffer;
 
-  int fix;			/* Fix Jpegs that are missing huffman tables. */
+  int fix;                      /* Fix Jpegs that are missing huffman tables. */
 
   int snapshot;
   int msg_handled;
@@ -157,7 +157,7 @@ static int set_device(Instance *pi, const char *value)
   get_device_range(pi, &available_v4l_devices);
   for (i=0; i < available_v4l_devices.descriptions.count; i++) {
     printf("strstr( %s, %s )\n",
-	   available_v4l_devices.descriptions.items[i]->bytes, value);
+           available_v4l_devices.descriptions.items[i]->bytes, value);
     if (strstr(available_v4l_devices.descriptions.items[i]->bytes, value)) {
       puts("found it!");
       String_set(&priv->devpath, available_v4l_devices.strings.items[i]->bytes);
@@ -242,7 +242,7 @@ static void get_device_range(Instance *pi, Range *range)
     }
 
     if (strncmp(de->d_name, "video", strlen("video")) == 0
-	&& isdigit(de->d_name[strlen("video")])) {
+        && isdigit(de->d_name[strlen("video")])) {
       String *s;
       String *desc;
 
@@ -524,7 +524,7 @@ static int generic_v4l2_set(V4L2Capture_private *priv, uint32_t cid, int value)
 }
 
 static void generic_v4l2_get_range(V4L2Capture_private *priv, uint32_t cid, const char *label,
-				   Range *range)
+                                   Range *range)
 {
 #if 0
   int rc = 0;
@@ -541,9 +541,9 @@ static void generic_v4l2_get_range(V4L2Capture_private *priv, uint32_t cid, cons
   }
 
   printf("%s: %d..%d step=%d default=%d\n",
-	 label,
-	 queryctrl.minimum, queryctrl.maximum,
-	 queryctrl.step, queryctrl.default_value);
+         label,
+         queryctrl.minimum, queryctrl.maximum,
+         queryctrl.step, queryctrl.default_value);
 
   Range *r = Range_new(RANGE_INTS);
   r->x.ints.min = queryctrl.minimum;
@@ -686,26 +686,26 @@ static int set_mute(Instance *pi, const char *value)
 /* begin lucview/v4l2uvc.c sample code */
 static int float_to_fraction_recursive(double f, double p, int *num, int *den)
 {
-	int whole = (int)f;
-	f = fabs(f - whole);
+        int whole = (int)f;
+        f = fabs(f - whole);
 
-	if(f > p) {
-		int n, d;
-		int a = float_to_fraction_recursive(1 / f, p + p / f, &n, &d);
-		*num = d;
-		*den = d * a + n;
-	}
-	else {
-		*num = 0;
-		*den = 1;
-	}
-	return whole;
+        if(f > p) {
+                int n, d;
+                int a = float_to_fraction_recursive(1 / f, p + p / f, &n, &d);
+                *num = d;
+                *den = d * a + n;
+        }
+        else {
+                *num = 0;
+                *den = 1;
+        }
+        return whole;
 }
 
 static void float_to_fraction(float f, int *num, int *den)
 {
-	int whole = float_to_fraction_recursive(f, FLT_EPSILON, num, den);
-	*num += whole * *den;
+        int whole = float_to_fraction_recursive(f, FLT_EPSILON, num, den);
+        *num += whole * *den;
 }
 /* end lucview/v4l2uvc.c sample code */
 
@@ -735,8 +735,8 @@ static int set_fps_priv(V4L2Capture_private *priv)
     rc = ioctl(priv->fd, VIDIOC_G_PARM, &setfps);
     if (rc == 0) {
       printf("frame rate: %d/%d\n",
-	     setfps.parm.capture.timeperframe.numerator,
-	     setfps.parm.capture.timeperframe.denominator);
+             setfps.parm.capture.timeperframe.numerator,
+             setfps.parm.capture.timeperframe.denominator);
     }
 
   }
@@ -878,8 +878,8 @@ static int V4L2_queue_setup(V4L2Capture_private *priv)
     }
 
     priv->buffers[i].data = mmap(0L, priv->vbuffer.length,
-				 PROT_READ | PROT_WRITE, MAP_SHARED,
-				 priv->fd, priv->vbuffer.m.offset);
+                                 PROT_READ | PROT_WRITE, MAP_SHARED,
+                                 priv->fd, priv->vbuffer.m.offset);
     if (priv->buffers[i].data == MAP_FAILED) {
       perror("mmap");
       return 1;
@@ -1169,8 +1169,8 @@ static int generic_set(Instance *pi, const char *label, const char *value)
     struct v4l2_control control = { .id = qctrl.id };
 
     fprintf(stderr, "%30s(0x%x) %5d-%-5d step %d default:%d",
-	    qctrl.name, qctrl.id, qctrl.minimum, qctrl.maximum, qctrl.step,
-	    qctrl.default_value);
+            qctrl.name, qctrl.id, qctrl.minimum, qctrl.maximum, qctrl.step,
+            qctrl.default_value);
 
     //ioctl(priv->fd, VIDIOC_G_CTRL, &control);
     //fprintf(stderr, " value: %d\n", control.value);
@@ -1182,7 +1182,7 @@ static int generic_set(Instance *pi, const char *label, const char *value)
 
       rc = ioctl(priv->fd, VIDIOC_S_CTRL, &control);
       if (rc == -1) {
-	perror("VIDIOC_S_CTRL");
+        perror("VIDIOC_S_CTRL");
       }
     }
 
@@ -1237,7 +1237,7 @@ static void jpeg_snapshot(Instance *pi, Jpeg_buffer *j)
   FILE *f;
   char filename[64];
 
-  Jpeg_fix(j);			/* Just in case. */
+  Jpeg_fix(j);                  /* Just in case. */
 
   sprintf(filename, "snap%06d.jpg", pi->counter);
   fprintf(stderr, "%s\n", filename);
@@ -1265,11 +1265,11 @@ static void bgr3_snapshot(Instance *pi, BGR3_buffer *bgr3)
       uint8_t line[bgr3->width*3];
       uint8_t *dst = &line[0];
       for (x=0; x < bgr3->width; x++) {
-	dst[0] = src[2];
-	dst[1] = src[1];
-	dst[2] = src[0];
-	dst += 3;
-	src += 3;
+        dst[0] = src[2];
+        dst[1] = src[1];
+        dst[2] = src[0];
+        dst += 3;
+        src += 3;
       }
       if (fwrite(bgr3->data, bgr3->width*3, 1, f) != 1) { perror("fwrite"); }
     }
@@ -1376,11 +1376,11 @@ static void V4L2Capture_tick(Instance *pi)
       V4L2_queue_unmap(priv);
       priv->fd = open(s(priv->devpath), O_RDWR);
       if (priv->fd == -1) {
-	perror(s(priv->devpath));
-	goto out;
+        perror(s(priv->devpath));
+        goto out;
       }
       else {
-	printf("device re-open Ok fd=%d\n", priv->fd);
+        printf("device re-open Ok fd=%d\n", priv->fd);
       }
 
       stream_enable(priv);
@@ -1391,7 +1391,7 @@ static void V4L2Capture_tick(Instance *pi)
   rc = ioctl(priv->fd, VIDIOC_DQBUF, &priv->vbuffer);
   if (-1 == rc) {
     perror("VIDIOC_DQBUF");
-    sleep(1); 			/* Sleep so don't flood output. */
+    sleep(1);                   /* Sleep so don't flood output. */
     goto out;
   }
 
@@ -1400,7 +1400,7 @@ static void V4L2Capture_tick(Instance *pi)
     if (missed) {
       printf("%s missed %d frames leading up to %d\n", s(pi->instance_label), missed, priv->vbuffer.sequence);
       if (priv->check_sequence > 0) {
-	priv->check_sequence -= 1; /* tick down by 1 */
+        priv->check_sequence -= 1; /* tick down by 1 */
       }
     }
     priv->sequence = priv->vbuffer.sequence;
@@ -1438,7 +1438,7 @@ static void V4L2Capture_tick(Instance *pi)
       BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, &c);
       memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
       if (priv->snapshot > 0) {
-	bgr3_snapshot(pi, bgr3);
+        bgr3_snapshot(pi, bgr3);
       }
       PostData(bgr3, pi->outputs[OUTPUT_BGR3].destination);
     }
@@ -1447,7 +1447,7 @@ static void V4L2Capture_tick(Instance *pi)
       BGR3_buffer *bgr3 = BGR3_buffer_new(priv->width, priv->height, &c);
       memcpy(bgr3->data, priv->buffers[priv->wait_on].data, priv->width * priv->height * 3);
       if (priv->snapshot > 0) {
-	bgr3_snapshot(pi, bgr3);
+        bgr3_snapshot(pi, bgr3);
       }
       bgr3_to_rgb3(&bgr3, &rgb3);
       PostData(rgb3, pi->outputs[OUTPUT_RGB3].destination);
@@ -1459,14 +1459,14 @@ static void V4L2Capture_tick(Instance *pi)
       Log(LOG_YUV422P, "%s allocated y422p @ %p", __func__, y422p);
       memcpy(y422p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y422p->cb,
-	     priv->buffers[priv->wait_on].data + priv->width*priv->height,
-	     priv->width*priv->height/2);
+             priv->buffers[priv->wait_on].data + priv->width*priv->height,
+             priv->width*priv->height/2);
       memcpy(y422p->cr,
-	     priv->buffers[priv->wait_on].data + priv->width*priv->height + priv->width*priv->height/2,
-	     priv->width*priv->height/2);
+             priv->buffers[priv->wait_on].data + priv->width*priv->height + priv->width*priv->height/2,
+             priv->width*priv->height/2);
       Log(LOG_YUV422P, "%s posting y422p @ %p", __func__, y422p);
       if (priv->snapshot > 0) {
-	yuv422p_snapshot(pi, y422p);
+        yuv422p_snapshot(pi, y422p);
       }
       PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
     }
@@ -1483,13 +1483,13 @@ static void V4L2Capture_tick(Instance *pi)
       dpf("%s allocated y420p @ %p", __func__, y420p);
       memcpy(y420p->y, priv->buffers[priv->wait_on].data + 0, priv->width*priv->height);
       memcpy(y420p->cb,
-	     priv->buffers[priv->wait_on].data + priv->width*priv->height,
-	     y420p->cr_width*y420p->cr_height);
+             priv->buffers[priv->wait_on].data + priv->width*priv->height,
+             y420p->cr_width*y420p->cr_height);
       memcpy(y420p->cr,
-	     priv->buffers[priv->wait_on].data + priv->width*priv->height + y420p->cr_width*y420p->cr_height,
-	     y420p->cb_width*y420p->cb_height);
+             priv->buffers[priv->wait_on].data + priv->width*priv->height + y420p->cr_width*y420p->cr_height,
+             y420p->cb_width*y420p->cb_height);
       if (priv->snapshot > 0) {
-	yuv420p_snapshot(pi, y420p);
+        yuv420p_snapshot(pi, y420p);
       }
       dpf("%s posting y420p @ %p", __func__, y420p);
       PostData(y420p, pi->outputs[OUTPUT_YUV420P].destination);
@@ -1513,17 +1513,17 @@ static void V4L2Capture_tick(Instance *pi)
       uint8_t *p = priv->buffers[priv->wait_on].data;
       YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, &c);
       for (i=0; i < priv->vbuffer.bytesused/4; i++) {
-	/* YUYV is packed-pixels, need to sort to planes for YUV422p.
-	 * Current SSE versions don't support scatter/gather, so
-	 * there's no easy way to acclerate this.  Well, I could try
-	 * doing it in 3 passes using SSE shuffle instructions. */
-	y422p->y[iy++] = *p++;
-	y422p->cb[icb++] = *p++;
-	y422p->y[iy++] = *p++;
-	y422p->cr[icr++] = *p++;
+        /* YUYV is packed-pixels, need to sort to planes for YUV422p.
+         * Current SSE versions don't support scatter/gather, so
+         * there's no easy way to acclerate this.  Well, I could try
+         * doing it in 3 passes using SSE shuffle instructions. */
+        y422p->y[iy++] = *p++;
+        y422p->cb[icb++] = *p++;
+        y422p->y[iy++] = *p++;
+        y422p->cr[icr++] = *p++;
       }
       if (priv->snapshot > 0) {
-	yuv422p_snapshot(pi, y422p);
+        yuv422p_snapshot(pi, y422p);
       }
       PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
     }
@@ -1533,30 +1533,30 @@ static void V4L2Capture_tick(Instance *pi)
       Gray_buffer *g = Gray_buffer_new(priv->width, priv->height, &c);
       /* Every 2nd pixel will be a gray value. */
       for (i=0; i < priv->vbuffer.bytesused/2; i++) {
-	g->data[i] = priv->buffers[priv->wait_on].data[i*2];
+        g->data[i] = priv->buffers[priv->wait_on].data[i*2];
       }
       PostData(g, pi->outputs[OUTPUT_GRAY].destination);
     }
   }
   else if (streq(s(priv->format), "JPEG") ||
-	   streq(s(priv->format), "MJPG") ) {
+           streq(s(priv->format), "MJPG") ) {
     if (pi->outputs[OUTPUT_JPEG].destination) {
       Jpeg_buffer *j = Jpeg_buffer_new(priv->vbuffer.bytesused, &c);
       /* Had been setting this for VirtualStorage,
-  	   j->c.label = String_new("/snapshot.jpg")
-	 but that should be done via config now. */
+           j->c.label = String_new("/snapshot.jpg")
+         but that should be done via config now. */
       memcpy(j->data, priv->buffers[priv->wait_on].data, priv->vbuffer.bytesused);
       j->encoded_length = priv->vbuffer.bytesused;
       if (priv->fix) { Jpeg_fix(j); }
       if (j->encoded_length < 1000) {
-	printf("encoded_length=%lu, probably isochronous error!\n", j->encoded_length);
-	Jpeg_buffer_release(j);
+        printf("encoded_length=%lu, probably isochronous error!\n", j->encoded_length);
+        Jpeg_buffer_release(j);
       }
       else {
-	if (priv->snapshot > 0) {
-	  jpeg_snapshot(pi, j);
-	}
-	PostData(j, pi->outputs[OUTPUT_JPEG].destination);
+        if (priv->snapshot > 0) {
+          jpeg_snapshot(pi, j);
+        }
+        PostData(j, pi->outputs[OUTPUT_JPEG].destination);
       }
     }
   }
@@ -1570,11 +1570,11 @@ static void V4L2Capture_tick(Instance *pi)
       o->encoded_length = priv->vbuffer.bytesused;
 
       if (o->encoded_length < 1000) {
-	printf("encoded_length=%lu, probably isochronous error!\n", o->encoded_length);
-	O511_buffer_release(o);
+        printf("encoded_length=%lu, probably isochronous error!\n", o->encoded_length);
+        O511_buffer_release(o);
       }
       else {
-	PostData(o, pi->outputs[OUTPUT_O511].destination);
+        PostData(o, pi->outputs[OUTPUT_O511].destination);
       }
     }
   }
