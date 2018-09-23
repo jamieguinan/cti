@@ -36,9 +36,6 @@ ArrayU8 * File_load_data(String * filename)
   if (n < len && !procflag) {
     fprintf(stderr, "warning: only read %ld of %ld expected bytes from %s\n", n, len, s(filename));
   }
-
-  /* Add a provisional 0 byte, which is valuable in my most common use
-     cases, and harmless otherwise. */
   a->data[n] = 0;
 
   fclose(f);
@@ -51,7 +48,9 @@ String * File_load_text(String * filename)
 {
   ArrayU8 *a = File_load_data(filename);
   if (a) {
-    /* Can convert directly to string here, see provisional comment above. */
+    /* Add 1 extra byte so can add null-termination byte when converting to string. */
+    ArrayU8_extend(a, a->len+1);
+    a->data[a->len-1] = 0;
     return ArrayU8_to_string(&a);
   }
   else {
