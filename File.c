@@ -31,7 +31,7 @@ ArrayU8 * File_load_data(String * filename)
   }
 
   ArrayU8 *a = ArrayU8_new();
-  ArrayU8_extend(a, len+1);     /* +1 to allow for [n]=0 below */
+  ArrayU8_extend(a, len);
   n = fread(a->data, 1, len, f);
   if (n < len && !procflag) {
     fprintf(stderr, "warning: only read %ld of %ld expected bytes from %s\n", n, len, s(filename));
