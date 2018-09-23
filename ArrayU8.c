@@ -74,7 +74,6 @@ void ArrayU8_cleanup(ArrayU8 **a)
 
 String * ArrayU8_to_string(ArrayU8 **a)
 {
-  /* Assumes *a->data points to a null-terminated string. */
   String *s = String_new((char*)(*a)->data);
   ArrayU8_cleanup(a);
   return s;
