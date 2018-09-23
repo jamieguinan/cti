@@ -36,7 +36,6 @@ ArrayU8 * File_load_data(String * filename)
   if (n < len && !procflag) {
     fprintf(stderr, "warning: only read %ld of %ld expected bytes from %s\n", n, len, s(filename));
   }
-  a->data[n] = 0;
 
   fclose(f);
 
