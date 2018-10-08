@@ -1,7 +1,8 @@
 // Replace tabs with spaces in named files.
+// Mainly intended for code source and headers.
 // Suggested use pattern:
 //   * Start with tracked files under version control
-//   * Run ths program
+//   * Run ths program on selected files
 //   * Diff versus commited version
 //   * If Ok, commit new version.
 //
