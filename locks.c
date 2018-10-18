@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#ifdef LOCKS_STACKDEBUG
 #include "StackDebug.h"
+#else
+#define Stack_dump() do {} while (0)
+#endif
 
 void Lock_init(Lock *lock)
 {

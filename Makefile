@@ -73,6 +73,7 @@ endif
 endif
 # -std=c99
 CPPFLAGS += -I/usr/include
+CPPFLAGS += -DLOCKS_STACKDEBUG
 #CPPFLAGS += -I../platform/$(ARCH)/include
 CPPFLAGS += -MMD -MP -MF $(subst .c,.dep,$<)
 CPPFLAGS += $(JPEGINCLUDE)
