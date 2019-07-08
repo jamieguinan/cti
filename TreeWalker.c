@@ -19,6 +19,8 @@
 #include "String.h"
 #include "localptr.h"
 
+int TreeWalker_ignore_errors = 0;
+
 int TreeWalker_walk(String *dstr,
                     int (*callback)(String * path, unsigned char dtype, void * cbdata),
                     void * cbdata)
@@ -26,7 +28,12 @@ int TreeWalker_walk(String *dstr,
   DIR * d = opendir(s(dstr));
   if (!d) {
     perror(s(dstr));
-    return errno;
+    if (TreeWalker_ignore_errors) {
+      return 0;
+    }
+    else {
+      return errno;
+    }
   }
 
   int ret = 0;
