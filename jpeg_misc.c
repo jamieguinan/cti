@@ -382,7 +382,7 @@ RGB3_buffer * Jpeg_to_rgb3(Jpeg_buffer * jpeg)
 /* I also put Jpeg_fix() in this module, because it has access to the huffman
    tables, and again I didn't want Images.c to pull in jpeglib.h, nor define
    a second copy of the tables. */
-enum maker_enums {
+enum marker_enums {
   SOI = 0xd8,
   APP0 = 0xe0,
   DQT = 0xdb,
