@@ -11,7 +11,12 @@ int main(int argc, char * argv[])
   int seconds;
 
   if (argc < 3) {
-    printf("Usage: %s file host:port [nowaitreply] [ timeout_seconds ]\n", argv[0]);
+    printf("Usage:\n"
+           "  %s file host:port [nowaitreply] [ timeout_seconds ]\n"
+           "  %s '{json text}' host:port [nowaitreply] [ timeout_seconds ]\n"
+           , argv[0]
+           , argv[0]
+           );
     return 1;
   }
 
@@ -24,7 +29,15 @@ int main(int argc, char * argv[])
     }
   }
 
-  ArrayU8 * msg = File_load_data(S(argv[1]));
+  ArrayU8 * msg= NULL;
+
+  if (strstr(argv[1], "{") && strstr(argv[1], "}")) {
+    msg = ArrayU8_new();
+    ArrayU8_append(msg, ArrayU8_temp_string(argv[1]));
+  }
+  else {
+    msg = File_load_data(S(argv[1]));
+  }
 
   if (!msg) {
     printf("Failed to load %s\n", argv[1]);
