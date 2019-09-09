@@ -1,26 +1,43 @@
-# Scale build to multiple cores if possible.
-MAKEFLAGS=j$(shell grep '^processor' /proc/cpuinfo | wc -l)
+# CTI Makefile
 
-ifeq ($(shell arch),x86_64)
-ARCH=x86_64-Linux
+ARCH=$(shell uname -m)
+OS=$(shell uname -s)
+
+HOSTARCH=$(ARCH)-$(OS)
+$(warning HOSTARCH=$(HOSTARCH))
+
+# Scale build to available cores.
+ifeq ($(shell sysctl -nq kern.ostype),Darwin)
+MAKEFLAGS=j$(shell sysctl -n hw.logicalcpu)
+else ifeq ($(OS),Linux)
+MAKEFLAGS=j$(shell grep '^processor' /proc/cpuinfo | wc -l)
+endif
+
+ifeq ($(HOSTARCH),x86_64-Darwin)
+LOCAL_JPEG=1
+endif
+
+ifeq ($(HOSTARCH),x86_64-Linux)
+LOCAL_JPEG=1
+endif
+
+ifeq ($(HOSTARCH),armv6l-Linux)
+TURBO_JPEG=1
+RPI=1
+endif
+
+ifeq ($(HOSTARCH),armv7l-Linux)
+TURBO_JPEG=1
+RPI=1
+endif
+
+ifeq ($(LOCAL_JPEG),1)
 JPEGINCLUDE=-I../jpeg-8
 JPEGLIB=../jpeg-8/.libs/libjpeg.a
 JPEGTRANSUPP=../jpeg-8/transupp.o
 endif
 
-ifeq ($(shell arch),i686)
-ARCH=i686-Linux
-endif
-
-ifeq ($(shell arch),armv6l)
-ARCH=rpi
-JPEGINCLUDE=-I../libjpeg-turbo -I../libjpeg-turbo/build
-JPEGLIB=../libjpeg-turbo/build/libjpeg.a
-JPEGTRANSUPP=../libjpeg-turbo/build/CMakeFiles/jpegtran-static.dir/transupp.c.o
-endif
-
-ifeq ($(shell arch),armv7l)
-ARCH=rpi
+ifeq ($(TURBO_JPEG),1)
 JPEGINCLUDE=-I../libjpeg-turbo -I../libjpeg-turbo/build
 JPEGLIB=../libjpeg-turbo/build/libjpeg.a
 JPEGTRANSUPP=../libjpeg-turbo/build/CMakeFiles/jpegtran-static.dir/transupp.c.o
@@ -30,28 +47,19 @@ default: test-requirements cti_main
 
 test-requirements:
 	@test -f $(JPEGLIB) || ( echo "Need compiled libjpeg at $(JPEGLIB)" ; false )
-	@pkg-config --exists libssl || ( echo "Need libssl for serf" ; false )
-	@pkg-config --exists libcrypto || ( echo "Need libcrypto for ssl" ; false )
-
-# include ../build/platforms.make
+#	@pkg-config --exists libcrypto || ( echo "Need libcrypto for ssl" ; false )
+#	@pkg-config --exists libssl || ( echo "Need libssl for serf" ; false )
 
 CC=gcc
 CFLAGS=-O2
 SHARED_FLAGS=-shared -fPIC
 NM=nm
-OS=Linux
 STRIP=strip
 # ARCH:=$(shell uname -m)-$(shell uname -s)
 
 MAIN=main.o
 
 PKGCONFIGDIR ?= /usr/lib/pkgconfig
-
-HOSTARCH=$(shell uname -m)-$(shell uname -s)
-
-ifeq ($(ARCH),$(HOSTARCH))
-LDFLAGS+=-Wl,-rpath,$(shell pwd)/../platform/$(ARCH)/lib -lm
-endif
 
 # This enables files > 2GB on 32-bit Linux.
 CFLAGS += -D_FILE_OFFSET_BITS=64
@@ -73,7 +81,7 @@ endif
 endif
 # -std=c99
 CPPFLAGS += -I/usr/include
-CPPFLAGS += -DLOCKS_STACKDEBUG
+#CPPFLAGS += -DLOCKS_STACKDEBUG
 #CPPFLAGS += -I../platform/$(ARCH)/include
 CPPFLAGS += -MMD -MP -MF $(subst .c,.dep,$<)
 CPPFLAGS += $(JPEGINCLUDE)
@@ -186,7 +194,6 @@ OBJS= \
 	VirtualStorage.o \
 	ATSCTuner.o \
 	Y4MOverlay.o \
-	LinuxEvent.o \
 	VMixer.o \
 	crc.o \
 	Array.o \
@@ -210,6 +217,7 @@ OBJS+=StackDebug.o
 ifeq ($(OS),Linux)
 OBJS+=\
 	Uvc.o \
+	LinuxEvent.o \
 	FFmpegEncode.o
 ifneq ($(ARCH),lpd)
 OBJS+=\
@@ -353,10 +361,9 @@ CPPFLAGS+=-DHAVE_CURL
 endif
 
 # AAC
-LIBFAAC=$(shell /bin/ls /usr/lib/libfaac.a /usr/lib/x86_64-linux-gnu/libfaac.a 2> /dev/null)
-ifneq (,$(shell /bin/ls $(LIBFAAC) 2> /dev/null ))
+ifneq (,$(shell /bin/ls /usr/include/faac.h /usr/local/include/faac.h 2> /dev/null ))
 OBJS+=AAC.o
-LDFLAGS+=$(LIBFAAC)
+LDFLAGS+=$(shell /bin/ls /usr/lib/libfaac.a /usr/lib/*/libfaac.a /usr/local/lib/libfaac.a 2> /dev/null )
 CPPFLAGS+=-DHAVE_AAC
 endif
 
@@ -373,7 +380,7 @@ endif
 ../rpi-openmax-demos/cti-rpi-encode-yuv.o: ../rpi-openmax-demos/rpi-encode-yuv.c
 	$(MAKE) -C ../rpi-openmax-demos cti_modules
 
-ifeq ($(ARCH),rpi)
+ifeq ($(RPI),1)
 OBJS+=RPiH264Enc.o ../rpi-openmax-demos/cti-rpi-encode-yuv.o
 LDFLAGS += -L/opt/vc/lib -lopenmaxil -lbcm_host -lvcos -lpthread -lm
 CPPFLAGS+=-DHAVE_RPIH264ENC
