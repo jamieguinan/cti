@@ -117,6 +117,7 @@ int cti_main(int argc, char *argv[])
   V4L2Capture_init();
   Signals_init();
   Spawn_init();
+  LinuxEvent_init();
 #endif
 
 #ifdef HAVE_VISCA
@@ -165,6 +166,10 @@ int cti_main(int argc, char *argv[])
 
 #ifdef HAVE_CURL
   Curl_init();
+#endif
+
+#ifdef HAVE_SERF
+  PushQueue_init();
 #endif
 
   CJpeg_init();
@@ -220,12 +225,10 @@ int cti_main(int argc, char *argv[])
   VirtualStorage_init();
   ATSCTuner_init();
   Y4MOverlay_init();
-  LinuxEvent_init();
   VMixer_init();
   M3U8_init();
   TunerControl_init();
   BinaryFiler_init();
-  PushQueue_init();
   //PCMSource_init();
   UDPTransmit_init();
   Compositor_init();
