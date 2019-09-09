@@ -539,10 +539,12 @@ void GetConfigValue(Input *pi, const char *label, Value *vreq)
   Config_buffer *cb;
 
   Lock_init(&lock);
+  Event_init(&event);
   cb = Config_buffer_vrreq_new(label, 0L, vreq, 0L, &event);
   Lock_acquire(&lock);
   PostData(cb, pi);
   Lock_release__event_wait__lock_acquire(&lock, &event);
+  Event_destroy(&event);
   Lock_release(&lock);
 }
 
@@ -553,10 +555,12 @@ void GetConfigRange(Input *pi, const char *label, Range *rreq)
   Config_buffer *cb;
 
   Lock_init(&lock);
+  Event_init(&event);
   cb = Config_buffer_vrreq_new(label, 0L, 0L, rreq, &event);
   Lock_acquire(&lock);
   PostData(cb, pi);
   Lock_release__event_wait__lock_acquire(&lock, &event);
+  Event_destroy(&event);
   Lock_release(&lock);
 }
 
