@@ -31,7 +31,6 @@ static Output ImageLoader_outputs[] = {
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
   [ OUTPUT_AAC ] = { .type_label = "AAC_buffer", .destination = 0L },
-  [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
 };
 
