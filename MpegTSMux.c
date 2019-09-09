@@ -318,6 +318,7 @@ static void m3u8_files_update(Instance *pi)
     file_to_delete = String_list_pull_at(priv->m3u8_ts_files, 0);
   }
 
+  localptr(String, m3u8name) = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
   localptr(String, tmpname) = String_sprintf("%s/prog_index.m3u8.tmp", sl(priv->index_dir));
   FILE * fpi = fopen(s(tmpname), "w");
   if (!fpi) {
@@ -350,8 +351,6 @@ static void m3u8_files_update(Instance *pi)
 
   //fprintf(fpi, "#EXT-X-ENDLIST\n");  /* ONLY for VODs, not live... */
   fclose(fpi);
-
-  localptr(String, m3u8name) = String_sprintf("%s/prog_index.m3u8", sl(priv->index_dir));
   rename(s(tmpname), s(m3u8name));
 
  out:
