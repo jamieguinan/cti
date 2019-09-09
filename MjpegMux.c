@@ -24,14 +24,14 @@ static void Wav_handler(Instance *pi, void *data);
 static void Audio_handler(Instance *pi, void *data);
 static void AAC_handler(Instance *pi, void *data);
 
-enum { INPUT_CONFIG, INPUT_JPEG, INPUT_O511, INPUT_WAV, INPUT_AUDIO };
+enum { INPUT_CONFIG, INPUT_JPEG, INPUT_O511, INPUT_WAV, INPUT_AUDIO, INPUT_AAC };
 static Input MjpegMux_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_buffer", .handler = Config_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
   [ INPUT_O511 ] = { .type_label = "O511_buffer", .handler = O511_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer", .handler = Wav_handler },
   [ INPUT_AUDIO ] = { .type_label = "Audio_buffer", .handler = Audio_handler },
-  [ INPUT_AUDIO ] = { .type_label = "AAC_buffer", .handler = AAC_handler },
+  [ INPUT_AAC ] = { .type_label = "AAC_buffer", .handler = AAC_handler },
 };
 
 enum { OUTPUT_RAWDATA };
