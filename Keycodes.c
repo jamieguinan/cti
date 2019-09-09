@@ -94,6 +94,7 @@ int Keycode_from_string(const char *string)
   return -1;
 }
 
+#ifdef __linux__
 #include <linux/input.h>
 #define _map_(x) [x] = CTI__##x
 static int linux_event_to_keycode[] = {
@@ -173,7 +174,7 @@ static int linux_event_to_keycode[] = {
   //_map_(KEY_CARET),
   _map_(KEY_CAMERA),
 };
-
+#endif
 
 #define _ksmap_(x) [x] = #x
 static const char * keycode_to_string_map[] = {
@@ -264,7 +265,7 @@ const char * Keycode_to_string(int keycode)
   return keycode_to_string_map[keycode];
 }
 
-
+#ifdef __linux__
 int Keycode_from_linux_event(uint16_t code)
 {
   if (code > cti_table_size(linux_event_to_keycode)) {
@@ -272,3 +273,4 @@ int Keycode_from_linux_event(uint16_t code)
   }
   return linux_event_to_keycode[code];
 }
+#endif
