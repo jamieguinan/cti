@@ -1,7 +1,11 @@
 CTI
 ===
 
-CTI is a hobby project I've been working on since 2010. During the 2000s, I had written several of one-off programs involving simple video and audio capture and processing, and network services. Applications included a birdfeeder webcam, recording analog TV programs with an NTSC tuner card, and converting DV tapes to other formats. Every time I needed a new, slightly different application, I'd copy and rename the previous one and change it slightly. I added features to the new programs, and the old ones would [bit rot](https://en.wikipedia.org/wiki/Software_rot). This bothered me, so I came up with the idea of having *one* program that could be configured at runtime to handle any of the applications I might come up with, and if I fixed a bug or added a feature, it would be immediately included and available in all of these applications. This was the impetus for CTI.
+CTI is *a modular, multi-threaded, message-passing, runtime-configurable program for video and audio capture and processing, networking, and various other applications*.
+
+### History
+
+During the 2000s, I had written several of one-off programs involving simple video and audio capture and processing, and network services. Applications included a birdfeeder webcam, recording analog TV programs with an NTSC tuner card, and converting DV tapes to other formats. Every time I needed a new, slightly different application, I'd copy and rename the previous one and change it slightly. I added features to the new programs, and the old ones would [bit rot](https://en.wikipedia.org/wiki/Software_rot). This bothered me, so I came up with the idea of having *one* program that could be configured at runtime to handle any of the applications I might come up with, and if I fixed a bug or added a feature, it would be immediately included and available in all of these applications. This was the impetus for CTI.
 
 The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc` stood for, maybe something to do with `netcat`. From my notes,
 
@@ -14,9 +18,9 @@ The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc`
 	Things I need right now, for getting config values and ranges, are
 	strings, lists of strings, maybe automatic cleanup.
 
-The core concept in CTI is that there are a set of static **C** structures, with camel-case labels like `SocketServer`, that are used as **T**emplates. Any number of them can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which usually blocks until it has something to do. Most instances have a set of Input and Output members, which can be connected in a many-to-one Output-to-Input graph, of sorts. Instances may thus pass (loosely runtime-typed) messages to other instances, and that is how a CTI "application" is built. Also, each instance has a table of configuration parameters that can be set using key/value strings.
+### How it works
 
-So, CTI is *a modular, multi-threaded, message-passing, runtime-configurable program for video and audio capture and processing, networking, and various other applications*.
+The core concept in CTI is that there are a set of static **C** structures, with camel-case labels like `SocketServer`, that are used as **T**emplates. Any number of them can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which usually blocks until it has something to do. Most instances have a set of Input and Output members, which can be connected in a many-to-one Output-to-Input graph, of sorts. Instances may thus pass (loosely runtime-typed) messages to other instances, and that is how a CTI "application" is built. Also, each instance has a table of configuration parameters that can be set using key/value strings.
 
 If you're looking for other projects in the same space, that let you instantiate and plug parts together to do things, here are a few that come to mind,
 
