@@ -192,6 +192,12 @@ static void Jpeg_handler(Instance *pi, void *data)
     RGB3_buffer_release(rgb3);
   }
 
+  /* Calculate decompress time. */
+  cti_getdoubletime(&t2);
+  float tdiff = t2 - t1;
+
+  dpf("djpeg %.5f (%dx%d)\n", tdiff, save_width, save_height);
+
  out:
   /* Discard or pass along input buffer. */
   if (pi->outputs[OUTPUT_JPEG].destination) {
@@ -201,12 +207,6 @@ static void Jpeg_handler(Instance *pi, void *data)
     Jpeg_buffer_release(jpeg_in);
   }
   pi->counter += 1;
-
-  /* Calculate decompress time. */
-  cti_getdoubletime(&t2);
-  float tdiff = t2 - t1;
-
-  dpf("djpeg %.5f (%dx%d)\n", tdiff, save_width, save_height);
 }
 
 static void DJpeg_tick(Instance *pi)
