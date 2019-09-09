@@ -1,6 +1,11 @@
 #include "locks.h"
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
+#include <signal.h>		/* kill */
+#if defined(__APPLE__)
+#include <unistd.h>		/* getpid */
+#endif
 
 #ifdef LOCKS_STACKDEBUG
 #include "StackDebug.h"
@@ -10,25 +15,30 @@
 
 void Lock_init(Lock *lock)
 {
-#ifdef __linux__
-  pthread_mutex_init(&lock->mlock, NULL);
+#if defined(__linux__) || defined(__APPLE__)
+  int rc;
+  rc = pthread_mutex_init(&lock->mlock, NULL);
+  if (rc != 0) {
+    perror("pthread_mutex_init");
+    kill(0, 3);
+  }
 #else
-#error __func__ is not defined for this platform.
+#error Lock_init not defined for this platform.
 #endif
 }
 
 void Lock_destroy(Lock *lock)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
   pthread_mutex_destroy(&lock->mlock);
 #else
-#error __func__ is not defined for this platform.
+#error Lock_destroy is not defined for this platform.
 #endif
 }
 
 void Lock_acquire(Lock *lock)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
   int rc;
   rc = pthread_mutex_lock(&lock->mlock);
   if (rc != 0) {
@@ -37,75 +47,78 @@ void Lock_acquire(Lock *lock)
     exit(1);
   }
 #else
-#error __func__ is not defined for this platform.
+#error Lock_acquire is not defined for this platform.
 #endif
 }
 
 void Lock_release(Lock *lock)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
   int rc;
   rc = pthread_mutex_unlock(&lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_mutex_unlock returned %d\n", rc);
     Stack_dump();
- exit(1);
+    exit(1);
   }
 #else
-#error __func__ is not defined for this platform.
+#error Lock_release is not defined for this platform.
 #endif
 }
 
 void Lock_release__event_wait__lock_acquire(Lock *lock, Event *event)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
   int rc;
+  printf("pthread_cond_wait %p %p\n", &event->event, &lock->mlock);
   rc = pthread_cond_wait(&event->event, &lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_cond_wait returned %d\n", rc);
     Stack_dump();
+    abort();
     exit(1);
   }
 #else
-#error __func__ is not defined for this platform.
+#error Lock_release__event_wait__lock_acquire is not defined for this platform.
 #endif
 }
 
 
 void Event_init(Event *ev)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
   pthread_cond_init(&ev->event, NULL);
 #else
-#error __func__ is not defined for this platform.
+#error Event_init is not defined for this platform.
 #endif
 }
 
 
 void Event_destroy(Event *ev)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
   pthread_cond_destroy(&ev->event);
 #else
-#error __func__ is not defined for this platform.
+#error Event_destory is not defined for this platform.
 #endif
 }
 
 
 void Event_signal(Event *ev)
 {
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
   pthread_cond_broadcast(&ev->event);
 #else
-#error __func__ is not defined for this platform.
+#error Event_signal is not defined for this platform.
 #endif
 }
 
 /* Semaphores */
 void Sem_init(Sem *sem)
 {
-#ifdef __linux__
-  int rc = sem_init(&sem->sem,
+#if defined(__linux__)
+  sem->sem = &sem->_sem;
+  int rc = sem_init(sem->sem,
                     0, /* shared between threads only */
                     0  /* initial value */
     );
@@ -113,38 +126,52 @@ void Sem_init(Sem *sem)
     perror("sem_init");
     exit(1);
   }
+#elif defined(__APPLE__)
+  /* macOS doesn't support anonymous semaphores with sem_init(), only
+     sem_open() which requires a system-wide unique name. My solution
+     is to generate a unique name using pid and address of the
+     structure. */
+  char name[128];
+  sprintf(name, "%ld%p", (long)getpid(), sem);
+  sem->sem = sem_open(name, O_CREAT|O_EXCL, 0700, 0);
+  if (SEM_FAILED == sem->sem) {
+    perror("sem_open");
+    exit(1);
+  }
 #else
-#error __func__ is not defined for this platform.
+#error Sem_init is not defined for this platform.
 #endif
 }
 
 
 void Sem_post(Sem *sem)
 {
-#ifdef __linux__
-  if (sem_post(&sem->sem) != 0) { perror("sem_post"); }
+#if defined(__linux__) || defined(__APPLE__)
+  if (sem_post(sem->sem) != 0) { perror("sem_post"); }
 #else
-#error __func__ is not defined for this platform.
+#error Sem_post is not defined for this platform.
 #endif
 }
 
 
 void Sem_wait(Sem *sem)
 {
-#ifdef __linux__
-  if (sem_wait(&sem->sem) != 0) { perror("sem_wait"); }
+#if defined(__linux__) || defined(__APPLE__)
+  if (sem_wait(sem->sem) != 0) { perror("sem_wait"); }
 #else
-#error __func__ is not defined for this platform.
+#error Sem_wait is not defined for this platform.
 #endif
 }
 
 
 void Sem_destroy(Sem *sem)
 {
-#ifdef __linux__
-  if (sem_destroy(&sem->sem) != 0) { perror("sem_destroy"); }
+#if defined(__linux__)
+  if (sem_destroy(sem->sem) != 0) { perror("sem_destroy"); }
+#elif defined(__APPLE__)
+  if (sem_close(sem->sem) != 0) { perror("sem_close"); }
 #else
-#error __func__ is not defined for this platform.
+#error Sem_destroy is not defined for this platform.
 #endif
 }
 

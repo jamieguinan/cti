@@ -14,7 +14,8 @@ typedef struct {
 
 
 typedef struct {
-  sem_t sem;
+  sem_t * sem;			/* points to _sem */
+  sem_t _sem;
 } Sem;
 
 #endif
@@ -23,7 +24,7 @@ typedef struct {
 #include <pthread.h>
 #include <semaphore.h>
 typedef struct {
-  pthread_mutex_t lock;
+  pthread_mutex_t mlock;
 } Lock;
 
 typedef struct {
@@ -31,7 +32,7 @@ typedef struct {
 } Event;
 
 typedef struct {
-  sem_t sem;
+  sem_t * sem;			/* returned by sem_open */
 } Sem;
 
 #endif
