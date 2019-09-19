@@ -70,7 +70,6 @@ void Lock_release__event_wait__lock_acquire(Lock *lock, Event *event)
 {
 #if defined(__linux__) || defined(__APPLE__)
   int rc;
-  printf("pthread_cond_wait %p %p\n", &event->event, &lock->mlock);
   rc = pthread_cond_wait(&event->event, &lock->mlock);
   if (rc != 0) {
     fprintf(stderr, "pthread_cond_wait returned %d\n", rc);
@@ -131,9 +130,8 @@ void Sem_init(Sem *sem)
      sem_open() which requires a system-wide unique name. My solution
      is to generate a unique name using pid and address of the
      structure. */
-  char name[128];
-  sprintf(name, "%ld%p", (long)getpid(), sem);
-  sem->sem = sem_open(name, O_CREAT|O_EXCL, 0700, 0);
+  sprintf(sem->name, "%ld%p", (long)getpid(), sem);
+  sem->sem = sem_open(sem->name, O_CREAT|O_EXCL, 0700, 0);
   if (SEM_FAILED == sem->sem) {
     perror("sem_open");
     exit(1);
@@ -169,7 +167,11 @@ void Sem_destroy(Sem *sem)
 #if defined(__linux__)
   if (sem_destroy(sem->sem) != 0) { perror("sem_destroy"); }
 #elif defined(__APPLE__)
-  if (sem_close(sem->sem) != 0) { perror("sem_close"); }
+  if (sem_close(sem->sem) != 0) {
+    perror("sem_close");
+  }
+  else {
+    sem_unlink(sem->name);
 #else
 #error Sem_destroy is not defined for this platform.
 #endif

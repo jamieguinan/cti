@@ -33,6 +33,7 @@ typedef struct {
 
 typedef struct {
   sem_t * sem;			/* returned by sem_open */
+  char name[128];
 } Sem;
 
 #endif

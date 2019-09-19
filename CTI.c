@@ -364,6 +364,7 @@ static Instance * _Instantiate_local(const char *label, String * instanceLabel, 
       }
 
       Lock_init(&pi->inputs_lock);
+      Event_init(&pi->inputs_event);
 
       /* Type-specific instance initialization. */
       if (t->instance_init) {
@@ -765,6 +766,7 @@ Callback *Callback_new(void)
 {
   Callback *cb = Mem_calloc(1, sizeof(*cb));
   Lock_init(&cb->lock);
+  Event_init(&cb->event);
   return cb;
 }
 
