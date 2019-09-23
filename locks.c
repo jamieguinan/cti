@@ -172,6 +172,7 @@ void Sem_destroy(Sem *sem)
   }
   else {
     sem_unlink(sem->name);
+  }
 #else
 #error Sem_destroy is not defined for this platform.
 #endif
