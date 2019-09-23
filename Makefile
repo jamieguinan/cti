@@ -64,12 +64,14 @@ PKGCONFIGDIR ?= /usr/lib/pkgconfig
 # This enables files > 2GB on 32-bit Linux.
 CFLAGS += -D_FILE_OFFSET_BITS=64
 
-CFLAGS += -Wall $(CMDLINE_CFLAGS)
+CFLAGS += -Wall
 CFLAGS += -O2
 #CFLAGS += -Os 
 #CFLAGS += -Werror
 #CFLAGS += -O0 -ggdb
 #CFLAGS += -Os -ggdb
+CFLAGS += $(CMDLINE_CFLAGS)
+
 ifneq ($(ARCH),armeb)
 ifneq ($(ARCH),lpd)
 ifneq ($(ARCH),i386-Darwin)
