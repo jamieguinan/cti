@@ -20,7 +20,7 @@ The last one-off program I wrote was called `ncjpeg`, but I forget what the `nc`
 
 ### How it works
 
-The core concept in CTI is that there are a set of static **C** structures, with camel-case labels like `SocketServer`, that are used as **T**emplates. Any number of them can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which usually blocks until it has something to do. Most instances have a set of Input and Output members, which can be connected in a many-to-one Output-to-Input graph, of sorts. Instances may thus pass (loosely runtime-typed) messages to other instances, and that is how a CTI "application" is built. Also, each instance has a table of configuration parameters that can be set using key/value strings.
+CTI has a set of static **C** structures, with camel-case labels like `SocketServer`, that are used as **T**emplates. Templates can be **I**nstantiated, wherein a copy of the template is allocated, and a thread is created which runs in a loop calling the `.tick()` method of the instance, which typically blocks until it has something to do. Most instances have Inputs (array of structures) and Outputs (array of pointers), which can be connected, forming a many-to-one Output-to-Input graph. Instances pass runtime-typed messages to other instances, and that is how a CTI "application" is built. Also, each instance has a table of configuration parameters that can be set using key/value strings.
 
 If you're looking for other projects in the same space, that let you instantiate and plug parts together to do things, here are a few that come to mind,
 
@@ -32,17 +32,17 @@ If you're looking for other projects in the same space, that let you instantiate
 
 Many [SoCs](https://en.wikipedia.org/wiki/System_on_a_chip) have similar capabilities in dedicated hardware. The OpenMax library used with the Raspberry Pi and other SoCs has [components with inputs and outputs](http://home.nouwen.name/RaspberryPi/documentation/ilcomponents/index.html) enumerated as port numbers.
 
-Why not C++? I spent a few years as a serious aficionado of the language, but I came back to C and have mostly stuck with it. I won't get into the C vs. C++ debate here, but I do acknowledge that several features in CTI could have been implemented more concisely in C++. My philosophy is "each to his own", whatever tools and language a developer is most familiar and comfortable with, are the best.
-
-### An example
+### Implementation
 
 CTI has a number of compiled-in Templates, each implemented in a separate C file (it can also load `.so` modules at runtime). Each Template is registered and added to a set of available templates. To create an Instance and start an associated thread, this function is used,
 
     Instance * Instantiate(const char *label);
 
-where `label` is the name associated with the Template. While CTI could be used as a library, and applications hard-coded to call `Instantiate()`, my main design goal of CTI was to allow runtime configurability, so I came up with a simple configuration and command language. Thinking that I would probably come up with something better later on, but not wanting to break previous applications, I implemented it in a file named `ScriptV00.c`, allowing for later versions named `ScriptV01`, `ScriptV02`, etc. But as is often the case, the original worked good enough for my needs, and I haven't added any other versions.
+where `label` is the name associated with the Template. While CTI could be used as a library, and applications hard-coded to call `Instantiate()`, my main design goal of CTI was to allow runtime configurability, so I came up with a simple configuration and command language. Thinking that I would probably come up with something better later on, but not wanting to break previous applications, I implemented it in a file named `ScriptV00.c`, allowing for later versions named `ScriptV01`, `ScriptV02`, etc. But the original worked good enough for my needs, so I haven't added any other versions.
 
-Ok, now an example. `logitech.cmd` is a simple camera viewer application. It assumes a [UVC](https://en.wikipedia.org/wiki/USB_video_device_class) compatible USB camera is available on the computer. Side note, since I hadn't mentioned it thus far, CTI is pretty Linux-centric, although I have occasionally ported it to other platforms, with varying degrees of success.
+### An example
+
+`logitech.cmd` is a simple camera viewer application. It assumes a [UVC](https://en.wikipedia.org/wiki/USB_video_device_class) compatible USB camera is available on the computer. Side note, since I hadn't mentioned it thus far, CTI is pretty Linux-centric, although I have occasionally ported it to other platforms, with varying degrees of success.
 
     # Make instances for video capture, Jpeg decompression, and display using SDL.
     # syntax: new template-label instance-label
@@ -151,7 +151,7 @@ For `String *` variables, I simply need to provide this function,
 
     void String_free(String **s)
 
-I love this. I still keep my code simple and close to the left margin, but I no longer have to use goto's and *one explicit cleanup call per local variable*. I sometimes think about writing a blog post explaing why I choose to use C over C++, I'll write more about this if I get around to it.
+I love this. I still keep my code simple and close to the left margin, but I no longer have to use goto's and *one explicit cleanup call per local variable*. I sometimes think about writing a blog post explaing why I choose to use C over C++, I'll write more about this if I get around to it. For now I'll note that I spent a few years as a serious fan and advocate of C++, but I came back to C and have mostly stuck with it.
 
 I had an experimental project called "modc" in the late 2000s, which implemented garbage collection by means of reference-counting allocations, keeping track of types, and leveraging the descending property of stack variable addresses (on most platforms) to periodically clean up dynamically allocated objects. It worked great, and I even wrote an sshfs-compatible (but non-encrypted) SFTP server completely from scratch with it, but the other goals of the modc project didn't pan out, so I abandoned it. I might try reviving some of the modc concepts in CTI one day.
 
