@@ -65,7 +65,13 @@ PKGCONFIGDIR ?= /usr/lib/pkgconfig
 CFLAGS += -D_FILE_OFFSET_BITS=64
 
 CFLAGS += -Wall
+
+ifeq ($(DEBUG),1)
+CFLAGS += -O0 -ggdb
+else
 CFLAGS += -O2
+endif
+
 #CFLAGS += -Os 
 #CFLAGS += -Werror
 #CFLAGS += -O0 -ggdb
