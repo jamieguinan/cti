@@ -96,6 +96,63 @@ void ScriptV00_Config(Instance *inst, const char *token2, const char *token3)
   }
 }
 
+enum { C_tl, C_tlv,
+       C_new, C_config, C_connect, C_include, C_load,
+       C_il, C_ilv,
+       C_system, C_exit, C_mt3, C_mdump,
+       C_g_synchronous, C_abort, C_p, C_ignoreeof,
+       C_dpl, C_dpt, C_dpe, C_v, C_mpm, C_apm, C_md5, C_help
+};
+static struct {
+  const char *command;
+  const char *help;
+  int num_args;                 /* negative value means ">=" of positive value */
+#define ENTRY(c, _n, _help) [ C_ ## c ] = { .command = #c, .help = _help, .num_args = _n }
+} command_table[] = {
+  ENTRY(tl, 1, "- list registered template types")
+  , ENTRY(tlv, 1, "- list registered template types, with input/output names")
+  , ENTRY(new, 3, "type label - instantiate type with instance name label")
+  , ENTRY(connect, 4, "instance label instance - connect 2 instances by common label"
+          "\nconnect instance:label instance:label - connect 2 instances by different label names (must be same type)")
+  , ENTRY(config, 4, "instance key value - set a value in an instance")
+  , ENTRY(il, 1, "- list instances in global instance group")
+  , ENTRY(ilv, 1, "- list instances in global instance group, with connected outputs")
+  , ENTRY(include, 2, "file - read commands (as described here) from named file")
+  , ENTRY(load, 2, "modulename - load shared library containing CTI registration for new type(s)")
+  , ENTRY(system, -1, "cmd [args...] - run command synchronously")
+  , ENTRY(exit, 1, "- exit program")
+  , ENTRY(mt3, 1, "- toggle memory tracking")
+  , ENTRY(mdump, 1, "- dump recorded memory allocations")
+  , ENTRY(g_synchronous, 1, "- toggle synchronous operation")
+  , ENTRY(abort, 1, "- abort program immediately")
+  , ENTRY(p, 1, "- set global pause flag, wait for enter, then unset")
+  , ENTRY(ignoreeof, -1, "- keep running after EOF on command file")
+  , ENTRY(dpl, 1, "- list dynamic debug prints")
+  , ENTRY(dpt, 2, "n - toggle dynamic debug print number n, wait for enter, then turn off")
+  , ENTRY(dpe, 2, "n - toggle dynamic debug print number n")
+  , ENTRY(v, 2, "v - set verbose level, alive until hit enter")
+  , ENTRY(mpm, 2, "n - set max pending messages to n")
+  , ENTRY(apm, 1, "- show all pending messages")
+  , ENTRY(md5, 1, "- show md5 checksum of executable")
+  , ENTRY(help, 1, "- show this help text")
+};
+
+static int check_command(char * token, int index, int num_args) {
+  if (streq(token, command_table[index].command)) {
+    if (command_table[index].num_args < 0 && (-1 * num_args) <= command_table[index].num_args) {
+      return 1;
+    }
+    else if (command_table[index].num_args == num_args) {
+      return 1;
+    }
+    else {
+      printf("%s %s\n", command_table[index].command, command_table[index].help);
+      /* fall through and return 0 */
+    }
+  }
+  return 0;
+}
+
 
 static void scan_file(ScriptV00_private *priv, const char *filename);
 
@@ -114,19 +171,19 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   /* The rest are tested based on a single sscanf. */
   n = sscanf(line->bytes, "%255s %255s %255s %255s", token0, token1, token2, token3);
 
-  if (n == 3 && streq(token0, "new")) {
+  if (check_command(token0, C_new, n)) {
     /* template, label */
     InstanceGroup_add(priv->g, token1, String_new(token2));
     return;
   }
 
-  if (n == 4 && streq(token0, "connect")) {
+  if (check_command(token0, C_connect, n)) {
     /* instance, label, instance */
     InstanceGroup_connect(priv->g, String_new(token1), token2, String_new(token3));
     return;
   }
 
-  if (n == 4 && streq(token0, "config")) {
+  if (check_command(token0, C_config, n)) {
     /* label, key, value */
     Instance *inst = InstanceGroup_find(priv->g, String_new(token1));
     if (inst) {
@@ -150,17 +207,17 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
-  if (n == 2 && streq(token0, "include")) {
+  if (check_command(token0, C_include, n)) {
     scan_file(priv, token1);
     return;
   }
 
-  if (n == 2 && streq(token0, "load")) {
+  if (check_command(token0, C_load, n)) {
     load_module(priv, token1);
     return;
   }
 
-  if (n > 1 && streq(token0, "system")) {
+  if (check_command(token0, C_system, n)) {
     int rc = system(line->bytes + strlen("system "));
     if (rc == -1) {
       perror("system");
@@ -168,54 +225,54 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
-  if (n == 1 && streq(token0, "exit")) {
+  if (check_command(token0, C_exit, n)) {
     exit(1);
     return;
   }
 
-  if (n == 1 && streq(token0, "mt3")) {
+  if (check_command(token0, C_mt3, n)) {
     int v = mt3_toggle();
     fprintf(stderr, "mem_tracking_3 %s\n", (v ? "on":"off"));
     return;
   }
 
-  if (n == 1 && streq(token0, "mdump")) {
+  if (check_command(token0, C_mdump, n)) {
     mdump();
     return;
   }
 
-  if (n == 1 && streq(token0, "tlv")) {
+  if (check_command(token0, C_tlv, n)) {
     Template_list(1);
     return;
   }
 
-  if (n == 1 && streq(token0, "tl")) {
+  if (check_command(token0, C_tl, n)) {
     Template_list(0);
     return;
   }
 
-  if (n == 1 && streq(token0, "il")) {
+  if (check_command(token0, C_il, n)) {
     Instance_list(0);
     return;
   }
 
-  if (n == 1 && streq(token0, "ilv")) {
+  if (check_command(token0, C_ilv, n)) {
     Instance_list(1);
     return;
   }
 
-  if (n == 1 && streq(token0, "g_synchronous")) {
+  if (check_command(token0, C_g_synchronous, n)) {
     g_synchronous = !g_synchronous;
     return;
   }
 
-  if (n == 1 && streq(token0, "abort")) {
+  if (check_command(token0, C_abort, n)) {
     puts("");                   /* Wrap line on console. */
     abort();
     return;
   }
 
-  if (n == 1 && streq(token0, "p")) {
+  if (check_command(token0, C_p, n)) {
     if (is_stdin) {
       cfg.pause = 1;
       /* Wait until newline then reset. */
@@ -227,7 +284,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
-  if (n >= 1 && streq(token0, "ignoreeof")) {
+  if (check_command(token0, C_ignoreeof, n)) {
     if (n == 1) {
       priv->exit_on_eof = 0;
     }
@@ -243,12 +300,12 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
-  if (n == 1 && streq(token0, "dpl")) {
+  if (check_command(token0, C_dpl, n)) {
     cti_debug_printf_list();
     return;
   }
 
-  if (n == 2 && streq(token0, "v")) {
+  if (check_command(token0, C_v, n)) {
     cfg.verbosity = atoi(token1);
     if (is_stdin) {
       /* Wait until newline then reset. */
@@ -260,7 +317,7 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
-  if (n == 2 && streq(token0, "dpt")) {
+  if (check_command(token0, C_dpt, n)) {
     int index = atoi(token1);
     cti_debug_printf_toggle(index);
     if (is_stdin) {
@@ -273,28 +330,39 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
     return;
   }
 
-  if (n == 2 && streq(token0, "dpe")) {
+  if (check_command(token0, C_dpe, n)) {
     /* Enable until dpe called again, without blocking command line. */
     int index = atoi(token1);
     cti_debug_printf_toggle(index);
     return;
   }
 
-  if (n == 2 && streq(token0, "mpm")) {
+  if (check_command(token0, C_mpm, n)) {
     cfg.max_pending_messages = atoi(token1);
     printf("max_pending_messages set to %d\n", cfg.max_pending_messages);
     return;
   }
 
-  if (n == 1 && streq(token0, "apm")) {
+  if (check_command(token0, C_apm, n)) {
     /* Show all pending messages. */
     CTI_pending_messages();
+    return;
   }
 
-  if (n == 1 && streq(token0, "md5")) {
+  if (check_command(token0, C_md5, n)) {
     /* Show md5sum of executable. */
     localptr(String, cmd) = String_sprintf("md5sum %s", argv0);
     system(s(cmd));
+    return;
+  }
+
+  if (check_command(token0, C_help, n)) {
+    int i;
+    for (i=0; i < cti_table_size(command_table); i++) {
+      printf("%s %s", command_table[i].command, command_table[i].help);
+      printf("\n");
+    }
+    return;
   }
 
 }
