@@ -121,7 +121,7 @@ static void y420p_handler(Instance *pi, void *msg)
     float delta = 0.025;         /* adjust levels by this amount */
     float level;                /* new level */
     if (luma > priv->target_luma) {
-      /* Move bright scene limit */
+      /* Move toward bright scene limit */
       level = cti_max(priv->current_level - delta, 0.0);
     }
     else {
