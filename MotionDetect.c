@@ -37,6 +37,7 @@ typedef struct {
   Gray_buffer *mask;
   int running_sum;
   int remove_dc_offset;
+  int step;
 } MotionDetect_private;
 
 
@@ -51,7 +52,7 @@ static int set_remove_dc_offset(Instance *pi, const char *value)
 
 static Config config_table[] = {
   { "remove_dc_offset", set_remove_dc_offset, 0L, 0L },
-  /* ...Generic_set_int, offsetof(MotionDetect_private, remove_dc_offset) ... */
+  { "step", 0L, 0L, 0L, cti_set_int, offsetof(MotionDetect_private, step)},
 };
 
 static void Config_handler(Instance *pi, void *data)
@@ -90,8 +91,8 @@ static void gray_handler(Instance *pi, void *msg)
   }
 
   sum = 0;
-  for (y=0; y < gray->height; y+=10) {
-    for (x=0; x < gray->width; x+=10) {
+  for (y=0; y < gray->height; y+=priv->step) {
+    for (x=0; x < gray->width; x+=priv->step) {
       int offset = y * gray->width + x;
 
       if (mask_check) {
@@ -126,7 +127,7 @@ static void gray_handler(Instance *pi, void *msg)
   }
 
   Gray_buffer_release(gray);
-  // printf("MotionDetect sum=%d\n", sum);
+  printf("MotionDetect sum=%d\n", sum);
 }
 
 
@@ -155,7 +156,8 @@ static void MotionDetect_tick(Instance *pi)
 
 static void MotionDetect_instance_init(Instance *pi)
 {
-  // MotionDetect_private *priv = (MotionDetect_private *)pi;
+  MotionDetect_private *priv = (MotionDetect_private *)pi;
+  priv->step = 10;
 }
 
 static Template MotionDetect_template = {
