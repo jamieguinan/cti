@@ -230,7 +230,7 @@ extern YUV422P_buffer *YUV422P_clone(YUV422P_buffer *y422p);
 extern void YUV422P_paste(YUV422P_buffer *dest, YUV422P_buffer *src, int x, int y, int width, int height);
 extern RGB3_buffer *YUV422P_to_RGB3(YUV422P_buffer *y422p);
 extern BGR3_buffer *YUV422P_to_BGR3(YUV422P_buffer *y422p);
-extern BGR3_buffer *YUV420P_to_BGR3(YUV420P_buffer *y420p);
+extern Gray_buffer *YUV422P_to_Gray(YUV422P_buffer *yuv422p);
 
 extern YUV420P_buffer *YUV420P_buffer_new(int width, int height, Image_common *c);
 extern YUV420P_buffer *YUV420P_buffer_ref(YUV420P_buffer *y420p);
@@ -239,6 +239,7 @@ extern YUV420P_buffer *YUV420P_clone(YUV420P_buffer *y420p);
 extern void YUV420P_buffer_release(YUV420P_buffer *y420p);
 extern RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *y420p);
 extern BGR3_buffer *YUV420P_to_BGR3(YUV420P_buffer *y420p);
+extern Gray_buffer *YUV420P_to_Gray(YUV420P_buffer *yuv420p);
 
 extern YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *y422p);
 extern YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p);

@@ -619,6 +619,31 @@ BGR3_buffer *YUV420P_to_BGR3(YUV420P_buffer *yuv420p)
   return bgr;
 }
 
+Gray_buffer *YUV420P_to_Gray(YUV420P_buffer *yuv420p)
+{
+  Gray_buffer *gray = Gray_buffer_new(yuv420p->width, yuv420p->height, &yuv420p->c);
+  if (yuv420p->y_length != gray->data_length) {
+    fprintf(stderr, "YUV420P_to_Gray data size mismatch, %d != %d\n",
+            yuv420p->y_length, gray->data_length);
+    exit(1);
+  }
+  memcpy(gray->data, yuv420p->y, gray->data_length);
+  return gray;
+}
+
+Gray_buffer *YUV422P_to_Gray(YUV422P_buffer *yuv422p)
+{
+  Gray_buffer *gray = Gray_buffer_new(yuv422p->width, yuv422p->height, &yuv422p->c);
+  if (yuv422p->y_length != gray->data_length) {
+    fprintf(stderr, "YUV422P_to_Gray data size mismatch, %d != %d\n",
+            yuv422p->y_length, gray->data_length);
+    exit(1);
+  }
+  memcpy(gray->data, yuv422p->y, gray->data_length);
+  return gray;
+}
+
+
 
 YUV422P_buffer *RGB3_to_YUV422P(RGB3_buffer *rgb)
 {
