@@ -6,19 +6,19 @@ OS=$(shell uname -s)
 HOSTARCH=$(ARCH)-$(OS)
 $(warning HOSTARCH=$(HOSTARCH))
 
+ifeq ($(OS),Linux)
 # Scale build to available cores.
-ifeq ($(shell sysctl -nq kern.ostype),Darwin)
-MAKEFLAGS=j$(shell sysctl -n hw.logicalcpu)
-else ifeq ($(OS),Linux)
 MAKEFLAGS=j$(shell grep '^processor' /proc/cpuinfo | wc -l)
 endif
 
 ifeq ($(HOSTARCH),x86_64-Darwin)
+MAKEFLAGS=j$(shell sysctl -n hw.logicalcpu)
 LOCAL_JPEG=1
 endif
 
 ifeq ($(HOSTARCH),x86_64-Linux)
 LOCAL_JPEG=1
+LDFLAGS+=-lm
 endif
 
 ifeq ($(HOSTARCH),armv6l-Linux)
