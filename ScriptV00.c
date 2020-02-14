@@ -205,7 +205,6 @@ static void scan_line(ScriptV00_private *priv, String *line, int is_stdin)
   }
 
   if (n == 1 && streq(token0, "g_synchronous")) {
-    /* FIXME: Could make this settable instead of a toggle. */
     g_synchronous = !g_synchronous;
     return;
   }
