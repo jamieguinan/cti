@@ -23,6 +23,7 @@ typedef enum {
   IMAGE_TYPE_PPM,
   IMAGE_TYPE_YUV420P,           /* decompressed iPhone Jpegs */
   IMAGE_TYPE_YUV422P,           /* raw dumps from V4L2Capture module, some decompressed Jpegs */
+  IMAGE_TYPE_YUYV,		/* packed pixel 4:2:2 */
   IMAGE_TYPE_O511,
   IMAGE_TYPE_H264,              /* One unit of compressor output */
   AUDIO_TYPE_AAC,
@@ -127,6 +128,16 @@ typedef struct {
 
   Image_common c;
 } YUV422P_buffer;
+
+/* YUYV 422 packed pixel. */
+typedef struct {
+  MemObject mo;
+  int width;
+  int height;
+  uint8_t *data;
+  int data_length;
+  Image_common c;
+} YUYV_buffer;
 
 
 /* 420P buffer */
@@ -240,13 +251,15 @@ extern void YUV420P_buffer_release(YUV420P_buffer *y420p);
 extern RGB3_buffer *YUV420P_to_RGB3(YUV420P_buffer *y420p);
 extern BGR3_buffer *YUV420P_to_BGR3(YUV420P_buffer *y420p);
 extern Gray_buffer *YUV420P_to_Gray(YUV420P_buffer *yuv420p);
-
 extern YUV420P_buffer *YUV422P_to_YUV420P(YUV422P_buffer *y422p);
 extern YUV422P_buffer *YUV420P_to_YUV422P(YUV420P_buffer *yuv420p);
 
+extern YUYV_buffer *YUYV_buffer_new(int width, int height, Image_common *c);
+extern void YUYV_buffer_release(YUYV_buffer *yuyv);
+
+/* extra conversions between non-compressed formats */
 extern YUV422P_buffer *RGB3_to_YUV422P(RGB3_buffer *rgb);
 extern YUV422P_buffer *BGR3_toYUV422P(BGR3_buffer *bgr);
-
 extern YUV420P_buffer *RGB3_to_YUV420P(RGB3_buffer *rgb);
 
 extern Jpeg_buffer *Jpeg_buffer_new(int size, Image_common *c);

@@ -51,13 +51,14 @@ static Input V4L2Capture_inputs[] = {
   [ INPUT_KEYCODE ] = { .type_label = "Keycode_msg", .handler = Keycode_handler },
 };
 
-enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_YUV422P, OUTPUT_YUV420P,
+enum { OUTPUT_BGR3, OUTPUT_RGB3, OUTPUT_YUV422P, OUTPUT_YUV420P, OUTPUT_YUYV,
        OUTPUT_JPEG, OUTPUT_O511, OUTPUT_H264, OUTPUT_GRAY };
 static Output V4L2Capture_outputs[] = {
   [ OUTPUT_BGR3 ] = { .type_label = "BGR3_buffer", .destination = 0L },
   [ OUTPUT_RGB3 ] = { .type_label = "RGB3_buffer", .destination = 0L },
   [ OUTPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .destination = 0L },
   [ OUTPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .destination = 0L },
+  [ OUTPUT_YUYV ] = { .type_label = "YUYV_buffer", .destination = 0L },
   [ OUTPUT_JPEG ] = { .type_label = "Jpeg_buffer", .destination = 0L },
   [ OUTPUT_O511 ] = { .type_label = "O511_buffer", .destination = 0L },
   [ OUTPUT_H264 ] = { .type_label = "H264_buffer", .destination = 0L },
@@ -1505,27 +1506,14 @@ static void V4L2Capture_tick(Instance *pi)
     if (priv->vbuffer.bytesused != priv->width*priv->height*2) {
       fprintf(stderr, "%s: YUYV buffer is not the expected size!\n", __func__);
     }
-    if (pi->outputs[OUTPUT_YUV422P].destination) {
-      int i;
-      int iy = 0;
-      int icr = 0;
-      int icb = 0;
-      uint8_t *p = priv->buffers[priv->wait_on].data;
-      YUV422P_buffer *y422p = YUV422P_buffer_new(priv->width, priv->height, &c);
-      for (i=0; i < priv->vbuffer.bytesused/4; i++) {
-        /* YUYV is packed-pixels, need to sort to planes for YUV422p.
-         * Current SSE versions don't support scatter/gather, so
-         * there's no easy way to acclerate this.  Well, I could try
-         * doing it in 3 passes using SSE shuffle instructions. */
-        y422p->y[iy++] = *p++;
-        y422p->cb[icb++] = *p++;
-        y422p->y[iy++] = *p++;
-        y422p->cr[icr++] = *p++;
-      }
+    if (pi->outputs[OUTPUT_YUYV].destination) {
+      YUYV_buffer *yuyv = YUYV_buffer_new(priv->width, priv->height, &c);
+      /* Just this memcpy adds ~20% CPU utilization on RPi1 with 720x480@30 video. */
+      memcpy(yuyv->data, priv->buffers[priv->wait_on].data, priv->width*priv->height*2);
       if (priv->snapshot > 0) {
-        yuv422p_snapshot(pi, y422p);
+	// snapshot...
       }
-      PostData(y422p, pi->outputs[OUTPUT_YUV422P].destination);
+      PostData(yuyv, pi->outputs[OUTPUT_YUYV].destination);
     }
 
     if (pi->outputs[OUTPUT_GRAY].destination) {

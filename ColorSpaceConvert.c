@@ -18,11 +18,12 @@ static void y422p_handler(Instance *pi, void *msg);
 static void y420p_handler(Instance *pi, void *msg);
 static void Config_handler(Instance *pi, void *msg);
 
-enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_YUV420P };
+enum { INPUT_CONFIG, INPUT_YUV422P, INPUT_YUV420P, INPUT_YUYV };
 static Input ColorSpaceConvert_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = y422p_handler },
   [ INPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .handler = y420p_handler },
+  // [ INPUT_YUYV ] = { .type_label = "YUYV_buffer", .handler = yuyv_handler },
 };
 
 enum { OUTPUT_YUV422P, OUTPUT_YUV420P, OUTPUT_GRAY };

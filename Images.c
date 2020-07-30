@@ -459,6 +459,34 @@ void YUV422P_buffer_release(YUV422P_buffer *yuv422p)
   }
 }
 
+YUYV_buffer *YUYV_buffer_new(int width, int height, Image_common *c)
+{
+  /* warn and endless loop if width is not even */
+  YUYV_buffer * yuyv = Mem_calloc(1, sizeof(*yuyv));
+  if (c) {
+    Image_common_copy(&yuyv->c, c);
+  }
+  yuyv->width = width;
+  yuyv->height = height;
+
+  yuyv->data_length = width * height * 2;
+  yuyv->data = Mem_malloc(yuyv->data_length);
+  LockedRef_init(&yuyv->c.ref);
+  return yuyv;
+}
+
+void YUYV_buffer_release(YUYV_buffer *yuyv)
+{
+  int count;
+  LockedRef_decrement(&yuyv->c.ref, &count);
+  if (count == 0) {
+    Image_common_cleanup(&(yuyv->c));
+    Mem_free(yuyv->data);
+    memset(yuyv, 0, sizeof(*yuyv));
+    Mem_free(yuyv);
+  }
+}
+
 
 static void YUV422P_to_xGx(YUV422P_buffer *yuv422p, RGB3_buffer *rgb, BGR3_buffer *bgr)
 {

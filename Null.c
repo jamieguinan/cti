@@ -41,6 +41,12 @@ static void YUV420P_handler(Instance *pi, void *data)
   YUV420P_buffer_release(y420p_in);
 }
 
+static void YUYV_handler(Instance *pi, void *data)
+{
+  YUYV_buffer *yuyv_in = data;
+  YUYV_buffer_release(yuyv_in);
+}
+
 static void O511_handler(Instance *pi, void *data)
 {
   O511_buffer *o511_in = data;
@@ -88,13 +94,14 @@ static void Config_handler(Instance *pi, void *data)
 }
 
 
-enum { INPUT_CONFIG, INPUT_GRAY, INPUT_JPEG, INPUT_YUV422P, INPUT_YUV420P, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_AUDIO, INPUT_H264, INPUT_AAC, INPUT_RAWDATA };
+enum { INPUT_CONFIG, INPUT_GRAY, INPUT_JPEG, INPUT_YUV422P, INPUT_YUV420P, INPUT_YUYV, INPUT_RGB3, INPUT_O511, INPUT_WAV, INPUT_AUDIO, INPUT_H264, INPUT_AAC, INPUT_RAWDATA };
 static Input Null_inputs[] = {
   [ INPUT_CONFIG ] = { .type_label = "Config_msg", .handler = Config_handler },
   [ INPUT_GRAY ] = { .type_label = "GRAY_buffer", .handler = Gray_handler },
   [ INPUT_JPEG ] = { .type_label = "Jpeg_buffer", .handler = Jpeg_handler },
   [ INPUT_YUV422P ] = { .type_label = "YUV422P_buffer", .handler = YUV422P_handler },
   [ INPUT_YUV420P ] = { .type_label = "YUV420P_buffer", .handler = YUV420P_handler },
+  [ INPUT_YUYV ] = { .type_label = "YUYV_buffer", .handler = YUYV_handler },
   [ INPUT_RGB3 ] = { .type_label = "RGB3_buffer", .handler = RGB3_handler },
   [ INPUT_O511 ] = { .type_label = "O511_buffer", .handler = O511_handler },
   [ INPUT_WAV ] = { .type_label = "Wav_buffer",   .handler = Wav_handler },
